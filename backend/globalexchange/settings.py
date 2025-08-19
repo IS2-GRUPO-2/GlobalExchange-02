@@ -99,7 +99,7 @@ REST_FRAMEWORK = {
 }
 
 SIMPLE_JWT = {
-    "TOKEN_OBTAINER_SERIALIZER" : "accounts.serializers.CustomTokenObtainPairSerializer"
+    "TOKEN_OBTAINER_SERIALIZER" : "globalexchange.serializers.CustomTokenObtainPairSerializer"
 }
 
 
