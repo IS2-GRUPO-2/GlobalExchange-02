@@ -1,0 +1,16 @@
+# Dockerfile for a Node.js frontend application
+FROM node:22.18-slim
+
+WORKDIR /app    
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential && \
+    rm -rf /var/lib/apt/lists/*
+
+COPY package*.json ./
+RUN npm install
+
+COPY . /app
+
+
+

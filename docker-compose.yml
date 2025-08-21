@@ -1,9 +1,10 @@
 services:
   web:
-    build: .
+    build: ./backend
+    container_name: backend_app
     command: python manage.py runserver 0.0.0.0:8000
     volumes:
-      - .:/app:delegated
+      - ./backend:/app:delegated
     ports:
       - "8000:8000"
     env_file:
@@ -12,8 +13,23 @@ services:
       db:
         condition: service_healthy
 
+  frontend:
+    build: ./frontend
+    container_name: frontend_app
+    command: npm run dev -- --host
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    ports:
+      - "5173:5173"
+    environment:
+      - CHOKIDAR_USEPOLLING=true
+    depends_on:
+      - web
+
   db:
     image: postgres:17-alpine
+    container_name: db_postgres
     environment:
       POSTGRES_DB: ${DATABASE_NAME}
       POSTGRES_USER: ${DATABASE_USER}
