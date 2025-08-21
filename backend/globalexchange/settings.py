@@ -46,7 +46,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'apps.roles',
-    'apps.permisos'
+    'apps.permisos',
     'drf_yasg'
 ]
 
