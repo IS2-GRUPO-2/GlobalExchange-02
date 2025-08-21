@@ -1,3 +1,9 @@
-from django.shortcuts import render
+from rest_framework import viewsets, permissions
+from django.contrib.auth.models import Group
+from .serializers import RoleSerializer
 
-# Create your views here.
+class RoleViewSet(viewsets.ModelViewSet):
+    queryset = Group.objects.all().prefetch_related("permissions")
+    serializer_class = RoleSerializer
+    permission_classes = [permissions.AllowAny]
+
