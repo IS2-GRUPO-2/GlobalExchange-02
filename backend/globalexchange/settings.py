@@ -13,6 +13,7 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 from pathlib import Path
 from .configuration import config
 
+
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -48,6 +49,7 @@ INSTALLED_APPS = [
     'apps.roles',
     'apps.permisos',
     "apps.clientes",
+    'apps.autenticacion',
     'drf_yasg'
 ]
 
@@ -147,3 +149,13 @@ STATIC_URL = 'static/'
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+# Custom user model
+AUTH_USER_MODEL = 'autenticacion.User'
+
+# Email configuration
+EMAIL_HOST = "smtp.gmail.com"
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+EMAIL_HOST_USER = config.EMAIL_HOST_USER
+EMAIL_HOST_PASSWORD = config.EMAIL_HOST_PASSWORD
