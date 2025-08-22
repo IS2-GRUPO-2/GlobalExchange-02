@@ -1,5 +1,5 @@
 import React from "react";
-import type {User, DecodedToken } from "../types/User";
+import type { User, DecodedToken } from "../types/User";
 import { createContext, useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import {
@@ -9,9 +9,10 @@ import {
 } from "../services/authService";
 import { jwtDecode } from "jwt-decode";
 import axios from "axios";
+import { getUsuario } from "../services/usuarioService";
 
 type UserContextType = {
-  user: DecodedToken | null;
+  user: User | null;
   token: string | null;
   refresh: string | null;
   loginUser: (username: string, password: string) => void;
@@ -30,11 +31,10 @@ type Props = { children: React.ReactNode };
 const UserContext = createContext<UserContextType>({} as UserContextType);
 
 export const UserProvider = ({ children }: Props) => {
-  const retry = React.useRef(true);
   const navigate = useNavigate();
   const [token, setToken] = useState<string | null>(null);
   const [refresh, setRefresh] = useState<string | null>(null);
-  const [user, setUser] = useState<DecodedToken | null>(null);
+  const [user, setUser] = useState<User | null>(null);
   const [isReady, setIsReady] = useState(false);
 
   const refreshToken = async () => {
@@ -70,9 +70,13 @@ export const UserProvider = ({ children }: Props) => {
     const resInterceptor = axios.interceptors.response.use(
       (response) => response,
       async (error) => {
-        if (error.response?.status === 401 && retry.current) {
+        const originalRequest = error.config;
+        if (error.response?.status === 401) {
+          if (originalRequest.url.includes("/refresh")) {
+            logout();
+            return Promise.reject(error);
+          }
           const newToken = await refreshToken();
-          retry.current = false;
           if (newToken) {
             error.config.headers["Authorization"] = `Bearer ${newToken}`;
             return axios(error.config); // retry the failed request
@@ -90,16 +94,23 @@ export const UserProvider = ({ children }: Props) => {
 
   const loginUser = async (username: string, password: string) => {
     await loginAPI(username, password)
-      .then((res) => {
+      .then(async (res) => {
         if (res) {
           localStorage.setItem("token", res?.data.access);
           localStorage.setItem("refresh", res?.data.refresh);
           const userObj = jwtDecode<DecodedToken>(res?.data.access);
+          const headers = {
+            headers: {
+              Authorization: `Bearer ${res?.data.access}`,
+            },
+          };
+          const user = await getUsuario(userObj.user_id, headers);
+
           console.log(userObj);
-          localStorage.setItem("user", JSON.stringify(userObj));
+          localStorage.setItem("user", JSON.stringify(user.data));
           setToken(res?.data.access!);
           setRefresh(res?.data.refresh!);
-          setUser(userObj);
+          setUser(user.data);
           navigate("/");
         }
       })

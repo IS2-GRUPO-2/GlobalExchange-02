@@ -1,5 +1,5 @@
 import axios from "axios";
-import { type User} from "../types/User";
+import { type User } from "../types/User";
 
 const API_URL = "http://localhost:8000/api/usuarios/";
 
@@ -12,11 +12,10 @@ const getAuthHeaders = () => {
   };
 };
 
-export const getUsuarios = () =>
-  axios.get<User[]>(API_URL, getAuthHeaders());
+export const getUsuarios = () => axios.get<User[]>(API_URL, getAuthHeaders());
 
-export const getUsuario = (id: string) =>
-  axios.get<User>(`${API_URL}${id}/`, getAuthHeaders());
+export const getUsuario = (id: string, headers = getAuthHeaders()) =>
+  axios.get<User>(`${API_URL}${id}/`, headers);
 
 export const createUsuario = (data: Partial<User>) =>
   axios.post<User>(API_URL, data, getAuthHeaders());

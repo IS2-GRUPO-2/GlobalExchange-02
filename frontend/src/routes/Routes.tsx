@@ -7,6 +7,7 @@ import ProtectedRoute from "./ProtectedRoute";
 import RegisterPage from "../pages/RegisterPage";
 import RolesPage from "../pages/RolesPage";
 import MainMenuPage from "../pages/MenuPage";
+import AdminRoutes from "./AdminRoutes";
 export const router = createBrowserRouter([
   {
     path: "/",
@@ -23,17 +24,17 @@ export const router = createBrowserRouter([
       {
         path: "roles",
         element: (
-          <ProtectedRoute>
+          <AdminRoutes>
             <RolesPage />
-          </ProtectedRoute>
+          </AdminRoutes>
         ),
       },
       {
         path: "clientes",
         element: (
-          <ProtectedRoute>
+          <AdminRoutes>
             <ClientesPage />
-          </ProtectedRoute>
+          </AdminRoutes>
         ),
       },
       {
@@ -43,9 +44,9 @@ export const router = createBrowserRouter([
       {
         path: "usuarios",
         element: (
-          <ProtectedRoute>
+          <AdminRoutes>
             <UsuariosPage />
-          </ProtectedRoute>  
+          </AdminRoutes>
         ),
       },
     ],
