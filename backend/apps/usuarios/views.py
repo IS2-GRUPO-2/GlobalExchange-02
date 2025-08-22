@@ -1,11 +1,11 @@
 from django.shortcuts import render
 from rest_framework import viewsets, permissions
-from .models import Usuario
-from .serializers import UsuarioSerializer
+from .models import User
+from .serializers import UserSerializer
 
-class UsuarioViewSet(viewsets.ModelViewSet):
-    queryset = Usuario.objects.all()
-    serializer_class = UsuarioSerializer
+class UserViewSet(viewsets.ModelViewSet):
+    queryset = User.objects.all()
+    serializer_class = UserSerializer
 
     def get_permissions(self):
             if self.action == "create":

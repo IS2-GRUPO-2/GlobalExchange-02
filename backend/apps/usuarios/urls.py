@@ -1,7 +1,7 @@
 from rest_framework.routers import DefaultRouter
-from .views import UsuarioViewSet
+from .views import UserViewSet
 
 router = DefaultRouter()
-router.register(r'usuarios', UsuarioViewSet)
+router.register(r'usuarios', UserViewSet)
 
 urlpatterns = router.urls
