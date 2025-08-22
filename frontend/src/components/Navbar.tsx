@@ -13,10 +13,9 @@ const navigation = [
   { name: "Dashboard", href: "#", current: true },
   { name: "Clientes", href: "/clientes", current: false },
   { name: "Usuarios", href: "/usuarios", current: false },
-  { name: "Team", href: "#", current: false },
-  { name: "Projects", href: "#", current: false },
-  { name: "Calendar", href: "#", current: false },
   { name: "Roles", href: "/roles", current: false }, 
+  { name: "Iniciar sesión", href: "/login", current: false },
+  { name: "Registrarse", href: "/register", current: false },
 ];
 
 interface NavigationItem {
@@ -24,6 +23,7 @@ interface NavigationItem {
   href: string;
   current: boolean;
 }
+
 
 function classNames(...classes: (string | undefined | false | null)[]): string {
   return classes.filter(Boolean).join(" ");

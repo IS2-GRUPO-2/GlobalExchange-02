@@ -30,6 +30,7 @@ type Props = { children: React.ReactNode };
 const UserContext = createContext<UserContextType>({} as UserContextType);
 
 export const UserProvider = ({ children }: Props) => {
+  const retry = React.useRef(true);
   const navigate = useNavigate();
   const [token, setToken] = useState<string | null>(null);
   const [refresh, setRefresh] = useState<string | null>(null);
@@ -69,8 +70,9 @@ export const UserProvider = ({ children }: Props) => {
     const resInterceptor = axios.interceptors.response.use(
       (response) => response,
       async (error) => {
-        if (error.response?.status === 401) {
+        if (error.response?.status === 401 && retry.current) {
           const newToken = await refreshToken();
+          retry.current = false;
           if (newToken) {
             error.config.headers["Authorization"] = `Bearer ${newToken}`;
             return axios(error.config); // retry the failed request

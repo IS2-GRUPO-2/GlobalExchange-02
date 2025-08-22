@@ -6,12 +6,16 @@ import LoginPage from "../pages/LoginPage";
 import ProtectedRoute from "./ProtectedRoute";
 import RegisterPage from "../pages/RegisterPage";
 import RolesPage from "../pages/RolesPage";
-
+import MainMenuPage from "../pages/MenuPage";
 export const router = createBrowserRouter([
   {
     path: "/",
     element: <App />,
     children: [
+      {
+        path: "landing",
+        element: <MainMenuPage />,
+      },
       {
         path: "login",
         element: <LoginPage />,
