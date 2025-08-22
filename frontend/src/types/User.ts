@@ -3,7 +3,7 @@ export type UserProfileToken = {
   refresh: string;
 };
 
-export type UserProfile = {
+export type User = {
   id: number;
   username: string;
   email: string;
@@ -11,6 +11,7 @@ export type UserProfile = {
   roles: string[];
   permissions: string[];
   is_active: boolean;
+  is_verified: boolean;
 };
 
 export type DecodedToken = {
