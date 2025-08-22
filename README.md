@@ -5,6 +5,17 @@
 docker compose up --build -d
 ```
 
+#### Ver logs del backend
+```bash
+docker compose logs -f backend
+```
+
+#### Ver logs del frontend
+```bash
+docker compose logs -f frontend
+```
+
+
 #### Acceder a la terminal del backend
 ```bash
 docker compose exec backend sh
