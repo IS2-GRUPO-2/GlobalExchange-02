@@ -92,3 +92,110 @@ def test_permissions_catalog_list_and_detail():
     resp = client.get(f"/permisos/{pid}/")
     assert resp.status_code == 200
     assert resp.json()["id"] == pid
+
+
+# MAS TESTS PARA ROBUSTES
+
+@pytest.mark.parametrize("role_name", ["USER", "STAFF", "SUPERVISOR", "QA", "DEVOPS"])
+def test_role_serializer_creates_various_roles(role_name):
+    perms = _some_permissions(2)
+    payload = {"name": role_name, "permissions": [p.id for p in perms]}
+    ser = RoleSerializer(data=payload)
+    assert ser.is_valid(), ser.errors
+    group = ser.save()
+    assert group.name == role_name
+    assert set(group.permissions.values_list("id", flat=True)) == set(p.id for p in perms)
+
+
+def test_role_serializer_without_permissions():
+    payload = {"name": "SIN_PERMISOS", "permissions": []}
+    ser = RoleSerializer(data=payload)
+    assert ser.is_valid(), ser.errors
+    group = ser.save()
+    assert group.permissions.count() == 0
+
+
+def test_role_serializer_empty_name_is_invalid():
+    perms = _some_permissions(1)
+    payload = {"name": "", "permissions": [p.id for p in perms]}
+    ser = RoleSerializer(data=payload)
+    assert not ser.is_valid()
+    assert "name" in ser.errors
+
+
+def test_role_serializer_duplicate_name_fails():
+    perms = _some_permissions(1)
+    payload = {"name": "DUPLICADO", "permissions": [p.id for p in perms]}
+    ser = RoleSerializer(data=payload)
+    assert ser.is_valid()
+    ser.save()
+    ser2 = RoleSerializer(data=payload)
+    assert not ser2.is_valid()
+    assert "name" in ser2.errors
+
+
+# ---- Variantes usando APIClient ----
+
+@pytest.mark.parametrize("role_name", ["COORDINADOR", "GERENTE", "ASISTENTE", "OPERADOR", "LECTOR"])
+def test_api_create_and_delete_roles(role_name):
+    client = APIClient()
+    perms = _some_permissions(2)
+    resp = client.post(
+        "/roles/",
+        {"name": role_name, "permissions": [p.id for p in perms]},
+        format="json",
+    )
+    assert resp.status_code in (200, 201)
+    role_id = resp.data["id"]
+    # luego borrar
+    resp = client.delete(f"/roles/{role_id}/")
+    assert resp.status_code in (204, 200, 202)
+    assert not Group.objects.filter(id=role_id).exists()
+
+
+def test_api_update_role_with_more_permissions():
+    client = APIClient()
+    perms = _some_permissions(2)
+    resp = client.post(
+        "/roles/", {"name": "AUDITOR", "permissions": [p.id for p in perms]}, format="json"
+    )
+    role_id = resp.data["id"]
+
+    extra = _some_permissions(3)
+    resp = client.patch(
+        f"/roles/{role_id}/", {"permissions": [p.id for p in extra]}, format="json"
+    )
+    assert resp.status_code in (200, 202)
+    group = Group.objects.get(id=role_id)
+    assert set(group.permissions.values_list("id", flat=True)) == {p.id for p in extra}
+
+
+def test_api_role_detail_shows_correct_data():
+    client = APIClient()
+    perms = _some_permissions(1)
+    resp = client.post(
+        "/roles/", {"name": "INSPECTOR", "permissions": [p.id for p in perms]}, format="json"
+    )
+    role_id = resp.data["id"]
+
+    resp = client.get(f"/roles/{role_id}/")
+    assert resp.status_code == 200
+    data = resp.json()
+    assert data["name"] == "INSPECTOR"
+    assert perms[0].id in data["permissions"]
+
+
+def test_api_list_roles_contains_new_role():
+    client = APIClient()
+    resp = client.get("/roles/")
+    assert resp.status_code == 200
+    data = resp.json()
+    assert isinstance(data, list)
+
+
+def test_api_permissions_catalog_returns_all():
+    client = APIClient()
+    resp = client.get("/permisos/")
+    assert resp.status_code == 200
+    data = resp.json()
+    assert all("id" in p and "codename" in p for p in data)
