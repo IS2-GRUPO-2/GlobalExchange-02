@@ -5,11 +5,11 @@ import {
   updateUsuario,
   deleteUsuario,
 } from "../services/usuarioService";
-import { type Usuario } from "../types/Usuario";
+import { type User } from "../types/User";
 
 export default function UsuariosPage() {
-  const [usuarios, setUsuarios] = useState<Usuario[]>([]);
-  const [formData, setFormData] = useState<Partial<Usuario>>({
+  const [usuarios, setUsuarios] = useState<User[]>([]);
+  const [formData, setFormData] = useState<Partial<User>>({
     username: "",
     first_name: "",
     last_name: "",
@@ -51,9 +51,9 @@ export default function UsuariosPage() {
     });
   };
 
-  const handleEdit = (usuario: Usuario) => {
-    setFormData(usuario);
-    setEditId(usuario.idUsuario);
+  const handleEdit = (User: User) => {
+    setFormData(User);
+    setEditId(User.id);
   };
 
   const handleDelete = async (id: string) => {
