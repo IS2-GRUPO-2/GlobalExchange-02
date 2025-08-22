@@ -51,7 +51,8 @@ urlpatterns = [
     path('api/token/refresh/', TokenRefreshView.as_view(), name="token_refresh"),
     path('', include("apps.roles.urls")),
     path('', include("apps.permisos.urls")),
-    path('api/', include('apps.usuarios.urls')),
+    path('api/', include("apps.usuarios.urls")),
+    path('api/', include("apps.clientes.urls")),
     path('docs/', schema_view.with_ui('swagger', cache_timeout=0), name='schema-swagger-ui'),
     path('redocs/', schema_view.with_ui('redoc', cache_timeout=0), name='schema-redoc'),
 ]

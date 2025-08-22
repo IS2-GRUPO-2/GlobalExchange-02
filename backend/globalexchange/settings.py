@@ -48,6 +48,7 @@ INSTALLED_APPS = [
     'apps.roles',
     'apps.permisos',
     'apps.usuarios',
+    'apps.clientes',
     'drf_yasg'
 ]
 
