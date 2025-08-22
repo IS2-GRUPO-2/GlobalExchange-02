@@ -27,7 +27,7 @@ export const router = createBrowserRouter([
         element: (
           <ProtectedRoute>
             <UsuariosPage />
-          </ProtectedRoute>
+          </ProtectedRoute>  
         ),
       },
     ],

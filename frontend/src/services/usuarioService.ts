@@ -1,9 +1,8 @@
 import axios from "axios";
-import { type Cliente } from "../types/Cliente";
+import { type Usuario} from "../types/Cliente";
 
-const API_URL = "http://localhost:8000/api/clientes/";
+const API_URL = "http://localhost:8000/api/usuarios/";
 
-// 👇 función auxiliar para obtener headers con token
 const getAuthHeaders = () => {
   const token = localStorage.getItem("access"); // el mismo que guardas en login
   return {
@@ -13,17 +12,17 @@ const getAuthHeaders = () => {
   };
 };
 
-export const getClientes = () =>
-  axios.get<Cliente[]>(API_URL, getAuthHeaders());
+export const getUsuarios = () =>
+  axios.get<Usuario[]>(API_URL, getAuthHeaders());
 
-export const getCliente = (id: string) =>
-  axios.get<Cliente>(`${API_URL}${id}/`, getAuthHeaders());
+export const getUsuario = (id: string) =>
+  axios.get<Usuario>(`${API_URL}${id}/`, getAuthHeaders());
 
-export const createCliente = (data: Partial<Cliente>) =>
-  axios.post<Cliente>(API_URL, data, getAuthHeaders());
+export const createUsuario = (data: Partial<Usuario>) =>
+  axios.post<Usuario>(API_URL, data, getAuthHeaders());
 
-export const updateCliente = (id: string, data: Partial<Cliente>) =>
-  axios.put<Cliente>(`${API_URL}${id}/`, data, getAuthHeaders());
+export const updateUsuario = (id: string, data: Partial<Usuario>) =>
+  axios.put<Usuario>(`${API_URL}${id}/`, data, getAuthHeaders());
 
-export const deleteCliente = (id: string) =>
+export const deleteUsuario = (id: string) =>
   axios.delete(`${API_URL}${id}/`, getAuthHeaders());
