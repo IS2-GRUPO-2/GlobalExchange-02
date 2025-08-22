@@ -1,5 +1,6 @@
 from django.db import models
 import uuid
+# from django.conf import settings  # para referenciar al modelo de User
 # Create your models here.
 
 
@@ -26,3 +27,12 @@ class Cliente(models.Model):
 
     def __str__(self):
         return self.nombre
+    
+
+    # # Relación ManyToMany con User
+    # usuarios = models.ManyToManyField(
+    #     settings.AUTH_USER_MODEL,  # referencia a tu modelo custom User
+    #     related_name="clientes",
+    #     blank=True
+    # )
+

@@ -3,6 +3,11 @@ from django.db import models
 
 class User(AbstractUser):
     email_verified = models.BooleanField(default=False)
+    clientes = models.ManyToManyField(
+        "clientes.Cliente",   # referencia al modelo Cliente por app_label.ModelName
+        related_name="usuarios",
+        blank=True
+    )
     
     def __str__(self):
         return self.username

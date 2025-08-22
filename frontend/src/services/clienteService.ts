@@ -5,7 +5,7 @@ const API_URL = "http://localhost:8000/api/clientes/";
 
 // 👇 función auxiliar para obtener headers con token
 const getAuthHeaders = () => {
-  const token = localStorage.getItem("access"); // el mismo que guardas en login
+  const token = localStorage.getItem("token"); // el mismo que guardas en login
   return {
     headers: {
       Authorization: token ? `Bearer ${token}` : "",
