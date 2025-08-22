@@ -1,0 +1,3 @@
+Si les falla el backend con docker ejecutar en el siguiente orden: 
+1. docker compose up -d
+2. docker system prune -a --volumes
