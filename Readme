@@ -1,0 +1,5 @@
+!! Ojo no olvidarse de construir (build) el compose de docker
+Si les falla el backend con docker ejecutar en el siguiente orden: 
+1. docker compose up -d
+2. docker system prune -a --volumes
+Configuración inicial

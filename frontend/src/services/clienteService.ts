@@ -1,0 +1,29 @@
+import axios from "axios";
+import { type Cliente } from "../types/Cliente";
+
+const API_URL = "http://localhost:8000/api/clientes/";
+
+// 👇 función auxiliar para obtener headers con token
+const getAuthHeaders = () => {
+  const token = localStorage.getItem("access"); // el mismo que guardas en login
+  return {
+    headers: {
+      Authorization: token ? `Bearer ${token}` : "",
+    },
+  };
+};
+
+export const getClientes = () =>
+  axios.get<Cliente[]>(API_URL, getAuthHeaders());
+
+export const getCliente = (id: string) =>
+  axios.get<Cliente>(`${API_URL}${id}/`, getAuthHeaders());
+
+export const createCliente = (data: Partial<Cliente>) =>
+  axios.post<Cliente>(API_URL, data, getAuthHeaders());
+
+export const updateCliente = (id: string, data: Partial<Cliente>) =>
+  axios.put<Cliente>(`${API_URL}${id}/`, data, getAuthHeaders());
+
+export const deleteCliente = (id: string) =>
+  axios.delete(`${API_URL}${id}/`, getAuthHeaders());
