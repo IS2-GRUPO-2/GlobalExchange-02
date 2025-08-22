@@ -1,0 +1,35 @@
+CRUD Usuarios
+https://chatgpt.com/share/68a7b047-de74-800a-96e8-4a7d8866250f
+
+Axios token refresh fix
+https://chatgpt.com/share/68a8cdc2-d4fc-8010-a4f8-f9e218e4fdca
+
+Gestion de Clientes y Asignación de Clientes a Usuarios
+https://chatgpt.com/share/68a8ce5c-aecc-8000-8cfd-b6b5d7ac4020
+
+Modificar token JWT
+https://chatgpt.com/share/68a8cde8-6d0c-8010-aafd-1cb494b43375
+
+Registro de usuario Django 
+https://chatgpt.com/share/68a7348a-d46c-8010-ba83-a8b9f04ea17a
+
+React useState solution
+https://chatgpt.com/share/68a8cd90-00dc-8010-8563-ff56b0f366db
+
+Test Unitarios
+https://chatgpt.com/share/68a8ceeb-5744-800a-99d8-61dc07b825ed
+
+CRUD Roles y Permisos
+https://chatgpt.com/share/68a7ec00-2298-800a-90f8-6876c9723dce
+
+Pruebas Unitarias pytest
+https://chatgpt.com/share/68a8d0d7-02dc-8007-934c-5e3cf30e2371
+
+Migrar Figma a React
+https://chatgpt.com/share/68a8d138-7668-8007-b829-e37820fe6289
+
+Registro de usuario Django 2
+https://chatgpt.com/share/68a749fd-e544-8007-91aa-698329ce8c03
+
+Doc de api (consultado en repositorio de github)
+https://github.com/axnsan12/drf-yasg/?tab=readme-ov-file#installation
