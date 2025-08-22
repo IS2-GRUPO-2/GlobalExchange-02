@@ -16,7 +16,11 @@ export const router = createBrowserRouter([
       },
       {
         path: "roles",
-        element: <RolesPage />,
+        element: (
+          <ProtectedRoute>
+            <RolesPage/>
+          </ProtectedRoute>
+        ),
       },
       {
         path: "clientes",
