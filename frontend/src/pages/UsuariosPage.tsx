@@ -100,6 +100,16 @@ export default function UsuariosPage() {
           onChange={(e) => setFormData({ ...formData, email: e.target.value })}
           className="w-full rounded border p-2"
         />
+        <input
+          type="password"
+          placeholder="Contraseña"
+          value={formData.password || ""}
+          onChange={(e) =>
+            setFormData({ ...formData, password: e.target.value })
+          }
+          className="w-full rounded border p-2"
+          required={!editId} // obligatorio solo al crear
+        />
         <label className="flex items-center space-x-2">
           <input
             type="checkbox"
@@ -144,7 +154,7 @@ export default function UsuariosPage() {
         </thead>
         <tbody>
           {usuarios.map((u) => (
-            <tr key={u.idUsuario} className="border-t">
+            <tr key={u.id} className="border-t">
               <td className="p-2">{u.username}</td>
               <td className="p-2">{u.first_name}</td>
               <td className="p-2">{u.last_name}</td>
@@ -159,7 +169,7 @@ export default function UsuariosPage() {
                   Editar
                 </button>
                 <button
-                  onClick={() => handleDelete(u.idUsuario)}
+                  onClick={() => handleDelete(u.id)}
                   className="px-2 py-1 rounded bg-red-500 text-white hover:bg-red-600"
                 >
                   Eliminar
