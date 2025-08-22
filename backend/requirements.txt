@@ -8,11 +8,16 @@ djangorestframework_simplejwt==5.5.1
 dotenv==0.9.9
 drf-yasg==1.21.10
 inflection==0.5.1
+iniconfig==2.1.0
 packaging==25.0
+pluggy==1.6.0
 psycopg==3.2.9
 psycopg-binary==3.2.9
 pycparser==2.22
+Pygments==2.19.2
 PyJWT==2.10.1
+pytest==8.4.1
+pytest-django==4.11.1
 python-dotenv==1.1.1
 pytz==2025.2
 PyYAML==6.0.2
