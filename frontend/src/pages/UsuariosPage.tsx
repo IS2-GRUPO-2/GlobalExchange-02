@@ -4,11 +4,16 @@ import {
   createUsuario,
   updateUsuario,
   deleteUsuario,
+  asignarClientesAUsuario,
 } from "../services/usuarioService";
 import { type User } from "../types/User";
+import { type Cliente } from "../types/Cliente";
+import { getClientes } from "../services/clienteService"; 
 
 export default function UsuariosPage() {
   const [usuarios, setUsuarios] = useState<User[]>([]);
+  const [clientes, setClientes] = useState<Cliente[]>([]);
+  const [selectedClientes, setSelectedClientes] = useState<string[]>([]);
   const [formData, setFormData] = useState<Partial<User>>({
     username: "",
     first_name: "",
@@ -21,6 +26,7 @@ export default function UsuariosPage() {
 
   useEffect(() => {
     fetchUsuarios();
+    fetchClientes();
   }, []);
 
   const fetchUsuarios = async () => {
@@ -28,14 +34,29 @@ export default function UsuariosPage() {
     setUsuarios(res.data);
   };
 
+    const fetchClientes = async () => {
+    const res = await getClientes();
+    setClientes(res.data);
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
     if (editId) {
       await updateUsuario(editId, formData);
+
+      if (selectedClientes.length > 0) {
+        await asignarClientesAUsuario(editId, selectedClientes);
+      }
       setEditId(null);
     } else {
-      await createUsuario(formData);
+      const nuevoUsuario = await createUsuario(formData);
+
+      if (selectedClientes.length > 0) {
+        await asignarClientesAUsuario(nuevoUsuario.id, selectedClientes);
+      }
     }
+
     resetForm();
     fetchUsuarios();
   };
@@ -49,11 +70,14 @@ export default function UsuariosPage() {
       is_staff: false,
       is_active: true,
     });
+    setSelectedClientes([]);
   };
 
-  const handleEdit = (User: User) => {
-    setFormData(User);
-    setEditId(User.id);
+  const handleEdit = (u: User) => {
+    setFormData(u);
+    setEditId(u.id);
+
+    setSelectedClientes(u.clientes?.map((c) => c.idCliente) || []);
   };
 
   const handleDelete = async (id: string) => {
@@ -110,6 +134,27 @@ export default function UsuariosPage() {
           className="w-full rounded border p-2"
           required={!editId} // obligatorio solo al crear
         />
+        <label className="block">Asignar Clientes:</label>
+        <div className="space-y-1">
+          {clientes.map((c) => (
+            <label key={c.idCliente} className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                checked={selectedClientes.includes(c.idCliente)}
+                onChange={(e) => {
+                  if (e.target.checked) {
+                    setSelectedClientes([...selectedClientes, c.idCliente]);
+                  } else {
+                    setSelectedClientes(selectedClientes.filter((id) => id !== c.idCliente));
+                  }
+                }}
+              />
+              {c.nombre} ({c.categoria})
+            </label>
+          ))}
+        </div>
+
+
         <label className="flex items-center space-x-2">
           <input
             type="checkbox"
@@ -149,6 +194,7 @@ export default function UsuariosPage() {
             <th className="p-2 border">Correo</th>
             <th className="p-2 border">Staff</th>
             <th className="p-2 border">Activo</th>
+            <th className="p-2 border">Clientes</th>
             <th className="p-2 border">Acciones</th>
           </tr>
         </thead>
@@ -161,6 +207,9 @@ export default function UsuariosPage() {
               <td className="p-2">{u.email}</td>
               <td className="p-2">{u.is_staff ? "Sí" : "No"}</td>
               <td className="p-2">{u.is_active ? "Sí" : "No"}</td>
+              <td className="p-2">
+                {u.clientes?.map((c) => c.nombre).join(", ") || "—"}
+              </td>
               <td className="p-2 space-x-2">
                 <button
                   onClick={() => handleEdit(u)}

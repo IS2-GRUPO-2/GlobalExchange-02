@@ -1,3 +1,4 @@
+import { type Cliente } from "./Cliente";
 export type UserProfileToken = {
   access: string;
   refresh: string;
@@ -12,6 +13,7 @@ export type User = {
   permissions: string[];
   is_active: boolean;
   is_verified: boolean;
+  clientes?: Cliente[];
 };
 
 export type DecodedToken = {
