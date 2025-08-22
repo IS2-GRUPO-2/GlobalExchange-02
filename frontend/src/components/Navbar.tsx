@@ -8,12 +8,13 @@ import {
   MenuItems,
 } from "@headlessui/react";
 import { Bars3Icon, BellIcon, XMarkIcon } from "@heroicons/react/24/outline";
+import { useAuth } from "../context/useAuth";
 
 const navigation = [
   { name: "Dashboard", href: "#", current: true },
   { name: "Clientes", href: "/clientes", current: false },
   { name: "Usuarios", href: "/usuarios", current: false },
-  { name: "Roles", href: "/roles", current: false }, 
+  { name: "Roles", href: "/roles", current: false },
   { name: "Iniciar sesión", href: "/login", current: false },
   { name: "Registrarse", href: "/register", current: false },
 ];
@@ -23,7 +24,6 @@ interface NavigationItem {
   href: string;
   current: boolean;
 }
-
 
 function classNames(...classes: (string | undefined | false | null)[]): string {
   return classes.filter(Boolean).join(" ");
