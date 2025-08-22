@@ -140,6 +140,8 @@ USE_I18N = True
 
 USE_TZ = True
 
+# Swagger: desactivar renderers en modo compatibilidad
+SWAGGER_USE_COMPAT_RENDERERS = False
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
