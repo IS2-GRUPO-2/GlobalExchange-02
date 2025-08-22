@@ -47,7 +47,8 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'apps.roles',
     'apps.permisos',
-    "apps.clientes",
+    'apps.usuarios',
+    'apps.clientes',
     'drf_yasg'
 ]
 
@@ -147,3 +148,6 @@ STATIC_URL = 'static/'
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+# Custom user model
+AUTH_USER_MODEL = 'usuarios.Usuario'
