@@ -2,7 +2,11 @@ import React from "react";
 import type { UserProfile, DecodedToken } from "../types/User";
 import { createContext, useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { loginAPI, refreshTokenAPI } from "../services/authService";
+import {
+  loginAPI,
+  refreshTokenAPI,
+  registerAPI,
+} from "../services/authService";
 import { jwtDecode } from "jwt-decode";
 import axios from "axios";
 
@@ -11,6 +15,12 @@ type UserContextType = {
   token: string | null;
   refresh: string | null;
   loginUser: (username: string, password: string) => void;
+  registerUser: (
+    username: string,
+    email: string,
+    first_name: string,
+    password: string
+  ) => Promise<boolean>;
   logout: () => void;
   isLoggedIn: () => boolean;
 };
@@ -94,6 +104,22 @@ export const UserProvider = ({ children }: Props) => {
       .catch((e) => console.log("error en useAuth" + e));
   };
 
+  const registerUser = async (
+    username: string,
+    email: string,
+    first_name: string,
+    password: string
+  ): Promise<boolean> => {
+    let success = false;
+    const res = await registerAPI(username, email, first_name, password);
+    if (res) {
+      success = true;
+      console.log(res);
+    }
+
+    return success;
+  };
+
   const isLoggedIn = () => {
     console.log("datos usuario: " + user);
     console.log("User logged in: " + !!user);
@@ -112,7 +138,15 @@ export const UserProvider = ({ children }: Props) => {
 
   return (
     <UserContext.Provider
-      value={{ loginUser, user, token, refresh, logout, isLoggedIn }}
+      value={{
+        loginUser,
+        registerUser,
+        user,
+        token,
+        refresh,
+        logout,
+        isLoggedIn,
+      }}
     >
       {isReady ? children : null}
     </UserContext.Provider>

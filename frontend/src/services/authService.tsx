@@ -27,3 +27,36 @@ export const refreshTokenAPI = async (refresh_token: string) => {
     console.log("error al refrescar token" + err);
   }
 };
+
+export const registerAPI = async (
+  username: string,
+  email: string,
+  first_name: string,
+  password: string
+) => {
+  try {
+    const data = await axios.post<UserProfileToken>(api + "/auth/register/", {
+      username: username,
+      email: email,
+      first_name: first_name,
+      password: password,
+    });
+
+    return data;
+  } catch (err) {
+    console.log("Error en el endpoint de registro: " + err);
+  }
+};
+
+export const verifyEmailAPI = async (email: string, code: string) => {
+  try {
+    const data = await axios.post(api + "/auth/verify-email/", {
+      email: email,
+      code: code,
+    });
+
+    return data;
+  } catch (err) {
+    console.log("Error en el endpoint de verificacion" + err);
+  }
+};
