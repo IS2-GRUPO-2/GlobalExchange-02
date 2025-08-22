@@ -21,6 +21,7 @@ from rest_framework import permissions
 from drf_yasg.views import get_schema_view
 from drf_yasg import openapi
 from apps.roles.views import RoleViewSet
+from apps.usuarios.views import UsuarioViewSet
 
 from rest_framework_simplejwt.views import (
     TokenObtainPairView,
@@ -29,10 +30,7 @@ from rest_framework_simplejwt.views import (
 
 from rest_framework.routers import DefaultRouter
 
-from .views import UserViewSet
 
-router = DefaultRouter()
-router.register(r"users", UserViewSet, basename="user")
 
 # Configuración de la documentación
 schema_view = get_schema_view(
@@ -53,8 +51,7 @@ urlpatterns = [
     path('api/token/refresh/', TokenRefreshView.as_view(), name="token_refresh"),
     path('', include("apps.roles.urls")),
     path('', include("apps.permisos.urls")),
-    path('api/', include('usuarios.urls')),
-    path("api/", include(router.urls)),
+    path('api/', include('apps.usuarios.urls')),
     path('docs/', schema_view.with_ui('swagger', cache_timeout=0), name='schema-swagger-ui'),
     path('redocs/', schema_view.with_ui('redoc', cache_timeout=0), name='schema-redoc'),
 ]

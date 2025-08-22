@@ -47,6 +47,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'apps.roles',
     'apps.permisos',
+    'apps.usuarios',
     'drf_yasg'
 ]
 
