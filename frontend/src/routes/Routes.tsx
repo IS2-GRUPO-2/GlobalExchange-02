@@ -4,6 +4,7 @@ import UsuariosPage from "../pages/UsuariosPage";
 import ClientesPage from "../pages/ClientesPage";
 import LoginPage from "../pages/LoginPage";
 import ProtectedRoute from "./ProtectedRoute";
+import RolesPage from "../pages/RolesPage";
 
 export const router = createBrowserRouter([
   {
@@ -13,6 +14,14 @@ export const router = createBrowserRouter([
       {
         path: "login",
         element: <LoginPage />,
+      },
+      {
+        path: "roles",
+        element: (
+          <ProtectedRoute>
+            <RolesPage/>
+          </ProtectedRoute>
+        ),
       },
       {
         path: "clientes",
