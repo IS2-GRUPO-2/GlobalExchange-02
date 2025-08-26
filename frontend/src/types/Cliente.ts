@@ -2,11 +2,13 @@ export type Cliente = {
   idCliente: string;
   nombre: string;
   isPersonaFisica: boolean;
-  categoria: "VIP" | "CORPORATIVO" | "MINORISTA";
+  categoria: Categoria;
   cedula?: string;
   correo: string;
   telefono: string;
   direccion: string;
   isActive: boolean;
   ruc?: string;
-}
+};
+
+export type Categoria = "VIP" | "CORPORATIVO" | "MINORISTA";
