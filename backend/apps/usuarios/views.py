@@ -6,6 +6,7 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework import status
 from apps.clientes.models import Cliente
+from apps.clientes.serializers import ClienteSerializer
 
 class UserViewSet(viewsets.ModelViewSet):
     queryset = User.objects.all()
@@ -44,3 +45,11 @@ class UserViewSet(viewsets.ModelViewSet):
             },
             status=status.HTTP_200_OK,
         )
+    
+    @action(detail=True, methods=['get'], url_path="get_clientes_asignados")
+    def get_clientes(self, request, pk=None):
+        """Este endpoint retorna una lista de todos los usuarios que pueden operar en nombre de este cliente."""
+        usuario = self.get_object()
+        clientes = usuario.clientes.all()
+        serializer = ClienteSerializer(clientes, many=True)
+        return Response(serializer.data)

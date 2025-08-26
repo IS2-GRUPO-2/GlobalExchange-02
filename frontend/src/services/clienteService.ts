@@ -1,5 +1,6 @@
 import axios from "axios";
 import { type Cliente } from "../types/Cliente";
+import { type User } from "../types/User";
 
 const API_URL = "http://localhost:8000/api/clientes/";
 
@@ -13,8 +14,8 @@ const getAuthHeaders = () => {
   };
 };
 
-export const getClientes = () =>
-  axios.get<Cliente[]>(API_URL, getAuthHeaders());
+export const getClientes = (search: string) =>
+  axios.get<Cliente[]>(API_URL + `?search=${search}`, getAuthHeaders());
 
 export const getCliente = (id: string) =>
   axios.get<Cliente>(`${API_URL}${id}/`, getAuthHeaders());
@@ -27,3 +28,10 @@ export const updateCliente = (id: string, data: Partial<Cliente>) =>
 
 export const deleteCliente = (id: string) =>
   axios.delete(`${API_URL}${id}/`, getAuthHeaders());
+
+export const getUsuariosAsignados = async (id_cliente: string) => {
+  const res = await axios.get<User[]>(
+    `${API_URL}${id_cliente}/get_usuarios_asignados/`
+  );
+  return res;
+};
