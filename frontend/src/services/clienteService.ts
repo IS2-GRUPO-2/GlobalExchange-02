@@ -2,7 +2,8 @@ import axios from "axios";
 import { type Cliente } from "../types/Cliente";
 import { type User } from "../types/User";
 
-const API_URL = "http://localhost:8000/api/clientes/";
+// Usamos rutas relativas para que las peticiones pasen por el proxy de Nginx
+const API_URL = "/api/clientes/";
 
 // 👇 función auxiliar para obtener headers con token
 const getAuthHeaders = () => {

@@ -14,7 +14,7 @@ export default function UsuariosPage() {
   const [usuarios, setUsuarios] = useState<User[]>([]);
   const [clientes, setClientes] = useState<Cliente[]>([]);
   const [selectedClientes, setSelectedClientes] = useState<string[]>([]);
-  const [formData, setFormData] = useState<Partial<User>>({
+  const [formData, setFormData] = useState<Partial<User> & { password?: string }>({
     username: "",
     first_name: "",
     last_name: "",
@@ -22,7 +22,7 @@ export default function UsuariosPage() {
     is_staff: false,
     is_active: true,
   });
-  const [editId, setEditId] = useState<string | null>(null);
+  const [editId, setEditId] = useState<number | null>(null);
 
   useEffect(() => {
     fetchUsuarios();
@@ -34,8 +34,9 @@ export default function UsuariosPage() {
     setUsuarios(res.data);
   };
 
-    const fetchClientes = async () => {
-    const res = await getClientes();
+  const fetchClientes = async () => {
+    // Corregir el llamado a getClientes para pasar una cadena vacía como argumento
+    const res = await getClientes("");
     setClientes(res.data);
   };
 
@@ -43,9 +44,11 @@ export default function UsuariosPage() {
     e.preventDefault();
 
     if (editId) {
-      await updateUsuario(editId, formData);
+      // Convertir editId a string para updateUsuario
+      await updateUsuario(String(editId), formData);
 
       if (selectedClientes.length > 0) {
+        // editId ya es un número para asignarClientesAUsuario
         await asignarClientesAUsuario(editId, selectedClientes);
       }
       setEditId(null);
@@ -80,8 +83,9 @@ export default function UsuariosPage() {
     setSelectedClientes(u.clientes?.map((c) => c.idCliente) || []);
   };
 
-  const handleDelete = async (id: string) => {
-    await deleteUsuario(id);
+  const handleDelete = async (id: number) => {
+    // Convertir id a string para la llamada a la API
+    await deleteUsuario(String(id));
     fetchUsuarios();
   };
 

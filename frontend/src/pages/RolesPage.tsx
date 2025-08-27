@@ -131,15 +131,16 @@ export default function RolesPage() {
     }
   }
 
-  async function onDelete(id: number) {
-    if (!confirm("¿Eliminar este rol?")) return;
-    try {
-      await RolesService.remove(id);
-      setRoles((prev) => prev.filter((r) => r.id !== id));
-    } catch (e: any) {
-      alert(e.message ?? "No se pudo eliminar");
-    }
-  }
+  // Esta función no se usa, así que la comentamos o eliminamos
+  // async function onDelete(id: number) {
+  //   if (!confirm("¿Eliminar este rol?")) return;
+  //   try {
+  //     await RolesService.remove(id);
+  //     setRoles((prev) => prev.filter((r) => r.id !== id));
+  //   } catch (e: any) {
+  //     alert(e.message ?? "No se pudo eliminar");
+  //   }
+  // }
 
   if (loading) {
     return (

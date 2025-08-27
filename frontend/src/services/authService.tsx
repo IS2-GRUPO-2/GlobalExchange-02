@@ -1,7 +1,8 @@
 import axios from "axios";
 import { type UserProfileToken } from "../types/User";
 
-const api = "http://localhost:8000/api";
+// Usamos rutas relativas para que las peticiones pasen por el proxy de Nginx
+const api = "/api";
 
 export const loginAPI = async (username: string, password: string) => {
   try {

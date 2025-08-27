@@ -25,12 +25,14 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = 'django-insecure-%i2-dz*x7)ad^+k961gy5eoz2)ur+xbomw8#+096-(8+&r769*'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = config.DJANGO_DEBUG
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = [config.HOST_ALLOW_ORIGINS]
 
 CORS_ALLOWED_ORIGINS = [
-    "http://localhost:5173"
+    "http://localhost:5173",
+    "http://localhost",
+    "http://localhost:80"
 ]
 
 CORS_ALLOW_CREDENTIALS = True
@@ -150,6 +152,11 @@ SWAGGER_USE_COMPAT_RENDERERS = False
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
 
 STATIC_URL = 'static/'
+STATIC_ROOT = '/app/static/'
+
+# Media files (User uploaded files)
+MEDIA_URL = 'media/'
+MEDIA_ROOT = '/app/media/'
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field

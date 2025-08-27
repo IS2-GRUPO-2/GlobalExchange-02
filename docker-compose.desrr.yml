@@ -1,21 +1,23 @@
 services:
   backend:
     build: ./backend
-    container_name: backend_app
+    container_name: backend_desrr
+    hostname: backend
     command: python manage.py runserver 0.0.0.0:8000
     volumes:
       - ./backend:/app:delegated
     ports:
       - "8000:8000"
     env_file:
-      - .env
+      - .env.desrr
     depends_on:
       db:
         condition: service_healthy
 
   frontend:
     build: ./frontend
-    container_name: frontend_app
+    container_name: frontend_desrr
+    hostname: frontend
     command: npm run dev -- --host
     volumes:
       - ./frontend:/app
@@ -30,16 +32,14 @@ services:
   db:
     image: postgres:17-alpine
     container_name: db_postgres
-    environment:
-      POSTGRES_DB: ${DATABASE_NAME}
-      POSTGRES_USER: ${DATABASE_USER}
-      POSTGRES_PASSWORD: ${DATABASE_PASS}
+    env_file:
+      - .env.desrr
     volumes:
       - pg_data:/var/lib/postgresql/data
     ports:
       - "5432:5432"
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${DATABASE_USER} -d ${DATABASE_NAME}"]
+      test: ["CMD-SHELL", "pg_isready -U postgres -d globalexchange_development"]
       interval: 5s
       timeout: 5s
       retries: 10

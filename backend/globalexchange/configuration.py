@@ -11,6 +11,8 @@ class Configs:
     DATABASE_PORT = os.getenv('DATABASE_PORT')
     EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER')
     EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD')
+    DJANGO_DEBUG = os.getenv('DJANGO_DEBUG')
+    HOST_ALLOW_ORIGINS = os.getenv('HOST_ALLOW_ORIGINS')
 
 
 config = Configs()

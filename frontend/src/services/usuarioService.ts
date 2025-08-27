@@ -1,7 +1,8 @@
 import axios from "axios";
 import { type User } from "../types/User";
 
-const API_URL = "http://localhost:8000/api/usuarios/";
+// Usamos rutas relativas para que las peticiones pasen por el proxy de Nginx
+const API_URL = "/api/usuarios/";
 
 const getAuthHeaders = () => {
   const token = localStorage.getItem("token"); // el mismo que guardas en login

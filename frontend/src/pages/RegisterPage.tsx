@@ -5,8 +5,8 @@ import { yupResolver } from "@hookform/resolvers/yup";
 import { toast } from "react-toastify";
 import VerifyEmail from "../components/VerifyEmail";
 import { useState } from "react";
-import { useNavigate } from "react-router";
-type Props = {};
+// Eliminando la definición de Props no utilizada
+// type Props = {};
 
 type RegisterFormInputs = {
   username: string;
@@ -28,7 +28,7 @@ const validation = Yup.object().shape({
     .required("Este campo es requerido."),
 });
 
-const RegisterPage = (props: Props) => {
+const RegisterPage = () => {
   const { registerUser } = useAuth();
   const [awaitingVerification, setAwaitingVerification] = useState(false);
   const [userEmail, setUserEmail] = useState("");
@@ -48,7 +48,7 @@ const RegisterPage = (props: Props) => {
           setUserEmail(form.email);
         }
       })
-      .catch((err) => {
+      .catch(() => {
         toast.error("Error en el registro");
       });
   };

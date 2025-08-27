@@ -3,7 +3,8 @@ import { useAuth } from "../context/useAuth";
 import { useForm } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
 
-type Props = {};
+// Props vacío, así que podemos removerlo o dejarlo como componente sin props
+// type Props = {};
 
 type LoginFormInputs = {
   username: string;
@@ -15,7 +16,7 @@ const validation = Yup.object().shape({
   password: Yup.string().required("La contraseña de usuario es necesaria"),
 });
 
-const LoginPage = (props: Props) => {
+const LoginPage = () => {
   const { loginUser } = useAuth();
   const {
     register,

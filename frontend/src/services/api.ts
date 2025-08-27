@@ -1,4 +1,5 @@
-const BASE_URL = "http://localhost:8000";
+// Usamos rutas relativas para que las peticiones pasen por el proxy de Nginx
+const BASE_URL = "";
 
 async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
   const res = await fetch(`${BASE_URL}${path}`, {
