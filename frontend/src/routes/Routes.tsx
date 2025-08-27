@@ -3,7 +3,7 @@ import App from "../App";
 import UsuariosPage from "../pages/UsuariosPage";
 import ClientesPage from "../pages/ClientesPage";
 import LoginPage from "../pages/LoginPage";
-import ProtectedRoute from "./ProtectedRoute";
+// import ProtectedRoute from "./ProtectedRoute"; // Esta importación no se usa
 import RegisterPage from "../pages/RegisterPage";
 import RolesPage from "../pages/RolesPage";
 import MainMenuPage from "../pages/MenuPage";

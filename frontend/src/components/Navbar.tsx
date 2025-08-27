@@ -8,7 +8,8 @@ import {
   MenuItems,
 } from "@headlessui/react";
 import { Bars3Icon, BellIcon, XMarkIcon } from "@heroicons/react/24/outline";
-import { useAuth } from "../context/useAuth";
+// Removiendo importación no utilizada
+// import { useAuth } from "../context/useAuth";
 
 const navigation = [
   { name: "Dashboard", href: "#", current: true },
@@ -19,11 +20,12 @@ const navigation = [
   { name: "Registrarse", href: "/register", current: false },
 ];
 
-interface NavigationItem {
-  name: string;
-  href: string;
-  current: boolean;
-}
+// La interfaz no se está usando, así que la eliminamos
+// interface NavigationItem {
+//   name: string;
+//   href: string;
+//   current: boolean;
+// }
 
 function classNames(...classes: (string | undefined | false | null)[]): string {
   return classes.filter(Boolean).join(" ");

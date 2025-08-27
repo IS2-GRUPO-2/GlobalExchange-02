@@ -34,16 +34,14 @@ services:
   db:
     image: postgres:17-alpine
     container_name: db_postgres
-    environment:
-      POSTGRES_DB: ${DATABASE_NAME}
-      POSTGRES_USER: ${DATABASE_USER}
-      POSTGRES_PASSWORD: ${DATABASE_PASS}
+    env_file:
+      - .env.prod
     volumes:
       - pg_data:/var/lib/postgresql/data
     ports:
       - "5432:5432"
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${DATABASE_USER} -d ${DATABASE_NAME}"]
+      test: ["CMD-SHELL", "pg_isready -U postgres -d globalexchange_development"]
       interval: 5s
       timeout: 5s
       retries: 10
