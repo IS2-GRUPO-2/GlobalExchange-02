@@ -9,12 +9,12 @@ export default defineConfig({
     proxy: {
       // Redirecciona las peticiones /api a localhost:8000 durante el desarrollo
       '/api': {
-        target: 'http://localhost:8000',
+        target: 'http://backend:8000',
         changeOrigin: true,
       },
       // También redirecciona /admin si necesitas acceder al admin de Django
       '/admin': {
-        target: 'http://localhost:8000',
+        target: 'http://backend:8000',
         changeOrigin: true,
       },
     },
