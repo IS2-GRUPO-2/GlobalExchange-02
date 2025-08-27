@@ -27,7 +27,14 @@ SECRET_KEY = 'django-insecure-%i2-dz*x7)ad^+k961gy5eoz2)ur+xbomw8#+096-(8+&r769*
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = config.DJANGO_DEBUG
 
-ALLOWED_HOSTS = []
+# Allowed hosts configuration
+ALLOWED_HOSTS = ['localhost', '127.0.0.1', 'backend', 'backend_prod']
+if config.HOST_ALLOW_ORIGINS:
+    # Split by comma if it's a comma-separated string
+    if isinstance(config.HOST_ALLOW_ORIGINS, str) and ',' in config.HOST_ALLOW_ORIGINS:
+        ALLOWED_HOSTS.extend(config.HOST_ALLOW_ORIGINS.split(','))
+    else:
+        ALLOWED_HOSTS.append(config.HOST_ALLOW_ORIGINS)
 
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:5173"
@@ -150,6 +157,11 @@ SWAGGER_USE_COMPAT_RENDERERS = False
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
 
 STATIC_URL = 'static/'
+STATIC_ROOT = '/app/static/'
+
+# Media files (User uploaded files)
+MEDIA_URL = 'media/'
+MEDIA_ROOT = '/app/media/'
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
