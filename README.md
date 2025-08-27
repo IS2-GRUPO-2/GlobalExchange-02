@@ -1,43 +1,28 @@
-#  GlobalExchange
+# GlobalExchange
 
-#### Construir y levantar los contenedores (backend/frontend/db)
+## Desarrollo
+Levanta el entorno de desarrollo usando el compose de desarrollo.
+
 ```bash
-docker compose up --build -d
+docker compose -f docker-compose.desrr.yml up -d --build 
 ```
 
-#### Ver logs del backend
+Parar y eliminar contenedores del entorno de desarrollo:
+
 ```bash
-docker compose logs -f backend
+docker compose -f docker-compose.desrr.yml down
 ```
 
-#### Ver logs del frontend
+## Producción
+Actualizar imágenes desde el registro y levantar en producción:
+
 ```bash
-docker compose logs -f frontend
+docker compose -f docker-compose.prod.yml up -d
 ```
 
-
-#### Acceder a la terminal del backend
+Parar y eliminar contenedores del entorno de producción:
 ```bash
-docker compose exec backend sh
-```
-
-#### Acceder a la terminal del frontend
-```bash
-docker compose exec frontend sh
-```
-
-#### Detener los contenedores
-```bash
-docker compose stop
-```
-#### Eliminar los contenedores con todos los datos
-```bash
-docker compose down -v
+docker compose -f docker-compose.prod.yml down
 ```
 
 
-#### Limpieza del sistema (solo si algo falla)
-
-```bash
-docker system prune -a --volumes
-```
