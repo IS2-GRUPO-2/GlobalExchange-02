@@ -3,7 +3,10 @@ services:
     build: ./backend
     container_name: backend_app_prod
     hostname: backend
-    command: python manage.py collectstatic --noinput && gunicorn globalexchange.wsgi:application --bind 0.0.0.0:8000
+    command: >
+      bash -c "python manage.py migrate --noinput &&
+               python manage.py collectstatic --noinput &&
+               gunicorn globalexchange.wsgi:application --bind 0.0.0.0:8000"
     volumes:
       - ./backend:/app:delegated
       - static_volume:/app/static
