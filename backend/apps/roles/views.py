@@ -7,5 +7,5 @@ class RoleViewSet(viewsets.ModelViewSet):
     serializer_class = RoleSerializer
     permission_classes = [permissions.AllowAny]
     filter_backends = [filters.SearchFilter]
-    search_fields = ['id', 'name', 'permissions__name']
+    search_fields = ['name', 'permissions__name']
 
