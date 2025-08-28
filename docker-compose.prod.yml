@@ -1,7 +1,7 @@
 services:
   backend:
     build: ./backend
-    container_name: backend_app_prod
+    container_name: backend_prod
     hostname: backend
     command: >
       bash -c "python manage.py migrate --noinput &&
@@ -33,7 +33,7 @@ services:
 
   db:
     image: postgres:17-alpine
-    container_name: db_postgres
+    container_name: db_postgres_prod
     env_file:
       - .env.prod
     volumes:
@@ -41,7 +41,7 @@ services:
     ports:
       - "5432:5432"
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres -d globalexchange_development"]
+      test: ["CMD-SHELL", "pg_isready -U $POSTGRES_USER -d $POSTGRES_DB"]
       interval: 5s
       timeout: 5s
       retries: 10
