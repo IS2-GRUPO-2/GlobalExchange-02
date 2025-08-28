@@ -4,13 +4,19 @@
 Levanta el entorno de desarrollo usando el compose de desarrollo.
 
 ```bash
-docker compose -f docker-compose.desrr.yml up -d --build 
+docker compose up -d --build  # Construye imagenes y levanta contenedores
+docker compose up -d          # Levanta el contenedor de la ultima imagen creada
 ```
 
 Parar y eliminar contenedores del entorno de desarrollo:
 
 ```bash
-docker compose -f docker-compose.desrr.yml down
+docker compose down # Añadir "-v" para eliminar los volumenes
+```
+
+Comando para limpiar imagenes
+```bash
+docker image prune  # Elimina imagenes huerfanas
 ```
 
 ## Producción
