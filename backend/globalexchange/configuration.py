@@ -4,11 +4,11 @@ from dotenv import load_dotenv
 load_dotenv()
 
 class Configs:
-    DATABASE_NAME = os.getenv('DATABASE_NAME')
-    DATABASE_USER = os.getenv('DATABASE_USER')
-    DATABASE_PASS = os.getenv('DATABASE_PASS')
-    DATABASE_HOST = os.getenv('DATABASE_HOST')
-    DATABASE_PORT = os.getenv('DATABASE_PORT')
+    POSTGRES_DB = os.getenv('POSTGRES_DB')
+    POSTGRES_USER = os.getenv('POSTGRES_USER')
+    POSTGRES_PASSWORD = os.getenv('POSTGRES_PASSWORD')
+    POSTGRES_HOST = os.getenv('POSTGRES_HOST')
+    POSTGRES_PORT = os.getenv('POSTGRES_PORT')
     EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER')
     EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD')
     DJANGO_DEBUG = os.getenv('DJANGO_DEBUG')

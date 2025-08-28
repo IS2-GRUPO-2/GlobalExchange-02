@@ -93,11 +93,11 @@ WSGI_APPLICATION = 'globalexchange.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': config.DATABASE_NAME,
-        'USER': config.DATABASE_USER,
-        'PASSWORD': config.DATABASE_PASS,
-        'HOST': config.DATABASE_HOST,  # or '127.0.0.1'
-        'PORT': config.DATABASE_PORT,
+        'NAME': config.POSTGRES_DB,
+        'USER': config.POSTGRES_USER,
+        'PASSWORD': config.POSTGRES_PASSWORD,
+        'HOST': config.POSTGRES_HOST,
+        'PORT': config.POSTGRES_PORT,
     }
 }
 
