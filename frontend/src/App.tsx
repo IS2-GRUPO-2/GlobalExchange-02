@@ -3,13 +3,16 @@ import { UserProvider } from "./context/useAuth";
 import { Outlet } from "react-router";
 import Navbar from "./components/Navbar";
 import { ToastContainer } from "react-toastify";
+import { AuthZProvider } from "./context/AuthZContext";
 
 function App() {
   return (
     <UserProvider>
-      <ToastContainer />
-      <Navbar />
-      <Outlet />
+      <AuthZProvider>
+        <ToastContainer />
+        <Navbar />
+        <Outlet />
+      </AuthZProvider>
     </UserProvider>
   );
 }
