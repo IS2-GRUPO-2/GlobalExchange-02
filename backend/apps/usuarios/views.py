@@ -7,6 +7,10 @@ from rest_framework.response import Response
 from rest_framework import status
 from apps.clientes.models import Cliente
 from apps.clientes.serializers import ClienteSerializer
+from django.contrib.auth.models import Group
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.permissions import IsAuthenticated
+
 
 class UserViewSet(viewsets.ModelViewSet):
     queryset = User.objects.all()
@@ -53,3 +57,40 @@ class UserViewSet(viewsets.ModelViewSet):
         clientes = usuario.clientes.all()
         serializer = ClienteSerializer(clientes, many=True)
         return Response(serializer.data)
+
+    @action(detail=True, methods=["post"], url_path="asignar_roles")
+    def asignar_roles(self, request, pk=None):
+        """
+        Reemplaza los roles (grupos) del usuario con la lista enviada.
+        Body: { "roles": [1, 2, 5] }  # IDs de Group
+        """
+        user = self.get_object()
+        role_ids = request.data.get("roles", [])
+
+        if not isinstance(role_ids, list):
+            return Response(
+                {"error": "El campo 'roles' debe ser una lista de IDs"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        groups = Group.objects.filter(id__in=role_ids)
+        user.groups.set(groups)
+        user.save()
+
+        return Response(
+            {
+                "message": "Roles asignados correctamente",
+                "user_id": user.id,
+                "roles": list(groups.values_list("id", flat=True)),
+            },
+            status=status.HTTP_200_OK,
+        )
+
+    @action(detail=True, methods=["get"], url_path="roles")
+    def get_roles(self, request, pk=None):
+        """
+        Retorna los roles actuales del usuario con id y nombre.
+        """
+        user = self.get_object()
+        data = list(user.groups.values("id", "name"))
+        return Response(data, status=status.HTTP_200_OK)
