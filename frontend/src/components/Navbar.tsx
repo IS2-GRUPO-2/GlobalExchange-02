@@ -8,16 +8,18 @@ import {
   MenuItems,
 } from "@headlessui/react";
 import { Bars3Icon, BellIcon, XMarkIcon } from "@heroicons/react/24/outline";
+import Can from "./Can";
+import { CLIENTES, ROLES, USUARIOS } from "../types/perms";
 // Removiendo importación no utilizada
 // import { useAuth } from "../context/useAuth";
 
 const navigation = [
-  { name: "Dashboard", href: "#", current: true },
-  { name: "Clientes", href: "/clientes", current: false },
-  { name: "Usuarios", href: "/usuarios", current: false },
-  { name: "Roles", href: "/roles", current: false },
-  { name: "Iniciar sesión", href: "/login", current: false },
-  { name: "Registrarse", href: "/register", current: false },
+  { name: "Dashboard", href: "#", current: true, permisos: [] },
+  { name: "Clientes", href: "/clientes", current: false, permisos: [CLIENTES.VIEW] },
+  { name: "Usuarios", href: "/usuarios", current: false, permisos: [USUARIOS.VIEW] },
+  { name: "Roles", href: "/roles", current: false, permisos: [ROLES.VIEW] },
+  { name: "Iniciar sesión", href: "/login", current: false, permisos: [] },
+  { name: "Registrarse", href: "/register", current: false, permisos: [] },
 ];
 
 // La interfaz no se está usando, así que la eliminamos
@@ -64,19 +66,20 @@ export default function Navbar() {
             <div className="hidden sm:ml-6 sm:block">
               <div className="flex space-x-4">
                 {navigation.map((item) => (
-                  <a
-                    key={item.name}
-                    href={item.href}
-                    aria-current={item.current ? "page" : undefined}
-                    className={classNames(
-                      item.current
-                        ? "bg-gray-950/50 text-white"
-                        : "text-gray-300 hover:bg-white/5 hover:text-white",
-                      "rounded-md px-3 py-2 text-sm font-medium"
-                    )}
-                  >
-                    {item.name}
-                  </a>
+                  <Can key={item.name} anyOf={item.permisos}>
+                    <a
+                      href={item.href}
+                      aria-current={item.current ? "page" : undefined}
+                      className={classNames(
+                        item.current
+                          ? "bg-gray-950/50 text-white"
+                          : "text-gray-300 hover:bg-white/5 hover:text-white",
+                        "rounded-md px-3 py-2 text-sm font-medium"
+                      )}
+                    >
+                      {item.name}
+                    </a>
+                  </Can>
                 ))}
               </div>
             </div>
@@ -140,20 +143,21 @@ export default function Navbar() {
       <DisclosurePanel className="sm:hidden">
         <div className="space-y-1 px-2 pt-2 pb-3">
           {navigation.map((item) => (
-            <DisclosureButton
-              key={item.name}
-              as="a"
-              href={item.href}
-              aria-current={item.current ? "page" : undefined}
-              className={classNames(
-                item.current
-                  ? "bg-gray-950/50 text-white"
-                  : "text-gray-300 hover:bg-white/5 hover:text-white",
-                "block rounded-md px-3 py-2 text-base font-medium"
-              )}
-            >
-              {item.name}
-            </DisclosureButton>
+            <Can key={item.name} anyOf={item.permisos}>
+              <DisclosureButton
+                as="a"
+                href={item.href}
+                aria-current={item.current ? "page" : undefined}
+                className={classNames(
+                  item.current
+                    ? "bg-gray-950/50 text-white"
+                    : "text-gray-300 hover:bg-white/5 hover:text-white",
+                  "block rounded-md px-3 py-2 text-base font-medium"
+                )}
+              >
+                {item.name}
+              </DisclosureButton>
+            </Can>
           ))}
         </div>
       </DisclosurePanel>
