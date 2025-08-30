@@ -94,3 +94,13 @@ class UserViewSet(viewsets.ModelViewSet):
         user = self.get_object()
         data = list(user.groups.values("id", "name"))
         return Response(data, status=status.HTTP_200_OK)
+
+@api_view(["GET"])
+@permission_classes([IsAuthenticated])
+def me_permissions(request):
+    """
+    Devuelve los permisos *actuales* del usuario logueado
+    como codenames nativos: ["auth.view_group", "clientes.add_cliente", ...]
+    """
+    perms = sorted(list(request.user.get_all_permissions()))
+    return Response({"perms": perms})
