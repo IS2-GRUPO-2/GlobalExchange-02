@@ -45,3 +45,8 @@ export const asignarClientesAUsuario = (id: number, clientesIds: string[]) =>
     getAuthHeaders()
   );
 
+export const getUserRoles = (userId: number) =>
+  axios.get<{id: number; name: string}[]>(`${API_URL}${userId}/roles/`, getAuthHeaders());
+
+export const assignUserRoles = (userId: number, roleIds: number[]) =>
+  axios.post(`${API_URL}${userId}/asignar_roles/`, { roles: roleIds }, getAuthHeaders());
