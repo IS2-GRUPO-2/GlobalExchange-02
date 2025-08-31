@@ -121,11 +121,11 @@ const ClientesPage = () => {
     try {
       const res = await updateCliente(clientData.id, clienteData);
       if (res.status === 200) {
-        toast.success("Cliente actualiado con éxito!");
+        toast.success("Cliente actualizado con éxito!");
         fetchClientes();
       }
     } catch (err) {
-      toast.error("Ha ocurrido un error al crear al cliente.");
+      toast.error("Ha ocurrido un error al actualizar al cliente.");
     } finally {
       closeEditModal();
     }
