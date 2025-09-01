@@ -22,6 +22,8 @@ import Modal from "../components/Modal";
 import UserForm from "../components/UserForm";
 import EditUserForm from "../components/EditUserForm";
 import AssignedClients from "../components/AssignedClients"; 
+import AssignedRoles from "../components/AssignedRoles";
+import { KeyRound } from "lucide-react";
 
 const UsuariosPage = () => {
   const [usuarios, setUsuarios] = useState<User[]>([]);
@@ -31,12 +33,22 @@ const UsuariosPage = () => {
   const [detailModalOpen, setDetailModalOpen] = useState<boolean>(false);
   const [clientsModalOpen, setClientsModalOpen] = useState<boolean>(false);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
-
+  const [rolesModalOpen, setRolesModalOpen] = useState<boolean>(false);
+  const [editReadOnly, setEditReadOnly] = useState(true);
   const openCreateModal = (): void => setCreateModalOpen(true);
   const closeCreateModal = (): void => setCreateModalOpen(false);
-
+  
+  const openRolesModal = (user: User): void => {
+    setSelectedUser(user);
+    setRolesModalOpen(true);
+  };
+  const closeRolesModal = (): void => {
+    setRolesModalOpen(false);
+    setSelectedUser(null);
+  };
   const openEditModal = (user: User): void => {
     setSelectedUser(user);
+    setEditReadOnly(true);    
     setEditModalOpen(true);
   };
   const closeEditModal = (): void => {
@@ -109,12 +121,8 @@ const UsuariosPage = () => {
       if (!userData.password) {
         delete userDataToUpdate.password;
       }
-      
+
       await updateUsuario(String(userData.id), userDataToUpdate);
-      
-      if (userData.clientes.length > 0) {
-        await asignarClientesAUsuario(userData.id, userData.clientes);
-      }
       
       toast.success("Usuario actualizado con éxito!");
       fetchUsuarios();
@@ -243,18 +251,18 @@ const UsuariosPage = () => {
                         )}
                       </button>
                       <button
-                        onClick={() => openDetailModal(user)}
-                        className="p-1 text-gray-500 hover:text-green-600 rounded-full hover:bg-gray-100"
-                        title="Ver detalles"
-                      >
-                        <Search size={16} />
-                      </button>
-                      <button
                         onClick={() => openClientsModal(user)}
                         className="p-1 text-gray-500 hover:text-yellow-700 rounded-full hover:bg-gray-100"
                         title="Ver clientes asignados"
                       >
                         <BookUser size={16} />
+                      </button>
+                      <button
+                        onClick={() => openRolesModal(user)}
+                        className="p-1 text-gray-500 hover:text-purple-700 rounded-full hover:bg-gray-100"
+                        title="Ver/Asignar roles"
+                      >
+                        <KeyRound size={16} />
                       </button>
                     </div>
                   </td>
@@ -271,23 +279,25 @@ const UsuariosPage = () => {
           />
         </Modal>
         <Modal isOpen={editModalOpen} onClose={closeEditModal}>
-          <EditUserForm
-            onSubmit={handleEditUser}
-            onCancel={closeEditModal}
-            user={selectedUser!}
-            readOnly={false}
-          />
-        </Modal>
-        <Modal isOpen={detailModalOpen} onClose={closeDetailModal}>
-          <EditUserForm
-            onSubmit={handleEditUser}
-            onCancel={closeDetailModal}
-            user={selectedUser!}
-            readOnly={true}
-          />
+          {selectedUser && (
+            <EditUserForm
+              onSubmit={handleEditUser}
+              onCancel={closeEditModal}
+              user={selectedUser}
+              readOnly={editReadOnly}
+              setReadOnly={setEditReadOnly}
+            />
+          )}
         </Modal>
         <Modal isOpen={clientsModalOpen} onClose={closeClientsModal}>
-          <AssignedClients user={selectedUser!} />
+          {selectedUser && (
+            <AssignedClients user={selectedUser} onClose={closeClientsModal} />
+          )}
+        </Modal>
+        <Modal isOpen={rolesModalOpen} onClose={closeRolesModal}>
+          {selectedUser && (
+            <AssignedRoles user={selectedUser} onClose={closeRolesModal} />
+          )}
         </Modal>
       </div>
     </div>

@@ -1,5 +1,6 @@
 import axios from "axios";
 import { type User } from "../types/User";
+import { type Cliente } from "../types/Cliente";
 
 // Usamos rutas relativas para que las peticiones pasen por el proxy de Nginx
 const API_URL = "/api/usuarios/";
@@ -42,6 +43,12 @@ export const asignarClientesAUsuario = (id: number, clientesIds: string[]) =>
   axios.post(
     `${API_URL}${id}/asignar_clientes/`,
     { clientes: clientesIds },
+    getAuthHeaders()
+  );
+  
+export const getUserClients = (userId: number) =>
+  axios.get<Cliente[]>(
+    `${API_URL}${userId}/get_clientes_asignados/`,
     getAuthHeaders()
   );
 
