@@ -8,6 +8,7 @@ import RegisterPage from "../pages/RegisterPage";
 import RolesPage from "../pages/RolesPage";
 import MainMenuPage from "../pages/MenuPage";
 import AdminRoutes from "./AdminRoutes";
+import DivisasPage from "../pages/DivisasPage";
 export const router = createBrowserRouter([
   {
     path: "/",
@@ -46,6 +47,14 @@ export const router = createBrowserRouter([
         element: (
           <AdminRoutes>
             <UsuariosPage />
+          </AdminRoutes>
+        ),
+      },
+      {
+        path: "divisas",
+        element: (
+          <AdminRoutes>
+            <DivisasPage />
           </AdminRoutes>
         ),
       },
