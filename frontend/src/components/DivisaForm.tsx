@@ -33,7 +33,8 @@ const divisaSchema = yup.object().shape({
   simbolo: yup
     .string()
     .required("Este campo es requerido")
-    .length(1, "Este campo debe tener solo un caracter."),
+    .min(1, "Este campo debe como mínimo un caracter.")
+    .max(3, "Este campo debe tener como máximo 3 caracteres"),
   max_digitos: yup
     .number()
     .required("Este campo es requerido")
@@ -76,14 +77,16 @@ const DivisaForm = ({ onSubmit, onCancel, isEditForm, divisa }: Props) => {
       onSubmit(data);
       reset();
     } catch (err) {
-      toast.error("Error al crear nueva divisa!");
+      isEditForm
+        ? toast.error("Error al crear nueva divisa!")
+        : toast.error("Error al editar divisa!");
     }
   };
 
   return (
     <div>
       <h2 className="text-2xl font-bold mb-4 text-gray-800">
-        Crear nueva divisa
+        {isEditForm ? "Editar divisa" : "Crear nueva divisa"}
       </h2>
       <div className="space-y-4">
         <div>
@@ -204,7 +207,11 @@ const DivisaForm = ({ onSubmit, onCancel, isEditForm, divisa }: Props) => {
             disabled={isSubmitting}
             className="flex-1 bg-gray-900 text-white py-2 px-4 rounded-md hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {isSubmitting ? "Creando..." : "Crear divisa"}
+            {isSubmitting
+              ? "Guardando..."
+              : isEditForm
+              ? "Editar divisa"
+              : "Crear divisa"}
           </button>
           <button
             type="button"

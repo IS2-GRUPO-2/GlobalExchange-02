@@ -116,7 +116,7 @@ const DivisasPage = () => {
     };
 
     try {
-      const res = await updateDivisa(divisa, divisaData.id!);
+      const res = await updateDivisa(divisa, selectedDivisa?.id!);
       if (res.status === 200) {
         toast.success("Divisa actualizada con éxito!");
         fetchDivisas();
