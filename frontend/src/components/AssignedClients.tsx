@@ -8,6 +8,8 @@ import {
 } from "../services/usuarioService";
 import { toast } from "react-toastify";
 import { Search } from "lucide-react";
+import { USUARIOS } from "../types/perms";
+import Can from "./Can";
 
 type Props = {
   user: User;
@@ -254,13 +256,15 @@ export default function AssignedClients({ user, onClose }: Props) {
         </button>
 
         {readOnly ? (
-          <button
-            type="button"
-            onClick={() => setReadOnly(false)}
-            className="rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-500"
-          >
-            Editar
-          </button>
+          <Can anyOf={[USUARIOS.ASSIGN_CLIENTS]}>
+            <button
+              type="button"
+              onClick={() => setReadOnly(false)}
+              className="rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-500"
+            >
+              Editar
+            </button>
+          </Can>
         ) : (
           <button
             type="button"

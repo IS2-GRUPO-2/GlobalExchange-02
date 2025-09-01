@@ -11,6 +11,8 @@ export const USUARIOS = {
   CHANGE: "usuarios.change_user",
   DELETE: "usuarios.delete_user",
   VIEW: "usuarios.view_user",
+  ASSIGN_CLIENTS: "usuarios.can_assign_clients",
+  ASSIGN_ROLES: "usuarios.can_assign_roles",
 } as const;
 
 export const ROLES = {
