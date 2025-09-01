@@ -24,6 +24,8 @@ import EditUserForm from "../components/EditUserForm";
 import AssignedClients from "../components/AssignedClients"; 
 import AssignedRoles from "../components/AssignedRoles";
 import { KeyRound } from "lucide-react";
+import Can from "../components/Can";
+import { USUARIOS } from "../types/perms";
 
 const UsuariosPage = () => {
   const [usuarios, setUsuarios] = useState<User[]>([]);
@@ -170,13 +172,15 @@ const UsuariosPage = () => {
           />
         </div>
 
-        <button
-          onClick={openCreateModal}
-          className="btn-primary flex items-center justify-center"
-        >
-          <UserPlus size={18} className="mr-2" />
-          Agregar Usuario
-        </button>
+        <Can anyOf={[USUARIOS.ADD]}>
+          <button
+            onClick={openCreateModal}
+            className="btn-primary flex items-center justify-center"
+          >
+            <UserPlus size={18} className="mr-2" />
+            Agregar Usuario
+          </button>
+        </Can>
       </div>
 
       <div className="card">
@@ -188,7 +192,6 @@ const UsuariosPage = () => {
                 <th>Nombre</th>
                 <th>Email</th>
                 <th>Estado</th>
-                <th>Staff</th>
                 <th>Clientes</th>
                 <th>Acciones</th>
               </tr>
@@ -211,17 +214,6 @@ const UsuariosPage = () => {
                     </span>
                   </td>
                   <td>
-                    <span
-                      className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                        user.is_staff
-                          ? "bg-blue-100 text-blue-800"
-                          : "bg-gray-100 text-gray-800"
-                      }`}
-                    >
-                      {user.is_staff ? "Sí" : "No"}
-                    </span>
-                  </td>
-                  <td>
                     <span className="text-sm text-gray-500">
                       {user.clientes?.length || 0} cliente(s)
                     </span>
@@ -235,21 +227,23 @@ const UsuariosPage = () => {
                       >
                         <Edit size={16} />
                       </button>
-                      <button
-                        onClick={
-                          user.is_active
-                            ? () => handleDeactivateUser(user.id)
-                            : () => handleActivateUser(user)
-                        }
-                        className="p-1 text-gray-500 hover:text-red-600 rounded-full hover:bg-gray-100"
-                        title={user.is_active ? "Desactivar" : "Activar"}
-                      >
-                        {user.is_active ? (
-                          <UserX size={16} />
-                        ) : (
-                          <UserCheck size={16} />
-                        )}
-                      </button>
+                      <Can anyOf={[USUARIOS.DELETE]}>
+                        <button
+                          onClick={
+                            user.is_active
+                              ? () => handleDeactivateUser(user.id)
+                              : () => handleActivateUser(user)
+                          }
+                          className="p-1 text-gray-500 hover:text-red-600 rounded-full hover:bg-gray-100"
+                          title={user.is_active ? "Desactivar" : "Activar"}
+                        >
+                          {user.is_active ? (
+                            <UserX size={16} />
+                          ) : (
+                            <UserCheck size={16} />
+                          )}
+                        </button>
+                      </Can>
                       <button
                         onClick={() => openClientsModal(user)}
                         className="p-1 text-gray-500 hover:text-yellow-700 rounded-full hover:bg-gray-100"

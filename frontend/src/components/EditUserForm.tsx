@@ -3,6 +3,8 @@ import * as yup from "yup";
 import { useForm } from "react-hook-form";
 import { toast } from "react-toastify";
 import { type User } from "../types/User";
+import Can from "./Can";
+import { USUARIOS } from "../types/perms";
 
 export type EditUserFormData = {
   id: number;
@@ -191,13 +193,15 @@ const EditUserForm = ({
           </button>
 
           {readOnly ? (
-            <button
-              type="button"
-              onClick={() => setReadOnly(false)}
-              className="bg-indigo-600 text-white py-2 px-4 rounded-md hover:bg-indigo-500"
-            >
-              Editar
-            </button>
+            <Can anyOf={[USUARIOS.CHANGE]}>
+              <button
+                type="button"
+                onClick={() => setReadOnly(false)}
+                className="bg-indigo-600 text-white py-2 px-4 rounded-md hover:bg-indigo-500"
+              >
+                Editar
+              </button>
+            </Can>
           ) : (
             <button
               type="button"
