@@ -9,6 +9,9 @@ import RolesPage from "../pages/RolesPage";
 import MainMenuPage from "../pages/MenuPage";
 import AdminRoutes from "./AdminRoutes";
 import DivisasPage from "../pages/DivisasPage";
+import RequirePerm from "./RequierePerm";
+import { CLIENTES, ROLES, USUARIOS } from "../types/perms";
+
 export const router = createBrowserRouter([
   {
     path: "/",
@@ -25,17 +28,17 @@ export const router = createBrowserRouter([
       {
         path: "roles",
         element: (
-          <AdminRoutes>
+          <RequirePerm anyOf={[ROLES.VIEW, ROLES.ADD, ROLES.CHANGE, ROLES.DELETE]}>
             <RolesPage />
-          </AdminRoutes>
+          </RequirePerm>
         ),
       },
       {
         path: "clientes",
         element: (
-          <AdminRoutes>
+          <RequirePerm anyOf={[CLIENTES.VIEW, CLIENTES.ADD, CLIENTES.CHANGE, CLIENTES.DELETE]}>
             <ClientesPage />
-          </AdminRoutes>
+          </RequirePerm>
         ),
       },
       {
@@ -45,9 +48,9 @@ export const router = createBrowserRouter([
       {
         path: "usuarios",
         element: (
-          <AdminRoutes>
+          <RequirePerm anyOf={[USUARIOS.VIEW, USUARIOS.ADD, USUARIOS.CHANGE, USUARIOS.DELETE]}>
             <UsuariosPage />
-          </AdminRoutes>
+          </RequirePerm>
         ),
       },
       {

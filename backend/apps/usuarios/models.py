@@ -22,7 +22,11 @@ class User(AbstractUser):
         related_name="usuarios",
         blank=True
     )
-    
+    class Meta:
+        permissions = [
+            ("can_assign_clients", "Puede asignar clientes a usuarios"),
+            ("can_assign_roles", "Puede asignar roles a usuarios"),
+        ]
     def __str__(self):
         """Retorna el nombre de usuario como representación del objeto."""
         return self.username

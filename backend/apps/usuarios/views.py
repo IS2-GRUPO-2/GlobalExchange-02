@@ -14,6 +14,10 @@ from rest_framework.response import Response
 from rest_framework import status
 from apps.clientes.models import Cliente
 from apps.clientes.serializers import ClienteSerializer
+from django.contrib.auth.models import Group
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.permissions import IsAuthenticated
+
 
 class UserViewSet(viewsets.ModelViewSet):
     """
@@ -41,7 +45,24 @@ class UserViewSet(viewsets.ModelViewSet):
             return [permissions.AllowAny()]
         return [permissions.AllowAny()]
     
-    @action(detail=True, methods=["post"], url_path="asignar_clientes")
+    def perform_update(self, serializer):
+        # Esto se llama en update() y partial_update()
+        instance = serializer.save()
+        password = self.request.data.get("password")
+        if password:
+            instance.set_password(password)
+            instance.save()
+
+    def destroy(self, request, *args, **kwargs):
+        user = self.get_object()
+        user.is_active = False
+        user.save()
+        return Response(
+            {"message": f"Usuario {user.username} desactivado (eliminado lógico)."},
+            status=status.HTTP_200_OK,
+        )
+    
+    @action(detail=True, methods=["post"], url_path="asignar_clientes", permission_classes=[IsAuthenticated])
     def asignar_clientes(self, request, pk=None):
         """
         Asigna clientes al usuario sin necesidad de actualizar todo el objeto.
@@ -57,6 +78,12 @@ class UserViewSet(viewsets.ModelViewSet):
             {"clientes": [1, 2, 3]}
         """
         user = self.get_object()
+        if not request.user.has_perm("usuarios.can_assign_clients"):
+            return Response(
+                {"detail": "No tienes permiso para asignar clientes."},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+        
         clientes_ids = request.data.get("clientes", [])
 
         if not isinstance(clientes_ids, list):
@@ -94,3 +121,56 @@ class UserViewSet(viewsets.ModelViewSet):
         clientes = usuario.clientes.all()
         serializer = ClienteSerializer(clientes, many=True)
         return Response(serializer.data)
+
+    @action(detail=True, methods=["post"], url_path="asignar_roles", permission_classes=[IsAuthenticated])
+    def asignar_roles(self, request, pk=None):
+        """
+        Reemplaza los roles (grupos) del usuario con la lista enviada.
+        Body: { "roles": [1, 2, 5] }  # IDs de Group
+        """
+        user = self.get_object()
+        if not request.user.has_perm("usuarios.can_assign_roles"):
+            return Response(
+                {"detail": "No tienes permiso para asignar roles."},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+        
+        role_ids = request.data.get("roles", [])
+
+        if not isinstance(role_ids, list):
+            return Response(
+                {"error": "El campo 'roles' debe ser una lista de IDs"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        groups = Group.objects.filter(id__in=role_ids)
+        user.groups.set(groups)
+        user.save()
+
+        return Response(
+            {
+                "message": "Roles asignados correctamente",
+                "user_id": user.id,
+                "roles": list(groups.values_list("id", flat=True)),
+            },
+            status=status.HTTP_200_OK,
+        )
+
+    @action(detail=True, methods=["get"], url_path="roles")
+    def get_roles(self, request, pk=None):
+        """
+        Retorna los roles actuales del usuario con id y nombre.
+        """
+        user = self.get_object()
+        data = list(user.groups.values("id", "name"))
+        return Response(data, status=status.HTTP_200_OK)
+
+@api_view(["GET"])
+@permission_classes([IsAuthenticated])
+def me_permissions(request):
+    """
+    Devuelve los permisos *actuales* del usuario logueado
+    como codenames nativos: ["auth.view_group", "clientes.add_cliente", ...]
+    """
+    perms = sorted(list(request.user.get_all_permissions()))
+    return Response({"perms": perms})

@@ -22,6 +22,10 @@ import Modal from "../components/Modal";
 import UserForm from "../components/UserForm";
 import EditUserForm from "../components/EditUserForm";
 import AssignedClients from "../components/AssignedClients"; 
+import AssignedRoles from "../components/AssignedRoles";
+import { KeyRound } from "lucide-react";
+import Can from "../components/Can";
+import { USUARIOS } from "../types/perms";
 
 const UsuariosPage = () => {
   const [usuarios, setUsuarios] = useState<User[]>([]);
@@ -31,12 +35,22 @@ const UsuariosPage = () => {
   const [detailModalOpen, setDetailModalOpen] = useState<boolean>(false);
   const [clientsModalOpen, setClientsModalOpen] = useState<boolean>(false);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
-
+  const [rolesModalOpen, setRolesModalOpen] = useState<boolean>(false);
+  const [editReadOnly, setEditReadOnly] = useState(true);
   const openCreateModal = (): void => setCreateModalOpen(true);
   const closeCreateModal = (): void => setCreateModalOpen(false);
-
+  
+  const openRolesModal = (user: User): void => {
+    setSelectedUser(user);
+    setRolesModalOpen(true);
+  };
+  const closeRolesModal = (): void => {
+    setRolesModalOpen(false);
+    setSelectedUser(null);
+  };
   const openEditModal = (user: User): void => {
     setSelectedUser(user);
+    setEditReadOnly(true);    
     setEditModalOpen(true);
   };
   const closeEditModal = (): void => {
@@ -109,12 +123,8 @@ const UsuariosPage = () => {
       if (!userData.password) {
         delete userDataToUpdate.password;
       }
-      
+
       await updateUsuario(String(userData.id), userDataToUpdate);
-      
-      if (userData.clientes.length > 0) {
-        await asignarClientesAUsuario(userData.id, userData.clientes);
-      }
       
       toast.success("Usuario actualizado con éxito!");
       fetchUsuarios();
@@ -162,13 +172,15 @@ const UsuariosPage = () => {
           />
         </div>
 
-        <button
-          onClick={openCreateModal}
-          className="btn-primary flex items-center justify-center"
-        >
-          <UserPlus size={18} className="mr-2" />
-          Agregar Usuario
-        </button>
+        <Can anyOf={[USUARIOS.ADD]}>
+          <button
+            onClick={openCreateModal}
+            className="btn-primary flex items-center justify-center"
+          >
+            <UserPlus size={18} className="mr-2" />
+            Agregar Usuario
+          </button>
+        </Can>
       </div>
 
       <div className="card">
@@ -180,7 +192,6 @@ const UsuariosPage = () => {
                 <th>Nombre</th>
                 <th>Email</th>
                 <th>Estado</th>
-                <th>Staff</th>
                 <th>Clientes</th>
                 <th>Acciones</th>
               </tr>
@@ -203,17 +214,6 @@ const UsuariosPage = () => {
                     </span>
                   </td>
                   <td>
-                    <span
-                      className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                        user.is_staff
-                          ? "bg-blue-100 text-blue-800"
-                          : "bg-gray-100 text-gray-800"
-                      }`}
-                    >
-                      {user.is_staff ? "Sí" : "No"}
-                    </span>
-                  </td>
-                  <td>
                     <span className="text-sm text-gray-500">
                       {user.clientes?.length || 0} cliente(s)
                     </span>
@@ -227,34 +227,36 @@ const UsuariosPage = () => {
                       >
                         <Edit size={16} />
                       </button>
-                      <button
-                        onClick={
-                          user.is_active
-                            ? () => handleDeactivateUser(user.id)
-                            : () => handleActivateUser(user)
-                        }
-                        className="p-1 text-gray-500 hover:text-red-600 rounded-full hover:bg-gray-100"
-                        title={user.is_active ? "Desactivar" : "Activar"}
-                      >
-                        {user.is_active ? (
-                          <UserX size={16} />
-                        ) : (
-                          <UserCheck size={16} />
-                        )}
-                      </button>
-                      <button
-                        onClick={() => openDetailModal(user)}
-                        className="p-1 text-gray-500 hover:text-green-600 rounded-full hover:bg-gray-100"
-                        title="Ver detalles"
-                      >
-                        <Search size={16} />
-                      </button>
+                      <Can anyOf={[USUARIOS.DELETE]}>
+                        <button
+                          onClick={
+                            user.is_active
+                              ? () => handleDeactivateUser(user.id)
+                              : () => handleActivateUser(user)
+                          }
+                          className="p-1 text-gray-500 hover:text-red-600 rounded-full hover:bg-gray-100"
+                          title={user.is_active ? "Desactivar" : "Activar"}
+                        >
+                          {user.is_active ? (
+                            <UserX size={16} />
+                          ) : (
+                            <UserCheck size={16} />
+                          )}
+                        </button>
+                      </Can>
                       <button
                         onClick={() => openClientsModal(user)}
                         className="p-1 text-gray-500 hover:text-yellow-700 rounded-full hover:bg-gray-100"
                         title="Ver clientes asignados"
                       >
                         <BookUser size={16} />
+                      </button>
+                      <button
+                        onClick={() => openRolesModal(user)}
+                        className="p-1 text-gray-500 hover:text-purple-700 rounded-full hover:bg-gray-100"
+                        title="Ver/Asignar roles"
+                      >
+                        <KeyRound size={16} />
                       </button>
                     </div>
                   </td>
@@ -271,23 +273,25 @@ const UsuariosPage = () => {
           />
         </Modal>
         <Modal isOpen={editModalOpen} onClose={closeEditModal}>
-          <EditUserForm
-            onSubmit={handleEditUser}
-            onCancel={closeEditModal}
-            user={selectedUser!}
-            readOnly={false}
-          />
-        </Modal>
-        <Modal isOpen={detailModalOpen} onClose={closeDetailModal}>
-          <EditUserForm
-            onSubmit={handleEditUser}
-            onCancel={closeDetailModal}
-            user={selectedUser!}
-            readOnly={true}
-          />
+          {selectedUser && (
+            <EditUserForm
+              onSubmit={handleEditUser}
+              onCancel={closeEditModal}
+              user={selectedUser}
+              readOnly={editReadOnly}
+              setReadOnly={setEditReadOnly}
+            />
+          )}
         </Modal>
         <Modal isOpen={clientsModalOpen} onClose={closeClientsModal}>
-          <AssignedClients user={selectedUser!} />
+          {selectedUser && (
+            <AssignedClients user={selectedUser} onClose={closeClientsModal} />
+          )}
+        </Modal>
+        <Modal isOpen={rolesModalOpen} onClose={closeRolesModal}>
+          {selectedUser && (
+            <AssignedRoles user={selectedUser} onClose={closeRolesModal} />
+          )}
         </Modal>
       </div>
     </div>
