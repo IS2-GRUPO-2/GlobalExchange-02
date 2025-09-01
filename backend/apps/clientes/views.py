@@ -11,7 +11,7 @@ User = get_user_model()
 class ClienteViewSet(viewsets.ModelViewSet):
     queryset = Cliente.objects.all()
     serializer_class = ClienteSerializer
-    permission_classes = [permissions.IsAuthenticated, permissions.IsAdminUser]
+    permission_classes = [permissions.IsAuthenticated]
 
     filter_backends = [filters.SearchFilter]
     search_fields = ["nombre", "cedula", "ruc"]
