@@ -39,13 +39,19 @@ class UserViewSet(viewsets.ModelViewSet):
             status=status.HTTP_200_OK,
         )
     
-    @action(detail=True, methods=["post"], url_path="asignar_clientes")
+    @action(detail=True, methods=["post"], url_path="asignar_clientes", permission_classes=[IsAuthenticated])
     def asignar_clientes(self, request, pk=None):
         """
         Asigna clientes al usuario sin necesidad de actualizar todo el objeto.
         Espera una lista de IDs de clientes en el body.
         """
         user = self.get_object()
+        if not request.user.has_perm("usuarios.can_assign_clients"):
+            return Response(
+                {"detail": "No tienes permiso para asignar clientes."},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+        
         clientes_ids = request.data.get("clientes", [])
 
         if not isinstance(clientes_ids, list):
@@ -75,13 +81,19 @@ class UserViewSet(viewsets.ModelViewSet):
         serializer = ClienteSerializer(clientes, many=True)
         return Response(serializer.data)
 
-    @action(detail=True, methods=["post"], url_path="asignar_roles")
+    @action(detail=True, methods=["post"], url_path="asignar_roles", permission_classes=[IsAuthenticated])
     def asignar_roles(self, request, pk=None):
         """
         Reemplaza los roles (grupos) del usuario con la lista enviada.
         Body: { "roles": [1, 2, 5] }  # IDs de Group
         """
         user = self.get_object()
+        if not request.user.has_perm("usuarios.can_assign_roles"):
+            return Response(
+                {"detail": "No tienes permiso para asignar roles."},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+        
         role_ids = request.data.get("roles", [])
 
         if not isinstance(role_ids, list):
