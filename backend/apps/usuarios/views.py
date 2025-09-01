@@ -22,6 +22,23 @@ class UserViewSet(viewsets.ModelViewSet):
                 return [permissions.AllowAny()]
             return [permissions.AllowAny()]
     
+    def perform_update(self, serializer):
+        # Esto se llama en update() y partial_update()
+        instance = serializer.save()
+        password = self.request.data.get("password")
+        if password:
+            instance.set_password(password)
+            instance.save()
+
+    def destroy(self, request, *args, **kwargs):
+        user = self.get_object()
+        user.is_active = False
+        user.save()
+        return Response(
+            {"message": f"Usuario {user.username} desactivado (eliminado lógico)."},
+            status=status.HTTP_200_OK,
+        )
+    
     @action(detail=True, methods=["post"], url_path="asignar_clientes")
     def asignar_clientes(self, request, pk=None):
         """
