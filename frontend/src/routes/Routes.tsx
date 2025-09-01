@@ -7,8 +7,11 @@ import LoginPage from "../pages/LoginPage";
 import RegisterPage from "../pages/RegisterPage";
 import RolesPage from "../pages/RolesPage";
 import MainMenuPage from "../pages/MenuPage";
+import AdminRoutes from "./AdminRoutes";
+import DivisasPage from "../pages/DivisasPage";
 import RequirePerm from "./RequierePerm";
 import { CLIENTES, ROLES, USUARIOS } from "../types/perms";
+
 export const router = createBrowserRouter([
   {
     path: "/",
@@ -48,6 +51,14 @@ export const router = createBrowserRouter([
           <RequirePerm anyOf={[USUARIOS.VIEW, USUARIOS.ADD, USUARIOS.CHANGE, USUARIOS.DELETE]}>
             <UsuariosPage />
           </RequirePerm>
+        ),
+      },
+      {
+        path: "divisas",
+        element: (
+          <AdminRoutes>
+            <DivisasPage />
+          </AdminRoutes>
         ),
       },
     ],
