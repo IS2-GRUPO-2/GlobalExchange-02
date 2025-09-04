@@ -9,12 +9,11 @@ import {
 } from "@headlessui/react";
 import { Bars3Icon, BellIcon, XMarkIcon } from "@heroicons/react/24/outline";
 import Can from "./Can";
+import { useAuth } from "../context/useAuth";
 import { CLIENTES, ROLES, USUARIOS } from "../types/perms";
-// Removiendo importación no utilizada
-// import { useAuth } from "../context/useAuth";
 
 const navigation = [
-  { name: "Dashboard", href: "#", current: true, permisos: [] },
+  { name: "Menú", href: "/", current: true, permisos: [] },
   { name: "Clientes", href: "/clientes", current: false, permisos: [CLIENTES.VIEW] },
   { name: "Usuarios", href: "/usuarios", current: false, permisos: [USUARIOS.VIEW] },
   { name: "Roles", href: "/roles", current: false, permisos: [ROLES.VIEW] },
@@ -22,18 +21,21 @@ const navigation = [
   { name: "Registrarse", href: "/register", current: false, permisos: [] },
 ];
 
-// La interfaz no se está usando, así que la eliminamos
-// interface NavigationItem {
-//   name: string;
-//   href: string;
-//   current: boolean;
-// }
-
 function classNames(...classes: (string | undefined | false | null)[]): string {
   return classes.filter(Boolean).join(" ");
 }
 
 export default function Navbar() {
+  const { logout, isLoggedIn } = useAuth();
+
+  // Filtrar navegación: ocultar login/register si está logueado
+  const filteredNavigation = navigation.filter((item) => {
+    if (isLoggedIn() && (item.name === "Iniciar sesión" || item.name === "Registrarse")) {
+      return false;
+    }
+    return true;
+  });
+
   return (
     <Disclosure
       as="nav"
@@ -65,7 +67,7 @@ export default function Navbar() {
             </div>
             <div className="hidden sm:ml-6 sm:block">
               <div className="flex space-x-4">
-                {navigation.map((item) => (
+                {filteredNavigation.map((item) => (
                   <Can key={item.name} anyOf={item.permisos}>
                     <a
                       href={item.href}
@@ -84,65 +86,71 @@ export default function Navbar() {
               </div>
             </div>
           </div>
+          
           <div className="absolute inset-y-0 right-0 flex items-center pr-2 sm:static sm:inset-auto sm:ml-6 sm:pr-0">
-            <button
-              type="button"
-              className="relative rounded-full p-1 text-gray-400 hover:text-white focus:outline-2 focus:outline-offset-2 focus:outline-indigo-500"
-            >
-              <span className="absolute -inset-1.5" />
-              <span className="sr-only">View notifications</span>
-              <BellIcon aria-hidden="true" className="size-6" />
-            </button>
+            {isLoggedIn() && (
+              <>
+                <button
+                  type="button"
+                  className="relative rounded-full p-1 text-gray-400 hover:text-white focus:outline-2 focus:outline-offset-2 focus:outline-indigo-500"
+                >
+                  <span className="absolute -inset-1.5" />
+                  <span className="sr-only">View notifications</span>
+                  <BellIcon aria-hidden="true" className="size-6" />
+                </button>
 
-            {/* Profile dropdown */}
-            <Menu as="div" className="relative ml-3">
-              <MenuButton className="relative flex rounded-full focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-500">
-                <span className="absolute -inset-1.5" />
-                <span className="sr-only">Open user menu</span>
-                <img
-                  alt=""
-                  src="https://img.icons8.com/?size=100&id=ABBSjQJK83zf&format=png&color=000000"
-                  className="size-8 rounded-full bg-gray-800 outline -outline-offset-1 outline-white/10"
-                />
-              </MenuButton>
+                {/* Profile dropdown */}
+                <Menu as="div" className="relative ml-3">
+                  <MenuButton className="relative flex rounded-full focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-500">
+                    <span className="absolute -inset-1.5" />
+                    <span className="sr-only">Open user menu</span>
+                    <img
+                      alt=""
+                      src="https://img.icons8.com/?size=100&id=ABBSjQJK83zf&format=png&color=000000"
+                      className="size-8 rounded-full bg-gray-800 outline -outline-offset-1 outline-white/10"
+                    />
+                  </MenuButton>
 
-              <MenuItems
-                transition
-                className="absolute right-0 z-10 mt-2 w-48 origin-top-right rounded-md bg-gray-800 py-1 outline -outline-offset-1 outline-white/10 transition data-closed:scale-95 data-closed:transform data-closed:opacity-0 data-enter:duration-100 data-enter:ease-out data-leave:duration-75 data-leave:ease-in"
-              >
-                <MenuItem>
-                  <a
-                    href="#"
-                    className="block px-4 py-2 text-sm text-gray-300 data-focus:bg-white/5 data-focus:outline-hidden"
+                  <MenuItems
+                    transition
+                    className="absolute right-0 z-10 mt-2 w-48 origin-top-right rounded-md bg-gray-800 py-1 outline -outline-offset-1 outline-white/10 transition data-closed:scale-95 data-closed:transform data-closed:opacity-0 data-enter:duration-100 data-enter:ease-out data-leave:duration-75 data-leave:ease-in"
                   >
-                    Your profile
-                  </a>
-                </MenuItem>
-                <MenuItem>
-                  <a
-                    href="#"
-                    className="block px-4 py-2 text-sm text-gray-300 data-focus:bg-white/5 data-focus:outline-hidden"
-                  >
-                    Settings
-                  </a>
-                </MenuItem>
-                <MenuItem>
-                  <a
-                    href="#"
-                    className="block px-4 py-2 text-sm text-gray-300 data-focus:bg-white/5 data-focus:outline-hidden"
-                  >
-                    Sign out
-                  </a>
-                </MenuItem>
-              </MenuItems>
-            </Menu>
+                    <MenuItem>
+                      <a
+                        href="#"
+                        className="block px-4 py-2 text-sm text-gray-300 data-focus:bg-white/5 data-focus:outline-hidden"
+                      >
+                        Cuenta
+                      </a>
+                    </MenuItem>
+                    <MenuItem>
+                      <a
+                        href="configuraciones"
+                        className="block px-4 py-2 text-sm text-gray-300 data-focus:bg-white/5 data-focus:outline-hidden"
+                      >
+                        Configuraciones
+                      </a>
+                    </MenuItem>
+                    <MenuItem>
+                      <button
+                        onClick={logout}
+                        className="block w-full text-left px-4 py-2 text-sm text-gray-300 data-focus:bg-white/5 data-focus:outline-hidden"
+                      >
+                        Cerrar sesión
+                      </button>
+                    </MenuItem>
+                  </MenuItems>
+                </Menu>
+              </>
+            )}
           </div>
         </div>
       </div>
 
+      {/* 📱 Menú móvil */}
       <DisclosurePanel className="sm:hidden">
         <div className="space-y-1 px-2 pt-2 pb-3">
-          {navigation.map((item) => (
+          {filteredNavigation.map((item) => (
             <Can key={item.name} anyOf={item.permisos}>
               <DisclosureButton
                 as="a"
