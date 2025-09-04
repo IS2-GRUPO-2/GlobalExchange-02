@@ -12,6 +12,7 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 
 from pathlib import Path
 from .configuration import config
+from datetime import timedelta
 
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -54,7 +55,12 @@ INSTALLED_APPS = [
     'apps.clientes',
     'apps.autenticacion',
     'apps.divisas',
-    'drf_yasg'
+<<<<<<< Updated upstream
+    'apps.cotizaciones',
+=======
+>>>>>>> Stashed changes
+    'drf_yasg',
+    'apps.conversiones'
 ]
 
 MIDDLEWARE = [
@@ -112,7 +118,9 @@ REST_FRAMEWORK = {
 }
 
 SIMPLE_JWT = {
-    "TOKEN_OBTAINER_SERIALIZER" : "globalexchange.serializers.CustomTokenObtainPairSerializer"
+    "TOKEN_OBTAINER_SERIALIZER" : "globalexchange.serializers.CustomTokenObtainPairSerializer",
+    "ACCESS_TOKEN_LIFETIME": timedelta(hours=1),
+    "REFRESH_TOKEN_LIFETIME": timedelta(days=7),
 }
 
 
