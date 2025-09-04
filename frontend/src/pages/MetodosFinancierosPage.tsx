@@ -29,12 +29,32 @@ import type {
 } from '../types/MetodoFinanciero';
 
 type MainTabType = 'catalogo' | 'instancias';
-type InstanceTabType = 'cuentas' | 'billeteras';
+type InstanceTabType = 'cuentas' | 'billeteras digitales';
 
 type ExtendedItem = (CuentaBancaria | BilleteraDigital) & {
   tipo: InstanceTabType;
   is_active: boolean;
   detalle_id?: number;
+};
+
+const getDisplayName = (nombre: string): string => {
+  switch (nombre) {
+    case 'BILLETERA_DIGITAL':
+      return 'Billetera Digital';
+    case 'TRANSFERENCIA_BANCARIA':
+      return 'Transferencia Bancaria';
+    case 'TARJETA_CREDITO':
+      return 'Tarjeta de Crédito';
+    case 'TARJETA_DEBITO':
+      return 'Tarjeta de Débito';
+    default:
+      // Convierte formato SNAKE_CASE a Title Case
+      return nombre
+        .toLowerCase()
+        .split('_')
+        .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+        .join(' ');
+  }
 };
 
 const MetodosFinancierosPage = () => {
@@ -139,8 +159,8 @@ const MetodosFinancierosPage = () => {
       case 'cuentas':
         items = getExtendedItems(cuentas, 'cuentas');
         break;
-      case 'billeteras':
-        items = getExtendedItems(billeteras, 'billeteras');
+      case 'billeteras digitales':
+        items = getExtendedItems(billeteras, 'billeteras digitales');
         break;
     }
 
@@ -160,7 +180,7 @@ const MetodosFinancierosPage = () => {
           return cuenta.banco.toLowerCase().includes(searchLower) ||
                  cuenta.titular.toLowerCase().includes(searchLower) ||
                  cuenta.numero_cuenta.includes(searchLower);
-        case 'billeteras':
+        case 'billeteras digitales':
           const billetera = item as BilleteraDigital & ExtendedItem;
           return billetera.plataforma.toLowerCase().includes(searchLower) ||
                  billetera.usuario_id.toLowerCase().includes(searchLower) ||
@@ -261,7 +281,7 @@ const MetodosFinancierosPage = () => {
         cliente: null,
         es_cuenta_casa: true,
         metodo_financiero: getMetodoFinancieroId(instanceTab),
-        alias: `Casa - ${instanceTab.slice(0, -1)}`,
+        alias: `Casa - ${getInstanceTabSingular(instanceTab)}`,
         is_active: true
       };
 
@@ -275,16 +295,16 @@ const MetodosFinancierosPage = () => {
         case 'cuentas':
           await createCuentaBancaria(itemData);
           break;
-        case 'billeteras':
+        case 'billeteras digitales':
           await createBilleteraDigital(itemData);
           break;
       }
 
-      toast.success(`${instanceTab.slice(0, -1)} de la casa creado exitosamente!`);
+      toast.success(`${getInstanceTabSingular(instanceTab)} de la casa creado exitosamente!`);
       fetchAllData();
       closeCreateModal();
     } catch (err) {
-      toast.error(`Error al crear ${instanceTab.slice(0, -1)} de la casa`);
+      toast.error(`Error al crear ${getInstanceTabSingular(instanceTab)} de la casa`);
       console.error(err);
     } finally {
       setIsSubmitting(false);
@@ -300,16 +320,16 @@ const MetodosFinancierosPage = () => {
         case 'cuentas':
           await updateCuentaBancaria(formData, selectedItem.id);
           break;
-        case 'billeteras':
+        case 'billeteras digitales':
           await updateBilleteraDigital(formData, selectedItem.id);
           break;
       }
 
-      toast.success(`${selectedItem.tipo.slice(0, -1)} de la casa actualizado exitosamente!`);
+      toast.success(`${getInstanceTabSingular(selectedItem.tipo)} de la casa actualizado exitosamente!`);
       fetchAllData();
       closeEditModal();
     } catch (err) {
-      toast.error(`Error al actualizar ${selectedItem.tipo.slice(0, -1)} de la casa`);
+      toast.error(`Error al actualizar ${getInstanceTabSingular(selectedItem.tipo)} de la casa`);
       console.error(err);
     } finally {
       setIsSubmitting(false);
@@ -321,34 +341,58 @@ const MetodosFinancierosPage = () => {
     
     try {
       await toggleActiveMetodoFinanciero(item.detalle_id);
-      toast.success(`${item.tipo.slice(0, -1)} de la casa ${item.is_active ? 'desactivado' : 'activado'} exitosamente!`);
+      toast.success(`${getInstanceTabSingular(item.tipo)} de la casa ${item.is_active ? 'desactivado' : 'activado'} exitosamente!`);
       fetchAllData();
     } catch (err) {
-      toast.error(`Error al ${item.is_active ? 'desactivar' : 'activar'} ${item.tipo.slice(0, -1)} de la casa`);
+      toast.error(`Error al ${item.is_active ? 'desactivar' : 'activar'} ${getInstanceTabSingular(item.tipo)} de la casa`);
       console.error(err);
     }
   };
 
   // Helper functions
   const getMetodoFinancieroId = (tipo: InstanceTabType): number => {
-    switch (tipo) {
-      case 'cuentas': return 1; // TRANSFERENCIA_BANCARIA
-      case 'billeteras': return 2; // BILLETERA_DIGITAL  
-      default: return 1;
+    // Buscar el ID del método financiero dinámicamente
+    const metodo = metodos.find(m => {
+      switch (tipo) {
+        case 'cuentas': return m.nombre === 'TRANSFERENCIA_BANCARIA';
+        case 'billeteras digitales': return m.nombre === 'BILLETERA_DIGITAL';
+        default: return false;
+      }
+    });
+    
+    if (!metodo) {
+      console.error(`No se encontró método financiero para tipo: ${tipo}`);
+      return 1; // Fallback
     }
+    
+    return metodo.id!;
   };
 
   const getInstanceTabIcon = (tab: InstanceTabType) => {
     switch (tab) {
       case 'cuentas': return <Building2 className="w-5 h-5" />;
-      case 'billeteras': return <Smartphone className="w-5 h-5" />;
+      case 'billeteras digitales': return <Smartphone className="w-5 h-5" />;
     }
   };
 
   const getInstanceTabLabel = (tab: InstanceTabType) => {
     switch (tab) {
       case 'cuentas': return 'Cuentas';
-      case 'billeteras': return 'Billeteras';
+      case 'billeteras digitales': return 'Billeteras Digitales';
+    }
+  };
+
+  const getInstanceTabSingular = (tab: InstanceTabType) => {
+    switch (tab) {
+      case 'cuentas': return 'cuenta';
+      case 'billeteras digitales': return 'billetera digital';
+    }
+  };
+
+  const getInstanceTabSingularTitle = (tab: InstanceTabType) => {
+    switch (tab) {
+      case 'cuentas': return 'Cuenta';
+      case 'billeteras digitales': return 'Billetera Digital';
     }
   };
 
@@ -494,7 +538,7 @@ const MetodosFinancierosPage = () => {
             isSubmitting={isSubmitting}
           />
         );
-      case 'billeteras':
+      case 'billeteras digitales':
         return (
           <BilleteraDigitalForm
             onSubmit={editModalOpen ? handleUpdateInstance : handleCreateInstance}
@@ -516,7 +560,7 @@ const MetodosFinancierosPage = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-700">Tipo</label>
-              <p className="text-gray-900">{metodo.nombre_display || metodo.nombre}</p>
+              <p className="text-gray-900">{getDisplayName(metodo.nombre)}</p>
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700">Estado</label>
@@ -546,8 +590,80 @@ const MetodosFinancierosPage = () => {
         </div>
       );
     } else {
-      // Same detail rendering as in client page but for casa instances
-      return <div>Detalles de instancia de la casa</div>;
+      switch (selectedItem.tipo) {
+        case 'cuentas':
+          const cuenta = selectedItem as CuentaBancaria & ExtendedItem;
+          return (
+            <div className="space-y-4">
+              <h2 className="text-2xl font-bold mb-4 text-gray-800">Detalles de Cuenta Bancaria</h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Banco</label>
+                  <p className="text-gray-900">{cuenta.banco}</p>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Titular</label>
+                  <p className="text-gray-900">{cuenta.titular}</p>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Número de Cuenta</label>
+                  <p className="text-gray-900">{cuenta.numero_cuenta}</p>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">CBU/CVU</label>
+                  <p className="text-gray-900">{cuenta.cbu_cvu}</p>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Estado</label>
+                  <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                    cuenta.is_active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                  }`}>
+                    {cuenta.is_active ? 'Activo' : 'Inactivo'}
+                  </span>
+                </div>
+              </div>
+            </div>
+          );
+        
+        case 'billeteras digitales':
+          const billetera = selectedItem as BilleteraDigital & ExtendedItem;
+          return (
+            <div className="space-y-4">
+              <h2 className="text-2xl font-bold mb-4 text-gray-800">Detalles de Billetera Digital</h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Plataforma</label>
+                  <p className="text-gray-900">{billetera.plataforma}</p>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Usuario ID</label>
+                  <p className="text-gray-900">{billetera.usuario_id}</p>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Email</label>
+                  <p className="text-gray-900">{billetera.email}</p>
+                </div>
+                {billetera.telefono && (
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">Teléfono</label>
+                    <p className="text-gray-900">{billetera.telefono}</p>
+                  </div>
+                )}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Estado</label>
+                  <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                    billetera.is_active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                  }`}>
+                    {billetera.is_active ? 'Activo' : 'Inactivo'}
+                  </span>
+                </div>
+              </div>
+            </div>
+          );
+        
+        default:
+          return <div className="text-gray-600">Detalles de instancia de la casa</div>;
+      }
     }
   };
 
@@ -640,7 +756,7 @@ const MetodosFinancierosPage = () => {
         <div className="mb-6">
           <div className="border-b border-gray-200">
             <nav className="-mb-px flex space-x-8">
-              {(['cuentas', 'billeteras'] as InstanceTabType[]).map((tab) => (
+              {(['cuentas', 'billeteras digitales'] as InstanceTabType[]).map((tab) => (
                 <button
                   key={tab}
                   onClick={() => setInstanceTab(tab)}
@@ -691,7 +807,7 @@ const MetodosFinancierosPage = () => {
                 ) : (
                   metodos.map((metodo) => (
                     <tr key={metodo.id}>
-                      <td className="font-medium">{metodo.nombre_display || metodo.nombre}</td>
+                      <td className="font-medium">{getDisplayName(metodo.nombre)}</td>
                       <td>
                         <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
                           metodo.permite_cobro ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
@@ -777,7 +893,7 @@ const MetodosFinancierosPage = () => {
               <p className="text-gray-600 mb-4">
                 {search 
                   ? `No se encontraron resultados para "${search}"`
-                  : `Comienza creando la primera ${instanceTab.slice(0, -1)} de la casa`
+                  : `Comienza creando la primera ${getInstanceTabSingular(instanceTab)} de la casa`
                 }
               </p>
             </div>
@@ -804,7 +920,7 @@ const MetodosFinancierosPage = () => {
           <h2 className="text-2xl font-bold mb-4 text-gray-800">
             {mainTab === 'catalogo' 
               ? 'Crear Método Financiero' 
-              : `Crear ${getInstanceTabLabel(instanceTab).slice(0, -1)} de la Casa`
+              : `Crear ${getInstanceTabSingularTitle(instanceTab)} de la Casa`
             }
           </h2>
           {mainTab === 'catalogo' ? renderMetodoForm() : renderInstanceForm()}
@@ -816,7 +932,7 @@ const MetodosFinancierosPage = () => {
           <h2 className="text-2xl font-bold mb-4 text-gray-800">
             {mainTab === 'catalogo' 
               ? 'Editar Método Financiero' 
-              : `Editar ${getInstanceTabLabel(instanceTab).slice(0, -1)} de la Casa`
+              : `Editar ${getInstanceTabSingularTitle(instanceTab)} de la Casa`
             }
           </h2>
           {mainTab === 'catalogo' ? renderMetodoForm() : renderInstanceForm()}

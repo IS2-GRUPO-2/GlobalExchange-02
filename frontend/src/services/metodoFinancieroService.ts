@@ -50,16 +50,6 @@ export const getMetodosFinancieros = async (
   }
 };
 
-export const getMetodoFinanciero = async (id: number): Promise<MetodoFinanciero> => {
-  try {
-    const res = await apiClient.get<MetodoFinanciero>(`${API_URL}metodos/${id}/`);
-    return res.data;
-  } catch (err: any) {
-    console.error("Error fetching método financiero: ", err);
-    throw err;
-  }
-};
-
 export const createMetodoFinanciero = async (metodoData: MetodoFinanciero) => {
   try {
     const res = await apiClient.post<MetodoFinanciero>(`${API_URL}metodos/`, metodoData);

@@ -23,13 +23,15 @@ import {
   getDetallesMetodosFinancieros,
   createDetalleMetodoFinanciero,
   updateDetalleMetodoFinanciero,
-  toggleActiveMetodoFinanciero
+  toggleActiveMetodoFinanciero,
+  getMetodosFinancieros
 } from '../services/metodoFinancieroService';
 import type { 
   CuentaBancaria, 
   BilleteraDigital, 
   Tarjeta, 
-  MetodoFinancieroDetalle 
+  MetodoFinancieroDetalle,
+  MetodoFinanciero
 } from '../types/MetodoFinanciero';
 
 type TabType = 'cuentas' | 'billeteras' | 'tarjetas';
@@ -46,6 +48,7 @@ const MetodosFinancierosClientePage = () => {
   const [billeteras, setBilleteras] = useState<BilleteraDigital[]>([]);
   const [tarjetas, setTarjetas] = useState<Tarjeta[]>([]);
   const [detalles, setDetalles] = useState<MetodoFinancieroDetalle[]>([]);
+  const [metodos, setMetodos] = useState<MetodoFinanciero[]>([]);
   const [search, setSearch] = useState('');
   const [loading, setLoading] = useState(false);
   
@@ -59,6 +62,15 @@ const MetodosFinancierosClientePage = () => {
   const { isLoggedIn } = useAuth();
 
   // Fetch data functions
+  const fetchMetodos = async () => {
+    try {
+      const res = await getMetodosFinancieros();
+      setMetodos(res.results);
+    } catch (err) {
+      console.error('Error fetching métodos:', err);
+    }
+  };
+
   const fetchDetalles = async () => {
     try {
       const res = await getDetallesMetodosFinancieros({ search });
@@ -99,6 +111,7 @@ const MetodosFinancierosClientePage = () => {
     setLoading(true);
     try {
       await Promise.all([
+        fetchMetodos(),
         fetchDetalles(),
         fetchCuentas(),
         fetchBilleteras(),
@@ -276,13 +289,28 @@ const MetodosFinancierosClientePage = () => {
 
   // Helper functions
   const getMetodoFinancieroId = (tipo: TabType): number => {
-    // Estos IDs deben corresponder a los métodos financieros en el backend
-    switch (tipo) {
-      case 'cuentas': return 1; // TRANSFERENCIA_BANCARIA
-      case 'billeteras': return 2; // BILLETERA_DIGITAL  
-      case 'tarjetas': return 3; // TARJETA
-      default: return 1;
+    // Buscar el ID del método financiero dinámicamente
+    const metodo = metodos.find(m => {
+      switch (tipo) {
+        case 'cuentas': return m.nombre === 'TRANSFERENCIA_BANCARIA';
+        case 'billeteras': return m.nombre === 'BILLETERA_DIGITAL';
+        case 'tarjetas': return m.nombre === 'TARJETA';
+        default: return false;
+      }
+    });
+    
+    if (!metodo) {
+      console.error(`No se encontró método financiero para tipo: ${tipo}`);
+      // Fallback a valores por defecto si no se encuentran los métodos
+      switch (tipo) {
+        case 'cuentas': return 1; // TRANSFERENCIA_BANCARIA
+        case 'billeteras': return 2; // BILLETERA_DIGITAL  
+        case 'tarjetas': return 3; // TARJETA
+        default: return 1;
+      }
     }
+    
+    return metodo.id!;
   };
 
   const getTabIcon = (tab: TabType) => {
