@@ -1,0 +1,833 @@
+import React, { useState, useEffect } from 'react';
+import { Building2, Smartphone, Plus, Search, Edit, X, Check } from 'lucide-react';
+import { toast } from 'react-toastify';
+import { useAuth } from '../context/useAuth';
+import Modal from '../components/Modal';
+import MetodoFinancieroCard from '../components/MetodoFinancieroCard';
+import CuentaBancariaForm from '../components/CuentaBancariaForm';
+import BilleteraDigitalForm from '../components/BilleteraDigitalForm';
+import {
+  getMetodosFinancieros,
+  getCuentasBancarias,
+  getBilleterasDigitales,
+  createMetodoFinanciero,
+  createCuentaBancaria,
+  createBilleteraDigital,
+  updateMetodoFinanciero,
+  updateCuentaBancaria,
+  updateBilleteraDigital,
+  deactivateMetodoFinanciero,
+  getDetallesMetodosFinancieros,
+  createDetalleMetodoFinanciero,
+  toggleActiveMetodoFinanciero
+} from '../services/metodoFinancieroService';
+import type { 
+  MetodoFinanciero,
+  CuentaBancaria, 
+  BilleteraDigital, 
+  MetodoFinancieroDetalle 
+} from '../types/MetodoFinanciero';
+
+type MainTabType = 'catalogo' | 'instancias';
+type InstanceTabType = 'cuentas' | 'billeteras';
+
+type ExtendedItem = (CuentaBancaria | BilleteraDigital) & {
+  tipo: InstanceTabType;
+  is_active: boolean;
+  detalle_id?: number;
+};
+
+const MetodosFinancierosPage = () => {
+  const [mainTab, setMainTab] = useState<MainTabType>('catalogo');
+  const [instanceTab, setInstanceTab] = useState<InstanceTabType>('cuentas');
+  
+  // Data states
+  const [metodos, setMetodos] = useState<MetodoFinanciero[]>([]);
+  const [cuentas, setCuentas] = useState<CuentaBancaria[]>([]);
+  const [billeteras, setBilleteras] = useState<BilleteraDigital[]>([]);
+  const [detalles, setDetalles] = useState<MetodoFinancieroDetalle[]>([]);
+  
+  // UI states
+  const [search, setSearch] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  
+  // Modal states
+  const [createModalOpen, setCreateModalOpen] = useState(false);
+  const [editModalOpen, setEditModalOpen] = useState(false);
+  const [viewModalOpen, setViewModalOpen] = useState(false);
+  const [selectedItem, setSelectedItem] = useState<any>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const { isLoggedIn } = useAuth();
+
+  // Fetch functions
+  const fetchMetodos = async () => {
+    try {
+      const res = await getMetodosFinancieros({ page, search });
+      setMetodos(res.results);
+      setTotalPages(Math.ceil(res.count / 10)); // Assuming 10 items per page
+    } catch (err) {
+      console.error('Error fetching métodos:', err);
+    }
+  };
+
+  const fetchDetalles = async () => {
+    try {
+      const res = await getDetallesMetodosFinancieros({ search });
+      setDetalles(res.results.filter(d => d.es_cuenta_casa));
+    } catch (err) {
+      console.error('Error fetching detalles:', err);
+    }
+  };
+
+  const fetchCuentas = async () => {
+    try {
+      const res = await getCuentasBancarias({ search });
+      setCuentas(res.results);
+    } catch (err) {
+      console.error('Error fetching cuentas:', err);
+    }
+  };
+
+  const fetchBilleteras = async () => {
+    try {
+      const res = await getBilleterasDigitales({ search });
+      setBilleteras(res.results);
+    } catch (err) {
+      console.error('Error fetching billeteras:', err);
+    }
+  };
+
+  const fetchAllData = async () => {
+    setLoading(true);
+    try {
+      if (mainTab === 'catalogo') {
+        await fetchMetodos();
+      } else {
+        await Promise.all([
+          fetchDetalles(),
+          fetchCuentas(),
+          fetchBilleteras()
+        ]);
+      }
+    } catch (err) {
+      toast.error('Error al cargar los datos');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Create extended items with active status from detalles (only for casa accounts)
+  const getExtendedItems = (items: any[], tipo: InstanceTabType): ExtendedItem[] => {
+    return items.map(item => {
+      const detalle = detalles.find(d => d.id === item.metodo_financiero_detalle);
+      return {
+        ...item,
+        tipo,
+        is_active: detalle?.is_active ?? true,
+        detalle_id: detalle?.id
+      };
+    });
+  };
+
+  const getFilteredItems = (): ExtendedItem[] => {
+    let items: ExtendedItem[] = [];
+    
+    switch (instanceTab) {
+      case 'cuentas':
+        items = getExtendedItems(cuentas, 'cuentas');
+        break;
+      case 'billeteras':
+        items = getExtendedItems(billeteras, 'billeteras');
+        break;
+    }
+
+    // Filter only casa accounts
+    items = items.filter(item => {
+      const detalle = detalles.find(d => d.id === item.detalle_id);
+      return detalle?.es_cuenta_casa;
+    });
+
+    if (!search) return items;
+    
+    return items.filter(item => {
+      const searchLower = search.toLowerCase();
+      switch (item.tipo) {
+        case 'cuentas':
+          const cuenta = item as CuentaBancaria & ExtendedItem;
+          return cuenta.banco.toLowerCase().includes(searchLower) ||
+                 cuenta.titular.toLowerCase().includes(searchLower) ||
+                 cuenta.numero_cuenta.includes(searchLower);
+        case 'billeteras':
+          const billetera = item as BilleteraDigital & ExtendedItem;
+          return billetera.plataforma.toLowerCase().includes(searchLower) ||
+                 billetera.usuario_id.toLowerCase().includes(searchLower) ||
+                 (billetera.email && billetera.email.toLowerCase().includes(searchLower));
+        default:
+          return false;
+      }
+    });
+  };
+
+  // Modal handlers
+  const openCreateModal = () => setCreateModalOpen(true);
+  const closeCreateModal = () => {
+    setCreateModalOpen(false);
+    setSelectedItem(null);
+    setIsSubmitting(false);
+  };
+
+  const openEditModal = (item: any) => {
+    setSelectedItem(item);
+    setEditModalOpen(true);
+  };
+  const closeEditModal = () => {
+    setSelectedItem(null);
+    setEditModalOpen(false);
+    setIsSubmitting(false);
+  };
+
+  const openViewModal = (item: any) => {
+    setSelectedItem(item);
+    setViewModalOpen(true);
+  };
+  const closeViewModal = () => {
+    setSelectedItem(null);
+    setViewModalOpen(false);
+  };
+
+  // CRUD operations for métodos financieros (catálogo)
+  const handleCreateMetodo = async (formData: any) => {
+    setIsSubmitting(true);
+    try {
+      await createMetodoFinanciero(formData);
+      toast.success('Método financiero creado exitosamente!');
+      fetchMetodos();
+      closeCreateModal();
+    } catch (err) {
+      toast.error('Error al crear método financiero');
+      console.error(err);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleUpdateMetodo = async (formData: any) => {
+    if (!selectedItem?.id) return;
+    
+    setIsSubmitting(true);
+    try {
+      await updateMetodoFinanciero(formData, selectedItem.id);
+      toast.success('Método financiero actualizado exitosamente!');
+      fetchMetodos();
+      closeEditModal();
+    } catch (err) {
+      toast.error('Error al actualizar método financiero');
+      console.error(err);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleToggleMetodo = async (metodo: MetodoFinanciero) => {
+    if (!metodo.id) return;
+    
+    try {
+      if (metodo.is_active) {
+        // Desactivar
+        await deactivateMetodoFinanciero(metodo.id);
+        toast.success('Método financiero desactivado exitosamente!');
+      } else {
+        // Activar - usar update con is_active = true
+        const updatedMetodo = { ...metodo, is_active: true };
+        await updateMetodoFinanciero(updatedMetodo, metodo.id);
+        toast.success('Método financiero activado exitosamente!');
+      }
+      fetchMetodos();
+    } catch (err) {
+      toast.error(`Error al ${metodo.is_active ? 'desactivar' : 'activar'} método financiero`);
+      console.error(err);
+    }
+  };
+
+  // CRUD operations for instances (instancias de la casa)
+  const handleCreateInstance = async (formData: any) => {
+    setIsSubmitting(true);
+    try {
+      // Primero crear el detalle marcado como cuenta de la casa
+      const detalleData: MetodoFinancieroDetalle = {
+        cliente: null,
+        es_cuenta_casa: true,
+        metodo_financiero: getMetodoFinancieroId(instanceTab),
+        alias: `Casa - ${instanceTab.slice(0, -1)}`,
+        is_active: true
+      };
+
+      const detalleRes = await createDetalleMetodoFinanciero(detalleData);
+      const detalleId = detalleRes.data.id;
+
+      // Luego crear el item específico
+      const itemData = { ...formData, metodo_financiero_detalle: detalleId };
+
+      switch (instanceTab) {
+        case 'cuentas':
+          await createCuentaBancaria(itemData);
+          break;
+        case 'billeteras':
+          await createBilleteraDigital(itemData);
+          break;
+      }
+
+      toast.success(`${instanceTab.slice(0, -1)} de la casa creado exitosamente!`);
+      fetchAllData();
+      closeCreateModal();
+    } catch (err) {
+      toast.error(`Error al crear ${instanceTab.slice(0, -1)} de la casa`);
+      console.error(err);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleUpdateInstance = async (formData: any) => {
+    if (!selectedItem?.id) return;
+    
+    setIsSubmitting(true);
+    try {
+      switch (selectedItem.tipo) {
+        case 'cuentas':
+          await updateCuentaBancaria(formData, selectedItem.id);
+          break;
+        case 'billeteras':
+          await updateBilleteraDigital(formData, selectedItem.id);
+          break;
+      }
+
+      toast.success(`${selectedItem.tipo.slice(0, -1)} de la casa actualizado exitosamente!`);
+      fetchAllData();
+      closeEditModal();
+    } catch (err) {
+      toast.error(`Error al actualizar ${selectedItem.tipo.slice(0, -1)} de la casa`);
+      console.error(err);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleToggleInstance = async (item: ExtendedItem) => {
+    if (!item.detalle_id) return;
+    
+    try {
+      await toggleActiveMetodoFinanciero(item.detalle_id);
+      toast.success(`${item.tipo.slice(0, -1)} de la casa ${item.is_active ? 'desactivado' : 'activado'} exitosamente!`);
+      fetchAllData();
+    } catch (err) {
+      toast.error(`Error al ${item.is_active ? 'desactivar' : 'activar'} ${item.tipo.slice(0, -1)} de la casa`);
+      console.error(err);
+    }
+  };
+
+  // Helper functions
+  const getMetodoFinancieroId = (tipo: InstanceTabType): number => {
+    switch (tipo) {
+      case 'cuentas': return 1; // TRANSFERENCIA_BANCARIA
+      case 'billeteras': return 2; // BILLETERA_DIGITAL  
+      default: return 1;
+    }
+  };
+
+  const getInstanceTabIcon = (tab: InstanceTabType) => {
+    switch (tab) {
+      case 'cuentas': return <Building2 className="w-5 h-5" />;
+      case 'billeteras': return <Smartphone className="w-5 h-5" />;
+    }
+  };
+
+  const getInstanceTabLabel = (tab: InstanceTabType) => {
+    switch (tab) {
+      case 'cuentas': return 'Cuentas';
+      case 'billeteras': return 'Billeteras';
+    }
+  };
+
+  const renderMetodoForm = () => {
+    const initialData = selectedItem || {
+      nombre: 'TRANSFERENCIA_BANCARIA',
+      permite_cobro: true,
+      permite_pago: true,
+      comision_cobro_porcentaje: '0.00',
+      comision_pago_porcentaje: '0.00',
+      is_active: true
+    };
+
+    return (
+      <form 
+        onSubmit={(e) => {
+          e.preventDefault();
+          const formData = new FormData(e.target as HTMLFormElement);
+          const data = {
+            nombre: formData.get('nombre'),
+            permite_cobro: formData.get('permite_cobro') === 'on',
+            permite_pago: formData.get('permite_pago') === 'on',
+            comision_cobro_porcentaje: formData.get('comision_cobro_porcentaje'),
+            comision_pago_porcentaje: formData.get('comision_pago_porcentaje'),
+            is_active: true
+          };
+          editModalOpen ? handleUpdateMetodo(data) : handleCreateMetodo(data);
+        }}
+        className="space-y-4"
+      >
+        <div>
+          <label htmlFor="nombre" className="block text-sm font-medium text-gray-700">
+            Tipo de Método *
+          </label>
+          <select
+            id="nombre"
+            name="nombre"
+            defaultValue={initialData.nombre}
+            className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 focus:border-gray-500 focus:outline-none focus:ring-1 focus:ring-gray-500"
+            required
+          >
+            <option value="TRANSFERENCIA_BANCARIA">Transferencia Bancaria</option>
+            <option value="BILLETERA_DIGITAL">Billetera Digital</option>
+            <option value="METALICO">Metálico</option>
+            <option value="CHEQUE">Cheque</option>
+          </select>
+        </div>
+
+        <div className="grid grid-cols-2 gap-4">
+          <div className="flex items-center">
+            <input
+              id="permite_cobro"
+              name="permite_cobro"
+              type="checkbox"
+              defaultChecked={initialData.permite_cobro}
+              className="h-4 w-4 text-gray-600 focus:ring-gray-500 border-gray-300 rounded"
+            />
+            <label htmlFor="permite_cobro" className="ml-2 block text-sm text-gray-900">
+              Permite Cobro
+            </label>
+          </div>
+
+          <div className="flex items-center">
+            <input
+              id="permite_pago"
+              name="permite_pago"
+              type="checkbox"
+              defaultChecked={initialData.permite_pago}
+              className="h-4 w-4 text-gray-600 focus:ring-gray-500 border-gray-300 rounded"
+            />
+            <label htmlFor="permite_pago" className="ml-2 block text-sm text-gray-900">
+              Permite Pago
+            </label>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <label htmlFor="comision_cobro_porcentaje" className="block text-sm font-medium text-gray-700">
+              Comisión Cobro (%)
+            </label>
+            <input
+              type="number"
+              id="comision_cobro_porcentaje"
+              name="comision_cobro_porcentaje"
+              step="0.01"
+              min="0"
+              max="100"
+              defaultValue={initialData.comision_cobro_porcentaje}
+              className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 focus:border-gray-500 focus:outline-none focus:ring-1 focus:ring-gray-500"
+              required
+            />
+          </div>
+
+          <div>
+            <label htmlFor="comision_pago_porcentaje" className="block text-sm font-medium text-gray-700">
+              Comisión Pago (%)
+            </label>
+            <input
+              type="number"
+              id="comision_pago_porcentaje"
+              name="comision_pago_porcentaje"
+              step="0.01"
+              min="0"
+              max="100"
+              defaultValue={initialData.comision_pago_porcentaje}
+              className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 focus:border-gray-500 focus:outline-none focus:ring-1 focus:ring-gray-500"
+              required
+            />
+          </div>
+        </div>
+
+        <div className="flex justify-end space-x-3 pt-4 border-t">
+          <button
+            type="button"
+            onClick={closeCreateModal || closeEditModal}
+            disabled={isSubmitting}
+            className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-200 border border-gray-300 rounded-md hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-500 disabled:opacity-50"
+          >
+            Cancelar
+          </button>
+          <button
+            type="submit"
+            disabled={isSubmitting}
+            className="btn-primary disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {isSubmitting ? "Guardando..." : editModalOpen ? "Actualizar" : "Crear"}
+          </button>
+        </div>
+      </form>
+    );
+  };
+
+  const renderInstanceForm = () => {
+    const initialData = selectedItem || undefined;
+    
+    switch (instanceTab) {
+      case 'cuentas':
+        return (
+          <CuentaBancariaForm
+            onSubmit={editModalOpen ? handleUpdateInstance : handleCreateInstance}
+            initialData={initialData as CuentaBancaria}
+            isSubmitting={isSubmitting}
+          />
+        );
+      case 'billeteras':
+        return (
+          <BilleteraDigitalForm
+            onSubmit={editModalOpen ? handleUpdateInstance : handleCreateInstance}
+            initialData={initialData as BilleteraDigital}
+            isSubmitting={isSubmitting}
+          />
+        );
+    }
+  };
+
+  const renderItemDetails = () => {
+    if (!selectedItem) return null;
+
+    if (mainTab === 'catalogo') {
+      const metodo = selectedItem as MetodoFinanciero;
+      return (
+        <div className="space-y-4">
+          <h2 className="text-2xl font-bold mb-4 text-gray-800">Detalles del Método Financiero</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700">Tipo</label>
+              <p className="text-gray-900">{metodo.nombre_display || metodo.nombre}</p>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700">Estado</label>
+              <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                metodo.is_active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+              }`}>
+                {metodo.is_active ? 'Activo' : 'Inactivo'}
+              </span>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700">Permite Cobro</label>
+              <p className="text-gray-900">{metodo.permite_cobro ? 'Sí' : 'No'}</p>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700">Permite Pago</label>
+              <p className="text-gray-900">{metodo.permite_pago ? 'Sí' : 'No'}</p>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700">Comisión Cobro</label>
+              <p className="text-gray-900">{metodo.comision_cobro_porcentaje}%</p>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700">Comisión Pago</label>
+              <p className="text-gray-900">{metodo.comision_pago_porcentaje}%</p>
+            </div>
+          </div>
+        </div>
+      );
+    } else {
+      // Same detail rendering as in client page but for casa instances
+      return <div>Detalles de instancia de la casa</div>;
+    }
+  };
+
+  useEffect(() => {
+    if (isLoggedIn) {
+      fetchAllData();
+    }
+  }, [isLoggedIn, mainTab, search, page]);
+
+  const filteredItems = mainTab === 'instancias' ? getFilteredItems() : [];
+
+  return (
+    <div className="bg-gray-50 min-h-screen flex-1 overflow-y-auto p-6">
+      {/* Header */}
+      <div className="mb-6">
+        <h1 className="text-3xl font-bold text-gray-900 mb-2">Gestión de Métodos Financieros</h1>
+      </div>
+
+      {/* Main Tabs */}
+      <div className="mb-6">
+        <div className="border-b border-gray-200">
+          <nav className="-mb-px flex space-x-8">
+            <button
+              onClick={() => setMainTab('catalogo')}
+              className={`py-2 px-1 border-b-2 font-medium text-sm ${
+                mainTab === 'catalogo'
+                  ? 'border-gray-900 text-gray-900'
+                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+              }`}
+            >
+              Catálogo de Métodos Financieros
+            </button>
+            <button
+              onClick={() => setMainTab('instancias')}
+              className={`py-2 px-1 border-b-2 font-medium text-sm ${
+                mainTab === 'instancias'
+                  ? 'border-gray-900 text-gray-900'
+                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+              }`}
+            >
+              Instancias de la Casa
+            </button>
+          </nav>
+        </div>
+      </div>
+
+      {/* Search and Create */}
+      <div className="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div className="relative w-full sm:w-64 md:w-96 pl-4">
+          <div className="flex w-full sm:w-64 md:w-96 gap-2">
+            <div className="relative flex-1">
+              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <Search size={18} className="text-gray-400" />
+              </div>
+              <input
+                type="text"
+                placeholder={mainTab === 'catalogo' ? 'Buscar métodos...' : `Buscar ${getInstanceTabLabel(instanceTab).toLowerCase()}...`}
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    fetchAllData();
+                  }
+                }}
+                className="pl-10 pr-4 py-2 w-full border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-700 focus:border-transparent"
+              />
+            </div>
+
+            <button
+              onClick={() => {
+                fetchAllData();
+              }}
+              className="btn-primary flex items-center justify-center"
+            >
+              Buscar
+            </button>
+          </div>
+        </div>
+        <button
+          onClick={openCreateModal}
+          className="btn-primary flex items-center justify-center"
+        >
+          <Plus size={18} className="mr-2" />
+          Agregar
+        </button>
+      </div>
+
+      {/* Instance Tabs (only shown when mainTab is 'instancias') */}
+      {mainTab === 'instancias' && (
+        <div className="mb-6">
+          <div className="border-b border-gray-200">
+            <nav className="-mb-px flex space-x-8">
+              {(['cuentas', 'billeteras'] as InstanceTabType[]).map((tab) => (
+                <button
+                  key={tab}
+                  onClick={() => setInstanceTab(tab)}
+                  className={`py-2 px-1 border-b-2 font-medium text-sm flex items-center space-x-2 ${
+                    instanceTab === tab
+                      ? 'border-gray-900 text-gray-900'
+                      : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                  }`}
+                >
+                  {getInstanceTabIcon(tab)}
+                  <span>{getInstanceTabLabel(tab)}</span>
+                </button>
+              ))}
+            </nav>
+          </div>
+        </div>
+      )}
+
+      {/* Content */}
+      <div className="card">
+        {loading ? (
+          <div className="text-center py-8">
+            <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
+            <p className="mt-2 text-gray-600">Cargando...</p>
+          </div>
+        ) : mainTab === 'catalogo' ? (
+          // Catalog table
+          <div className="table-container">
+            <table className="table">
+              <thead>
+                <tr>
+                  <th>Tipo</th>
+                  <th>Permite Cobro</th>
+                  <th>Permite Pago</th>
+                  <th>Comisión Cobro</th>
+                  <th>Comisión Pago</th>
+                  <th>Estado</th>
+                  <th>Acciones</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-200">
+                {metodos.length === 0 ? (
+                  <tr>
+                    <td colSpan={7} className="text-center py-8">
+                      <p className="text-gray-600">No hay métodos financieros</p>
+                    </td>
+                  </tr>
+                ) : (
+                  metodos.map((metodo) => (
+                    <tr key={metodo.id}>
+                      <td className="font-medium">{metodo.nombre_display || metodo.nombre}</td>
+                      <td>
+                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                          metodo.permite_cobro ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                        }`}>
+                          {metodo.permite_cobro ? 'Sí' : 'No'}
+                        </span>
+                      </td>
+                      <td>
+                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                          metodo.permite_pago ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                        }`}>
+                          {metodo.permite_pago ? 'Sí' : 'No'}
+                        </span>
+                      </td>
+                      <td>{metodo.comision_cobro_porcentaje}%</td>
+                      <td>{metodo.comision_pago_porcentaje}%</td>
+                      <td>
+                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                          metodo.is_active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                        }`}>
+                          {metodo.is_active ? 'Activo' : 'Inactivo'}
+                        </span>
+                      </td>
+                      <td>
+                        <div className="flex items-center space-x-2">
+                          <button
+                            onClick={() => openEditModal(metodo)}
+                            className="p-1 text-gray-500 hover:text-blue-600 rounded-full hover:bg-gray-100"
+                            title="Editar"
+                          >
+                            <Edit size={16} />
+                          </button>
+                          <button
+                            onClick={() => handleToggleMetodo(metodo)}
+                            className="p-1 text-gray-500 hover:text-red-600 rounded-full hover:bg-gray-100"
+                            title={metodo.is_active ? 'Desactivar' : 'Activar'}
+                          >
+                            {metodo.is_active ? <X size={16} /> : <Check size={16} />}
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+
+            {/* Pagination for catalog */}
+            {metodos.length > 0 && (
+              <div className="flex justify-between items-center mt-4 pt-4 border-t">
+                <div className="text-sm text-gray-600">
+                  Página {page} de {totalPages}
+                </div>
+                <div className="flex space-x-4">
+                  <button
+                    onClick={() => setPage((p) => Math.max(p - 1, 1))}
+                    disabled={page === 1}
+                    className="px-3 py-1 btn-primary disabled:opacity-50"
+                  >
+                    Anterior
+                  </button>
+                  <button
+                    onClick={() => setPage((p) => Math.min(p + 1, totalPages))}
+                    disabled={page === totalPages}
+                    className="px-3 py-1 btn-primary disabled:opacity-50"
+                  >
+                    Siguiente
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        ) : (
+          // Instances grid
+          filteredItems.length === 0 ? (
+            <div className="text-center py-8">
+              <div className="text-gray-400 mb-4">
+                {getInstanceTabIcon(instanceTab)}
+              </div>
+              <h3 className="text-lg font-medium text-gray-900 mb-2">
+                No hay {getInstanceTabLabel(instanceTab).toLowerCase()} de la casa
+              </h3>
+              <p className="text-gray-600 mb-4">
+                {search 
+                  ? `No se encontraron resultados para "${search}"`
+                  : `Comienza creando la primera ${instanceTab.slice(0, -1)} de la casa`
+                }
+              </p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {filteredItems.map((item) => (
+                <MetodoFinancieroCard
+                  key={item.id}
+                  item={item}
+                  onView={openViewModal}
+                  onEdit={openEditModal}
+                  onToggleActive={handleToggleInstance}
+                  isAdminView={true}
+                />
+              ))}
+            </div>
+          )
+        )}
+      </div>
+
+      {/* Modals */}
+      <Modal isOpen={createModalOpen} onClose={closeCreateModal}>
+        <div>
+          <h2 className="text-2xl font-bold mb-4 text-gray-800">
+            {mainTab === 'catalogo' 
+              ? 'Crear Método Financiero' 
+              : `Crear ${getInstanceTabLabel(instanceTab).slice(0, -1)} de la Casa`
+            }
+          </h2>
+          {mainTab === 'catalogo' ? renderMetodoForm() : renderInstanceForm()}
+        </div>
+      </Modal>
+
+      <Modal isOpen={editModalOpen} onClose={closeEditModal}>
+        <div>
+          <h2 className="text-2xl font-bold mb-4 text-gray-800">
+            {mainTab === 'catalogo' 
+              ? 'Editar Método Financiero' 
+              : `Editar ${getInstanceTabLabel(instanceTab).slice(0, -1)} de la Casa`
+            }
+          </h2>
+          {mainTab === 'catalogo' ? renderMetodoForm() : renderInstanceForm()}
+        </div>
+      </Modal>
+
+      <Modal isOpen={viewModalOpen} onClose={closeViewModal}>
+        {renderItemDetails()}
+      </Modal>
+    </div>
+  );
+};
+
+export default MetodosFinancierosPage;

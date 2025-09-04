@@ -23,11 +23,7 @@ class MetodoFinancieroSerializer(serializers.ModelSerializer):
     """
     Serializer para el catálogo de métodos financieros.
 
-    Campos adicionales:
-        - nombre_display: representación legible del campo `nombre` (choice).
     """
-    nombre_display = serializers.CharField(source='get_nombre_display', read_only=True)
-
     class Meta:
         model = MetodoFinanciero
         fields = '__all__'
@@ -54,6 +50,7 @@ class CuentaBancariaSerializer(serializers.ModelSerializer):
 
     Muestra todos los campos por defecto; `metodo_financiero_detalle`
     debe ser el ID del detalle asociado.
+
     """
 
     class Meta:
@@ -66,8 +63,8 @@ class BilleteraDigitalSerializer(serializers.ModelSerializer):
     Serializer para billeteras digitales.
 
     Campos como `email` y `telefono` son opcionales según el modelo.
+    
     """
-
     class Meta:
         model = BilleteraDigital
         fields = '__all__'
@@ -79,9 +76,55 @@ class TarjetaSerializer(serializers.ModelSerializer):
 
     Nota: `stripe_payment_method_id` es único y obligatorio para la integración
     con Stripe.
+    
     """
-
     class Meta:
         model = Tarjeta
         fields = '__all__'
+
+
+class MetodoFinancieroPaginatedResponseSerializer(serializers.Serializer):
+    """
+    Serializer para la respuesta paginada de métodos financieros.
+    """
+    count = serializers.IntegerField()
+    next = serializers.URLField(required=False)
+    previous = serializers.URLField(required=False)
+    results = MetodoFinancieroSerializer(many=True)
+
+class MetodoFinancieroDetallePaginatedResponseSerializer(serializers.Serializer):
+    """
+    Serializer para la respuesta paginada de detalles de métodos financieros.
+    """
+    count = serializers.IntegerField()
+    next = serializers.URLField(required=False)
+    previous = serializers.URLField(required=False)
+    results = MetodoFinancieroDetalleSerializer(many=True)
+
+class CuentaBancariaPaginatedResponseSerializer(serializers.Serializer):
+    """
+    Serializer para la respuesta paginada de cuentas bancarias.
+    """
+    count = serializers.IntegerField()
+    next = serializers.URLField(required=False)
+    previous = serializers.URLField(required=False)
+    results = CuentaBancariaSerializer(many=True)
+
+class BilleteraDigitalPaginatedResponseSerializer(serializers.Serializer):
+    """
+    Serializer para la respuesta paginada de billeteras digitales.
+    """
+    count = serializers.IntegerField()
+    next = serializers.URLField(required=False)
+    previous = serializers.URLField(required=False)
+    results = BilleteraDigitalSerializer(many=True)
+
+class TarjetaPaginatedResponseSerializer(serializers.Serializer):
+    """
+    Serializer para la respuesta paginada de tarjetas.
+    """
+    count = serializers.IntegerField()
+    next = serializers.URLField(required=False)
+    previous = serializers.URLField(required=False)
+    results = TarjetaSerializer(many=True)  
 

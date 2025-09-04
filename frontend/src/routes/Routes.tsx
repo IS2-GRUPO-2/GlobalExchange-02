@@ -9,6 +9,8 @@ import RolesPage from "../pages/RolesPage";
 import MainMenuPage from "../pages/MenuPage";
 import AdminRoutes from "./AdminRoutes";
 import DivisasPage from "../pages/DivisasPage";
+import MetodosFinancierosPage from "../pages/MetodosFinancierosPage";
+import MetodosFinancierosClientePage from "../pages/MetodosFinancierosClientePage";
 import RequirePerm from "./RequierePerm";
 import { CLIENTES, ROLES, USUARIOS } from "../types/perms";
 
@@ -59,6 +61,20 @@ export const router = createBrowserRouter([
           <AdminRoutes>
             <DivisasPage />
           </AdminRoutes>
+        ),
+      },
+      {
+        path: "metodos-financieros",
+        element: (
+          <AdminRoutes>
+            <MetodosFinancierosPage />
+          </AdminRoutes>
+        ),
+      },
+      {
+        path: "billeteras",
+        element: (
+          <MetodosFinancierosClientePage />
         ),
       },
     ],
