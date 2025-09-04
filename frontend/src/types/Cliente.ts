@@ -11,4 +11,9 @@ export type Cliente = {
   ruc?: string;
 };
 
-export type Categoria = "VIP" | "CORPORATIVO" | "MINORISTA";
+export type Categoria = {
+  idCategoria: string;
+  nombre: string;
+  descripcion: string;
+  descuento: number;
+};
