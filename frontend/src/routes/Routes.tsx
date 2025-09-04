@@ -11,6 +11,7 @@ import AdminRoutes from "./AdminRoutes";
 import DivisasPage from "../pages/DivisasPage";
 import RequirePerm from "./RequierePerm";
 import { CLIENTES, ROLES, USUARIOS } from "../types/perms";
+import CotizacionesPage from "../pages/CotizacionesPage";
 
 export const router = createBrowserRouter([
   {
@@ -59,6 +60,12 @@ export const router = createBrowserRouter([
           <AdminRoutes>
             <DivisasPage />
           </AdminRoutes>
+        ),
+      },
+      {
+        path: "cotizaciones",
+        element: (
+          <CotizacionesPage />
         ),
       },
     ],

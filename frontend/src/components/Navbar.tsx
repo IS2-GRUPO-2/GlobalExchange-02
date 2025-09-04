@@ -18,6 +18,7 @@ const navigation = [
   { name: "Clientes", href: "/clientes", current: false, permisos: [CLIENTES.VIEW] },
   { name: "Usuarios", href: "/usuarios", current: false, permisos: [USUARIOS.VIEW] },
   { name: "Roles", href: "/roles", current: false, permisos: [ROLES.VIEW] },
+  { name: "Cotizaciones", href: "/cotizaciones", current: false, permisos: [] },
   { name: "Iniciar sesión", href: "/login", current: false, permisos: [] },
   { name: "Registrarse", href: "/register", current: false, permisos: [] },
 ];
