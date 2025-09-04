@@ -1,15 +1,10 @@
-from django.db import models
-import uuid
-# from django.conf import settings  # para referenciar al modelo de User
-# Create your models here.
-
-
 import uuid
 from django.db import models
 
 class CategoriaCliente(models.Model):
     idCategoria = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     nombre = models.CharField(max_length=50, unique=True)
+    descripcion = models.TextField(blank=True, null=True)
     descuento = models.DecimalField(max_digits=5, decimal_places=2, default=0.00, help_text="Porcentaje de descuento en la comisión")
 
     def __str__(self):
