@@ -3,6 +3,8 @@ import { useForm } from "react-hook-form";
 import { toast } from "react-toastify";
 import { yupResolver } from "@hookform/resolvers/yup";
 import type { Divisa } from "../types/Divisa";
+import { getDivisas } from "../services/divisaService";
+import { useEffect, useState } from "react";
 
 export type DivisaFormData = {
   id?: number;
@@ -11,6 +13,7 @@ export type DivisaFormData = {
   simbolo: string;
   max_digitos: number;
   precision: number;
+  es_base?: boolean;
 };
 
 type Props = {
@@ -48,11 +51,14 @@ const divisaSchema = yup.object().shape({
 });
 
 const DivisaForm = ({ onSubmit, onCancel, isEditForm, divisa }: Props) => {
+  const [existeBase, setExisteBase] = useState<boolean>(false);
+
   const {
     register,
     handleSubmit,
     formState: { errors, isSubmitting },
     reset,
+    setValue, 
   } = useForm<DivisaFormData>({
     resolver: yupResolver(divisaSchema),
     defaultValues: !isEditForm
@@ -62,6 +68,7 @@ const DivisaForm = ({ onSubmit, onCancel, isEditForm, divisa }: Props) => {
           simbolo: "",
           max_digitos: 30,
           precision: 6,
+          es_base: false,
         }
       : {
           codigo: divisa?.codigo,
@@ -69,8 +76,25 @@ const DivisaForm = ({ onSubmit, onCancel, isEditForm, divisa }: Props) => {
           simbolo: divisa?.simbolo,
           max_digitos: divisa?.max_digitos,
           precision: divisa?.precision,
+          es_base: divisa?.es_base ?? false,
         },
   });
+
+  useEffect(() => {
+    const checkBase = async () => {
+      if (isEditForm) return;
+      try {
+        const res = await getDivisas({ page: 1, es_base: true });
+        const hayBase = (res?.count ?? 0) > 0;
+        setExisteBase(hayBase);
+        if (hayBase) setValue("es_base", false);
+      } catch {
+        setExisteBase(true);
+        setValue("es_base", false);
+      }
+    };
+    checkBase();
+  }, [isEditForm, setValue]);
 
   const onFormSubmit = async (data: DivisaFormData) => {
     try {
@@ -199,6 +223,23 @@ const DivisaForm = ({ onSubmit, onCancel, isEditForm, divisa }: Props) => {
             </p>
           )}
         </div>
+
+        {/* 👇 Campo “Divisa base” */}
+        {isEditForm ? (
+          <div className="flex items-center gap-2">
+            <input id="es_base" type="checkbox" checked={!!divisa?.es_base} disabled />
+            <label htmlFor="es_base" className="text-sm">
+              Divisa base
+            </label>
+          </div>
+        ) : !existeBase ? (
+          <div className="flex items-center gap-2">
+            <input id="es_base" type="checkbox" {...register("es_base")} />
+            <label htmlFor="es_base" className="text-sm">
+              Marcar como divisa base
+            </label>
+          </div>
+        ) : null}
 
         <div className="flex space-x-3 pt-4">
           <button
