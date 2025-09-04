@@ -34,7 +34,7 @@ import type {
   MetodoFinanciero
 } from '../types/MetodoFinanciero';
 
-type TabType = 'cuentas' | 'billeteras' | 'tarjetas';
+type TabType = 'cuentas' | 'billeteras digitales' | 'tarjetas';
 
 type ExtendedItem = (CuentaBancaria | BilleteraDigital | Tarjeta) & {
   tipo: TabType;
@@ -144,8 +144,8 @@ const MetodosFinancierosClientePage = () => {
       case 'cuentas':
         items = getExtendedItems(cuentas, 'cuentas');
         break;
-      case 'billeteras':
-        items = getExtendedItems(billeteras, 'billeteras');
+      case 'billeteras digitales':
+        items = getExtendedItems(billeteras, 'billeteras digitales');
         break;
       case 'tarjetas':
         items = getExtendedItems(tarjetas, 'tarjetas');
@@ -162,7 +162,7 @@ const MetodosFinancierosClientePage = () => {
           return cuenta.banco.toLowerCase().includes(searchLower) ||
                  cuenta.titular.toLowerCase().includes(searchLower) ||
                  cuenta.numero_cuenta.includes(searchLower);
-        case 'billeteras':
+        case 'billeteras digitales':
           const billetera = item as BilleteraDigital & ExtendedItem;
           return billetera.plataforma.toLowerCase().includes(searchLower) ||
                  billetera.usuario_id.toLowerCase().includes(searchLower) ||
@@ -227,7 +227,7 @@ const MetodosFinancierosClientePage = () => {
         case 'cuentas':
           await createCuentaBancaria(itemData);
           break;
-        case 'billeteras':
+        case 'billeteras digitales':
           await createBilleteraDigital(itemData);
           break;
         case 'tarjetas':
@@ -255,7 +255,7 @@ const MetodosFinancierosClientePage = () => {
         case 'cuentas':
           await updateCuentaBancaria(formData, selectedItem.id);
           break;
-        case 'billeteras':
+        case 'billeteras digitales':
           await updateBilleteraDigital(formData, selectedItem.id);
           break;
         case 'tarjetas':
@@ -293,7 +293,7 @@ const MetodosFinancierosClientePage = () => {
     const metodo = metodos.find(m => {
       switch (tipo) {
         case 'cuentas': return m.nombre === 'TRANSFERENCIA_BANCARIA';
-        case 'billeteras': return m.nombre === 'BILLETERA_DIGITAL';
+        case 'billeteras digitales': return m.nombre === 'BILLETERA_DIGITAL';
         case 'tarjetas': return m.nombre === 'TARJETA';
         default: return false;
       }
@@ -304,7 +304,7 @@ const MetodosFinancierosClientePage = () => {
       // Fallback a valores por defecto si no se encuentran los métodos
       switch (tipo) {
         case 'cuentas': return 1; // TRANSFERENCIA_BANCARIA
-        case 'billeteras': return 2; // BILLETERA_DIGITAL  
+        case 'billeteras digitales': return 2; // BILLETERA_DIGITAL
         case 'tarjetas': return 3; // TARJETA
         default: return 1;
       }
@@ -316,7 +316,7 @@ const MetodosFinancierosClientePage = () => {
   const getTabIcon = (tab: TabType) => {
     switch (tab) {
       case 'cuentas': return <Building2 className="w-5 h-5" />;
-      case 'billeteras': return <Smartphone className="w-5 h-5" />;
+      case 'billeteras digitales': return <Smartphone className="w-5 h-5" />;
       case 'tarjetas': return <CreditCard className="w-5 h-5" />;
     }
   };
@@ -324,7 +324,7 @@ const MetodosFinancierosClientePage = () => {
   const getTabLabel = (tab: TabType) => {
     switch (tab) {
       case 'cuentas': return 'Cuentas Bancarias';
-      case 'billeteras': return 'Billeteras Digitales';
+      case 'billeteras digitales': return 'Billeteras Digitales';
       case 'tarjetas': return 'Tarjetas';
     }
   };
@@ -341,7 +341,7 @@ const MetodosFinancierosClientePage = () => {
             isSubmitting={isSubmitting}
           />
         );
-      case 'billeteras':
+      case 'billeteras digitales':
         return (
           <BilleteraDigitalForm
             onSubmit={editModalOpen ? handleUpdateItem : handleCreateItem}
@@ -398,7 +398,7 @@ const MetodosFinancierosClientePage = () => {
           </div>
         );
       
-      case 'billeteras':
+      case 'billeteras digitales':
         const billetera = selectedItem as BilleteraDigital & ExtendedItem;
         return (
           <div className="space-y-4">
@@ -532,7 +532,7 @@ const MetodosFinancierosClientePage = () => {
       <div className="mb-6">
         <div className="border-b border-gray-200">
           <nav className="-mb-px flex space-x-8">
-            {(['cuentas', 'billeteras', 'tarjetas'] as TabType[]).map((tab) => (
+            {(['cuentas', 'billeteras digitales', 'tarjetas'] as TabType[]).map((tab) => (
               <button
                 key={tab}
                 onClick={() => setActiveTab(tab)}
