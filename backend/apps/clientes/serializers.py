@@ -10,6 +10,7 @@ from .models import Cliente, CategoriaCliente
 #         fields = ["id", "username", "email"]
 
 class ClienteSerializer(serializers.ModelSerializer):
+    nombreCategoria= serializers.CharField(source='categoria.nombre', read_only=True)
     class Meta:
         model = Cliente
         fields = "__all__"

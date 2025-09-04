@@ -32,17 +32,10 @@ class ClienteViewSet(viewsets.ModelViewSet):
         serializer = UserSerializer(usuarios, many=True)
         return Response(serializer.data)
     
-    @action(detail=False, methods=['get'], url_path="categorias", token_auth=True)
+    @action(detail=False, methods=['get'], url_path="categorias")
     def get_categorias(self, request):
         """Este endpoint retorna todas las categorías disponibles."""
         categorias = CategoriaCliente.objects.all()
         serializer = CategoriaClienteSerializer(categorias, many=True)
         return Response(serializer.data)
-    
-    @action(detail=True, methods=['get'], url_path="categoria_cliente")
-    def get_categoria_cliente(self, request, pk=None):
-        """Este endpoint retorna la categoria del cliente."""
-        cliente = self.get_object()
-        categoria = cliente.categoria
-        serializer = CategoriaClienteSerializer(categoria)
-        return Response(serializer.data)
+
