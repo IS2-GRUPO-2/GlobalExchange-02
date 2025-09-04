@@ -10,12 +10,38 @@ from .models import Cliente, CategoriaCliente
 #         fields = ["id", "username", "email"]
 
 class ClienteSerializer(serializers.ModelSerializer):
+    """
+    Serializer principal para el modelo Cliente.
+    
+    Maneja la serialización y deserialización de clientes, incluyendo
+    información extendida de la categoría asociada.
+    
+    Campos:
+        nombreCategoria: Campo calculado de solo lectura que obtiene
+                        el nombre de la categoría asociada al cliente.
+                        
+    Características:
+        - Incluye todos los campos del modelo Cliente
+        - Agrega información de la categoría sin necesidad de consultas adicionales
+        - Campo nombreCategoria es de solo lectura para evitar inconsistencias
+    """
     nombreCategoria= serializers.CharField(source='categoria.nombre', read_only=True)
     class Meta:
         model = Cliente
         fields = "__all__"
         
 class CategoriaClienteSerializer(serializers.ModelSerializer):
+    """
+    Serializer para el modelo CategoriaCliente.
+    
+    Maneja la serialización y deserialización de categorías de clientes,
+    proporcionando una interfaz completa para la gestión de categorías.
+    
+    Características:
+        - Incluye todos los campos del modelo CategoriaCliente
+        - Permite operaciones CRUD completas sobre categorías
+        - Validación automática según las reglas del modelo
+    """
     class Meta:
         model = CategoriaCliente
         fields = "__all__"

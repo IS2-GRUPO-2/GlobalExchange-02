@@ -2,6 +2,14 @@ import uuid
 from django.db import models
 
 class CategoriaCliente(models.Model):
+    """
+    Modelo de categoría de cliente.
+    Atributos:
+        idCategoria (UUID): Identificador único de la categoría.
+        nombre (str): Nombre de la categoría.
+        descripcion (str): Descripción de la categoría.
+        descuento (Decimal): Porcentaje de descuento asociado a la categoría.
+    """
     idCategoria = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     nombre = models.CharField(max_length=50, unique=True)
     descripcion = models.TextField(blank=True, null=True)
@@ -11,7 +19,21 @@ class CategoriaCliente(models.Model):
         return f"{self.nombre} ({self.descuento}%)"
 
 class Cliente(models.Model):
-
+    """
+    Modelo de cliente.
+    
+    Atributos:
+        idCliente (UUID): Identificador único del cliente.
+        nombre (str): Nombre completo del cliente.
+        isPersonaFisica (bool): Indica si el cliente es una persona física.
+        categoria (ForeignKey): Relación con la categoría del cliente.
+        cedula (str): Cédula de identidad del cliente (única).
+        correo (str): Correo electrónico del cliente (único).
+        telefono (str): Número de teléfono del cliente.
+        direccion (str): Dirección física del cliente.
+        isActive (bool): Indica si el cliente está activo.
+        ruc (str): Registro Único de Contribuyentes del cliente (único).
+    """
     idCliente = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     nombre = models.CharField(max_length=255)
     isPersonaFisica = models.BooleanField(default=True)
