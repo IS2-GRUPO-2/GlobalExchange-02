@@ -54,6 +54,7 @@ INSTALLED_APPS = [
     'apps.clientes',
     'apps.autenticacion',
     'apps.divisas',
+    'apps.operaciones',
     'drf_yasg'
 ]
 
