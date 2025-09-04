@@ -3,6 +3,40 @@ from django.core.exceptions import ValidationError
 from apps.clientes.models import Cliente
 
 
+# ======================== CATÁLOGOS INDEPENDIENTES ========================
+
+class Banco(models.Model):
+    """Catálogo de bancos disponibles"""
+    nombre = models.CharField(max_length=100, unique=True, help_text="Nombre del banco (ej: Santander, Itaú, BBVA)")
+    is_active = models.BooleanField(default=True, help_text="Indica si el banco está disponible")
+    fecha_creacion = models.DateTimeField(auto_now_add=True)
+    fecha_actualizacion = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        verbose_name = "Banco"
+        verbose_name_plural = "Bancos"
+        ordering = ['nombre']
+    
+    def __str__(self):
+        return self.nombre
+
+
+class BilleteraDigitalCatalogo(models.Model):
+    """Catálogo de billeteras digitales disponibles"""
+    nombre = models.CharField(max_length=100, unique=True, help_text="Nombre de la billetera (ej: PayPal, MercadoPago, Binance Pay, TigoMoney)")
+    is_active = models.BooleanField(default=True, help_text="Indica si la billetera está disponible")
+    fecha_creacion = models.DateTimeField(auto_now_add=True)
+    fecha_actualizacion = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        verbose_name = "Billetera Digital"
+        verbose_name_plural = "Billeteras Digitales"
+        ordering = ['nombre']
+    
+    def __str__(self):
+        return self.nombre
+
+
 class TipoMetodoFinanciero(models.TextChoices):
     """Tipos de métodos financieros"""
     TRANSFERENCIA_BANCARIA = 'TRANSFERENCIA_BANCARIA', 'Transferencia Bancaria'
@@ -96,7 +130,7 @@ class CuentaBancaria(models.Model):
         on_delete=models.CASCADE,
         related_name='cuenta_bancaria'
     )
-    banco = models.CharField(max_length=100)
+    banco = models.ForeignKey(Banco, on_delete=models.PROTECT, help_text="Banco del catálogo")
     numero_cuenta = models.CharField(max_length=50)
     titular = models.CharField(max_length=100)
     cbu_cvu = models.CharField(max_length=22, blank=True, help_text="CBU o CVU")
@@ -106,7 +140,7 @@ class CuentaBancaria(models.Model):
         verbose_name_plural = "Cuentas Bancarias"
 
     def __str__(self):
-        return f"{self.banco} - {self.numero_cuenta} ({self.titular})"
+        return f"{self.banco.nombre} - {self.numero_cuenta} ({self.titular})"
 
 
 class BilleteraDigital(models.Model):
@@ -116,7 +150,7 @@ class BilleteraDigital(models.Model):
         on_delete=models.CASCADE,
         related_name='billetera_digital'
     )
-    plataforma = models.CharField(max_length=50)  # PayPal, Nequi, MercadoPago, etc.
+    plataforma = models.ForeignKey(BilleteraDigitalCatalogo, on_delete=models.PROTECT, help_text="Billetera del catálogo")
     usuario_id = models.CharField(max_length=100)
     email = models.EmailField(blank=True)
     telefono = models.CharField(max_length=20, blank=True)
@@ -127,7 +161,7 @@ class BilleteraDigital(models.Model):
         verbose_name_plural = "Billeteras Digitales"
     
     def __str__(self):
-        return f"{self.plataforma} - {self.usuario_id}"
+        return f"{self.plataforma.nombre} - {self.usuario_id}"
 
 
 class Tarjeta(models.Model):
@@ -158,7 +192,7 @@ class Cheque(models.Model):
     """Detalles específicos de cheque"""
     ##Va ser parte de la operacion ya que no es reutilizable, no es un detalle de metodo financiero
     cliente = models.ForeignKey(Cliente, on_delete=models.PROTECT, null=True)
-    banco_emisor = models.CharField(max_length=100)
+    banco_emisor = models.ForeignKey(Banco, on_delete=models.PROTECT, help_text="Banco emisor del cheque")
     titular = models.CharField(max_length=100)
     numero = models.CharField(max_length=50, unique=True)
     tipo = models.CharField(max_length=15, choices=[
@@ -184,5 +218,5 @@ class Cheque(models.Model):
         verbose_name_plural = "Cheques"
     
     def __str__(self):
-        return f"Cheque {self.numero} - {self.banco_emisor} ({self.estado})"
+        return f"Cheque {self.numero} - {self.banco_emisor.nombre} ({self.estado})"
 

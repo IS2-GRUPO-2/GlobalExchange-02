@@ -1,8 +1,9 @@
-import React, { useState } from "react";
-import type { BilleteraDigital } from "../types/MetodoFinanciero";
+import React, { useState, useEffect } from "react";
+import type { BilleteraDigital, BilleteraDigitalCatalogo } from "../types/MetodoFinanciero";
+import { getBilleterasDigitalesCatalogo } from "../services/metodoFinancieroService";
 
 export interface BilleteraDigitalFormData {
-  plataforma: string;
+  plataforma: number; // Cambió de string a number para el ID
   usuario_id: string;
   email: string;
   telefono?: string;
@@ -20,8 +21,11 @@ const BilleteraDigitalForm: React.FC<BilleteraDigitalFormProps> = ({
   initialData,
   isSubmitting = false,
 }) => {
+  const [billeteras, setBilleteras] = useState<BilleteraDigitalCatalogo[]>([]);
+  const [loadingBilleteras, setLoadingBilleteras] = useState(true);
+  
   const [formData, setFormData] = useState<BilleteraDigitalFormData>({
-    plataforma: initialData?.plataforma || "",
+    plataforma: initialData?.plataforma || 0,
     usuario_id: initialData?.usuario_id || "",
     email: initialData?.email || "",
     telefono: initialData?.telefono || "",
@@ -30,11 +34,27 @@ const BilleteraDigitalForm: React.FC<BilleteraDigitalFormProps> = ({
 
   const [errors, setErrors] = useState<Partial<BilleteraDigitalFormData>>({});
 
+  // Cargar lista de billeteras digitales activas
+  useEffect(() => {
+    const fetchBilleteras = async () => {
+      try {
+        const response = await getBilleterasDigitalesCatalogo();
+        setBilleteras(response.results.filter(billetera => billetera.is_active));
+      } catch (error) {
+        console.error('Error loading billeteras digitales:', error);
+      } finally {
+        setLoadingBilleteras(false);
+      }
+    };
+
+    fetchBilleteras();
+  }, []);
+
   const validateForm = (): boolean => {
     const newErrors: Partial<BilleteraDigitalFormData> = {};
 
-    if (!formData.plataforma.trim()) {
-      newErrors.plataforma = "La plataforma es requerida";
+    if (!formData.plataforma) {
+      newErrors.plataforma = "Debe seleccionar una plataforma";
     }
 
     if (!formData.usuario_id.trim()) {
@@ -61,9 +81,10 @@ const BilleteraDigitalForm: React.FC<BilleteraDigitalFormProps> = ({
   const handleInputChange = (field: keyof BilleteraDigitalFormData) => (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
   ) => {
+    const value = field === 'plataforma' ? parseInt(e.target.value) : e.target.value;
     setFormData(prev => ({
       ...prev,
-      [field]: e.target.value
+      [field]: value
     }));
     // Limpiar error del campo cuando el usuario empiece a escribir
     if (errors[field]) {
@@ -74,42 +95,45 @@ const BilleteraDigitalForm: React.FC<BilleteraDigitalFormProps> = ({
     }
   };
 
-  const plataformasPopulares = [
-    'MercadoPago',
-    'PayPal',
-    'Ualá',
-    'Brubank',
-    'Naranja X',
-    'Personal Pay',
-    'Todo Pago',
-    'Otra'
-  ];
-
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <div>
         <label htmlFor="plataforma" className="block text-sm font-medium text-gray-700">
-          Plataforma *
+          Plataforma
         </label>
-        <select
-          id="plataforma"
-          value={formData.plataforma}
-          onChange={handleInputChange('plataforma')}
-          className={`mt-1 block w-full rounded-md border ${
-            errors.plataforma ? 'border-red-300' : 'border-gray-300'
-          } px-3 py-2 focus:border-gray-500 focus:outline-none focus:ring-1 focus:ring-gray-500`}
-        >
-          <option value="">Seleccionar plataforma...</option>
-          {plataformasPopulares.map(plataforma => (
-            <option key={plataforma} value={plataforma}>{plataforma}</option>
-          ))}
-        </select>
+        {loadingBilleteras ? (
+          <div className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 bg-gray-50">
+            Cargando billeteras digitales...
+          </div>
+        ) : (
+          <select
+            id="plataforma"
+            value={formData.plataforma}
+            onChange={handleInputChange('plataforma')}
+            className={`mt-1 block w-full rounded-md border ${
+              errors.plataforma ? 'border-red-300' : 'border-gray-300'
+            } px-3 py-2 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500`}
+            disabled={isSubmitting}
+          >
+            <option value={0}>Seleccione una plataforma</option>
+            {billeteras.map((billetera) => (
+              <option key={billetera.id} value={billetera.id}>
+                {billetera.nombre}
+              </option>
+            ))}
+          </select>
+        )}
         {errors.plataforma && <p className="mt-1 text-sm text-red-600">{errors.plataforma}</p>}
+        {billeteras.length === 0 && !loadingBilleteras && (
+          <p className="mt-1 text-sm text-amber-600">
+            No hay billeteras digitales disponibles.
+          </p>
+        )}
       </div>
 
       <div>
         <label htmlFor="usuario_id" className="block text-sm font-medium text-gray-700">
-          ID de Usuario *
+          ID de Usuario
         </label>
         <input
           type="text"
@@ -126,7 +150,7 @@ const BilleteraDigitalForm: React.FC<BilleteraDigitalFormProps> = ({
 
       <div>
         <label htmlFor="email" className="block text-sm font-medium text-gray-700">
-          Email *
+          Email
         </label>
         <input
           type="email"
@@ -155,7 +179,7 @@ const BilleteraDigitalForm: React.FC<BilleteraDigitalFormProps> = ({
         />
       </div>
 
-      <div className="flex justify-end space-x-3 pt-4 border-t">
+      <div className="flex justify-end space-x-3 pt-4">
         <button
           type="submit"
           disabled={isSubmitting}

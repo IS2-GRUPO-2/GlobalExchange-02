@@ -122,7 +122,7 @@ const TarjetaForm: React.FC<TarjetaFormProps> = ({
     <form onSubmit={handleSubmit} className="space-y-4">
       <div>
         <label htmlFor="stripe_payment_method_id" className="block text-sm font-medium text-gray-700">
-          ID Método de Pago *
+          ID Método de Pago
         </label>
         <input
           type="text"
@@ -132,7 +132,7 @@ const TarjetaForm: React.FC<TarjetaFormProps> = ({
           className={`mt-1 block w-full rounded-md border ${
             errors.stripe_payment_method_id ? 'border-red-300' : 'border-gray-300'
           } px-3 py-2 focus:border-gray-500 focus:outline-none focus:ring-1 focus:ring-gray-500`}
-          placeholder="pm_1234567890abcdef"
+          placeholder="stripe"
         />
         {errors.stripe_payment_method_id && (
           <p className="mt-1 text-sm text-red-600">{errors.stripe_payment_method_id}</p>
@@ -141,7 +141,7 @@ const TarjetaForm: React.FC<TarjetaFormProps> = ({
 
       <div>
         <label htmlFor="brand" className="block text-sm font-medium text-gray-700">
-          Marca *
+          Marca
         </label>
         <select
           id="brand"
@@ -161,7 +161,7 @@ const TarjetaForm: React.FC<TarjetaFormProps> = ({
 
       <div>
         <label htmlFor="last4" className="block text-sm font-medium text-gray-700">
-          Últimos 4 dígitos *
+          Últimos 4 dígitos
         </label>
         <input
           type="text"
@@ -180,7 +180,7 @@ const TarjetaForm: React.FC<TarjetaFormProps> = ({
       <div className="grid grid-cols-2 gap-4">
         <div>
           <label htmlFor="exp_month" className="block text-sm font-medium text-gray-700">
-            Mes de vencimiento *
+            Mes de vencimiento
           </label>
           <select
             id="exp_month"
@@ -201,7 +201,7 @@ const TarjetaForm: React.FC<TarjetaFormProps> = ({
 
         <div>
           <label htmlFor="exp_year" className="block text-sm font-medium text-gray-700">
-            Año de vencimiento *
+            Año de vencimiento
           </label>
           <select
             id="exp_year"
@@ -221,7 +221,7 @@ const TarjetaForm: React.FC<TarjetaFormProps> = ({
 
       <div>
         <label htmlFor="titular" className="block text-sm font-medium text-gray-700">
-          Titular *
+          Titular
         </label>
         <input
           type="text"
@@ -236,7 +236,7 @@ const TarjetaForm: React.FC<TarjetaFormProps> = ({
         {errors.titular && <p className="mt-1 text-sm text-red-600">{errors.titular}</p>}
       </div>
 
-      <div className="flex justify-end space-x-3 pt-4 border-t">
+      <div className="flex justify-end space-x-3 pt-4">
         <button
           type="submit"
           disabled={isSubmitting}

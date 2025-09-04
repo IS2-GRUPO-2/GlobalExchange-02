@@ -6,35 +6,52 @@ import Modal from '../components/Modal';
 import MetodoFinancieroCard from '../components/MetodoFinancieroCard';
 import CuentaBancariaForm from '../components/CuentaBancariaForm';
 import BilleteraDigitalForm from '../components/BilleteraDigitalForm';
+import BancoForm from '../components/BancoForm';
+import BilleteraDigitalCatalogoForm from '../components/BilleteraDigitalCatalogoForm';
 import {
   getMetodosFinancieros,
   getCuentasBancarias,
   getBilleterasDigitales,
+  getBancos,
+  getBilleterasDigitalesCatalogo,
   createMetodoFinanciero,
   createCuentaBancaria,
   createBilleteraDigital,
+  createBanco,
+  createBilleteraDigitalCatalogo,
   updateMetodoFinanciero,
   updateCuentaBancaria,
   updateBilleteraDigital,
+  updateBanco,
+  updateBilleteraDigitalCatalogo,
   deactivateMetodoFinanciero,
+  toggleActiveMetodoFinanciero,
+  toggleActiveBanco,
+  toggleActiveBilleteraDigitalCatalogo,
   getDetallesMetodosFinancieros,
-  createDetalleMetodoFinanciero,
-  toggleActiveMetodoFinanciero
+  createDetalleMetodoFinanciero
 } from '../services/metodoFinancieroService';
 import type { 
+  Banco,
+  BilleteraDigitalCatalogo,
   MetodoFinanciero,
   CuentaBancaria, 
   BilleteraDigital, 
   MetodoFinancieroDetalle 
 } from '../types/MetodoFinanciero';
 
-type MainTabType = 'catalogo' | 'instancias';
+type MainTabType = 'catalogo' | 'instancias' | 'catalogos';
 type InstanceTabType = 'cuentas' | 'billeteras digitales';
+type CatalogTabType = 'bancos' | 'billeteras';
 
 type ExtendedItem = (CuentaBancaria | BilleteraDigital) & {
   tipo: InstanceTabType;
   is_active: boolean;
   detalle_id?: number;
+};
+
+type CatalogItem = (Banco | BilleteraDigitalCatalogo) & {
+  tipo: CatalogTabType;
 };
 
 const getDisplayName = (nombre: string): string => {
@@ -60,12 +77,15 @@ const getDisplayName = (nombre: string): string => {
 const MetodosFinancierosPage = () => {
   const [mainTab, setMainTab] = useState<MainTabType>('catalogo');
   const [instanceTab, setInstanceTab] = useState<InstanceTabType>('cuentas');
+  const [catalogTab, setCatalogTab] = useState<CatalogTabType>('bancos');
   
   // Data states
   const [metodos, setMetodos] = useState<MetodoFinanciero[]>([]);
   const [cuentas, setCuentas] = useState<CuentaBancaria[]>([]);
   const [billeteras, setBilleteras] = useState<BilleteraDigital[]>([]);
   const [detalles, setDetalles] = useState<MetodoFinancieroDetalle[]>([]);
+  const [bancos, setBancos] = useState<Banco[]>([]);
+  const [billeterasCatalogo, setBilleterasCatalogo] = useState<BilleteraDigitalCatalogo[]>([]);
   
   // UI states
   const [search, setSearch] = useState('');
@@ -120,11 +140,34 @@ const MetodosFinancierosPage = () => {
     }
   };
 
+  const fetchBancos = async () => {
+    try {
+      const res = await getBancos({ search });
+      setBancos(res.results);
+    } catch (err) {
+      console.error('Error fetching bancos:', err);
+    }
+  };
+
+  const fetchBilleterasCatalogo = async () => {
+    try {
+      const res = await getBilleterasDigitalesCatalogo({ search });
+      setBilleterasCatalogo(res.results);
+    } catch (err) {
+      console.error('Error fetching billeteras catálogo:', err);
+    }
+  };
+
   const fetchAllData = async () => {
     setLoading(true);
     try {
       if (mainTab === 'catalogo') {
         await fetchMetodos();
+      } else if (mainTab === 'catalogos') {
+        await Promise.all([
+          fetchBancos(),
+          fetchBilleterasCatalogo()
+        ]);
       } else {
         await Promise.all([
           fetchDetalles(),
@@ -177,12 +220,12 @@ const MetodosFinancierosPage = () => {
       switch (item.tipo) {
         case 'cuentas':
           const cuenta = item as CuentaBancaria & ExtendedItem;
-          return cuenta.banco.toLowerCase().includes(searchLower) ||
+          return (cuenta.banco_nombre && cuenta.banco_nombre.toLowerCase().includes(searchLower)) ||
                  cuenta.titular.toLowerCase().includes(searchLower) ||
                  cuenta.numero_cuenta.includes(searchLower);
         case 'billeteras digitales':
           const billetera = item as BilleteraDigital & ExtendedItem;
-          return billetera.plataforma.toLowerCase().includes(searchLower) ||
+          return (billetera.plataforma_nombre && billetera.plataforma_nombre.toLowerCase().includes(searchLower)) ||
                  billetera.usuario_id.toLowerCase().includes(searchLower) ||
                  (billetera.email && billetera.email.toLowerCase().includes(searchLower));
         default:
@@ -349,6 +392,113 @@ const MetodosFinancierosPage = () => {
     }
   };
 
+  // ======================== FUNCIONES PARA CATÁLOGOS ========================
+
+  const handleCreateCatalog = async (formData: any) => {
+    setIsSubmitting(true);
+    try {
+      if (catalogTab === 'bancos') {
+        await createBanco(formData);
+        toast.success('Banco creado exitosamente!');
+      } else {
+        await createBilleteraDigitalCatalogo(formData);
+        toast.success('Billetera digital creada exitosamente!');
+      }
+      fetchAllData();
+      closeCreateModal();
+    } catch (err) {
+      toast.error(`Error al crear ${catalogTab === 'bancos' ? 'banco' : 'billetera digital'}`);
+      console.error(err);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleUpdateCatalog = async (formData: any) => {
+    if (!selectedItem?.id) return;
+    
+    setIsSubmitting(true);
+    try {
+      if (catalogTab === 'bancos') {
+        await updateBanco(formData, selectedItem.id);
+        toast.success('Banco actualizado exitosamente!');
+      } else {
+        await updateBilleteraDigitalCatalogo(formData, selectedItem.id);
+        toast.success('Billetera digital actualizada exitosamente!');
+      }
+      fetchAllData();
+      closeEditModal();
+    } catch (err) {
+      toast.error(`Error al actualizar ${catalogTab === 'bancos' ? 'banco' : 'billetera digital'}`);
+      console.error(err);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleToggleCatalog = async (item: any, tipo: CatalogTabType) => {
+    if (!item.id) return;
+    
+    try {
+      // Si estamos desactivando un elemento del catálogo, mostrar confirmación
+      if (item.is_active) {
+        const confirm = window.confirm(
+          `¿Está seguro de desactivar este ${tipo === 'bancos' ? 'banco' : 'billetera digital'}? ` +
+          `Esto también desactivará todos los métodos financieros asociados a esta ${tipo === 'bancos' ? 'entidad bancaria' : 'plataforma'}.`
+        );
+        
+        if (!confirm) return;
+      }
+      
+      if (tipo === 'bancos') {
+        await toggleActiveBanco(item.id);
+        toast.success(`Banco ${item.is_active ? 'desactivado' : 'activado'} exitosamente!`);
+        
+        // Si se desactivó el banco, desactivar todas las cuentas bancarias asociadas
+        if (item.is_active) {
+          const cuentasAsociadas = cuentas.filter((cuenta: any) => cuenta.banco === item.id);
+          for (const cuenta of cuentasAsociadas) {
+            if (cuenta.detalle_id) {
+              try {
+                await toggleActiveMetodoFinanciero(cuenta.detalle_id);
+              } catch (err) {
+                console.error(`Error al desactivar cuenta asociada ${cuenta.id}:`, err);
+              }
+            }
+          }
+          if (cuentasAsociadas.length > 0) {
+            toast.info(`Se desactivaron ${cuentasAsociadas.length} cuenta(s) bancaria(s) asociada(s)`);
+          }
+        }
+      } else {
+        await toggleActiveBilleteraDigitalCatalogo(item.id);
+        toast.success(`Billetera digital ${item.is_active ? 'desactivada' : 'activada'} exitosamente!`);
+        
+        // Si se desactivó la billetera, desactivar todas las billeteras digitales asociadas
+        if (item.is_active) {
+          const billeterasAsociadas = billeteras.filter((billetera: any) => billetera.plataforma === item.id);
+          for (const billetera of billeterasAsociadas) {
+            if (billetera.detalle_id) {
+              try {
+                await toggleActiveMetodoFinanciero(billetera.detalle_id);
+              } catch (err) {
+                console.error(`Error al desactivar billetera asociada ${billetera.id}:`, err);
+              }
+            }
+          }
+          if (billeterasAsociadas.length > 0) {
+            toast.info(`Se desactivaron ${billeterasAsociadas.length} billetera(s) digital(es) asociada(s)`);
+          }
+        }
+      }
+      
+      fetchAllData();
+    } catch (err) {
+      toast.error(`Error al ${item.is_active ? 'desactivar' : 'activar'} ${tipo === 'bancos' ? 'banco' : 'billetera digital'}`);
+      console.error(err);
+    }
+  };
+
   // Helper functions
   const getMetodoFinancieroId = (tipo: InstanceTabType): number => {
     // Buscar el ID del método financiero dinámicamente
@@ -505,7 +655,7 @@ const MetodosFinancierosPage = () => {
           </div>
         </div>
 
-        <div className="flex justify-end space-x-3 pt-4 border-t">
+        <div className="flex justify-end space-x-3 pt-4">
           <button
             type="button"
             onClick={closeCreateModal || closeEditModal}
@@ -546,6 +696,31 @@ const MetodosFinancierosPage = () => {
             isSubmitting={isSubmitting}
           />
         );
+    }
+  };
+
+  const renderCatalogForm = () => {
+    const initialData = selectedItem || undefined;
+    
+    switch (catalogTab) {
+      case 'bancos':
+        return (
+          <BancoForm
+            onSubmit={editModalOpen ? handleUpdateCatalog : handleCreateCatalog}
+            initialData={initialData as Banco}
+            isSubmitting={isSubmitting}
+          />
+        );
+      case 'billeteras':
+        return (
+          <BilleteraDigitalCatalogoForm
+            onSubmit={editModalOpen ? handleUpdateCatalog : handleCreateCatalog}
+            initialData={initialData as BilleteraDigitalCatalogo}
+            isSubmitting={isSubmitting}
+          />
+        );
+      default:
+        return null;
     }
   };
 
@@ -697,6 +872,16 @@ const MetodosFinancierosPage = () => {
               Catálogo de Métodos Financieros
             </button>
             <button
+              onClick={() => setMainTab('catalogos')}
+              className={`py-2 px-1 border-b-2 font-medium text-sm ${
+                mainTab === 'catalogos'
+                  ? 'border-gray-900 text-gray-900'
+                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+              }`}
+            >
+              Catálogos de Entidades
+            </button>
+            <button
               onClick={() => setMainTab('instancias')}
               className={`py-2 px-1 border-b-2 font-medium text-sm ${
                 mainTab === 'instancias'
@@ -720,7 +905,13 @@ const MetodosFinancierosPage = () => {
               </div>
               <input
                 type="text"
-                placeholder={mainTab === 'catalogo' ? 'Buscar métodos...' : `Buscar ${getInstanceTabLabel(instanceTab).toLowerCase()}...`}
+                placeholder={
+                  mainTab === 'catalogo' 
+                    ? 'Buscar métodos...' 
+                    : mainTab === 'catalogos'
+                      ? `Buscar ${catalogTab}...`
+                      : `Buscar ${getInstanceTabLabel(instanceTab).toLowerCase()}...`
+                }
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 onKeyDown={(e) => {
@@ -770,6 +961,38 @@ const MetodosFinancierosPage = () => {
                   <span>{getInstanceTabLabel(tab)}</span>
                 </button>
               ))}
+            </nav>
+          </div>
+        </div>
+      )}
+
+      {/* Catalog Tabs (only shown when mainTab is 'catalogos') */}
+      {mainTab === 'catalogos' && (
+        <div className="mb-6">
+          <div className="border-b border-gray-200">
+            <nav className="-mb-px flex space-x-8">
+              <button
+                onClick={() => setCatalogTab('bancos')}
+                className={`py-2 px-1 border-b-2 font-medium text-sm flex items-center space-x-2 ${
+                  catalogTab === 'bancos'
+                    ? 'border-gray-900 text-gray-900'
+                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                }`}
+              >
+                <Building2 className="w-5 h-5" />
+                <span>Bancos</span>
+              </button>
+              <button
+                onClick={() => setCatalogTab('billeteras')}
+                className={`py-2 px-1 border-b-2 font-medium text-sm flex items-center space-x-2 ${
+                  catalogTab === 'billeteras'
+                    ? 'border-gray-900 text-gray-900'
+                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                }`}
+              >
+                <Smartphone className="w-5 h-5" />
+                <span>Billeteras Digitales</span>
+              </button>
             </nav>
           </div>
         </div>
@@ -857,7 +1080,7 @@ const MetodosFinancierosPage = () => {
 
             {/* Pagination for catalog */}
             {metodos.length > 0 && (
-              <div className="flex justify-between items-center mt-4 pt-4 border-t">
+              <div className="flex justify-between items-center mt-4 pt-4">
                 <div className="text-sm text-gray-600">
                   Página {page} de {totalPages}
                 </div>
@@ -880,6 +1103,103 @@ const MetodosFinancierosPage = () => {
               </div>
             )}
           </div>
+        ) : mainTab === 'catalogos' ? (
+          // Nueva sección de catálogos
+          <div className="table-container">
+            <table className="table">
+              <thead>
+                <tr>
+                  <th>Nombre</th>
+                  <th>Estado</th>
+                  <th>Fecha Creación</th>
+                  <th>Acciones</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-200">
+                  {catalogTab === 'bancos' ? (
+                    bancos.length === 0 ? (
+                      <tr>
+                        <td colSpan={4} className="text-center py-8">
+                          <p className="text-gray-600">No hay bancos registrados</p>
+                        </td>
+                      </tr>
+                    ) : (
+                      bancos.map((banco) => (
+                        <tr key={banco.id}>
+                          <td className="font-medium">{banco.nombre}</td>
+                          <td>
+                            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                              banco.is_active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                            }`}>
+                              {banco.is_active ? 'Activo' : 'Inactivo'}
+                            </span>
+                          </td>
+                          <td>{banco.fecha_creacion ? new Date(banco.fecha_creacion).toLocaleDateString() : '-'}</td>
+                          <td>
+                            <div className="flex items-center space-x-2">
+                              <button
+                                onClick={() => openEditModal(banco)}
+                                className="p-1 text-gray-500 hover:text-blue-600 rounded-full hover:bg-gray-100"
+                                title="Editar"
+                              >
+                                <Edit size={16} />
+                              </button>
+                              <button
+                                onClick={() => handleToggleCatalog(banco, 'bancos')}
+                                className="p-1 text-gray-500 hover:text-red-600 rounded-full hover:bg-gray-100"
+                                title={banco.is_active ? 'Desactivar' : 'Activar'}
+                              >
+                                {banco.is_active ? <X size={16} /> : <Check size={16} />}
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))
+                    )
+                  ) : (
+                    billeterasCatalogo.length === 0 ? (
+                      <tr>
+                        <td colSpan={4} className="text-center py-8">
+                          <p className="text-gray-600">No hay billeteras digitales registradas</p>
+                        </td>
+                      </tr>
+                    ) : (
+                      billeterasCatalogo.map((billetera) => (
+                        <tr key={billetera.id}>
+                          <td className="font-medium">{billetera.nombre}</td>
+                          <td>
+                            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                              billetera.is_active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                            }`}>
+                              {billetera.is_active ? 'Activo' : 'Inactivo'}
+                            </span>
+                          </td>
+                          <td>{billetera.fecha_creacion ? new Date(billetera.fecha_creacion).toLocaleDateString() : '-'}</td>
+                          <td>
+                            <div className="flex items-center space-x-2">
+                              <button
+                                onClick={() => openEditModal(billetera)}
+                                className="p-1 text-gray-500 hover:text-blue-600 rounded-full hover:bg-gray-100"
+                                title="Editar"
+                              >
+                                <Edit size={16} />
+                              </button>
+                              <button
+                                onClick={() => handleToggleCatalog(billetera, 'billeteras')}
+                                className="p-1 text-gray-500 hover:text-red-600 rounded-full hover:bg-gray-100"
+                                title={billetera.is_active ? 'Desactivar' : 'Activar'}
+                              >
+                                {billetera.is_active ? <X size={16} /> : <Check size={16} />}
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))
+                    )
+                  )}
+                </tbody>
+              </table>
+            </div>
         ) : (
           // Instances grid
           filteredItems.length === 0 ? (
@@ -920,10 +1240,17 @@ const MetodosFinancierosPage = () => {
           <h2 className="text-2xl font-bold mb-4 text-gray-800">
             {mainTab === 'catalogo' 
               ? 'Crear Método Financiero' 
-              : `Crear ${getInstanceTabSingularTitle(instanceTab)} de la Casa`
+              : mainTab === 'catalogos'
+                ? `Crear ${catalogTab === 'bancos' ? 'Banco' : 'Billetera Digital'}`
+                : `Crear ${getInstanceTabSingularTitle(instanceTab)} de la Casa`
             }
           </h2>
-          {mainTab === 'catalogo' ? renderMetodoForm() : renderInstanceForm()}
+          {mainTab === 'catalogo' 
+            ? renderMetodoForm() 
+            : mainTab === 'catalogos'
+              ? renderCatalogForm()
+              : renderInstanceForm()
+          }
         </div>
       </Modal>
 
@@ -932,10 +1259,17 @@ const MetodosFinancierosPage = () => {
           <h2 className="text-2xl font-bold mb-4 text-gray-800">
             {mainTab === 'catalogo' 
               ? 'Editar Método Financiero' 
-              : `Editar ${getInstanceTabSingularTitle(instanceTab)} de la Casa`
+              : mainTab === 'catalogos'
+                ? `Editar ${catalogTab === 'bancos' ? 'Banco' : 'Billetera Digital'}`
+                : `Editar ${getInstanceTabSingularTitle(instanceTab)} de la Casa`
             }
           </h2>
-          {mainTab === 'catalogo' ? renderMetodoForm() : renderInstanceForm()}
+          {mainTab === 'catalogo' 
+            ? renderMetodoForm() 
+            : mainTab === 'catalogos'
+              ? renderCatalogForm()
+              : renderInstanceForm()
+          }
         </div>
       </Modal>
 

@@ -1,10 +1,14 @@
 import axios from "axios";
 import type {
+  Banco,
+  BilleteraDigitalCatalogo,
   MetodoFinanciero,
   MetodoFinancieroDetalle,
   CuentaBancaria,
   BilleteraDigital,
   Tarjeta,
+  PaginatedBanco,
+  PaginatedBilleteraDigitalCatalogo,
   PaginatedMetodoFinanciero,
   PaginatedMetodoFinancieroDetalle,
   PaginatedCuentaBancaria,
@@ -258,6 +262,114 @@ export const deactivateTarjeta = async (id: number) => {
     return res;
   } catch (err) {
     console.error("Error deactivating tarjeta: ", err);
+    throw err;
+  }
+};
+
+// ======================== CATÁLOGOS ========================
+
+// Bancos
+export const getBancos = async (
+  params: GetParams = {}
+): Promise<PaginatedBanco> => {
+  try {
+    const res = await apiClient.get<PaginatedBanco>(`${API_URL}bancos/`, { params });
+    return res.data;
+  } catch (err: any) {
+    console.error("Error fetching bancos: ", err.response?.data || err.message);
+    throw err;
+  }
+};
+
+export const createBanco = async (bancoData: Banco) => {
+  try {
+    const res = await apiClient.post<Banco>(`${API_URL}bancos/`, bancoData);
+    return res;
+  } catch (err) {
+    console.error("Error creating banco: ", err);
+    throw err;
+  }
+};
+
+export const updateBanco = async (bancoData: Banco, id: number) => {
+  try {
+    const res = await apiClient.put<Banco>(`${API_URL}bancos/${id}/`, bancoData);
+    return res;
+  } catch (err) {
+    console.error("Error updating banco: ", err);
+    throw err;
+  }
+};
+
+export const deactivateBanco = async (id: number) => {
+  try {
+    const res = await apiClient.delete(`${API_URL}bancos/${id}/`);
+    return res;
+  } catch (err) {
+    console.error("Error deactivating banco: ", err);
+    throw err;
+  }
+};
+
+export const toggleActiveBanco = async (id: number) => {
+  try {
+    const res = await apiClient.post(`${API_URL}bancos/${id}/toggle_active/`);
+    return res.data;
+  } catch (err) {
+    console.error("Error toggling banco status: ", err);
+    throw err;
+  }
+};
+
+// Billeteras Digitales Catálogo
+export const getBilleterasDigitalesCatalogo = async (
+  params: GetParams = {}
+): Promise<PaginatedBilleteraDigitalCatalogo> => {
+  try {
+    const res = await apiClient.get<PaginatedBilleteraDigitalCatalogo>(`${API_URL}billeteras-catalogo/`, { params });
+    return res.data;
+  } catch (err: any) {
+    console.error("Error fetching billeteras digitales catálogo: ", err.response?.data || err.message);
+    throw err;
+  }
+};
+
+export const createBilleteraDigitalCatalogo = async (billeteraData: BilleteraDigitalCatalogo) => {
+  try {
+    const res = await apiClient.post<BilleteraDigitalCatalogo>(`${API_URL}billeteras-catalogo/`, billeteraData);
+    return res;
+  } catch (err) {
+    console.error("Error creating billetera digital catálogo: ", err);
+    throw err;
+  }
+};
+
+export const updateBilleteraDigitalCatalogo = async (billeteraData: BilleteraDigitalCatalogo, id: number) => {
+  try {
+    const res = await apiClient.put<BilleteraDigitalCatalogo>(`${API_URL}billeteras-catalogo/${id}/`, billeteraData);
+    return res;
+  } catch (err) {
+    console.error("Error updating billetera digital catálogo: ", err);
+    throw err;
+  }
+};
+
+export const deactivateBilleteraDigitalCatalogo = async (id: number) => {
+  try {
+    const res = await apiClient.delete(`${API_URL}billeteras-catalogo/${id}/`);
+    return res;
+  } catch (err) {
+    console.error("Error deactivating billetera digital catálogo: ", err);
+    throw err;
+  }
+};
+
+export const toggleActiveBilleteraDigitalCatalogo = async (id: number) => {
+  try {
+    const res = await apiClient.post(`${API_URL}billeteras-catalogo/${id}/toggle_active/`);
+    return res.data;
+  } catch (err) {
+    console.error("Error toggling billetera digital catálogo status: ", err);
     throw err;
   }
 };

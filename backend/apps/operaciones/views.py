@@ -12,6 +12,8 @@ from rest_framework.response import Response
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.decorators import action
 from .models import (
+    Banco,
+    BilleteraDigitalCatalogo,
     MetodoFinanciero,
     MetodoFinancieroDetalle,
     CuentaBancaria,
@@ -19,6 +21,8 @@ from .models import (
     Tarjeta,
 )
 from .serializers import (
+    BancoSerializer,
+    BilleteraDigitalCatalogoSerializer,
     MetodoFinancieroSerializer,
     MetodoFinancieroDetalleSerializer,
     CuentaBancariaSerializer,
@@ -31,6 +35,128 @@ class OperacionesPagination(PageNumberPagination):
     page_size = 10
     page_size_query_param = "page_size"
     max_page_size = 100
+
+
+class BancoViewSet(viewsets.ModelViewSet):
+    """
+    ViewSet para operaciones CRUD del catálogo de bancos.
+
+    Proporciona endpoints para gestionar los bancos disponibles en el sistema.
+    Solo los administradores pueden crear, actualizar o eliminar bancos.
+    """
+    queryset = Banco.objects.all()
+    serializer_class = BancoSerializer
+    permission_classes = [permissions.IsAuthenticated]
+    filter_backends = [filters.SearchFilter]
+    search_fields = ['nombre']
+    pagination_class = OperacionesPagination
+
+    def get_permissions(self):
+        """
+        Instancia y retorna la lista de permisos que requiere esta vista.
+        """
+        if self.action in ['create', 'update', 'partial_update', 'destroy']:
+            permission_classes = [permissions.IsAuthenticated, permissions.IsAdminUser]
+        else:
+            permission_classes = [permissions.IsAuthenticated]
+        return [permission() for permission in permission_classes]
+
+    def destroy(self, request, *args, **kwargs):
+        """
+        Desactivación lógica del banco.
+
+        En lugar de eliminar físicamente el registro, marca `is_active=False`.
+        """
+        instance = self.get_object()
+        if not instance.is_active:
+            return Response(
+                {"detail": "El banco ya está desactivado."},
+                status=status.HTTP_404_NOT_FOUND
+            )
+        instance.is_active = False
+        instance.save()
+        return Response(
+            {"message": f"Banco {instance.nombre} desactivado (eliminado lógico)."},
+            status=status.HTTP_200_OK
+        )
+
+    @action(detail=True, methods=['post'], permission_classes=[permissions.IsAuthenticated, permissions.IsAdminUser])
+    def toggle_active(self, request, pk=None):
+        """
+        Alterna el estado de activación del banco (activo/inactivo).
+        
+        Solo los administradores pueden usar esta funcionalidad.
+        """
+        instance = self.get_object()
+        instance.is_active = not instance.is_active
+        instance.save()
+        
+        estado = "activado" if instance.is_active else "desactivado"
+        return Response({
+            "message": f"Banco {instance.nombre} {estado}.",
+            "is_active": instance.is_active
+        }, status=status.HTTP_200_OK)
+
+
+class BilleteraDigitalCatalogoViewSet(viewsets.ModelViewSet):
+    """
+    ViewSet para operaciones CRUD del catálogo de billeteras digitales.
+
+    Proporciona endpoints para gestionar las billeteras digitales disponibles en el sistema.
+    Solo los administradores pueden crear, actualizar o eliminar billeteras.
+    """
+    queryset = BilleteraDigitalCatalogo.objects.all()
+    serializer_class = BilleteraDigitalCatalogoSerializer
+    permission_classes = [permissions.IsAuthenticated]
+    filter_backends = [filters.SearchFilter]
+    search_fields = ['nombre']
+    pagination_class = OperacionesPagination
+
+    def get_permissions(self):
+        """
+        Instancia y retorna la lista de permisos que requiere esta vista.
+        """
+        if self.action in ['create', 'update', 'partial_update', 'destroy']:
+            permission_classes = [permissions.IsAuthenticated, permissions.IsAdminUser]
+        else:
+            permission_classes = [permissions.IsAuthenticated]
+        return [permission() for permission in permission_classes]
+
+    def destroy(self, request, *args, **kwargs):
+        """
+        Desactivación lógica de la billetera digital.
+
+        En lugar de eliminar físicamente el registro, marca `is_active=False`.
+        """
+        instance = self.get_object()
+        if not instance.is_active:
+            return Response(
+                {"detail": "La billetera digital ya está desactivada."},
+                status=status.HTTP_404_NOT_FOUND
+            )
+        instance.is_active = False
+        instance.save()
+        return Response(
+            {"message": f"Billetera digital {instance.nombre} desactivada (eliminado lógico)."},
+            status=status.HTTP_200_OK
+        )
+
+    @action(detail=True, methods=['post'], permission_classes=[permissions.IsAuthenticated, permissions.IsAdminUser])
+    def toggle_active(self, request, pk=None):
+        """
+        Alterna el estado de activación de la billetera digital (activo/inactivo).
+        
+        Solo los administradores pueden usar esta funcionalidad.
+        """
+        instance = self.get_object()
+        instance.is_active = not instance.is_active
+        instance.save()
+        
+        estado = "activado" if instance.is_active else "desactivado"
+        return Response({
+            "message": f"Billetera digital {instance.nombre} {estado}.",
+            "is_active": instance.is_active
+        }, status=status.HTTP_200_OK)
 
 
 class MetodoFinancieroViewSet(viewsets.ModelViewSet):
@@ -172,7 +298,7 @@ class CuentaBancariaViewSet(viewsets.ModelViewSet):
     serializer_class = CuentaBancariaSerializer
     permission_classes = [permissions.IsAuthenticated]
     filter_backends = [filters.SearchFilter]
-    search_fields = ['banco', 'numero_cuenta', 'titular', 'cbu_cvu']
+    search_fields = ['banco__nombre', 'numero_cuenta', 'titular', 'cbu_cvu']
     pagination_class = OperacionesPagination
 
     def get_queryset(self):
@@ -184,7 +310,7 @@ class CuentaBancariaViewSet(viewsets.ModelViewSet):
         
         NOTA: No se filtra por is_active aquí, se incluye el estado en el serializer
         """
-        queryset = CuentaBancaria.objects.select_related('metodo_financiero_detalle').all()
+        queryset = CuentaBancaria.objects.select_related('metodo_financiero_detalle', 'banco').all()
         
         if self.request.user.is_staff or self.request.user.is_superuser:
             # Administradores ven todas las cuentas
@@ -219,7 +345,7 @@ class CuentaBancariaViewSet(viewsets.ModelViewSet):
 
         detalle.is_active = False
         detalle.save()
-        return Response({"message": f"Cuenta bancaria {instance.banco} - {instance.numero_cuenta} desactivada (eliminado lógico)."}, status=status.HTTP_200_OK)
+        return Response({"message": f"Cuenta bancaria {instance.banco.nombre} - {instance.numero_cuenta} desactivada (eliminado lógico)."}, status=status.HTTP_200_OK)
 
 
 class BilleteraDigitalViewSet(viewsets.ModelViewSet):
@@ -233,7 +359,7 @@ class BilleteraDigitalViewSet(viewsets.ModelViewSet):
     serializer_class = BilleteraDigitalSerializer
     permission_classes = [permissions.IsAuthenticated]
     filter_backends = [filters.SearchFilter]
-    search_fields = ['plataforma', 'usuario_id', 'email', 'telefono']
+    search_fields = ['plataforma__nombre', 'usuario_id', 'email', 'telefono']
     pagination_class = OperacionesPagination
 
     def get_queryset(self):
@@ -245,7 +371,7 @@ class BilleteraDigitalViewSet(viewsets.ModelViewSet):
         
         NOTA: No se filtra por is_active aquí, se incluye el estado en el serializer
         """
-        queryset = BilleteraDigital.objects.select_related('metodo_financiero_detalle').all()
+        queryset = BilleteraDigital.objects.select_related('metodo_financiero_detalle', 'plataforma').all()
         
         if self.request.user.is_staff or self.request.user.is_superuser:
             # Administradores ven todas las billeteras
@@ -278,7 +404,7 @@ class BilleteraDigitalViewSet(viewsets.ModelViewSet):
 
         detalle.is_active = False
         detalle.save()
-        return Response({"message": f"Billetera digital {instance.plataforma} - {instance.usuario_id} desactivada (eliminado lógico)."}, status=status.HTTP_200_OK)
+        return Response({"message": f"Billetera digital {instance.plataforma.nombre} - {instance.usuario_id} desactivada (eliminado lógico)."}, status=status.HTTP_200_OK)
 
 
 class TarjetaViewSet(viewsets.ModelViewSet):

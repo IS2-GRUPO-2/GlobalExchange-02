@@ -1,8 +1,9 @@
-import React, { useState } from "react";
-import type { CuentaBancaria } from "../types/MetodoFinanciero";
+import React, { useState, useEffect } from "react";
+import type { CuentaBancaria, Banco } from "../types/MetodoFinanciero";
+import { getBancos } from "../services/metodoFinancieroService";
 
 export interface CuentaBancariaFormData {
-  banco: string;
+  banco: number; // Cambió de string a number para el ID
   numero_cuenta: string;
   titular: string;
   cbu_cvu: string;
@@ -20,8 +21,11 @@ const CuentaBancariaForm: React.FC<CuentaBancariaFormProps> = ({
   initialData,
   isSubmitting = false,
 }) => {
+  const [bancos, setBancos] = useState<Banco[]>([]);
+  const [loadingBancos, setLoadingBancos] = useState(true);
+  
   const [formData, setFormData] = useState<CuentaBancariaFormData>({
-    banco: initialData?.banco || "",
+    banco: initialData?.banco || 0,
     numero_cuenta: initialData?.numero_cuenta || "",
     titular: initialData?.titular || "",
     cbu_cvu: initialData?.cbu_cvu || "",
@@ -30,11 +34,27 @@ const CuentaBancariaForm: React.FC<CuentaBancariaFormProps> = ({
 
   const [errors, setErrors] = useState<Partial<CuentaBancariaFormData>>({});
 
+  // Cargar lista de bancos activos
+  useEffect(() => {
+    const fetchBancos = async () => {
+      try {
+        const response = await getBancos();
+        setBancos(response.results.filter(banco => banco.is_active));
+      } catch (error) {
+        console.error('Error loading bancos:', error);
+      } finally {
+        setLoadingBancos(false);
+      }
+    };
+
+    fetchBancos();
+  }, []);
+
   const validateForm = (): boolean => {
     const newErrors: Partial<CuentaBancariaFormData> = {};
 
-    if (!formData.banco.trim()) {
-      newErrors.banco = "El banco es requerido";
+    if (!formData.banco) {
+      newErrors.banco = "Debe seleccionar un banco";
     }
 
     if (!formData.numero_cuenta.trim()) {
@@ -47,8 +67,8 @@ const CuentaBancariaForm: React.FC<CuentaBancariaFormProps> = ({
 
     if (!formData.cbu_cvu.trim()) {
       newErrors.cbu_cvu = "El CBU/CVU es requerido";
-    } else if (formData.cbu_cvu.length < 22) {
-      newErrors.cbu_cvu = "El CBU/CVU debe tener 22 dígitos";
+    } else if (formData.cbu_cvu.length !== 22) {
+      newErrors.cbu_cvu = "El CBU/CVU debe tener exactamente 22 dígitos";
     }
 
     setErrors(newErrors);
@@ -63,11 +83,12 @@ const CuentaBancariaForm: React.FC<CuentaBancariaFormProps> = ({
   };
 
   const handleInputChange = (field: keyof CuentaBancariaFormData) => (
-    e: React.ChangeEvent<HTMLInputElement>
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
   ) => {
+    const value = field === 'banco' ? parseInt(e.target.value) : e.target.value;
     setFormData(prev => ({
       ...prev,
-      [field]: e.target.value
+      [field]: value
     }));
     // Limpiar error del campo cuando el usuario empiece a escribir
     if (errors[field]) {
@@ -82,24 +103,41 @@ const CuentaBancariaForm: React.FC<CuentaBancariaFormProps> = ({
     <form onSubmit={handleSubmit} className="space-y-4">
       <div>
         <label htmlFor="banco" className="block text-sm font-medium text-gray-700">
-          Banco *
+          Banco
         </label>
-        <input
-          type="text"
-          id="banco"
-          value={formData.banco}
-          onChange={handleInputChange('banco')}
-          className={`mt-1 block w-full rounded-md border ${
-            errors.banco ? 'border-red-300' : 'border-gray-300'
-          } px-3 py-2 focus:border-gray-500 focus:outline-none focus:ring-1 focus:ring-gray-500`}
-          placeholder="Ej: Banco Santander"
-        />
+        {loadingBancos ? (
+          <div className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 bg-gray-50">
+            Cargando bancos...
+          </div>
+        ) : (
+          <select
+            id="banco"
+            value={formData.banco}
+            onChange={handleInputChange('banco')}
+            className={`mt-1 block w-full rounded-md border ${
+              errors.banco ? 'border-red-300' : 'border-gray-300'
+            } px-3 py-2 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500`}
+            disabled={isSubmitting}
+          >
+            <option value={0}>Seleccione un banco</option>
+            {bancos.map((banco) => (
+              <option key={banco.id} value={banco.id}>
+                {banco.nombre}
+              </option>
+            ))}
+          </select>
+        )}
         {errors.banco && <p className="mt-1 text-sm text-red-600">{errors.banco}</p>}
+        {bancos.length === 0 && !loadingBancos && (
+          <p className="mt-1 text-sm text-amber-600">
+            No hay bancos disponibles
+          </p>
+        )}
       </div>
 
       <div>
         <label htmlFor="numero_cuenta" className="block text-sm font-medium text-gray-700">
-          Número de Cuenta *
+          Número de Cuenta
         </label>
         <input
           type="text"
@@ -116,7 +154,7 @@ const CuentaBancariaForm: React.FC<CuentaBancariaFormProps> = ({
 
       <div>
         <label htmlFor="titular" className="block text-sm font-medium text-gray-700">
-          Titular *
+          Titular
         </label>
         <input
           type="text"
@@ -133,7 +171,7 @@ const CuentaBancariaForm: React.FC<CuentaBancariaFormProps> = ({
 
       <div>
         <label htmlFor="cbu_cvu" className="block text-sm font-medium text-gray-700">
-          CBU/CVU *
+          CBU/CVU
         </label>
         <input
           type="text"
@@ -149,7 +187,7 @@ const CuentaBancariaForm: React.FC<CuentaBancariaFormProps> = ({
         {errors.cbu_cvu && <p className="mt-1 text-sm text-red-600">{errors.cbu_cvu}</p>}
       </div>
 
-      <div className="flex justify-end space-x-3 pt-4 border-t">
+      <div className="flex justify-end space-x-3 pt-4">
         <button
           type="submit"
           disabled={isSubmitting}

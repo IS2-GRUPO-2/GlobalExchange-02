@@ -5,6 +5,23 @@ export type TipoMetodoFinanciero =
   | 'METALICO' 
   | 'CHEQUE';
 
+// Nuevos tipos para catálogos
+export type Banco = {
+  id?: number;
+  nombre: string;
+  is_active: boolean;
+  fecha_creacion?: string;
+  fecha_actualizacion?: string;
+};
+
+export type BilleteraDigitalCatalogo = {
+  id?: number;
+  nombre: string;
+  is_active: boolean;
+  fecha_creacion?: string;
+  fecha_actualizacion?: string;
+};
+
 export type MetodoFinanciero = {
   id?: number;
   nombre: TipoMetodoFinanciero;
@@ -28,10 +45,13 @@ export type MetodoFinancieroDetalle = {
   is_active: boolean;
 };
 
+// Tipos actualizados con referencias a catálogos
 export type CuentaBancaria = {
   id?: number;
   metodo_financiero_detalle: number;
-  banco: string;
+  banco: number; // ID del banco del catálogo
+  banco_nombre?: string; // Nombre del banco (solo lectura)
+  banco_activo?: boolean; // Estado del banco (solo lectura)
   numero_cuenta: string;
   titular: string;
   cbu_cvu: string;
@@ -40,7 +60,9 @@ export type CuentaBancaria = {
 export type BilleteraDigital = {
   id?: number;
   metodo_financiero_detalle: number;
-  plataforma: string;
+  plataforma: number; // ID de la billetera del catálogo
+  plataforma_nombre?: string; // Nombre de la plataforma (solo lectura)
+  plataforma_activa?: boolean; // Estado de la plataforma (solo lectura)
   usuario_id: string;
   email?: string;
   telefono?: string;
@@ -56,6 +78,21 @@ export type Tarjeta = {
   exp_month: number;
   exp_year: number;
   titular: string;
+};
+
+// Tipos de paginación
+export type PaginatedBanco = {
+  count: number;
+  next: string | null;
+  previous: string | null;
+  results: Banco[];
+};
+
+export type PaginatedBilleteraDigitalCatalogo = {
+  count: number;
+  next: string | null;
+  previous: string | null;
+  results: BilleteraDigitalCatalogo[];
 };
 
 export type PaginatedMetodoFinanciero = {
