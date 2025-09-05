@@ -167,7 +167,7 @@ const BilleteraDigitalForm: React.FC<BilleteraDigitalFormProps> = ({
 
       <div>
         <label htmlFor="telefono" className="block text-sm font-medium text-gray-700">
-          Teléfono (opcional)
+          Teléfono
         </label>
         <input
           type="tel"
@@ -175,7 +175,7 @@ const BilleteraDigitalForm: React.FC<BilleteraDigitalFormProps> = ({
           value={formData.telefono}
           onChange={handleInputChange('telefono')}
           className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 focus:border-gray-500 focus:outline-none focus:ring-1 focus:ring-gray-500"
-          placeholder="+54 11 1234-5678"
+          placeholder="+595 0971 123456"
         />
       </div>
 

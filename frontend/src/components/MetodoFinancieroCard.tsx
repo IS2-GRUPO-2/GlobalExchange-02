@@ -5,7 +5,11 @@ import type { CuentaBancaria, BilleteraDigital, Tarjeta } from '../types/MetodoF
 type MetodoFinancieroItem = CuentaBancaria | BilleteraDigital | Tarjeta;
 
 interface MetodoFinancieroCardProps {
-  item: MetodoFinancieroItem & { tipo: 'cuentas' | 'billeteras digitales' | 'tarjetas'; is_active: boolean };
+  item: MetodoFinancieroItem & { 
+    tipo: 'cuentas' | 'billeteras digitales' | 'tarjetas'; 
+    is_active: boolean; 
+    desactivado_por_catalogo?: boolean;
+  };
   onView: (item: MetodoFinancieroItem) => void;
   onEdit: (item: MetodoFinancieroItem) => void;
   onToggleActive: (item: MetodoFinancieroItem) => void;
@@ -153,15 +157,27 @@ const MetodoFinancieroCard: React.FC<MetodoFinancieroCardProps> = ({
 
           <button
             onClick={() => onToggleActive(item)}
+            disabled={!item.is_active && item.desactivado_por_catalogo}
             className={`flex items-center space-x-1 px-3 py-1.5 text-sm rounded-md transition-colors ${
-              item.is_active
+              !item.is_active && item.desactivado_por_catalogo
+                ? 'text-gray-400 bg-gray-100 cursor-not-allowed'
+                : item.is_active
                 ? 'text-red-600 hover:bg-red-50'
                 : 'text-green-600 hover:bg-green-50'
             }`}
-            title={item.is_active ? 'Desactivar' : 'Activar'}
+            title={
+              !item.is_active && item.desactivado_por_catalogo
+                ? 'No se puede reactivar - Desactivado por administrador (catálogo)'
+                : item.is_active ? 'Desactivar' : 'Activar'
+            }
           >
             {item.is_active ? <X size={14} /> : <Check size={14} />}
-            <span>{item.is_active ? 'Desactivar' : 'Activar'}</span>
+            <span>
+              {!item.is_active && item.desactivado_por_catalogo
+                ? 'Desactivado por catálogo'
+                : item.is_active ? 'Desactivar' : 'Activar'
+              }
+            </span>
           </button>
         </div>
       </div>

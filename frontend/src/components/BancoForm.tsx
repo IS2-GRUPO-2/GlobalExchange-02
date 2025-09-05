@@ -17,6 +17,7 @@ const BancoForm: React.FC<BancoFormProps> = ({
 }) => {
   const [formData, setFormData] = useState<Banco>({
     nombre: '',
+    cvu: '',
     is_active: true
   });
 
@@ -37,6 +38,14 @@ const BancoForm: React.FC<BancoFormProps> = ({
       newErrors.nombre = 'El nombre debe tener al menos 2 caracteres';
     } else if (formData.nombre.length > 100) {
       newErrors.nombre = 'El nombre no puede exceder 100 caracteres';
+    }
+
+    if (!formData.cvu.trim()) {
+      newErrors.cvu = 'El CVU del banco es obligatorio';
+    } else if (formData.cvu.length !== 22) {
+      newErrors.cvu = 'El CVU debe tener exactamente 22 dígitos';
+    } else if (!/^\d+$/.test(formData.cvu)) {
+      newErrors.cvu = 'El CVU solo puede contener números';
     }
 
     setErrors(newErrors);
@@ -92,6 +101,29 @@ const BancoForm: React.FC<BancoFormProps> = ({
           />
           {errors.nombre && (
             <p className="mt-1 text-sm text-red-600">{errors.nombre}</p>
+          )}
+        </div>
+
+        {/* CVU del Banco */}
+        <div>
+          <label htmlFor="cvu" className="block text-sm font-medium text-gray-700 mb-1">
+            CVU del Banco
+          </label>
+          <input
+            type="text"
+            id="cvu"
+            name="cvu"
+            value={formData.cvu}
+            onChange={handleChange}
+            className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+              errors.cvu ? 'border-red-500' : 'border-gray-300'
+            }`}
+            placeholder="22 dígitos del CVU del banco"
+            disabled={isSubmitting}
+            maxLength={22}
+          />
+          {errors.cvu && (
+            <p className="mt-1 text-sm text-red-600">{errors.cvu}</p>
           )}
         </div>
 

@@ -40,6 +40,7 @@ type ExtendedItem = (CuentaBancaria | BilleteraDigital | Tarjeta) & {
   tipo: TabType;
   is_active: boolean;
   detalle_id?: number;
+  desactivado_por_catalogo?: boolean;
 };
 
 const MetodosFinancierosClientePage = () => {
@@ -127,12 +128,13 @@ const MetodosFinancierosClientePage = () => {
   // Create extended items with active status from detalles
   const getExtendedItems = (items: any[], tipo: TabType): ExtendedItem[] => {
     return items.map(item => {
-      const detalle = detalles.find(d => d.id === item.metodo_financiero_detalle);
+      const detalle = detalles.find((d: MetodoFinancieroDetalle) => d.id === item.metodo_financiero_detalle);
       return {
         ...item,
         tipo,
         is_active: detalle?.is_active ?? true,
-        detalle_id: detalle?.id
+        detalle_id: detalle?.id,
+        desactivado_por_catalogo: detalle?.desactivado_por_catalogo ?? false
       };
     });
   };
@@ -208,12 +210,23 @@ const MetodosFinancierosClientePage = () => {
   const handleCreateItem = async (formData: any) => {
     setIsSubmitting(true);
     try {
+      // Generar alias único con timestamp
+      const timestamp = Date.now();
+      const getAliasBase = (tab: TabType) => {
+        switch (tab) {
+          case 'cuentas': return 'Mi cuenta bancaria';
+          case 'billeteras digitales': return 'Mi billetera digital';
+          case 'tarjetas': return 'Mi tarjeta';
+          default: return 'Mi método financiero';
+        }
+      };
+      
       // Primero crear el detalle
       const detalleData: MetodoFinancieroDetalle = {
         cliente: null, // Se asignará automáticamente en el backend
         es_cuenta_casa: false,
         metodo_financiero: getMetodoFinancieroId(activeTab),
-        alias: `Mi ${activeTab.slice(0, -1)}`,
+        alias: `${getAliasBase(activeTab)} - ${timestamp}`,
         is_active: true
       };
 
@@ -372,7 +385,7 @@ const MetodosFinancierosClientePage = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700">Banco</label>
-                <p className="text-gray-900">{cuenta.banco}</p>
+                <p className="text-gray-900">{cuenta.banco_nombre || `Banco ID: ${cuenta.banco}`}</p>
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700">Titular</label>
@@ -406,7 +419,7 @@ const MetodosFinancierosClientePage = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700">Plataforma</label>
-                <p className="text-gray-900">{billetera.plataforma}</p>
+                <p className="text-gray-900">{billetera.plataforma_nombre || `Plataforma ID: ${billetera.plataforma}`}</p>
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700">Usuario ID</label>
@@ -478,6 +491,29 @@ const MetodosFinancierosClientePage = () => {
     }
   }, [isLoggedIn, search]);
 
+  // Actualizar datos cuando la página vuelve a tener foco
+  useEffect(() => {
+    const handleFocus = () => {
+      if (isLoggedIn) {
+        fetchAllData();
+      }
+    };
+
+    window.addEventListener('focus', handleFocus);
+    return () => window.removeEventListener('focus', handleFocus);
+  }, [isLoggedIn]);
+
+  // Actualizar datos cada 30 segundos para reflejar cambios en tiempo real
+  useEffect(() => {
+    if (!isLoggedIn) return;
+
+    const interval = setInterval(() => {
+      fetchAllData();
+    }, 30000); // 30 segundos
+
+    return () => clearInterval(interval);
+  }, [isLoggedIn]);
+
   const filteredItems = getFilteredItems();
 
   return (
@@ -512,10 +548,12 @@ const MetodosFinancierosClientePage = () => {
             <button
               onClick={() => {
                 fetchAllData();
+                toast.info('Datos actualizados');
               }}
-              className="btn-primary flex items-center justify-center"
+              className="btn-primary flex items-center justify-center px-4 py-2"
+              title="Actualizar datos"
             >
-              Buscar
+              <Search size={18} />
             </button>
           </div>
         </div>

@@ -34,6 +34,11 @@ const CuentaBancariaForm: React.FC<CuentaBancariaFormProps> = ({
 
   const [errors, setErrors] = useState<Partial<CuentaBancariaFormData>>({});
 
+  // Función auxiliar para obtener el banco seleccionado
+  const getSelectedBanco = () => {
+    return bancos.find(b => b.id === formData.banco);
+  };
+
   // Cargar lista de bancos activos
   useEffect(() => {
     const fetchBancos = async () => {
@@ -65,9 +70,13 @@ const CuentaBancariaForm: React.FC<CuentaBancariaFormProps> = ({
       newErrors.titular = "El titular es requerido";
     }
 
+    // Solo validar CVU si no se auto-llenó desde el banco
+    const selectedBanco = getSelectedBanco();
+    const isAutoFilledCVU = selectedBanco && selectedBanco.cvu;
+    
     if (!formData.cbu_cvu.trim()) {
       newErrors.cbu_cvu = "El CBU/CVU es requerido";
-    } else if (formData.cbu_cvu.length !== 22) {
+    } else if (!isAutoFilledCVU && formData.cbu_cvu.length !== 22) {
       newErrors.cbu_cvu = "El CBU/CVU debe tener exactamente 22 dígitos";
     }
 
@@ -86,10 +95,22 @@ const CuentaBancariaForm: React.FC<CuentaBancariaFormProps> = ({
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
   ) => {
     const value = field === 'banco' ? parseInt(e.target.value) : e.target.value;
-    setFormData(prev => ({
-      ...prev,
+    
+    let updatedFormData = {
+      ...formData,
       [field]: value
-    }));
+    };
+
+    // Si se selecciona un banco, llenar automáticamente el CVU
+    if (field === 'banco' && value) {
+      const selectedBanco = bancos.find(b => b.id === parseInt(e.target.value));
+      if (selectedBanco && selectedBanco.cvu) {
+        updatedFormData.cbu_cvu = selectedBanco.cvu;
+      }
+    }
+
+    setFormData(updatedFormData);
+    
     // Limpiar error del campo cuando el usuario empiece a escribir
     if (errors[field]) {
       setErrors(prev => ({
@@ -179,11 +200,23 @@ const CuentaBancariaForm: React.FC<CuentaBancariaFormProps> = ({
           value={formData.cbu_cvu}
           onChange={handleInputChange('cbu_cvu')}
           maxLength={22}
+          readOnly={!!formData.banco && getSelectedBanco()?.cvu}
           className={`mt-1 block w-full rounded-md border ${
             errors.cbu_cvu ? 'border-red-300' : 'border-gray-300'
-          } px-3 py-2 focus:border-gray-500 focus:outline-none focus:ring-1 focus:ring-gray-500`}
-          placeholder="22 dígitos del CBU o CVU"
+          } px-3 py-2 focus:border-gray-500 focus:outline-none focus:ring-1 focus:ring-gray-500 ${
+            !!formData.banco && getSelectedBanco()?.cvu ? 'bg-gray-100' : ''
+          }`}
+          placeholder={
+            !!formData.banco && getSelectedBanco()?.cvu 
+              ? "CVU del banco seleccionado" 
+              : "22 dígitos del CBU o CVU"
+          }
         />
+        {!!formData.banco && getSelectedBanco()?.cvu && (
+          <p className="mt-1 text-xs text-blue-600">
+            ℹ️ CVU del banco seleccionado (llenado automáticamente)
+          </p>
+        )}
         {errors.cbu_cvu && <p className="mt-1 text-sm text-red-600">{errors.cbu_cvu}</p>}
       </div>
 

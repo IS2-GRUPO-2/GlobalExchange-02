@@ -9,6 +9,7 @@ export type TipoMetodoFinanciero =
 export type Banco = {
   id?: number;
   nombre: string;
+  cvu: string;
   is_active: boolean;
   fecha_creacion?: string;
   fecha_actualizacion?: string;
@@ -43,6 +44,7 @@ export type MetodoFinancieroDetalle = {
   alias: string;
   fecha_registro?: string;
   is_active: boolean;
+  desactivado_por_catalogo?: boolean;
 };
 
 // Tipos actualizados con referencias a catálogos

@@ -8,6 +8,7 @@ from apps.clientes.models import Cliente
 class Banco(models.Model):
     """Catálogo de bancos disponibles"""
     nombre = models.CharField(max_length=100, unique=True, help_text="Nombre del banco (ej: Santander, Itaú, BBVA)")
+    cvu = models.CharField(max_length=22, unique=True, help_text="CVU del banco para transferencias interbancarias")
     is_active = models.BooleanField(default=True, help_text="Indica si el banco está disponible")
     fecha_creacion = models.DateTimeField(auto_now_add=True)
     fecha_actualizacion = models.DateTimeField(auto_now=True)

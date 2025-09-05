@@ -462,49 +462,26 @@ const MetodosFinancierosPage = () => {
     if (!item.id) return;
     
     try {
-      // Si estamos desactivando un elemento del catálogo, mostraremos mensaje informativo después
+      let response;
       if (tipo === 'bancos') {
-        await toggleActiveBanco(item.id);
+        response = await toggleActiveBanco(item.id);
         toast.success(`Banco ${item.is_active ? 'desactivado' : 'activado'} exitosamente!`);
         
-        // Si se desactivó el banco, desactivar todas las cuentas bancarias asociadas
-        if (item.is_active) {
-          const cuentasAsociadas = cuentas.filter((cuenta: any) => cuenta.banco === item.id);
-          for (const cuenta of cuentasAsociadas) {
-            if (cuenta.detalle_id) {
-              try {
-                await toggleActiveMetodoFinanciero(cuenta.detalle_id);
-              } catch (err) {
-                console.error(`Error al desactivar cuenta asociada ${cuenta.id}:`, err);
-              }
-            }
-          }
-          if (cuentasAsociadas.length > 0) {
-            toast.info(`Se desactivaron ${cuentasAsociadas.length} cuenta(s) bancaria(s) asociada(s)`);
-          }
+        // Mostrar información sobre instancias afectadas
+        if (response.affected_instances && response.affected_instances.length > 0) {
+          toast.info(`Se desactivaron ${response.affected_instances.length} cuenta(s) bancaria(s) asociada(s)`);
         }
       } else {
-        await toggleActiveBilleteraDigitalCatalogo(item.id);
+        response = await toggleActiveBilleteraDigitalCatalogo(item.id);
         toast.success(`Billetera digital ${item.is_active ? 'desactivada' : 'activada'} exitosamente!`);
         
-        // Si se desactivó la billetera, desactivar todas las billeteras digitales asociadas
-        if (item.is_active) {
-          const billeterasAsociadas = billeteras.filter((billetera: any) => billetera.plataforma === item.id);
-          for (const billetera of billeterasAsociadas) {
-            if (billetera.detalle_id) {
-              try {
-                await toggleActiveMetodoFinanciero(billetera.detalle_id);
-              } catch (err) {
-                console.error(`Error al desactivar billetera asociada ${billetera.id}:`, err);
-              }
-            }
-          }
-          if (billeterasAsociadas.length > 0) {
-            toast.info(`Se desactivaron ${billeterasAsociadas.length} billetera(s) digital(es) asociada(s)`);
-          }
+        // Mostrar información sobre instancias afectadas
+        if (response.affected_instances && response.affected_instances.length > 0) {
+          toast.info(`Se desactivaron ${response.affected_instances.length} billetera(s) digital(es) asociada(s)`);
         }
       }
       
+      // Recargar datos para reflejar los cambios
       fetchAllData();
     } catch (err) {
       toast.error(`Error al ${item.is_active ? 'desactivar' : 'activar'} ${tipo === 'bancos' ? 'banco' : 'billetera digital'}`);
@@ -789,7 +766,7 @@ const MetodosFinancierosPage = () => {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700">Banco</label>
-                  <p className="text-gray-900">{cuenta.banco}</p>
+                  <p className="text-gray-900">{cuenta.banco_nombre || `Banco ID: ${cuenta.banco}`}</p>
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700">Titular</label>
@@ -823,7 +800,7 @@ const MetodosFinancierosPage = () => {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700">Plataforma</label>
-                  <p className="text-gray-900">{billetera.plataforma}</p>
+                  <p className="text-gray-900">{billetera.plataforma_nombre || `Plataforma ID: ${billetera.plataforma}`}</p>
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700">Usuario ID</label>
