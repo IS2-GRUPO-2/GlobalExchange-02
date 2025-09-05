@@ -658,7 +658,7 @@ const MetodosFinancierosPage = () => {
         <div className="flex justify-end space-x-3 pt-4">
           <button
             type="button"
-            onClick={closeCreateModal || closeEditModal}
+            onClick={editModalOpen ? closeEditModal : closeCreateModal}
             disabled={isSubmitting}
             className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-200 border border-gray-300 rounded-md hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-500 disabled:opacity-50"
           >
@@ -709,6 +709,7 @@ const MetodosFinancierosPage = () => {
             onSubmit={editModalOpen ? handleUpdateCatalog : handleCreateCatalog}
             initialData={initialData as Banco}
             isSubmitting={isSubmitting}
+            onCancel={editModalOpen ? closeEditModal : closeCreateModal}
           />
         );
       case 'billeteras':
@@ -717,6 +718,7 @@ const MetodosFinancierosPage = () => {
             onSubmit={editModalOpen ? handleUpdateCatalog : handleCreateCatalog}
             initialData={initialData as BilleteraDigitalCatalogo}
             isSubmitting={isSubmitting}
+            onCancel={editModalOpen ? closeEditModal : closeCreateModal}
           />
         );
       default:
