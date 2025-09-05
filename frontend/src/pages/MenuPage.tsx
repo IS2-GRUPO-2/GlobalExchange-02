@@ -1,81 +1,185 @@
-import { useState } from "react";
-import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
+import { useState, useEffect } from "react";
+import { simularConversion } from "../services/conversionService";
+import { type SimulacionResponse } from "../types/Conversion";
+import { getClientes } from "../services/clienteService";
+import { type Cliente } from "../types/Cliente";
+import { getDivisas } from "../services/divisaService";
+import { type Divisa } from "../types/Divisa";
 
-const mockData = [
-  { date: "2025-01", value: 8000 },
-  { date: "2025-02", value: 8100 },
-  { date: "2025-03", value: 7900 },
-  { date: "2025-04", value: 7800 },
-  { date: "2025-05", value: 7950 },
-  { date: "2025-06", value: 8050 },
-];
 
 export default function MainMenuPage() {
-  const [guarani, setGuarani] = useState(0);
-  const [euro, setEuro] = useState(0);
-  const exchangeRate = 8000; // 1 EUR = 8000 PYG
+  const [monto, setMonto] = useState<number>(0);
+  const [resultado, setResultado] = useState<SimulacionResponse | null>(null);
 
-  const handleConvert = () => {
-    setEuro(guarani / exchangeRate);
+
+  // Clientes
+  const [clientes, setClientes] = useState<Cliente[]>([]);
+  const [clienteSeleccionado, setClienteSeleccionado] = useState<string>("");
+
+  // Divisas
+  const [divisas, setDivisas] = useState<Divisa[]>([]);
+  const [divisaSeleccionada, setDivisaSeleccionada] = useState<string>("");
+
+  // Acción desde perspectiva del cliente
+  const [accionCliente, setAccionCliente] = useState<"compra" | "venta">("compra");
+  
+
+  useEffect(() => {
+    const fetchClientes = async () => {
+      try {
+        const data = await getClientes();
+        setClientes(data);
+        if (data.length > 0) setClienteSeleccionado(data[0].idCliente); // seleccionar el primero por defecto
+        
+      } catch (err) {
+        console.error("Error cargando clientes", err);
+      }
+    };
+    fetchClientes();
+  }, []);
+
+   // Carga inicial de divisas
+  useEffect(() => {
+    const fetchDivisas = async () => {
+      try {
+        const data = await getDivisas();
+        const filtradas = data.results.filter((d) => !d.es_base);
+        setDivisas(filtradas);
+        if (filtradas.length > 0 && filtradas[0].id) {
+          setDivisaSeleccionada(filtradas[0].id.toString());
+        }
+      } catch (err) {
+        console.error("Error cargando divisas", err);
+      }
+    };
+    fetchDivisas();
+  }, []);
+
+  const mapOperacionCasa = (accion: "compra" | "venta") => {
+    return accion === "compra" ? "venta" : "compra";
+  };
+
+  const handleSimular = async () => {
+     if (!clienteSeleccionado || !divisaSeleccionada) {
+      alert("Debes seleccionar cliente y divisa");
+      return;
+    }
+
+    try {
+      const res = await simularConversion({
+        cliente_id: clienteSeleccionado,
+        divisa_id: divisaSeleccionada, 
+        monto,
+        metodo_pago: "metalico", //luego será select dinámico
+        operacion: mapOperacionCasa(accionCliente),
+      });
+      setResultado(res);
+    } catch (err) {
+      console.error("Error en simulación", err);
+    }
   };
 
   return (
     <div className="flex flex-col min-h-screen bg-gray-50">
-      {/* Conversión */}
       <main className="flex-grow">
         <section id="convert" className="p-8 flex flex-col items-center">
           <div className="w-full max-w-md bg-white p-6 rounded-xl shadow">
             <h2 className="text-xl font-bold mb-4 text-gray-800">
-              Conversión de Guaraní a Euro
+              Simulación de Conversión
             </h2>
             <div className="space-y-4">
+              {/* Select cliente */}
+              <select
+                value={clienteSeleccionado}
+                onChange={(e) => setClienteSeleccionado(e.target.value)}
+                className="w-full p-2 border rounded-lg"
+              >
+                {clientes.map((cliente) => (
+                  <option key={cliente.idCliente} value={cliente.idCliente}>
+                    {cliente.nombre} ({cliente.categoria})
+                  </option>
+                ))}
+              </select>
+
+              {/* Select divisa */}
+              <select
+                value={divisaSeleccionada}
+                onChange={(e) => setDivisaSeleccionada(e.target.value)}
+                className="w-full p-2 border rounded-lg"
+              >
+                {divisas.map((divisa) => (
+                  <option key={divisa.id} value={divisa.id}>
+                    {divisa.codigo} - {divisa.nombre}
+                  </option>
+                ))}
+              </select>
+
+              {/* Select acción cliente */}
+              <select
+                value={accionCliente}
+                onChange={(e) =>
+                  setAccionCliente(e.target.value as "compra" | "venta")
+                }
+                className="w-full p-2 border rounded-lg"
+              >
+                <option value="compra">Comprar</option>
+                <option value="venta">Vender</option>
+              </select>
+
+              {/* Input monto */}
               <input
                 type="number"
-                value={guarani}
-                onChange={(e) => setGuarani(Number(e.target.value))}
-                placeholder="Monto en Guaraní"
+                value={monto}
+                onChange={(e) => setMonto(Number(e.target.value))}
+                placeholder={
+                  accionCliente === "compra"
+                    ? "Monto en PYG (cliente compra divisa)"
+                    : "Monto en divisa extranjera (cliente vende)"
+                }
                 className="w-full p-2 border rounded-lg"
               />
+
               <button
-                onClick={handleConvert}
+                onClick={handleSimular}
                 className="w-full bg-gray-900 text-white py-2 rounded-lg hover:bg-gray-700"
               >
-                Convertir
+                Simular
               </button>
-              <p className="text-lg font-semibold text-gray-700">
-                {euro.toFixed(2)} €
-              </p>
+
+              {/* Resultado */}
+              {resultado && (
+                <div className="mt-4 space-y-2 text-gray-700">
+                  <p>
+                    <strong>Operación:</strong> {resultado.operacion}
+                  </p>
+                  <p>
+                    <strong>Divisa:</strong> {resultado.divisa}
+                  </p>
+                  <p>
+                    <strong>Precio base:</strong>{" "}
+                    {resultado.parametros.precio_base}
+                  </p>
+                  <p>
+                    <strong>Comisión base:</strong>{" "}
+                    {resultado.parametros.comision_base}
+                  </p>
+                  <p>
+                    <strong>Descuento categoría:</strong>{" "}
+                    {resultado.parametros.descuento_categoria} %
+                  </p>
+                  <p>
+                    <strong>Tasa final:</strong> {resultado.tc_final}
+                  </p>
+                  <p>
+                    <strong>Monto destino:</strong> {resultado.monto_destino}{" "}
+                    {resultado.unidad_destino}
+                  </p>
+                </div>
+              )}
             </div>
           </div>
         </section>
-
-        {/* Historial */}
-        <section id="chart" className="p-8">
-          <h2 className="text-xl font-bold mb-4 text-gray-800 text-center">
-            Historial de la divisa (PYG/EUR)
-          </h2>
-          <div className="w-full h-80 bg-white p-4 rounded-xl shadow">
-            <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={mockData}>
-                <XAxis dataKey="date" />
-                <YAxis />
-                <Tooltip />
-                <Line
-                  type="monotone"
-                  dataKey="value"
-                  stroke="#2563eb"
-                  strokeWidth={2}
-                />
-              </LineChart>
-            </ResponsiveContainer>
-          </div>
-        </section>
       </main>
-
-      {/* Footer */}
-      <footer id="about" className="bg-gray-900 text-gray-400 text-center p-6 mt-6">
-        <p>© 2025 Global Exchange. Todos los derechos reservados.</p>
-      </footer>
     </div>
   );
 }

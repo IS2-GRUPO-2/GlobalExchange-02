@@ -55,12 +55,9 @@ INSTALLED_APPS = [
     'apps.clientes',
     'apps.autenticacion',
     'apps.divisas',
-<<<<<<< Updated upstream
     'apps.cotizaciones',
-=======
->>>>>>> Stashed changes
-    'drf_yasg',
-    'apps.conversiones'
+    'apps.conversiones',
+    'drf_yasg'
 ]
 
 MIDDLEWARE = [

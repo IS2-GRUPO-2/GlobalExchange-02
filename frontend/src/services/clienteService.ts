@@ -15,7 +15,7 @@ const getAuthHeaders = () => {
   };
 };
 
-export const getClientes = (search: string) =>
+export const getClientes = (search: string = "") =>
   axios.get<Cliente[]>(API_URL + `?search=${search}`, getAuthHeaders());
 
 export const getCliente = (id: string) =>
