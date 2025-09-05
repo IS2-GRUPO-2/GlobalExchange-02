@@ -11,6 +11,7 @@ from rest_framework import viewsets, status, filters, permissions
 from rest_framework.response import Response
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.decorators import action
+from rest_framework.exceptions import PermissionDenied
 from .models import (
     Banco,
     BilleteraDigitalCatalogo,
@@ -91,11 +92,51 @@ class BancoViewSet(viewsets.ModelViewSet):
         instance.is_active = not instance.is_active
         instance.save()
         
+        # Si se desactiva, desactivar también todas las cuentas bancarias relacionadas
+        affected_instances = []
+        if not instance.is_active:
+            from .models import CuentaBancaria
+            cuentas_relacionadas = CuentaBancaria.objects.filter(
+                banco=instance,
+                metodo_financiero_detalle__is_active=True
+            )
+            
+            for cuenta in cuentas_relacionadas:
+                cuenta.metodo_financiero_detalle.is_active = False
+                cuenta.metodo_financiero_detalle.desactivado_por_catalogo = True
+                cuenta.metodo_financiero_detalle.save()
+                affected_instances.append({
+                    'id': cuenta.id,
+                    'tipo': 'cuenta',
+                    'titular': cuenta.titular
+                })
+        else:
+            # Si se reactiva el banco, permitir reactivar cuentas que fueron desactivadas por catálogo
+            from .models import CuentaBancaria
+            cuentas_relacionadas = CuentaBancaria.objects.filter(
+                banco=instance,
+                metodo_financiero_detalle__is_active=False,
+                metodo_financiero_detalle__desactivado_por_catalogo=True
+            )
+            
+            for cuenta in cuentas_relacionadas:
+                cuenta.metodo_financiero_detalle.is_active = True
+                cuenta.metodo_financiero_detalle.desactivado_por_catalogo = False
+                cuenta.metodo_financiero_detalle.save()
+                affected_instances.append({
+                    'id': cuenta.id,
+                    'tipo': 'cuenta',
+                    'titular': cuenta.titular
+                })
+        
         estado = "activado" if instance.is_active else "desactivado"
-        return Response({
+        response_data = {
             "message": f"Banco {instance.nombre} {estado}.",
-            "is_active": instance.is_active
-        }, status=status.HTTP_200_OK)
+            "is_active": instance.is_active,
+            "affected_instances": affected_instances
+        }
+        
+        return Response(response_data, status=status.HTTP_200_OK)
 
 
 class BilleteraDigitalCatalogoViewSet(viewsets.ModelViewSet):
@@ -152,11 +193,51 @@ class BilleteraDigitalCatalogoViewSet(viewsets.ModelViewSet):
         instance.is_active = not instance.is_active
         instance.save()
         
+        # Si se desactiva, desactivar también todas las billeteras digitales relacionadas
+        affected_instances = []
+        if not instance.is_active:
+            from .models import BilleteraDigital
+            billeteras_relacionadas = BilleteraDigital.objects.filter(
+                plataforma=instance,
+                metodo_financiero_detalle__is_active=True
+            )
+            
+            for billetera in billeteras_relacionadas:
+                billetera.metodo_financiero_detalle.is_active = False
+                billetera.metodo_financiero_detalle.desactivado_por_catalogo = True
+                billetera.metodo_financiero_detalle.save()
+                affected_instances.append({
+                    'id': billetera.id,
+                    'tipo': 'billetera',
+                    'usuario_id': billetera.usuario_id
+                })
+        else:
+            # Si se reactiva la billetera digital, permitir reactivar billeteras que fueron desactivadas por catálogo
+            from .models import BilleteraDigital
+            billeteras_relacionadas = BilleteraDigital.objects.filter(
+                plataforma=instance,
+                metodo_financiero_detalle__is_active=False,
+                metodo_financiero_detalle__desactivado_por_catalogo=True
+            )
+            
+            for billetera in billeteras_relacionadas:
+                billetera.metodo_financiero_detalle.is_active = True
+                billetera.metodo_financiero_detalle.desactivado_por_catalogo = False
+                billetera.metodo_financiero_detalle.save()
+                affected_instances.append({
+                    'id': billetera.id,
+                    'tipo': 'billetera',
+                    'usuario_id': billetera.usuario_id
+                })
+        
         estado = "activado" if instance.is_active else "desactivado"
-        return Response({
+        response_data = {
             "message": f"Billetera digital {instance.nombre} {estado}.",
-            "is_active": instance.is_active
-        }, status=status.HTTP_200_OK)
+            "is_active": instance.is_active,
+            "affected_instances": affected_instances
+        }
+        
+        return Response(response_data, status=status.HTTP_200_OK)
 
 
 class MetodoFinancieroViewSet(viewsets.ModelViewSet):
@@ -248,11 +329,29 @@ class MetodoFinancieroDetalleViewSet(viewsets.ModelViewSet):
         """
         Instancia y retorna la lista de permisos que requiere esta vista.
         """
-        if self.action in ['create', 'update', 'partial_update', 'destroy']:
+        if self.action in ['update', 'partial_update', 'destroy']:
+            # Solo admins pueden editar/eliminar detalles de métodos financieros
             permission_classes = [permissions.IsAuthenticated, permissions.IsAdminUser]
         else:
+            # Usuarios autenticados pueden ver y crear sus propios métodos financieros
             permission_classes = [permissions.IsAuthenticated]
         return [permission() for permission in permission_classes]
+
+    def perform_create(self, serializer):
+        """
+        Asigna automáticamente el cliente cuando un usuario no-admin crea un método financiero.
+        """
+        if not (self.request.user.is_staff or self.request.user.is_superuser):
+            # Para usuarios no-admin, asignar automáticamente el primer cliente asignado
+            clientes = self.request.user.clientes.all()
+            if clientes.exists():
+                serializer.save(cliente=clientes.first())
+            else:
+                # Si no tiene clientes asignados, devolver error
+                raise PermissionDenied("No tienes clientes asignados para crear métodos financieros.")
+        else:
+            # Para admins, usar el cliente especificado en los datos
+            serializer.save()
 
     def destroy(self, request, *args, **kwargs):
         """Desactivación lógica del detalle de método financiero.
@@ -268,15 +367,37 @@ class MetodoFinancieroDetalleViewSet(viewsets.ModelViewSet):
         instance.save()
         return Response({"message": f"Detalle de método financiero {instance.alias} desactivado (eliminado lógico)."}, status=status.HTTP_200_OK)
 
-    @action(detail=True, methods=['post'], permission_classes=[permissions.IsAuthenticated, permissions.IsAdminUser])
+    @action(detail=True, methods=['post'], permission_classes=[permissions.IsAuthenticated])
     def toggle_active(self, request, pk=None):
         """
         Alterna el estado de activación del método financiero (activo/inactivo).
         
-        Solo los administradores pueden usar esta funcionalidad.
+        - Los administradores pueden activar/desactivar cualquier método.
+        - Los usuarios regulares pueden:
+          * Desactivar sus propios métodos financieros
+          * Reactivar solo aquellos que ellos mismos desactivaron (no los desactivados por catálogo)
         """
         instance = self.get_object()
+        
+        # Verificar permisos para usuarios no-admin
+        if not (self.request.user.is_staff or self.request.user.is_superuser):
+            # Verificar que el método financiero pertenece al usuario
+            if instance.cliente not in self.request.user.clientes.all():
+                raise PermissionDenied("No tienes permisos para modificar este método financiero.")
+            
+            # Si está intentando reactivar un método desactivado por catálogo, denegar
+            if not instance.is_active and instance.desactivado_por_catalogo:
+                return Response({
+                    "error": "No puedes reactivar este método financiero porque fue desactivado por desactivación del catálogo (banco o billetera digital). Contacta al administrador."
+                }, status=status.HTTP_403_FORBIDDEN)
+        
+        # Realizar el toggle
         instance.is_active = not instance.is_active
+        
+        # Si el usuario regular está desactivando, asegurarse de que no sea por catálogo
+        if not instance.is_active and not (self.request.user.is_staff or self.request.user.is_superuser):
+            instance.desactivado_por_catalogo = False
+        
         instance.save()
         
         estado = "activado" if instance.is_active else "desactivado"
@@ -325,9 +446,11 @@ class CuentaBancariaViewSet(viewsets.ModelViewSet):
         """
         Instancia y retorna la lista de permisos que requiere esta vista.
         """
-        if self.action in ['create', 'update', 'partial_update', 'destroy']:
+        if self.action in ['update', 'partial_update', 'destroy']:
+            # Solo admins pueden editar/eliminar cuentas bancarias
             permission_classes = [permissions.IsAuthenticated, permissions.IsAdminUser]
         else:
+            # Usuarios autenticados pueden ver y crear sus propias cuentas bancarias
             permission_classes = [permissions.IsAuthenticated]
         return [permission() for permission in permission_classes]
 
@@ -386,9 +509,11 @@ class BilleteraDigitalViewSet(viewsets.ModelViewSet):
         """
         Instancia y retorna la lista de permisos que requiere esta vista.
         """
-        if self.action in ['create', 'update', 'partial_update', 'destroy']:
+        if self.action in ['update', 'partial_update', 'destroy']:
+            # Solo admins pueden editar/eliminar billeteras digitales
             permission_classes = [permissions.IsAuthenticated, permissions.IsAdminUser]
         else:
+            # Usuarios autenticados pueden ver y crear sus propias billeteras digitales
             permission_classes = [permissions.IsAuthenticated]
         return [permission() for permission in permission_classes]
 
@@ -445,9 +570,11 @@ class TarjetaViewSet(viewsets.ModelViewSet):
         """
         Instancia y retorna la lista de permisos que requiere esta vista.
         """
-        if self.action in ['create', 'update', 'partial_update', 'destroy']:
+        if self.action in ['update', 'partial_update', 'destroy']:
+            # Solo admins pueden editar/eliminar tarjetas
             permission_classes = [permissions.IsAuthenticated, permissions.IsAdminUser]
         else:
+            # Usuarios autenticados pueden ver y crear sus propias tarjetas
             permission_classes = [permissions.IsAuthenticated]
         return [permission() for permission in permission_classes]
 

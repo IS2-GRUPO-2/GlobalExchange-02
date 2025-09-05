@@ -35,9 +35,11 @@ const MetodoFinancieroCard: React.FC<MetodoFinancieroCardProps> = ({
   const getTitle = () => {
     switch (item.tipo) {
       case 'cuentas':
-        return (item as CuentaBancaria).banco;
+        const cuenta = item as CuentaBancaria;
+        return cuenta.banco_nombre || `Banco ID: ${cuenta.banco}`;
       case 'billeteras digitales':
-        return (item as BilleteraDigital).plataforma;
+        const billetera = item as BilleteraDigital;
+        return billetera.plataforma_nombre || `Plataforma ID: ${billetera.plataforma}`;
       case 'tarjetas':
         return `**** ${(item as Tarjeta).last4}`;
       default:

@@ -94,12 +94,18 @@ class MetodoFinancieroDetalle(models.Model):
     
     fecha_registro = models.DateTimeField(auto_now_add=True)
     is_active = models.BooleanField(default=True)
+    desactivado_por_catalogo = models.BooleanField(default=False, help_text="Indica si fue desactivado por desactivación de catálogo (banco/billetera digital)")
     
     class Meta:
         verbose_name = "Detalle de Método Financiero"
         verbose_name_plural = "Detalles de Métodos Financieros"
-        unique_together = [
-            ('cliente', 'alias'),  # Cliente no puede tener alias duplicados
+        constraints = [
+            # Solo los clientes no pueden tener alias duplicados, no aplica para casa
+            models.UniqueConstraint(
+                fields=['cliente', 'alias'], 
+                condition=models.Q(cliente__isnull=False),
+                name='unique_cliente_alias'
+            ),
         ]
         indexes = [
             models.Index(fields=['cliente', 'is_active']),

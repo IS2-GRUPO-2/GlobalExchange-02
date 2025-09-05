@@ -383,8 +383,30 @@ const MetodosFinancierosPage = () => {
     if (!item.detalle_id) return;
     
     try {
+      // Verificar si el elemento padre (banco o billetera) está activo SOLO cuando intentamos activar una instancia
+      if (!item.is_active) { // Si estamos intentando activar (cambiar de inactivo a activo)
+        if (item.tipo === 'cuentas') {
+          const cuenta = item as CuentaBancaria & ExtendedItem;
+          // Buscar el banco correspondiente
+          const bancoAsociado = bancos.find(b => b.id === cuenta.banco);
+          if (bancoAsociado && !bancoAsociado.is_active) {
+            toast.error(`No se puede activar esta cuenta porque el banco ${bancoAsociado.nombre} está desactivado.`);
+            return;
+          }
+        } else if (item.tipo === 'billeteras digitales') {
+          const billetera = item as BilleteraDigital & ExtendedItem;
+          // Buscar la plataforma correspondiente
+          const plataformaAsociada = billeterasCatalogo.find(p => p.id === billetera.plataforma);
+          if (plataformaAsociada && !plataformaAsociada.is_active) {
+            toast.error(`No se puede activar esta billetera porque la plataforma ${plataformaAsociada.nombre} está desactivada.`);
+            return;
+          }
+        }
+      }
+      // Para desactivar, no hay restricciones - siempre se permite
+      
       await toggleActiveMetodoFinanciero(item.detalle_id);
-      toast.success(`${getInstanceTabSingular(item.tipo)} de la casa ${item.is_active ? 'desactivado' : 'activado'} exitosamente!`);
+      toast.success(`${getInstanceTabSingularTitle(item.tipo)} de la casa ${item.is_active ? 'desactivado' : 'activado'} exitosamente!`);
       fetchAllData();
     } catch (err) {
       toast.error(`Error al ${item.is_active ? 'desactivar' : 'activar'} ${getInstanceTabSingular(item.tipo)} de la casa`);
@@ -440,16 +462,7 @@ const MetodosFinancierosPage = () => {
     if (!item.id) return;
     
     try {
-      // Si estamos desactivando un elemento del catálogo, mostrar confirmación
-      if (item.is_active) {
-        const confirm = window.confirm(
-          `¿Está seguro de desactivar este ${tipo === 'bancos' ? 'banco' : 'billetera digital'}? ` +
-          `Esto también desactivará todos los métodos financieros asociados a esta ${tipo === 'bancos' ? 'entidad bancaria' : 'plataforma'}.`
-        );
-        
-        if (!confirm) return;
-      }
-      
+      // Si estamos desactivando un elemento del catálogo, mostraremos mensaje informativo después
       if (tipo === 'bancos') {
         await toggleActiveBanco(item.id);
         toast.success(`Banco ${item.is_active ? 'desactivado' : 'activado'} exitosamente!`);
@@ -707,7 +720,7 @@ const MetodosFinancierosPage = () => {
         return (
           <BancoForm
             onSubmit={editModalOpen ? handleUpdateCatalog : handleCreateCatalog}
-            initialData={initialData as Banco}
+            banco={initialData as Banco}
             isSubmitting={isSubmitting}
             onCancel={editModalOpen ? closeEditModal : closeCreateModal}
           />
@@ -716,7 +729,7 @@ const MetodosFinancierosPage = () => {
         return (
           <BilleteraDigitalCatalogoForm
             onSubmit={editModalOpen ? handleUpdateCatalog : handleCreateCatalog}
-            initialData={initialData as BilleteraDigitalCatalogo}
+            billetera={initialData as BilleteraDigitalCatalogo}
             isSubmitting={isSubmitting}
             onCancel={editModalOpen ? closeEditModal : closeCreateModal}
           />
