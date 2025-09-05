@@ -31,3 +31,23 @@ class ClienteViewSet(viewsets.ModelViewSet):
         usuarios = cliente.usuarios.all()
         serializer = UserSerializer(usuarios, many=True)
         return Response(serializer.data)
+    
+    @action(detail=False, methods=['get'], url_path="categorias")
+    def get_categorias(self, request):
+        """Este endpoint retorna todas las categorías disponibles."""
+        categorias = CategoriaCliente.objects.all()
+        serializer = CategoriaClienteSerializer(categorias, many=True)
+        return Response(serializer.data)
+
+
+class CategoriaClienteViewSet(viewsets.ModelViewSet):
+    """
+    ViewSet para gestionar categorías de cliente.
+    Permite listar, crear, editar y eliminar categorías.
+    """
+    queryset = CategoriaCliente.objects.all()
+    serializer_class = CategoriaClienteSerializer
+    permission_classes = [permissions.IsAuthenticated]
+    filter_backends = [filters.SearchFilter]
+    search_fields = ["nombre", "descuento", "descripcion"]
+

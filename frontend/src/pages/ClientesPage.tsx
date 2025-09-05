@@ -5,6 +5,7 @@ import {
   deleteCliente,
   getClientes,
   updateCliente,
+  getCategoriaCliente
 } from "../services/clienteService";
 import {
   Edit,
@@ -196,7 +197,7 @@ const ClientesPage = () => {
               {clientes.map((cliente: Cliente) => (
                 <tr key={cliente.idCliente}>
                   <td className="font-medium">{cliente.nombre}</td>
-                  <td>{cliente.categoria}</td>
+                  <td>{cliente.nombreCategoria}</td>
                   <td>
                     <span
                       className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
