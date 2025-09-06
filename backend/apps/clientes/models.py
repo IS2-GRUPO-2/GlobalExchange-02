@@ -26,7 +26,7 @@ class Cliente(models.Model):
         idCliente (UUID): Identificador único del cliente.
         nombre (str): Nombre completo del cliente.
         isPersonaFisica (bool): Indica si el cliente es una persona física.
-        categoria (ForeignKey): Relación con la categoría del cliente.
+        idCategoria (ForeignKey): Relación con la categoría del cliente.
         cedula (str): Cédula de identidad del cliente (única).
         correo (str): Correo electrónico del cliente (único).
         telefono (str): Número de teléfono del cliente.
@@ -37,7 +37,7 @@ class Cliente(models.Model):
     idCliente = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     nombre = models.CharField(max_length=255)
     isPersonaFisica = models.BooleanField(default=True)
-    categoria = models.ForeignKey(CategoriaCliente, on_delete=models.PROTECT, related_name="clientes")
+    idCategoria = models.ForeignKey(CategoriaCliente, on_delete=models.PROTECT, related_name="clientes")
     cedula = models.CharField(max_length=20, unique=True, null=True, blank=True)
     correo = models.EmailField(unique=True)
     telefono = models.CharField(max_length=20)
