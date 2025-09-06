@@ -9,6 +9,8 @@ import RolesPage from "../pages/RolesPage";
 import MainMenuPage from "../pages/MenuPage";
 import AdminRoutes from "./AdminRoutes";
 import DivisasPage from "../pages/DivisasPage";
+import MetodosFinancierosPage from "../pages/MetodosFinancierosPage";
+import MetodosFinancierosClientePage from "../pages/MetodosFinancierosClientePage";
 import ConfiguracionesPage from "../pages/ConfiguracionesPage";
 import CategoriaClientePage from "../pages/CategoriaClientePage";
 import RequirePerm from "./RequierePerm";
@@ -64,11 +66,25 @@ export const router = createBrowserRouter([
         ),
       },
       {
+        path: "metodos-financieros",
+        element: (
+          <AdminRoutes>
+            <MetodosFinancierosPage />
+           <AdminRoutes>
+         ),
+       },
+       {
         path: "configuraciones",
         element: (
           <AdminRoutes>
             <ConfiguracionesPage />
           </AdminRoutes>
+        ),
+      },
+      {
+        path: "billeteras",
+        element: (
+          <MetodosFinancierosClientePage />
         ),
       },
       {
@@ -78,7 +94,7 @@ export const router = createBrowserRouter([
             <CategoriaClientePage />
           </AdminRoutes>
         ),
-      }
+      },
     ],
   },
 ]);
