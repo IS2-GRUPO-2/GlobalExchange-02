@@ -1,4 +1,4 @@
-import type { Categoria } from "../types/Cliente";
+import type { CategoriaCliente } from "../types/Cliente";
 import { yupResolver } from "@hookform/resolvers/yup";
 import * as yup from "yup";
 import { useForm } from "react-hook-form";
@@ -9,7 +9,7 @@ import { getCategorias } from "../services/clienteService";
 export type ClientFormData = {
   nombre: string;
   isPersonaFisica: boolean;
-  categoria: Categoria;
+  idCategoria: string;
   documento: string;
   correo: string;
   telefono: string;
@@ -31,7 +31,7 @@ const clientSchema = yup.object().shape({
     .required("Este campo es requerido")
     .email("Ingrese una dirección de correo válida"),
   isPersonaFisica: yup.boolean().required("Este campo es requerido."),
-  categoria: yup.mixed<Categoria>().required("Este campo es requerido."),
+  idCategoria: yup.string().required("Este campo es requerido."),
   documento: yup
     .string()
     .required("Este campo es requerido.")
@@ -50,7 +50,7 @@ const clientSchema = yup.object().shape({
 });
 
 const ClientForm = ({ onSubmit, onCancel }: Props) => {
-  const [categorias, setCategorias] = useState<Categoria[]>([]);
+  const [categorias, setCategorias] = useState<CategoriaCliente[]>([]);
   const [loadingCategorias, setLoadingCategorias] = useState(true);
 
   const {
@@ -62,7 +62,7 @@ const ClientForm = ({ onSubmit, onCancel }: Props) => {
     resolver: yupResolver(clientSchema),
     defaultValues: {
       nombre: "",
-      categoria: undefined,
+      idCategoria: "",
       documento: "",
       isPersonaFisica: false,
       direccion: "",
@@ -157,7 +157,7 @@ const ClientForm = ({ onSubmit, onCancel }: Props) => {
             className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
               errors.documento ? "border-red-500" : "border-gray-300"
             }`}
-            placeholder="Nombre"
+            placeholder="Documento (Cédula o RUC)"
           />
           {errors.documento && (
             <p className="mt-1 text-sm text-red-600">
@@ -221,9 +221,9 @@ const ClientForm = ({ onSubmit, onCancel }: Props) => {
           </label>
           <select
             id="categoria"
-            {...register("categoria")}
+            {...register("idCategoria")}
             className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
-              errors.categoria ? "border-red-500" : "border-gray-300"
+              errors.idCategoria ? "border-red-500" : "border-gray-300"
             }`}
           >
             <option value="">
@@ -235,9 +235,9 @@ const ClientForm = ({ onSubmit, onCancel }: Props) => {
               </option>
             ))}
           </select>
-          {errors.categoria && (
+          {errors.idCategoria && (
             <p className="mt-1 text-sm text-red-600">
-              {errors.categoria.message}
+              {errors.idCategoria.message}
             </p>
           )}
         </div>
