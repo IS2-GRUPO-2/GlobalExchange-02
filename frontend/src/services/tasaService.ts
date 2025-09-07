@@ -72,3 +72,13 @@ export const deactivateTasa = async (tasa_id: number) => {
     throw err;
   }
 };
+
+export const getPublicTasas = async (): Promise<any[]> => {
+  try {
+    const res = await axios.get(`${API_URL}public/`);
+    return res.data;
+  } catch (err: any) {
+    console.error("Error fetching public tasas: ", err?.response?.data || err.message);
+    throw err;
+  }
+};

@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
+import CotizacionesTabla from "../components/CotizacionesTabla";
 
 const mockData = [
   { date: "2025-01", value: 8000 },
@@ -23,6 +24,7 @@ export default function MainMenuPage() {
     <div className="flex flex-col min-h-screen bg-gray-50">
       {/* Conversión */}
       <main className="flex-grow">
+        <CotizacionesTabla />
         <section id="convert" className="p-8 flex flex-col items-center">
           <div className="w-full max-w-md bg-white p-6 rounded-xl shadow">
             <h2 className="text-xl font-bold mb-4 text-gray-800">
