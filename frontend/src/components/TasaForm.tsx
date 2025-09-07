@@ -18,30 +18,29 @@ type Props = {
   tasa: Tasa | null;
 };
 
-const DECIMAL_REGEX = /^\d*(\.\d*)?$/; // solo números y punto (opcional)
+const DECIMAL_REGEX = /^\d*(\.\d*)?$/;
 
 const TasaForm = ({ onSubmit, onCancel, isEditForm, tasa }: Props) => {
   const [divisas, setDivisas] = useState<Divisa[]>([]);
   const [loadingDivisas, setLoadingDivisas] = useState(false);
-  const [divisaLabel, setDivisaLabel] = useState<string>(""); // etiqueta bonita en edición
+  const [divisaLabel, setDivisaLabel] = useState<string>("");
 
   const [form, setForm] = useState<TasaFormData>({
     divisa: tasa?.divisa ?? 0,
-    precioBase: tasa?.precioBase ?? "0",
-    comisionBase: tasa?.comisionBase ?? "0",
+    precioBase: tasa?.precioBase ?? "",
+    comisionBase: tasa?.comisionBase ?? "",
     activo: tasa?.activo ?? true,
   });
 
   const handleDecimalChange =
     (field: "precioBase" | "comisionBase") =>
     (e: React.ChangeEvent<HTMLInputElement>) => {
-      const raw = e.target.value.replace(",", "."); // permitir coma -> punto
+      const raw = e.target.value.replace(",", ".");
       if (raw === "" || DECIMAL_REGEX.test(raw)) {
         setForm((f) => ({ ...f, [field]: raw }));
       }
     };
 
-  // Crear: cargar SOLO divisas activas sin tasa (backend ya filtra y pagina)
   const fetchAllDivisas = async (): Promise<Divisa[]> => {
     let page = 1;
     const aggregated: Divisa[] = [];
@@ -56,7 +55,6 @@ const TasaForm = ({ onSubmit, onCancel, isEditForm, tasa }: Props) => {
   };
 
   useEffect(() => {
-    // Si es edición, mostramos la etiqueta bonita de la divisa seleccionada
     const loadDivisaLabel = async () => {
       if (!isEditForm) return;
       const id = tasa?.divisa;
@@ -65,11 +63,10 @@ const TasaForm = ({ onSubmit, onCancel, isEditForm, tasa }: Props) => {
         const d = await getDivisa(id);
         setDivisaLabel(`${d.codigo} — ${d.nombre}`);
       } catch {
-        setDivisaLabel(String(id)); // fallback: id
+        setDivisaLabel(String(id));
       }
     };
 
-    // Si es creación, cargamos el combo desde /sin_tasa/
     const loadDivisasForCreate = async () => {
       if (isEditForm) return;
       try {
@@ -83,7 +80,6 @@ const TasaForm = ({ onSubmit, onCancel, isEditForm, tasa }: Props) => {
 
     loadDivisaLabel();
     loadDivisasForCreate();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isEditForm, tasa?.divisa]);
 
   const base = Number(form.precioBase || "0");
@@ -103,23 +99,27 @@ const TasaForm = ({ onSubmit, onCancel, isEditForm, tasa }: Props) => {
   }, [form, isEditForm, comisionMayorQueBase]);
 
   return (
-    <div className="p-4 w-[92vw] max-w-xl">
-      <h2 className="text-lg font-semibold mb-4">
+    <div className="p-6 w-[92vw] max-w-xl bg-white rounded-xl shadow">
+      <h2 className="text-lg font-bold mb-6 text-gray-800">
         {isEditForm ? "Editar Cotización" : "Crear Cotización"}
       </h2>
 
-      <div className="space-y-4">
+      <div className="space-y-5">
         {/* Divisa */}
         <div>
-          <label className="block text-sm font-medium mb-1">Divisa</label>
+          <label className="block text-sm font-semibold mb-1 text-gray-700">Divisa</label>
           {isEditForm ? (
-            <input className="input" value={divisaLabel || String(tasa?.divisa ?? "")} disabled />
+            <input
+              className="w-full px-3 py-2 border rounded-md bg-gray-100 text-gray-700"
+              value={divisaLabel || String(tasa?.divisa ?? "")}
+              disabled
+            />
           ) : loadingDivisas ? (
             <div className="text-sm text-gray-500">Cargando divisas...</div>
           ) : (
             <div className="relative">
               <select
-                className="input appearance-none pr-10 bg-white"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm appearance-none pr-10 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 value={form.divisa}
                 onChange={(e) =>
                   setForm((f) => ({ ...f, divisa: Number(e.target.value) }))
@@ -133,7 +133,7 @@ const TasaForm = ({ onSubmit, onCancel, isEditForm, tasa }: Props) => {
                 ))}
               </select>
               <span className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400">
-                <ChevronDown size={16} />
+                <ChevronDown size={18} />
               </span>
             </div>
           )}
@@ -146,9 +146,9 @@ const TasaForm = ({ onSubmit, onCancel, isEditForm, tasa }: Props) => {
 
         {/* Precio base */}
         <div>
-          <label className="block text-sm font-medium mb-1">Precio base</label>
+          <label className="block text-sm font-semibold mb-1 text-gray-700">Precio base</label>
           <input
-            className="input"
+            className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             type="text"
             inputMode="decimal"
             value={form.precioBase}
@@ -160,9 +160,9 @@ const TasaForm = ({ onSubmit, onCancel, isEditForm, tasa }: Props) => {
 
         {/* Comisión base */}
         <div>
-          <label className="block text-sm font-medium mb-1">Comisión base</label>
+          <label className="block text-sm font-semibold mb-1 text-gray-700">Comisión base</label>
           <input
-            className="input"
+            className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             type="text"
             inputMode="decimal"
             value={form.comisionBase}
@@ -171,40 +171,44 @@ const TasaForm = ({ onSubmit, onCancel, isEditForm, tasa }: Props) => {
             autoComplete="off"
           />
           {comisionMayorQueBase && (
-            <p className="mt-1 text-xs text-red-600">
+            <p className="mt-1 text-xs text-red-600 font-medium">
               La comisión no puede ser mayor al precio base.
             </p>
           )}
         </div>
 
         {/* Activo */}
-        { isEditForm? null : (
-        <div className="flex items-center gap-2">
-          <input
-            id="activo"
-            type="checkbox"
-            checked={form.activo}
-            onChange={(e) =>
-              setForm((f) => ({ ...f, activo: e.target.checked }))
-            }
-          />
-          <label htmlFor="activo" className="text-sm">
-            Activo
-          </label>
-        </div>
-        ) }
+        {!isEditForm && (
+          <div className="flex items-center gap-2">
+            <input
+              id="activo"
+              type="checkbox"
+              checked={form.activo}
+              onChange={(e) =>
+                setForm((f) => ({ ...f, activo: e.target.checked }))
+              }
+              className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+            />
+            <label htmlFor="activo" className="text-sm text-gray-700">
+              Activo
+            </label>
+          </div>
+        )}
 
-        {/* acciones */}
-        <div className="flex items-center justify-end gap-2 pt-2">
-          <button className="btn-secondary" onClick={onCancel}>
+        {/* Acciones */}
+        <div className="flex items-center justify-end gap-3 pt-4">
+          <button
+            className="btn-secondary px-4 py-2 rounded-md border border-gray-300 hover:bg-gray-100"
+            onClick={onCancel}
+          >
             Cancelar
           </button>
           <button
-            className="btn-primary"
+            className="btn-primary px-4 py-2 rounded-md bg-blue-600 text-white hover:bg-blue-500 disabled:opacity-50"
             disabled={!isValid}
             onClick={() => onSubmit(form)}
           >
-            {isEditForm ? "Guardar cambios" : "Crear tasa"}
+            {isEditForm ? "Guardar cambios" : "Crear Cotización"}
           </button>
         </div>
       </div>

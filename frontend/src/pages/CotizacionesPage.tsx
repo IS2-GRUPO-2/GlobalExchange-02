@@ -160,18 +160,29 @@ const CotizacionesPage = () => {
       } else {
         toast.info(`Respuesta: ${res.status}`);
       }
-    } catch (e: any) {
-      const msg = e?.response?.data;
-      console.log("Create error payload:", msg);
-      toast.error(
-        typeof msg === "string"
-          ? msg
-          : msg
-          ? JSON.stringify(msg)
-          : "Error creando tasa"
-      );
-    } finally {
       closeCreateModal();
+    }catch (e: any) {
+      const data = e?.response?.data;
+
+      let msg = "Error creando tasa";
+
+      if (typeof data === "string") {
+        msg = data;
+      } else if (data && typeof data === "object") {
+        const allErrors: string[] = [];
+        for (const key in data) {
+          if (Array.isArray(data[key])) {
+            allErrors.push(...data[key]);
+          } else if (typeof data[key] === "string") {
+            allErrors.push(data[key]);
+          }
+        }
+        if (allErrors.length > 0) {
+          msg = allErrors.join("\n");
+        }
+      }
+
+      toast.error(msg);
     }
   };
 
@@ -194,21 +205,32 @@ const CotizacionesPage = () => {
       } else {
         toast.info(`Respuesta: ${res.status}`);
       }
-    } catch (e: any) {
-      const msg = e?.response?.data;
-      toast.error(
-        typeof msg === "string"
-          ? msg
-          : msg
-          ? JSON.stringify(msg)
-          : "Error actualizando Cotización"
-      );
-    } finally {
       closeEditModal();
+    }catch (e: any) {
+      const data = e?.response?.data;
+
+      let msg = "Error creando tasa";
+
+      if (typeof data === "string") {
+        msg = data;
+      } else if (data && typeof data === "object") {
+        const allErrors: string[] = [];
+        for (const key in data) {
+          if (Array.isArray(data[key])) {
+            allErrors.push(...data[key]);
+          } else if (typeof data[key] === "string") {
+            allErrors.push(data[key]);
+          }
+        }
+        if (allErrors.length > 0) {
+          msg = allErrors.join("\n");
+        }
+      }
+
+      toast.error(msg);
     }
   };
 
-  // Desactivar (DELETE -> soft delete)
   const handleDeactivateTasa = async (id: number) => {
     try {
       const res = await deactivateTasa(id);
@@ -233,15 +255,28 @@ const CotizacionesPage = () => {
       } else {
         toast.info(`Respuesta: ${res.status}`);
       }
-    } catch (e: any) {
-      const msg = e?.response?.data;
-      toast.error(
-        typeof msg === "string"
-          ? msg
-          : msg
-          ? JSON.stringify(msg)
-          : "Error activando tasa"
-      );
+    }catch (e: any) {
+      const data = e?.response?.data;
+
+      let msg = "Error creando tasa";
+
+      if (typeof data === "string") {
+        msg = data;
+      } else if (data && typeof data === "object") {
+        const allErrors: string[] = [];
+        for (const key in data) {
+          if (Array.isArray(data[key])) {
+            allErrors.push(...data[key]);
+          } else if (typeof data[key] === "string") {
+            allErrors.push(data[key]);
+          }
+        }
+        if (allErrors.length > 0) {
+          msg = allErrors.join("\n");
+        }
+      }
+
+      toast.error(msg);
     }
   };
 
