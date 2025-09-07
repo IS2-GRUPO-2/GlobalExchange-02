@@ -9,6 +9,10 @@ import RolesPage from "../pages/RolesPage";
 import MainMenuPage from "../pages/MenuPage";
 import AdminRoutes from "./AdminRoutes";
 import DivisasPage from "../pages/DivisasPage";
+import MetodosFinancierosPage from "../pages/MetodosFinancierosPage";
+import MetodosFinancierosClientePage from "../pages/MetodosFinancierosClientePage";
+import ConfiguracionesPage from "../pages/ConfiguracionesPage";
+import CategoriaClientePage from "../pages/CategoriaClientePage";
 import RequirePerm from "./RequierePerm";
 import { CLIENTES, ROLES, USUARIOS } from "../types/perms";
 import CotizacionesPage from "../pages/CotizacionesPage";
@@ -19,7 +23,7 @@ export const router = createBrowserRouter([
     element: <App />,
     children: [
       {
-        path: "landing",
+        path: "",
         element: <MainMenuPage />,
       },
       {
@@ -59,6 +63,36 @@ export const router = createBrowserRouter([
         element: (
           <AdminRoutes>
             <DivisasPage />
+          </AdminRoutes>
+        ),
+      },
+      {
+        path: "metodos-financieros",
+        element: (
+          <AdminRoutes>
+            <MetodosFinancierosPage />
+           </AdminRoutes>
+         ),
+       },
+       {
+        path: "configuraciones",
+        element: (
+          <AdminRoutes>
+            <ConfiguracionesPage />
+          </AdminRoutes>
+        ),
+      },
+      {
+        path: "billeteras",
+        element: (
+          <MetodosFinancierosClientePage />
+        ),
+      },
+      {
+        path: "categorias-clientes",
+        element: (
+          <AdminRoutes>
+            <CategoriaClientePage />
           </AdminRoutes>
         ),
       },

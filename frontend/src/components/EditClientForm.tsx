@@ -3,12 +3,13 @@ import { yupResolver } from "@hookform/resolvers/yup";
 import * as yup from "yup";
 import { useForm } from "react-hook-form";
 import { toast } from "react-toastify";
-
+import { useEffect, useState } from "react";
+import { getCategorias } from "../services/clienteService";
 export type EditClientFormData = {
   id: string;
   nombre: string;
   isPersonaFisica: boolean;
-  categoria: Categoria;
+  categoria: string;
   documento: string;
   correo: string;
   telefono: string;
@@ -52,6 +53,9 @@ const clientSchema = yup.object().shape({
 });
 
 const EditClientForm = ({ onSubmit, onCancel, cliente, readOnly }: Props) => {
+  const [categorias, setCategorias] = useState<Categoria[]>([]);
+  const [loadingCategorias, setLoadingCategorias] = useState(true);
+  
   const {
     register,
     handleSubmit,
@@ -70,7 +74,22 @@ const EditClientForm = ({ onSubmit, onCancel, cliente, readOnly }: Props) => {
       correo: cliente.correo,
     },
   });
+  // Cargar categorías al montar el componente
+  useEffect(() => {
+    const fetchCategorias = async () => {
+      try {
+        const response = await getCategorias();
+        setCategorias(response.data);
+      } catch (error) {
+        console.error("Error al cargar categorías:", error);
+        toast.error("Error al cargar las categorías");
+      } finally {
+        setLoadingCategorias(false);
+      }
+    };
 
+    fetchCategorias();
+  }, []);
   const onFormSubmit = async (data: EditClientFormData) => {
     try {
       onSubmit(data);
@@ -210,9 +229,14 @@ const EditClientForm = ({ onSubmit, onCancel, cliente, readOnly }: Props) => {
             }`}
             disabled={readOnly}
           >
-            <option value="MINORISTA">Minorista</option>
-            <option value="CORPORATIVO">Corporativo</option>
-            <option value="VIP">VIP</option>
+            <option value="">
+              {loadingCategorias ? "Cargando categorías..." : "Seleccione una categoría"}
+            </option>
+            {categorias.map((categoria) => (
+              <option key={categoria.idCategoria} value={categoria.idCategoria}>
+                {categoria.nombre} {`(${categoria.descuento}% desc.)`}
+              </option>
+            ))}
           </select>
           {errors.categoria && (
             <p className="mt-1 text-sm text-red-600">
