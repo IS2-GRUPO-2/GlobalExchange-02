@@ -70,7 +70,7 @@ export const router = createBrowserRouter([
         element: (
           <AdminRoutes>
             <MetodosFinancierosPage />
-           <AdminRoutes>
+           </AdminRoutes>
          ),
        },
        {
