@@ -10,14 +10,27 @@ import {
 import { Bars3Icon, BellIcon, XMarkIcon } from "@heroicons/react/24/outline";
 import Can from "./Can";
 import { useAuth } from "../context/useAuth";
-import { CLIENTES, ROLES, USUARIOS } from "../types/perms";
+import { CATEGORIAS_CLIENTE, CLIENTES, DIVISAS, ROLES, TASAS, USUARIOS } from "../types/perms";
 
 const navigation = [
   { name: "Menú", href: "/", current: true, permisos: [] },
   { name: "Clientes", href: "/clientes", current: false, permisos: [CLIENTES.VIEW] },
   { name: "Usuarios", href: "/usuarios", current: false, permisos: [USUARIOS.VIEW] },
   { name: "Roles", href: "/roles", current: false, permisos: [ROLES.VIEW] },
-  { name: "Cotizaciones", href: "/cotizaciones", current: false, permisos: [] },
+  { name: "Cotizaciones", href: "/cotizaciones", current: false, permisos: [TASAS.VIEW] },
+  {
+    name: "Admin Config",
+    href: "/configuraciones",
+    current: false,
+    permisos: [
+      DIVISAS.VIEW,
+      ROLES.VIEW,
+      CATEGORIAS_CLIENTE.VIEW,
+      TASAS.VIEW,
+      USUARIOS.VIEW,
+      CLIENTES.VIEW,
+    ],
+  },
   { name: "Iniciar sesión", href: "/login", current: false, permisos: [] },
   { name: "Registrarse", href: "/register", current: false, permisos: [] },
 ];
@@ -31,7 +44,10 @@ export default function Navbar() {
 
   // Filtrar navegación: ocultar login/register si está logueado
   const filteredNavigation = navigation.filter((item) => {
-    if (isLoggedIn() && (item.name === "Iniciar sesión" || item.name === "Registrarse")) {
+    if (
+      isLoggedIn() &&
+      (item.name === "Iniciar sesión" || item.name === "Registrarse")
+    ) {
       return false;
     }
     return true;
@@ -87,7 +103,7 @@ export default function Navbar() {
               </div>
             </div>
           </div>
-          
+
           <div className="absolute inset-y-0 right-0 flex items-center pr-2 sm:static sm:inset-auto sm:ml-6 sm:pr-0">
             {isLoggedIn() && (
               <>
