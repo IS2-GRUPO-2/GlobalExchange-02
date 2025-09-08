@@ -1,7 +1,6 @@
-from rest_framework.routers import DefaultRouter
-from .views import ConversionViewSet
+from django.urls import path
+from .views import simular_conversion
 
-router = DefaultRouter()
-router.register(r"", ConversionViewSet, basename="conversiones")
-
-urlpatterns = router.urls
+urlpatterns = [
+    path("simular/", simular_conversion, name="simular-conversion"),
+]

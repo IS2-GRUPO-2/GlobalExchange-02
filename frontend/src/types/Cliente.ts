@@ -2,7 +2,7 @@ export type Cliente = {
   idCliente: string;
   nombre: string;
   isPersonaFisica: boolean;
-  categoria: Categoria;
+  categoria: string;
   cedula?: string;
   correo: string;
   telefono: string;

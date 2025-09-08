@@ -3,7 +3,7 @@ from rest_framework.response import Response
 from rest_framework.decorators import action
 from .models import Cliente
 from django.contrib.auth import get_user_model
-from .serializers import ClienteSerializer
+from .serializers import ClienteSerializer, CategoriaClienteSerializer, CategoriaCliente
 from apps.usuarios.serializers import UserSerializer
 
 User = get_user_model()
