@@ -16,7 +16,7 @@ class DivisaPagination(PageNumberPagination):
 class DivisaViewset(viewsets.ModelViewSet):
     serializer_class = DivisaSerializer
     queryset = Divisa.objects.all()
-    permission_classes = [permissions.IsAuthenticated, permissions.IsAdminUser]
+    permission_classes = [permissions.IsAuthenticated, permissions.DjangoModelPermissions]
     filter_backends = [filters.SearchFilter]
     search_fields = ["nombre", "codigo"]
     pagination_class = DivisaPagination
@@ -167,7 +167,7 @@ class DivisaViewset(viewsets.ModelViewSet):
 class DenominacionViewset(viewsets.ModelViewSet):
     serializer_class = DenominacionSerializer
     queryset = Denominacion.objects.all()
-    permission_classes = [permissions.IsAuthenticated, permissions.IsAdminUser]
+    permission_classes = [permissions.IsAuthenticated, permissions.DjangoModelPermissions]
 
     def create(self, request, *args, **kwargs):
         divisa = request.data.get('divisa')

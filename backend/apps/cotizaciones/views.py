@@ -7,12 +7,13 @@ from drf_yasg.utils import swagger_auto_schema
 from drf_yasg import openapi
 from apps.cotizaciones.service import TasaService
 from apps.divisas.models import Divisa
+from rest_framework.permissions import DjangoModelPermissions
 
 
 class TasaViewSet(viewsets.ModelViewSet):
     queryset = Tasa.objects.select_related("divisa").all()
     serializer_class = TasaSerializer
-    permission_classes = [permissions.AllowAny]
+    permission_classes = [permissions.AllowAny, DjangoModelPermissions]
 
     filter_backends = [filters.SearchFilter]
     search_fields = ["divisa__codigo", "divisa__nombre"]

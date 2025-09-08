@@ -32,7 +32,7 @@ class UserViewSet(viewsets.ModelViewSet):
     """
     queryset = User.objects.all()
     serializer_class = UserSerializer
-    permission_classes = [permissions.AllowAny] 
+    permission_classes = [permissions.IsAuthenticated, permissions.DjangoModelPermissions]
     
     def get_permissions(self):
         """

@@ -5,7 +5,7 @@ from .serializers import RoleSerializer
 class RoleViewSet(viewsets.ModelViewSet):
     queryset = Group.objects.all().prefetch_related("permissions")
     serializer_class = RoleSerializer
-    permission_classes = [permissions.AllowAny]
+    permission_classes = [permissions.IsAuthenticated, permissions.DjangoModelPermissions]
     filter_backends = [filters.SearchFilter]
     search_fields = ['name', 'permissions__name']
 
