@@ -13,7 +13,6 @@ export type EditUserFormData = {
   last_name: string;
   email: string;
   password?: string;
-  is_active: boolean;
 };
 
 type Props = {
@@ -43,7 +42,6 @@ const userSchema = yup.object().shape({
     .required("Este campo es requerido")
     .email("Ingrese una dirección de correo válida"),
   password: yup.string().optional(),
-  is_active: yup.boolean(),
 });
 
 const EditUserForm = ({
@@ -67,7 +65,6 @@ const EditUserForm = ({
       last_name: user.last_name,
       email: user.email,
       password: "",
-      is_active: user.is_active,
     },
   });
 
@@ -167,19 +164,6 @@ const EditUserForm = ({
             />
           </div>
         )}
-
-        {/* Activo */}
-        <div>
-          <label className="flex items-center text-sm font-medium text-gray-700 cursor-pointer">
-            <input
-              type="checkbox"
-              {...register("is_active")}
-              className="mr-2 h-4 w-4 text-blue-600 border-gray-300 rounded"
-              disabled={readOnly}
-            />
-            Activo
-          </label>
-        </div>
 
         {/* Footer */}
         <div className="flex justify-end gap-2 pt-4">
