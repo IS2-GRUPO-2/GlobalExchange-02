@@ -9,7 +9,11 @@ import {
   FileText,
   CreditCard,
   Tag,
+  Users,
+  User,
 } from "lucide-react";
+import { CATEGORIAS_CLIENTE, CLIENTES, DIVISAS, ROLES, TASAS, USUARIOS } from "../types/perms";
+import Can from "../components/Can";
 
 type ConfigItem = {
   id: string;
@@ -24,6 +28,24 @@ const ConfiguracionesPage = () => {
   const navigate = useNavigate();
 
   const [configItems] = useState<ConfigItem[]>([
+      {
+        id: "usuarios",
+        nombre: "Usuarios",
+        descripcion: "Administrar usuarios del sistema",
+        icon: <Users className="w-6 h-6 text-indigo-600" />,
+        path: "/usuarios",
+        habilitado: true,
+        permisos: [USUARIOS.VIEW],
+      },
+      {
+        id: "clientes",
+        nombre: "Clientes",
+        descripcion: "Gestionar clientes registrados",
+        icon: <User className="w-6 h-6 text-emerald-600" />,
+        path: "/clientes",
+        habilitado: true,
+        permisos: [CLIENTES.VIEW],
+      },
     {
       id: "divisas",
       nombre: "Divisas",
@@ -31,6 +53,7 @@ const ConfiguracionesPage = () => {
       icon: <Coins className="w-6 h-6 text-blue-600" />,
       path: "/divisas",
       habilitado: true,
+      permisos: [DIVISAS.VIEW],
     },
     {
       id: "roles",
@@ -39,6 +62,7 @@ const ConfiguracionesPage = () => {
       icon: <UserCog className="w-6 h-6 text-orange-600" />,
       path: "/roles",
       habilitado: true,
+      permisos: [ROLES.VIEW],
     },
     {
       id: "categorias",
@@ -47,14 +71,16 @@ const ConfiguracionesPage = () => {
       icon: <Tag className="w-6 h-6 text-pink-600" />,
       path: "/categorias-clientes",
       habilitado: true,
+      permisos: [CATEGORIAS_CLIENTE.VIEW],
     },
     {
       id: "tasas",
       nombre: "Tasas de cambio",
       descripcion: "Configurar y actualizar tasas de cambio",
       icon: <Percent className="w-6 h-6 text-green-600" />,
-      path: "/configuraciones/tasas",
-      habilitado: false,
+      path: "/cotizaciones",
+      habilitado: true,
+      permisos: [TASAS.VIEW],
     },
     {
       id: "metodos",
@@ -63,6 +89,7 @@ const ConfiguracionesPage = () => {
       icon: <CreditCard className="w-6 h-6 text-purple-600" />,
       path: "/configuraciones/metodos",
       habilitado: false,
+      permisos: [],
     },
     {
       id: "comisiones",
@@ -71,6 +98,7 @@ const ConfiguracionesPage = () => {
       icon: <Wallet className="w-6 h-6 text-teal-600" />,
       path: "/configuraciones/comisiones",
       habilitado: false,
+      permisos: [],
     },
     {
       id: "documentos",
@@ -79,6 +107,7 @@ const ConfiguracionesPage = () => {
       icon: <FileText className="w-6 h-6 text-gray-600" />,
       path: "/configuraciones/documentos",
       habilitado: false,
+      permisos: [],
     },
   ]);
 
@@ -92,29 +121,30 @@ const ConfiguracionesPage = () => {
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
         {configItems.map((item) => (
-          <div
-            key={item.id}
-            onClick={() => item.habilitado && navigate(item.path)}
-            className={`relative p-6 bg-white rounded-xl shadow transition ${
-              item.habilitado
-                ? "cursor-pointer hover:shadow-lg"
-                : "opacity-50 cursor-not-allowed"
-            }`}
-          >
-            <div className="flex items-center gap-4">
-              {item.icon}
-              <div>
-                <h2 className="text-lg font-semibold">{item.nombre}</h2>
-                <p className="text-sm text-gray-500">{item.descripcion}</p>
+          <Can key={item.id} allOf={item.permisos}>
+            <div
+              onClick={() => item.habilitado && navigate(item.path)}
+              className={`relative p-6 bg-white rounded-xl shadow transition ${
+                item.habilitado
+                  ? "cursor-pointer hover:shadow-lg"
+                  : "opacity-50 cursor-not-allowed"
+              }`}
+            >
+              <div className="flex items-center gap-4">
+                {item.icon}
+                <div>
+                  <h2 className="text-lg font-semibold">{item.nombre}</h2>
+                  <p className="text-sm text-gray-500">{item.descripcion}</p>
+                </div>
               </div>
-            </div>
 
-            {!item.habilitado && (
-              <span className="absolute top-2 right-2 text-xs bg-gray-200 text-gray-600 px-2 py-1 rounded">
-                Próximamente
-              </span>
-            )}
-          </div>
+              {!item.habilitado && (
+                <span className="absolute top-2 right-2 text-xs bg-gray-200 text-gray-600 px-2 py-1 rounded">
+                  Próximamente
+                </span>
+              )}
+            </div>
+          </Can>
         ))}
       </div>
     </div>
