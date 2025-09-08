@@ -2,10 +2,7 @@ import { yupResolver } from "@hookform/resolvers/yup";
 import * as yup from "yup";
 import { useForm } from "react-hook-form";
 import { toast } from "react-toastify";
-import { type User } from "../types/User";
-import { type Cliente } from "../types/Cliente";
-import { useEffect, useState } from "react";
-import { getClientes } from "../services/clienteService";
+
 
 export type UserFormData = {
   username: string;
@@ -13,7 +10,6 @@ export type UserFormData = {
   last_name: string;
   email: string;
   password: string;
-  is_staff: boolean;
   is_active: boolean;
   clientes: string[];
 };
@@ -44,13 +40,10 @@ const userSchema = yup.object().shape({
     .string()
     .required("Este campo es requerido.")
     .min(6, "La contraseña debe tener al menos 6 caracteres"),
-  is_staff: yup.boolean(),
   is_active: yup.boolean(),
-  clientes: yup.array().of(yup.string()),
 });
 
 const UserForm = ({ onSubmit, onCancel }: Props) => {
-  const [clientes, setClientes] = useState<Cliente[]>([]);
 
   const {
     register,
@@ -66,35 +59,10 @@ const UserForm = ({ onSubmit, onCancel }: Props) => {
       first_name: "",
       last_name: "",
       email: "",
-      password: "",
-      is_staff: false,
+      password: "", 
       is_active: true,
-      clientes: [],
     },
   });
-
-  const selectedClientes = watch("clientes");
-
-  useEffect(() => {
-    fetchClientes();
-  }, []);
-
-  const fetchClientes = async () => {
-    try {
-      const res = await getClientes("");
-      setClientes(res.data);
-    } catch (error) {
-      toast.error("Error al cargar clientes");
-    }
-  };
-
-  const handleClienteChange = (clienteId: string, checked: boolean) => {
-    if (checked) {
-      setValue("clientes", [...selectedClientes, clienteId]);
-    } else {
-      setValue("clientes", selectedClientes.filter(id => id !== clienteId));
-    }
-  };
 
   const onFormSubmit = async (data: UserFormData) => {
     try {
@@ -217,57 +185,35 @@ const UserForm = ({ onSubmit, onCancel }: Props) => {
             <p className="mt-1 text-sm text-red-600">{errors.password.message}</p>
           )}
         </div>
-
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Asignar Clientes
-          </label>
-          <div className="max-h-40 overflow-y-auto border border-gray-300 rounded-md p-3 space-y-2">
-            {clientes.map((cliente) => (
-              <label key={cliente.idCliente} className="flex items-center space-x-2">
-                <input
-                  type="checkbox"
-                  checked={selectedClientes.includes(cliente.idCliente)}
-                  onChange={(e) => handleClienteChange(cliente.idCliente, e.target.checked)}
-                  className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-                />
-                <span className="text-sm text-gray-700">
-                  {cliente.nombre} ({cliente.categoria})
-                </span>
-              </label>
-            ))}
-          </div>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <label
-              htmlFor="is_staff"
-              className="flex items-center text-sm font-medium text-gray-700 cursor-pointer"
+        <div className="flex items-center space-x-4">
+          <div className="flex items-center space-x-3">
+            <button
+              type="button"
+              onClick={() => {
+                const currentValue = watch("is_active");
+                setValue("is_active", !currentValue);
+              }}
+              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${
+                watch("is_active") ? "bg-green-400" : "bg-gray-300"
+              }`}
             >
-              <input
-                type="checkbox"
-                id="is_staff"
-                {...register("is_staff")}
-                className="mr-2 h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+              <span
+                className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                  watch("is_active") ? "translate-x-6" : "translate-x-1"
+                }`}
               />
-              Es Staff
-            </label>
-          </div>
-
-          <div>
-            <label
-              htmlFor="is_active"
-              className="flex items-center text-sm font-medium text-gray-700 cursor-pointer"
+            </button>
+            <span
+              className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                watch("is_active")
+                  ? "bg-green-100 text-green-800"
+                  : "bg-red-100 text-red-900"
+              }`}
             >
-              <input
-                type="checkbox"
-                id="is_active"
-                {...register("is_active")}
-                className="mr-2 h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-              />
-              Activo
-            </label>
+              {watch("is_active") ? "Activo" : "Inactivo"}
+            </span>
+            {/* Hidden input para registrar el campo con react-hook-form */}
+            <input type="hidden" {...register("is_active")} />
           </div>
         </div>
 

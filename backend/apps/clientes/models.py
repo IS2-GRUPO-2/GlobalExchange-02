@@ -1,9 +1,3 @@
-from django.db import models
-import uuid
-# from django.conf import settings  # para referenciar al modelo de User
-# Create your models here.
-
-
 import uuid
 from django.db import models
 

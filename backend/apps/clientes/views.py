@@ -1,7 +1,7 @@
 from rest_framework import viewsets, permissions, filters, status
 from rest_framework.response import Response
 from rest_framework.decorators import action
-from .models import Cliente
+from .models import Cliente, CategoriaCliente
 from django.contrib.auth import get_user_model
 from .serializers import ClienteSerializer, CategoriaClienteSerializer, CategoriaCliente
 from apps.usuarios.serializers import UserSerializer
@@ -38,7 +38,6 @@ class ClienteViewSet(viewsets.ModelViewSet):
         categorias = CategoriaCliente.objects.all()
         serializer = CategoriaClienteSerializer(categorias, many=True)
         return Response(serializer.data)
-
 
 class CategoriaClienteViewSet(viewsets.ModelViewSet):
     """
