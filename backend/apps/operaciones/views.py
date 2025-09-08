@@ -57,7 +57,7 @@ class BancoViewSet(viewsets.ModelViewSet):
         Instancia y retorna la lista de permisos que requiere esta vista.
         """
         if self.action in ['create', 'update', 'partial_update', 'destroy']:
-            permission_classes = [permissions.IsAuthenticated, permissions.IsAdminUser]
+            permission_classes = [permissions.IsAuthenticated]
         else:
             permission_classes = [permissions.IsAuthenticated]
         return [permission() for permission in permission_classes]
@@ -81,7 +81,7 @@ class BancoViewSet(viewsets.ModelViewSet):
             status=status.HTTP_200_OK
         )
 
-    @action(detail=True, methods=['post'], permission_classes=[permissions.IsAuthenticated, permissions.IsAdminUser])
+    @action(detail=True, methods=['post'], permission_classes=[permissions.IsAuthenticated])
     def toggle_active(self, request, pk=None):
         """
         Alterna el estado de activación del banco (activo/inactivo).
@@ -158,7 +158,7 @@ class BilleteraDigitalCatalogoViewSet(viewsets.ModelViewSet):
         Instancia y retorna la lista de permisos que requiere esta vista.
         """
         if self.action in ['create', 'update', 'partial_update', 'destroy']:
-            permission_classes = [permissions.IsAuthenticated, permissions.IsAdminUser]
+            permission_classes = [permissions.IsAuthenticated]
         else:
             permission_classes = [permissions.IsAuthenticated]
         return [permission() for permission in permission_classes]
@@ -182,7 +182,7 @@ class BilleteraDigitalCatalogoViewSet(viewsets.ModelViewSet):
             status=status.HTTP_200_OK
         )
 
-    @action(detail=True, methods=['post'], permission_classes=[permissions.IsAuthenticated, permissions.IsAdminUser])
+    @action(detail=True, methods=['post'], permission_classes=[permissions.IsAuthenticated])
     def toggle_active(self, request, pk=None):
         """
         Alterna el estado de activación de la billetera digital (activo/inactivo).
@@ -262,7 +262,7 @@ class MetodoFinancieroViewSet(viewsets.ModelViewSet):
         Instancia y retorna la lista de permisos que requiere esta vista.
         """
         if self.action in ['create', 'update', 'partial_update', 'destroy']:
-            permission_classes = [permissions.IsAuthenticated, permissions.IsAdminUser]
+            permission_classes = [permissions.IsAuthenticated]
         else:
             permission_classes = [permissions.IsAuthenticated]
         return [permission() for permission in permission_classes]
@@ -317,10 +317,9 @@ class MetodoFinancieroDetalleViewSet(viewsets.ModelViewSet):
         - Usuarios regulares: ven sus propios registros (activos e inactivos)
         """
         queryset = MetodoFinancieroDetalle.objects.all()
-        
-        if self.request.user.is_staff or self.request.user.is_superuser:
+        if self.request.user.has_perm('operaciones.view_metodofinanciero'):
             # Administradores ven todos los registros
-            return queryset
+            return queryset.filter(es_cuenta_casa=True)
         else:
             # Usuarios regulares ven los registros de sus clientes asignados (activos e inactivos)
             return queryset.filter(cliente__in=self.request.user.clientes.all())
@@ -331,7 +330,7 @@ class MetodoFinancieroDetalleViewSet(viewsets.ModelViewSet):
         """
         if self.action in ['update', 'partial_update', 'destroy']:
             # Solo admins pueden editar/eliminar detalles de métodos financieros
-            permission_classes = [permissions.IsAuthenticated, permissions.IsAdminUser]
+            permission_classes = [permissions.IsAuthenticated]
         else:
             # Usuarios autenticados pueden ver y crear sus propios métodos financieros
             permission_classes = [permissions.IsAuthenticated]
@@ -341,7 +340,7 @@ class MetodoFinancieroDetalleViewSet(viewsets.ModelViewSet):
         """
         Asigna automáticamente el cliente cuando un usuario no-admin crea un método financiero.
         """
-        if not (self.request.user.is_staff or self.request.user.is_superuser):
+        if not (self.request.user.has_perm('operaciones.add_metodofinanciero')):
             # Para usuarios no-admin, asignar automáticamente el primer cliente asignado
             clientes = self.request.user.clientes.all()
             if clientes.exists():
@@ -380,7 +379,7 @@ class MetodoFinancieroDetalleViewSet(viewsets.ModelViewSet):
         instance = self.get_object()
         
         # Verificar permisos para usuarios no-admin
-        if not (self.request.user.is_staff or self.request.user.is_superuser):
+        if not (self.request.user.has_perm('operaciones.change_metodofinanciero')):
             # Verificar que el método financiero pertenece al usuario
             if instance.cliente not in self.request.user.clientes.all():
                 raise PermissionDenied("No tienes permisos para modificar este método financiero.")
@@ -395,7 +394,7 @@ class MetodoFinancieroDetalleViewSet(viewsets.ModelViewSet):
         instance.is_active = not instance.is_active
         
         # Si el usuario regular está desactivando, asegurarse de que no sea por catálogo
-        if not instance.is_active and not (self.request.user.is_staff or self.request.user.is_superuser):
+        if not instance.is_active and not (self.request.user.has_perm('operaciones.change_metodofinanciero')):
             instance.desactivado_por_catalogo = False
         
         instance.save()
@@ -433,9 +432,8 @@ class CuentaBancariaViewSet(viewsets.ModelViewSet):
         """
         queryset = CuentaBancaria.objects.select_related('metodo_financiero_detalle', 'banco').all()
         
-        if self.request.user.is_staff or self.request.user.is_superuser:
-            # Administradores ven todas las cuentas
-            return queryset
+        if self.request.user.has_perm('operaciones.view_metodofinanciero'):
+            return  queryset.filter(es_cuenta_casa=True)
         else:
             # Usuarios regulares ven las cuentas de sus clientes asignados
             return queryset.filter(
@@ -448,7 +446,7 @@ class CuentaBancariaViewSet(viewsets.ModelViewSet):
         """
         if self.action in ['update', 'partial_update', 'destroy']:
             # Solo admins pueden editar/eliminar cuentas bancarias
-            permission_classes = [permissions.IsAuthenticated, permissions.IsAdminUser]
+            permission_classes = [permissions.IsAuthenticated]
         else:
             # Usuarios autenticados pueden ver y crear sus propias cuentas bancarias
             permission_classes = [permissions.IsAuthenticated]
@@ -496,9 +494,8 @@ class BilleteraDigitalViewSet(viewsets.ModelViewSet):
         """
         queryset = BilleteraDigital.objects.select_related('metodo_financiero_detalle', 'plataforma').all()
         
-        if self.request.user.is_staff or self.request.user.is_superuser:
-            # Administradores ven todas las billeteras
-            return queryset
+        if self.request.user.has_perm('operaciones.view_metodofinanciero'):
+            return queryset.filter(es_cuenta_casa=True)
         else:
             # Usuarios regulares ven las billeteras de sus clientes asignados
             return queryset.filter(
@@ -556,15 +553,11 @@ class TarjetaViewSet(viewsets.ModelViewSet):
         NOTA: No se filtra por is_active aquí, se incluye el estado en el serializer
         """
         queryset = Tarjeta.objects.select_related('metodo_financiero_detalle').all()
-        
-        if self.request.user.is_staff or self.request.user.is_superuser:
-            # Administradores ven todas las tarjetas
-            return queryset
-        else:
-            # Usuarios regulares ven las tarjetas de sus clientes asignados
-            return queryset.filter(
-                metodo_financiero_detalle__cliente__in=self.request.user.clientes.all()
-            )
+
+        # Usuarios regulares ven las tarjetas de sus clientes asignados
+        return queryset.filter(
+            metodo_financiero_detalle__cliente__in=self.request.user.clientes.all()
+        )
 
     def get_permissions(self):
         """
@@ -572,7 +565,7 @@ class TarjetaViewSet(viewsets.ModelViewSet):
         """
         if self.action in ['update', 'partial_update', 'destroy']:
             # Solo admins pueden editar/eliminar tarjetas
-            permission_classes = [permissions.IsAuthenticated, permissions.IsAdminUser]
+            permission_classes = [permissions.IsAuthenticated]
         else:
             # Usuarios autenticados pueden ver y crear sus propias tarjetas
             permission_classes = [permissions.IsAuthenticated]

@@ -28,3 +28,24 @@ export const PERMISOS = {
   DELETE: "auth.delete_permission",
   VIEW: "auth.view_permission",
 } as const;
+
+export const DIVISAS = {
+  ADD: "divisas.add_divisa",
+  CHANGE: "divisas.change_divisa",
+  DELETE: "divisas.delete_divisa",
+  VIEW: "divisas.view_divisa",
+} as const;
+
+export const METODOS_FINANCIEROS = {
+  ADD: "metodos_financieros.add_metodofinanciero",
+  CHANGE: "metodos_financieros.change_metodofinanciero",
+  DELETE: "metodos_financieros.delete_metodofinanciero",
+  VIEW: "metodos_financieros.view_metodofinanciero",
+} as const;
+
+export const CONFIGURACIONES = {
+  ADD: "configuraciones.add_configuracion",
+  CHANGE: "configuraciones.change_configuracion",
+  DELETE: "configuraciones.delete_configuracion",
+  VIEW: "configuraciones.view_configuracion",
+} as const;

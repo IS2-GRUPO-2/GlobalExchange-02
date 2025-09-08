@@ -7,7 +7,7 @@ type Props = { children: React.ReactNode };
 const AdminRoutes = ({ children }: Props) => {
   const location = useLocation();
   const { isLoggedIn, user } = useAuth();
-  return isLoggedIn() && user?.is_staff ? (
+  return isLoggedIn() ? (
     <>{children}</>
   ) : (
     <Navigate to="/" state={{ from: location }} replace />

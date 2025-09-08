@@ -3,7 +3,6 @@ import App from "../App";
 import UsuariosPage from "../pages/UsuariosPage";
 import ClientesPage from "../pages/ClientesPage";
 import LoginPage from "../pages/LoginPage";
-// import ProtectedRoute from "./ProtectedRoute"; // Esta importación no se usa
 import RegisterPage from "../pages/RegisterPage";
 import RolesPage from "../pages/RolesPage";
 import MainMenuPage from "../pages/MenuPage";
@@ -14,7 +13,7 @@ import MetodosFinancierosClientePage from "../pages/MetodosFinancierosClientePag
 import ConfiguracionesPage from "../pages/ConfiguracionesPage";
 import CategoriaClientePage from "../pages/CategoriaClientePage";
 import RequirePerm from "./RequierePerm";
-import { CLIENTES, ROLES, USUARIOS } from "../types/perms";
+import { CLIENTES, METODOS_FINANCIEROS, ROLES, USUARIOS, CONFIGURACIONES } from "../types/perms";
 
 export const router = createBrowserRouter([
   {
@@ -32,7 +31,7 @@ export const router = createBrowserRouter([
       {
         path: "roles",
         element: (
-          <RequirePerm anyOf={[ROLES.VIEW, ROLES.ADD, ROLES.CHANGE, ROLES.DELETE]}>
+          <RequirePerm anyOf={[ROLES.VIEW]}>
             <RolesPage />
           </RequirePerm>
         ),
@@ -40,7 +39,7 @@ export const router = createBrowserRouter([
       {
         path: "clientes",
         element: (
-          <RequirePerm anyOf={[CLIENTES.VIEW, CLIENTES.ADD, CLIENTES.CHANGE, CLIENTES.DELETE]}>
+          <RequirePerm anyOf={[CLIENTES.VIEW]}>
             <ClientesPage />
           </RequirePerm>
         ),
@@ -52,7 +51,7 @@ export const router = createBrowserRouter([
       {
         path: "usuarios",
         element: (
-          <RequirePerm anyOf={[USUARIOS.VIEW, USUARIOS.ADD, USUARIOS.CHANGE, USUARIOS.DELETE]}>
+          <RequirePerm anyOf={[USUARIOS.VIEW]}>
             <UsuariosPage />
           </RequirePerm>
         ),
@@ -60,31 +59,33 @@ export const router = createBrowserRouter([
       {
         path: "divisas",
         element: (
-          <AdminRoutes>
+          <RequirePerm anyOf={[USUARIOS.VIEW]}>
             <DivisasPage />
-          </AdminRoutes>
+          </RequirePerm>
         ),
       },
       {
         path: "metodos-financieros",
         element: (
-          <AdminRoutes>
+          <RequirePerm anyOf={[METODOS_FINANCIEROS.VIEW]}>
             <MetodosFinancierosPage />
-           </AdminRoutes>
-         ),
-       },
-       {
-        path: "configuraciones",
-        element: (
-          <AdminRoutes>
-            <ConfiguracionesPage />
-          </AdminRoutes>
+          </RequirePerm>
         ),
       },
       {
-        path: "billeteras",
+        path: "configuraciones",
         element: (
-          <MetodosFinancierosClientePage />
+          <RequirePerm anyOf={[CONFIGURACIONES.VIEW]}>
+            <ConfiguracionesPage />
+          </RequirePerm>
+        ),
+      },
+      {
+        path: "metodos-financieros-cliente",
+        element: (
+          <RequirePerm anyOf={[METODOS_FINANCIEROS.VIEW]}>
+            <MetodosFinancierosClientePage />
+          </RequirePerm>
         ),
       },
       {
