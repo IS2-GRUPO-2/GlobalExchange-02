@@ -90,6 +90,7 @@ const DivisasPage = () => {
       max_digitos: divisaData.max_digitos,
       precision: divisaData.precision,
       is_active: true,
+      es_base: divisaData.es_base ?? false,
     };
 
     try {
@@ -225,6 +226,7 @@ const DivisasPage = () => {
                 <th>Símbolo</th>
                 <th>Máx. dígitos</th>
                 <th>Precisión</th>
+                <th>Base</th>
                 <th>Estado</th>
                 <th>Acciones</th>
               </tr>
@@ -256,6 +258,15 @@ const DivisasPage = () => {
                     <td>{divisa.simbolo}</td>
                     <td>{divisa.max_digitos}</td>
                     <td>{divisa.precision}</td>
+                    <td>
+                      <span
+                        className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                          divisa.es_base ? "bg-blue-100 text-blue-800" : "bg-gray-100 text-gray-800"
+                        }`}
+                      >
+                        {divisa.es_base ? "Sí" : "No"}
+                      </span>
+                    </td>
                     <td>
                       <span
                         className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${

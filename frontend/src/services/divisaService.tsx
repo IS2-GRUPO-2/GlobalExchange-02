@@ -5,6 +5,7 @@ const API_URL = "/api/divisas/";
 interface GetDivisasParams {
   page?: number;
   search?: string;
+  es_base?: boolean;
 }
 
 export const getDivisas = async (
@@ -131,4 +132,9 @@ export const updateDenominacion = async (
     console.error("Error updating denominacion: ", err);
     throw err;
   }
+};
+
+export const getDivisasSinTasa = async (params: { page?: number; search?: string } = {}) => {
+  const res = await axios.get<PaginatedDivisas>("/api/divisas/sin_tasa/", { params });
+  return res.data;
 };

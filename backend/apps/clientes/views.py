@@ -5,13 +5,14 @@ from .models import Cliente, CategoriaCliente
 from django.contrib.auth import get_user_model
 from .serializers import ClienteSerializer, CategoriaClienteSerializer
 from apps.usuarios.serializers import UserSerializer
+from rest_framework.permissions import DjangoModelPermissions
 
 User = get_user_model()
 
 class ClienteViewSet(viewsets.ModelViewSet):
     queryset = Cliente.objects.all()
     serializer_class = ClienteSerializer
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [permissions.IsAuthenticated, permissions.DjangoModelPermissions]
 
     filter_backends = [filters.SearchFilter]
     search_fields = ["nombre", "cedula", "ruc"]
@@ -46,6 +47,6 @@ class CategoriaClienteViewSet(viewsets.ModelViewSet):
     """
     queryset = CategoriaCliente.objects.all()
     serializer_class = CategoriaClienteSerializer
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [permissions.IsAuthenticated, DjangoModelPermissions]
     filter_backends = [filters.SearchFilter]
     search_fields = ["nombre", "descuento", "descripcion"]

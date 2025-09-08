@@ -220,7 +220,7 @@ const RolesPage = () => {
           <RoleForm
             onSubmit={async () => {}}
             onCancel={closeDetailModal}
-            permissions={perms}
+            permissions={perms.filter((p) => selectedRole?.permissions.includes(p.id))}
             initial={selectedRole}
             readOnly={true}
           />
