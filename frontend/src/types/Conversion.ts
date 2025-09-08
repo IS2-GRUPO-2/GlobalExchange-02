@@ -2,7 +2,7 @@ export type SimulacionRequest = {
   cliente_id: string;
   divisa_id: string;
   monto: number;
-  metodo_pago: string;
+  metodo_id: string;
   operacion: "compra" | "venta";
 };
 
@@ -13,8 +13,7 @@ export type SimulacionResponse = {
     precio_base: number;
     comision_base: number;
     descuento_categoria: number;
-    porcentaje_metodo_pago?: number;
-    porcentaje_metodo_cobro?: number;
+    comision_metodo?: number;
   };
   tc_final: number;
   monto_origen: number;

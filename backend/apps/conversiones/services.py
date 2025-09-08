@@ -1,8 +1,9 @@
 from apps.clientes.models import Cliente
 from apps.divisas.models import Divisa 
 from apps.cotizaciones.models import Tasa
+from apps.operaciones.models import MetodoFinanciero
 
-def calcular_conversion(cliente_id, divisa_id, monto, metodo_pago, operacion):
+def calcular_conversion(cliente_id, divisa_id, monto, metodo_id, operacion):
     """
     cliente_id: UUID del cliente
     divisa_id: ID de la divisa (no base)
@@ -26,14 +27,17 @@ def calcular_conversion(cliente_id, divisa_id, monto, metodo_pago, operacion):
     pb_divisa = float(tasa.precioBase)
     com_base = float(tasa.comisionBase)
 
-    #Variables de ajuste (extensibles más adelante con otro modelo)
-    # Por ahora en crudo → se reemplazará por tabla "MetodoPago"
-    por_com_mp = 0  # RF-42: comisión método de pago
-    por_com_mc = 0  # RF-41: comisión método de cobro
+  
+
+    try:
+        metodo = MetodoFinanciero.objects.get(id=metodo_id, is_active=True)
+    except MetodoFinanciero.DoesNotExist:
+        return {"error": "Método financiero no válido"}
 
     # 4. Cálculo según operación
     if operacion == "compra":  
         # Casa COMPRA divisa extranjera (cliente VENDE USD → recibe PYG)
+        por_com_mp = float(metodo.comision_pago_porcentaje)
         tc_comp = pb_divisa * (1 - por_com_mp/100) - com_base * (1 - des_seg/100)
         monto_destino = monto * tc_comp
 
@@ -44,16 +48,18 @@ def calcular_conversion(cliente_id, divisa_id, monto, metodo_pago, operacion):
                 "precio_base": pb_divisa,
                 "comision_base": com_base,
                 "descuento_categoria": des_seg,
-                "porcentaje_metodo_pago": por_com_mp,
+                "comision_metodo": por_com_mp,
             },
             "tc_final": round(tc_comp, 4),
             "monto_origen": monto,
             "monto_destino": round(monto_destino, 2),
-            "unidad_destino": "PYG"
+            "unidad_destino": "PYG",
+            "metodo": metodo.get_nombre_display()
         }
 
     elif operacion == "venta":  
         # Casa VENDE divisa extranjera (cliente COMPRA USD → paga PYG)
+        por_com_mc = float(metodo.comision_cobro_porcentaje)
         tc_vta = pb_divisa * (1 + por_com_mc/100) + com_base * (1 - des_seg/100)
         monto_destino = monto / tc_vta
 
@@ -64,12 +70,13 @@ def calcular_conversion(cliente_id, divisa_id, monto, metodo_pago, operacion):
                 "precio_base": pb_divisa,
                 "comision_base": com_base,
                 "descuento_categoria": des_seg,
-                "porcentaje_metodo_cobro": por_com_mc,
+                "comision_metodo": por_com_mc,
             },
             "tc_final": round(tc_vta, 4),
             "monto_origen": monto,
             "monto_destino": round(monto_destino, 2),
-            "unidad_destino": divisa.codigo
+            "unidad_destino": divisa.codigo,
+            "metodo": metodo.get_nombre_display()
         }
 
     return {"error": "Operación no soportada"}

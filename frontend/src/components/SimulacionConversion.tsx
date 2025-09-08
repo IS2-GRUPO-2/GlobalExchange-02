@@ -1,8 +1,9 @@
 import { useState, useEffect } from "react";
-import { simularConversion } from "../services/conversionService";
+import { simularConversion, getMetodosDisponibles } from "../services/conversionService";
 import { type SimulacionResponse } from "../types/Conversion";
 import { getUserClients } from "../services/usuarioService";
 import { type Cliente } from "../types/Cliente";
+import { type MetodoFinanciero } from "../types/MetodoFinanciero";
 import { getDivisas } from "../services/divisaService";
 import { type Divisa } from "../types/Divisa";
 import type { DecodedToken } from "../types/User";
@@ -19,6 +20,11 @@ export default function SimulacionConversion() {
   // Divisas
   const [divisas, setDivisas] = useState<Divisa[]>([]);
   const [divisaSeleccionada, setDivisaSeleccionada] = useState<string>("");
+
+  // Métodos
+  const [metodos, setMetodos] = useState<MetodoFinanciero[]>([]);
+  const [metodoSeleccionado, setMetodoSeleccionado] = useState<string>("");
+  
 
   // Acción desde perspectiva del cliente
   const [accionCliente, setAccionCliente] = useState<"compra" | "venta">("compra");
@@ -43,11 +49,10 @@ export default function SimulacionConversion() {
   useEffect(() => {
     const fetchDivisas = async () => {
       try {
-        const data = await getDivisas();
-        const filtradas = data.results.filter((d) => !d.es_base);
-        setDivisas(filtradas);
-        if (filtradas.length > 0 && filtradas[0].id) {
-          setDivisaSeleccionada(filtradas[0].id.toString());
+        const data = await getDivisas({ es_base: "false" });
+        setDivisas(data.results);
+        if (data.results.length > 0 && data.results[0].id) {
+          setDivisaSeleccionada(data.results[0].id.toString());
         }
       } catch (err) {
         console.error("Error cargando divisas", err);
@@ -55,6 +60,19 @@ export default function SimulacionConversion() {
     };
     fetchDivisas();
   }, []);
+
+  useEffect(() => {
+    const fetchMetodos = async () => {
+      try {
+        const data = await getMetodosDisponibles(mapOperacionCasa(accionCliente));
+        setMetodos(data);
+        if (data.length > 0) setMetodoSeleccionado(data[0].id?.toString() ?? "");
+      } catch (err) {
+        console.error("Error cargando métodos disponibles", err);
+      }
+    };
+    fetchMetodos();
+  }, [accionCliente]);
 
   const mapOperacionCasa = (accion: "compra" | "venta") => {
     return accion === "compra" ? "venta" : "compra";
@@ -70,7 +88,7 @@ export default function SimulacionConversion() {
         cliente_id: clienteSeleccionado,
         divisa_id: divisaSeleccionada,
         monto,
-        metodo_pago: "metalico",
+        metodo_id: metodoSeleccionado,
         operacion: mapOperacionCasa(accionCliente),
       });
       setResultado(res);
@@ -94,7 +112,10 @@ export default function SimulacionConversion() {
             <select
               id="cliente"
               value={clienteSeleccionado}
-              onChange={(e) => setClienteSeleccionado(e.target.value)}
+              onChange={(e) => {
+                setClienteSeleccionado(e.target.value);
+                setResultado(null);
+              }}
               className="w-full p-2 border rounded-lg"
             >
               {clientes.map((cliente) => (
@@ -108,12 +129,15 @@ export default function SimulacionConversion() {
           {/* Select divisa */}
           <div className="flex flex-col">
             <label htmlFor="divisa" className="mb-1 text-sm font-medium text-gray-700">
-              Divisa
+              {accionCliente === "compra" ? "Quiero" : "Tengo"}
             </label>
             <select
               id="divisa"
               value={divisaSeleccionada}
-              onChange={(e) => setDivisaSeleccionada(e.target.value)}
+              onChange={(e) => {
+                setDivisaSeleccionada(e.target.value);
+                setResultado(null);
+              }}
               className="w-full p-2 border rounded-lg"
             >
               {divisas.map((divisa) => (
@@ -124,26 +148,36 @@ export default function SimulacionConversion() {
             </select>
           </div>
 
-          {/* Select acción cliente */}
+          
+
+          {/* Select de Método*/}
           <div className="flex flex-col">
-            <label htmlFor="accion" className="mb-1 text-sm font-medium text-gray-700">
-              Acción
+            <label htmlFor="metodo" className="mb-1 text-sm font-medium text-gray-700">
+              Método Financiero
             </label>
             <select
-              id="accion"
-              value={accionCliente}
-              onChange={(e) => setAccionCliente(e.target.value as "compra" | "venta")}
+              id="metodo"
+              value={metodoSeleccionado}
+              onChange={(e) => {
+                setMetodoSeleccionado(e.target.value);
+                setResultado(null);
+              }}
               className="w-full p-2 border rounded-lg"
             >
-              <option value="compra">Comprar</option>
-              <option value="venta">Vender</option>
+              {metodos.map((m) => (
+                <option key={m.id} value={m.id}>
+                  {m.nombre_display ?? m.nombre}
+                </option>
+              ))}
             </select>
           </div>
 
+
+                  
           {/* Input monto */}
           <div className="flex flex-col">
             <label htmlFor="monto" className="mb-1 text-sm font-medium text-gray-700">
-              Monto
+              Monto ({accionCliente === "compra" ? "PYG" : divisas.find((d) => d.id.toString() === divisaSeleccionada)?.codigo || ""})
             </label>
             <input
               id="monto"
@@ -153,10 +187,29 @@ export default function SimulacionConversion() {
               placeholder={
                 accionCliente === "compra"
                   ? "Monto en PYG (cliente compra divisa)"
-                  : "Monto en divisa extranjera (cliente vende)"
+                  : `Monto en ${divisas.find((d) => d.id.toString() === divisaSeleccionada)?.codigo || "divisa"}`
               }
               className="w-full p-2 border rounded-lg"
             />
+          </div>
+
+             {/* Select acción cliente */}
+          <div className="flex flex-col">
+            <label htmlFor="operacion" className="mb-1 text-sm font-medium text-gray-700">
+              Operacion
+            </label>
+            <select
+              id="operacion"
+              value={accionCliente}
+              onChange={(e) => {
+                setAccionCliente(e.target.value as "compra" | "venta");
+                setResultado(null);
+              }}
+              className="w-full p-2 border rounded-lg"
+            >
+              <option value="compra">Comprar</option>
+              <option value="venta">Vender</option>
+            </select>
           </div>
 
           <button
@@ -166,27 +219,32 @@ export default function SimulacionConversion() {
             Simular
           </button>
 
-          {/* Resultado */}
-          {resultado && (
-            <div className="mt-4 space-y-2 text-gray-700">
-              <p>
-                <strong>Precio base:</strong> {resultado.parametros.precio_base}
-              </p>
-              <p>
-                <strong>Comisión base:</strong> {resultado.parametros.comision_base}
-              </p>
-              <p>
-                <strong>Descuento categoría:</strong> {resultado.parametros.descuento_categoria} %
-              </p>
-              <p>
-                <strong>Tasa final:</strong> {resultado.tc_final}
-              </p>
-              <p>
-                <strong>Monto destino:</strong> {resultado.monto_destino}{" "}
-                {resultado.unidad_destino}
-              </p>
-            </div>
-          )}
+        {/* Resultado */}
+        {resultado && (
+          <div className="mt-4 space-y-2 text-gray-700">
+            {/* Texto descriptivo */}
+            <p className="font-semibold text-lg text-gray-800">
+              {accionCliente === "compra"
+                ? `Recibirás ${resultado.monto_destino.toLocaleString()} ${resultado.unidad_destino} a cambio de tus ${resultado.monto_origen.toLocaleString()} PYG`
+                : `Recibirás ${resultado.monto_destino.toLocaleString()} PYG a cambio de tus ${resultado.monto_origen.toLocaleString()} ${divisas.find((d) => d.id.toString() === divisaSeleccionada)?.codigo}`}
+            </p>
+
+            {/* Conversión detallada */}
+            <p>
+              <strong>Convertiste:</strong>{" "}
+              {resultado.monto_origen.toLocaleString()}{" "}
+              {accionCliente === "compra" ? "PYG" : divisas.find((d) => d.id.toString() === divisaSeleccionada)?.codigo}
+              {" "}→{" "}
+              {resultado.monto_destino.toLocaleString()} {resultado.unidad_destino}
+            </p>
+
+            <p><strong>Precio base:</strong> {resultado.parametros.precio_base}</p>
+            <p><strong>Comisión base:</strong> {resultado.parametros.comision_base}</p>
+            <p><strong>Comisión método:</strong> {resultado.parametros.comision_metodo} %</p>
+            <p><strong>Descuento categoría:</strong> {resultado.parametros.descuento_categoria} %</p>
+            <p><strong>Tasa final:</strong> {resultado.tc_final}</p>
+          </div>
+        )}
         </div>
       </div>
     </section>
