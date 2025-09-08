@@ -166,7 +166,7 @@ class UserViewSet(viewsets.ModelViewSet):
         return Response(data, status=status.HTTP_200_OK)
 
 @api_view(["GET"])
-@permission_classes([IsAuthenticated])
+@permission_classes([permissions.AllowAny])
 def me_permissions(request):
     """
     Devuelve los permisos *actuales* del usuario logueado
