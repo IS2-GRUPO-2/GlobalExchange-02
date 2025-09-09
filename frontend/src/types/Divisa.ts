@@ -6,6 +6,7 @@ export type Divisa = {
   is_active: boolean;
   max_digitos: number;
   precision: number;
+  es_base?: boolean;
 };
 
 export type PaginatedDivisas = {

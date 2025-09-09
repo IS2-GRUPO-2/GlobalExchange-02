@@ -1,11 +1,16 @@
 import "./App.css";
 import { UserProvider } from "./context/useAuth";
-import { Outlet } from "react-router";
+import { Outlet, useLocation } from "react-router";
 import Navbar from "./components/Navbar";
 import { ToastContainer } from "react-toastify";
 import { AuthZProvider } from "./context/AuthZContext";
 
+const HIDE_NAV_ROUTES = ["/login", "/register"];
+
 function App() {
+  const { pathname } = useLocation();
+  const hideNavbar = HIDE_NAV_ROUTES.some((p) => pathname === p || pathname.startsWith(p + "/"));
+
   return (
     <UserProvider>
       <AuthZProvider>
@@ -22,7 +27,7 @@ function App() {
           limit={2}
           theme="light"
         />
-        <Navbar />
+        {!hideNavbar && <Navbar />}
         <Outlet />
       </AuthZProvider>
     </UserProvider>

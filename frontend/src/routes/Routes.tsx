@@ -6,94 +6,114 @@ import LoginPage from "../pages/LoginPage";
 import RegisterPage from "../pages/RegisterPage";
 import RolesPage from "../pages/RolesPage";
 import MainMenuPage from "../pages/MenuPage";
-import AdminRoutes from "./AdminRoutes";
 import DivisasPage from "../pages/DivisasPage";
 import MetodosFinancierosPage from "../pages/MetodosFinancierosPage";
 import MetodosFinancierosClientePage from "../pages/MetodosFinancierosClientePage";
 import ConfiguracionesPage from "../pages/ConfiguracionesPage";
 import CategoriaClientePage from "../pages/CategoriaClientePage";
-import RequirePerm from "./RequierePerm";
-import { CLIENTES, METODOS_FINANCIEROS, ROLES, USUARIOS, CONFIGURACIONES } from "../types/perms";
+import {
+  CATEGORIAS_CLIENTE,
+  CLIENTES,
+  DIVISAS,
+  METODOS_FINANCIEROS, ROLES,
+  TASAS,
+  USUARIOS, CONFIGURACIONES,
+} from "../types/perms";
+import CotizacionesPage from "../pages/CotizacionesPage";
+import RequireAuth from "./RequiereAuth";
 
 export const router = createBrowserRouter([
   {
     path: "/",
     element: <App />,
     children: [
+      // RUTAS PÚBLICAS DE ESTA MANERA
+      { path: "", element: <MainMenuPage /> },
+      { path: "login", element: <LoginPage /> },
+      { path: "register", element: <RegisterPage /> },
+
+      // RUTAS QUE SOLO REQUIEREN LOGIN
       {
-        path: "",
-        element: <MainMenuPage />,
-      },
-      {
-        path: "login",
-        element: <LoginPage />,
-      },
-      {
-        path: "roles",
+        path: "billeteras",
         element: (
-          <RequirePerm anyOf={[ROLES.VIEW]}>
-            <RolesPage />
-          </RequirePerm>
-        ),
-      },
-      {
-        path: "clientes",
-        element: (
-          <RequirePerm anyOf={[CLIENTES.VIEW]}>
-            <ClientesPage />
-          </RequirePerm>
-        ),
-      },
-      {
-        path: "register",
-        element: <RegisterPage />,
-      },
-      {
-        path: "usuarios",
-        element: (
-          <RequirePerm anyOf={[USUARIOS.VIEW]}>
-            <UsuariosPage />
-          </RequirePerm>
-        ),
-      },
-      {
-        path: "divisas",
-        element: (
-          <RequirePerm anyOf={[USUARIOS.VIEW]}>
-            <DivisasPage />
-          </RequirePerm>
+          <RequireAuth>
+            <MetodosFinancierosClientePage />,
+          </RequireAuth>
         ),
       },
       {
         path: "metodos-financieros",
         element: (
-          <RequirePerm anyOf={[METODOS_FINANCIEROS.VIEW]}>
+          <RequireAuth>
             <MetodosFinancierosPage />
-          </RequirePerm>
+          </RequireAuth>
+        ),
+      },
+
+      // RUTAS QUE REQUIEREN LOGIN Y PERMISOS
+      {
+        path: "roles",
+        element: (
+          <RequireAuth anyOf={[ROLES.VIEW]}>
+            <RolesPage />
+          </RequireAuth>
         ),
       },
       {
-        path: "configuraciones",
+        path: "clientes",
         element: (
-          <RequirePerm anyOf={[CONFIGURACIONES.VIEW]}>
-            <ConfiguracionesPage />
-          </RequirePerm>
+          <RequireAuth anyOf={[CLIENTES.VIEW]}>
+            <ClientesPage />
+          </RequireAuth>
         ),
       },
       {
-        path: "metodos-financieros-cliente",
+        path: "usuarios",
         element: (
-          <RequirePerm anyOf={[METODOS_FINANCIEROS.VIEW]}>
-            <MetodosFinancierosClientePage />
-          </RequirePerm>
+          <RequireAuth anyOf={[USUARIOS.VIEW]}>
+            <UsuariosPage />
+          </RequireAuth>
+        ),
+      },
+      {
+        path: "divisas",
+        element: (
+          <RequireAuth anyOf={[DIVISAS.VIEW]}>
+            <DivisasPage />
+          </RequireAuth>
         ),
       },
       {
         path: "categorias-clientes",
         element: (
-          <AdminRoutes>
+          <RequireAuth anyOf={[CATEGORIAS_CLIENTE.VIEW]}>
             <CategoriaClientePage />
-          </AdminRoutes>
+          </RequireAuth>
+        ),
+      },
+      {
+        path: "cotizaciones",
+        element: (
+          <RequireAuth anyOf={[TASAS.VIEW]}>
+            <CotizacionesPage />,
+          </RequireAuth>
+        ),
+      },
+      {
+        path: "configuraciones",
+        element: (
+          <RequireAuth
+            anyOf={[
+              DIVISAS.VIEW,
+              ROLES.VIEW,
+              CATEGORIAS_CLIENTE.VIEW,
+              TASAS.VIEW,
+              USUARIOS.VIEW,
+              CLIENTES.VIEW,
+            ]}
+          >
+            <ConfiguracionesPage />
+          </RequireAuth>
         ),
       },
     ],

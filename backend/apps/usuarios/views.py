@@ -32,7 +32,7 @@ class UserViewSet(viewsets.ModelViewSet):
     """
     queryset = User.objects.all()
     serializer_class = UserSerializer
-    permission_classes = [permissions.AllowAny] 
+    permission_classes = [permissions.IsAuthenticated, permissions.DjangoModelPermissions]
     
     def get_permissions(self):
         """
@@ -166,7 +166,7 @@ class UserViewSet(viewsets.ModelViewSet):
         return Response(data, status=status.HTTP_200_OK)
 
 @api_view(["GET"])
-@permission_classes([IsAuthenticated])
+@permission_classes([permissions.AllowAny])
 def me_permissions(request):
     """
     Devuelve los permisos *actuales* del usuario logueado
