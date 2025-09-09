@@ -3,7 +3,7 @@ from rest_framework.response import Response
 from rest_framework.decorators import action
 from .models import Cliente, CategoriaCliente
 from django.contrib.auth import get_user_model
-from .serializers import ClienteSerializer, CategoriaClienteSerializer
+from .serializers import ClienteSerializer, CategoriaClienteSerializer, CategoriaCliente
 from apps.usuarios.serializers import UserSerializer
 from rest_framework.permissions import DjangoModelPermissions
 
@@ -50,3 +50,4 @@ class CategoriaClienteViewSet(viewsets.ModelViewSet):
     permission_classes = [permissions.IsAuthenticated, DjangoModelPermissions]
     filter_backends = [filters.SearchFilter]
     search_fields = ["nombre", "descuento", "descripcion"]
+

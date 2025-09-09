@@ -1,5 +1,13 @@
+import SimulacionConversion from "../components/SimulacionConversion";
 import { useState } from "react";
-import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
+import {
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  Tooltip,
+  ResponsiveContainer,
+} from "recharts";
 import CotizacionesTabla from "../components/CotizacionesTabla";
 
 const mockData = [
@@ -22,9 +30,11 @@ export default function MainMenuPage() {
 
   return (
     <div className="flex flex-col min-h-screen bg-gray-50">
-      {/* Conversión */}
       <main className="flex-grow">
+        <SimulacionConversion />
         <CotizacionesTabla />
+
+        {/* Conversión */}
         <section id="convert" className="p-8 flex flex-col items-center">
           <div className="w-full max-w-md bg-white p-6 rounded-xl shadow">
             <h2 className="text-xl font-bold mb-4 text-gray-800">
@@ -73,11 +83,6 @@ export default function MainMenuPage() {
           </div>
         </section>
       </main>
-
-      {/* Footer */}
-      <footer id="about" className="bg-gray-900 text-gray-400 text-center p-6 mt-6">
-        <p>© 2025 Global Exchange. Todos los derechos reservados.</p>
-      </footer>
     </div>
   );
 }

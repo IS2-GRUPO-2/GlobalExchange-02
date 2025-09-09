@@ -6,13 +6,19 @@ interface GetDivisasParams {
   page?: number;
   search?: string;
   es_base?: boolean;
+
 }
 
 export const getDivisas = async (
   params: GetDivisasParams = {}
 ): Promise<PaginatedDivisas> => {
   try {
-    const res = await axios.get<PaginatedDivisas>(API_URL, { params });
+    const res = await axios.get<PaginatedDivisas>(API_URL, { 
+      params: {
+        ...params,
+        es_base: params.es_base !== undefined ? params.es_base : undefined,
+      },
+     });
     return res.data;
   } catch (err: any) {
     console.error("Error fetching divisas: ", err.res?.data || err.message);

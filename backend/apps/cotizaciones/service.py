@@ -27,4 +27,6 @@ class TasaService:
             tasa=tasa,
             tasaCompra=TasaService.calcular_tasa_compra(tasa),
             tasaVenta=TasaService.calcular_tasa_venta(tasa),
+
         )
+

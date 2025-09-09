@@ -1,6 +1,7 @@
 from rest_framework import viewsets, permissions, filters
 from apps.cotizaciones.models import Tasa
 from apps.cotizaciones.serializers import TasaSerializer
+
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from drf_yasg.utils import swagger_auto_schema
@@ -10,10 +11,13 @@ from apps.divisas.models import Divisa
 from rest_framework.permissions import DjangoModelPermissions
 
 
+
 class TasaViewSet(viewsets.ModelViewSet):
     queryset = Tasa.objects.select_related("divisa").all()
     serializer_class = TasaSerializer
+
     permission_classes = [permissions.AllowAny, DjangoModelPermissions]
+
 
     filter_backends = [filters.SearchFilter]
     search_fields = ["divisa__codigo", "divisa__nombre"]

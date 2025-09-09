@@ -1,7 +1,9 @@
 from decimal import Decimal
 from rest_framework import serializers
 from apps.cotizaciones.models import Tasa
+
 from apps.cotizaciones.service import TasaService
+
 
 
 class TasaSerializer(serializers.ModelSerializer):
@@ -17,6 +19,7 @@ class TasaSerializer(serializers.ModelSerializer):
             "fechaCreacion", "fechaActualizacion",
         )
         read_only_fields = ("id", "fechaCreacion", "fechaActualizacion")
+
     
     def get_tasaCompra(self, obj):
         valor = TasaService.calcular_tasa_compra(obj)
@@ -25,6 +28,7 @@ class TasaSerializer(serializers.ModelSerializer):
     def get_tasaVenta(self, obj):
         valor = TasaService.calcular_tasa_venta(obj)
         return str(valor)
+
 
     # ---- Validaciones ----
     def validate(self, attrs):
@@ -36,6 +40,7 @@ class TasaSerializer(serializers.ModelSerializer):
             if divisa is None:
                 raise serializers.ValidationError("Debe especificar una divisa.")
             if Tasa.objects.filter(divisa=divisa).exists():
+
                 raise serializers.ValidationError("La divisa ya tiene una Cotización asociada.")
 
         if instance is not None and "divisa" in attrs and divisa != instance.divisa:
@@ -43,6 +48,7 @@ class TasaSerializer(serializers.ModelSerializer):
 
         if activo and divisa and not divisa.is_active:
             raise serializers.ValidationError("No se puede activar una Cotización si la divisa está inactiva.")
+
 
         return attrs
 
