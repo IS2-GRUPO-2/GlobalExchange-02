@@ -15,7 +15,7 @@ def calcular_conversion(cliente_id, divisa_id, monto, metodo_id, operacion):
 
     # 1. Cliente y descuento
     cliente = Cliente.objects.get(idCliente=cliente_id)
-    des_seg = float(cliente.categoria.descuento)  # ahora directo del FK
+    des_seg = float(cliente.idCategoria.descuento)  # ahora directo del FK
 
     # 2. Divisa
     divisa = Divisa.objects.get(id=divisa_id)

@@ -182,8 +182,12 @@ export default function SimulacionConversion() {
             <input
               id="monto"
               type="number"
+              min={0}
               value={monto}
-              onChange={(e) => setMonto(Number(e.target.value))}
+              onChange={(e) => {
+                const value = Number(e.target.value);
+                setMonto(value < 0 ? 0 : value);
+              }}
               placeholder={
                 accionCliente === "compra"
                   ? "Monto en PYG (cliente compra divisa)"

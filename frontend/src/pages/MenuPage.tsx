@@ -1,7 +1,13 @@
-
 import SimulacionConversion from "../components/SimulacionConversion";
 import { useState } from "react";
-import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
+import {
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  Tooltip,
+  ResponsiveContainer,
+} from "recharts";
 import CotizacionesTabla from "../components/CotizacionesTabla";
 
 const mockData = [
@@ -22,13 +28,13 @@ export default function MainMenuPage() {
     setEuro(guarani / exchangeRate);
   };
 
-
-export default function MenuPage() {
   return (
     <div className="flex flex-col min-h-screen bg-gray-50">
       <main className="flex-grow">
         <SimulacionConversion />
         <CotizacionesTabla />
+
+        {/* Conversión */}
         <section id="convert" className="p-8 flex flex-col items-center">
           <div className="w-full max-w-md bg-white p-6 rounded-xl shadow">
             <h2 className="text-xl font-bold mb-4 text-gray-800">

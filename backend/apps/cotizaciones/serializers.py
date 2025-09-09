@@ -2,7 +2,7 @@ from decimal import Decimal
 from rest_framework import serializers
 from apps.cotizaciones.models import Tasa
 
-from apps.cotizaciones.service import TasaService, TasaFormatter
+from apps.cotizaciones.service import TasaService
 
 
 
