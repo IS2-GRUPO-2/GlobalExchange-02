@@ -34,23 +34,23 @@ export const router = createBrowserRouter([
 
       // RUTAS QUE SOLO REQUIEREN LOGIN
       {
-        path: "billeteras",
+        path: "metodos-financieros-cliente",
         element: (
           <RequireAuth>
-            <MetodosFinancierosClientePage />,
-          </RequireAuth>
-        ),
-      },
-      {
-        path: "metodos-financieros",
-        element: (
-          <RequireAuth>
-            <MetodosFinancierosPage />
+            <MetodosFinancierosClientePage />
           </RequireAuth>
         ),
       },
 
       // RUTAS QUE REQUIEREN LOGIN Y PERMISOS
+      {
+        path: "metodos-financieros",
+        element: (
+          <RequireAuth anyOf={[METODOS_FINANCIEROS.VIEW]}>
+            <MetodosFinancierosPage />
+          </RequireAuth>
+        ),
+      },
       {
         path: "roles",
         element: (
