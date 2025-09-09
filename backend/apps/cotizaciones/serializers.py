@@ -1,7 +1,9 @@
 from decimal import Decimal
 from rest_framework import serializers
 from apps.cotizaciones.models import Tasa
+
 from apps.cotizaciones.service import TasaService, TasaFormatter
+
 
 
 class TasaSerializer(serializers.ModelSerializer):
@@ -18,14 +20,15 @@ class TasaSerializer(serializers.ModelSerializer):
         )
         read_only_fields = ("id", "fechaCreacion", "fechaActualizacion")
 
-    # ---- Campos formateados con la divisa base ----
+    
     def get_tasaCompra(self, obj):
         valor = TasaService.calcular_tasa_compra(obj)
-        return TasaFormatter.formatear(Decimal(valor))
+        return str(valor)
 
     def get_tasaVenta(self, obj):
         valor = TasaService.calcular_tasa_venta(obj)
-        return TasaFormatter.formatear(Decimal(valor))
+        return str(valor)
+
 
     # ---- Validaciones ----
     def validate(self, attrs):
@@ -37,13 +40,15 @@ class TasaSerializer(serializers.ModelSerializer):
             if divisa is None:
                 raise serializers.ValidationError("Debe especificar una divisa.")
             if Tasa.objects.filter(divisa=divisa).exists():
-                raise serializers.ValidationError("La divisa ya tiene una Tasa asociada.")
+
+                raise serializers.ValidationError("La divisa ya tiene una Cotización asociada.")
 
         if instance is not None and "divisa" in attrs and divisa != instance.divisa:
-            raise serializers.ValidationError("No se puede cambiar la divisa de una Tasa.")
+            raise serializers.ValidationError("No se puede cambiar la divisa de una Cotización.")
 
         if activo and divisa and not divisa.is_active:
-            raise serializers.ValidationError("No se puede activar una Tasa si la divisa está inactiva.")
+            raise serializers.ValidationError("No se puede activar una Cotización si la divisa está inactiva.")
+
 
         return attrs
 

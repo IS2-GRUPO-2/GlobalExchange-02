@@ -75,7 +75,7 @@ const ClientesPage = () => {
     let clienteData: Partial<Cliente> = {
       nombre: clientData.nombre,
       isPersonaFisica: clientData.isPersonaFisica,
-      categoria: clientData.categoria,
+      idCategoria: clientData.idCategoria,
       correo: clientData.correo,
       telefono: clientData.telefono,
       direccion: clientData.direccion,
@@ -104,7 +104,7 @@ const ClientesPage = () => {
       idCliente: clientData.id,
       nombre: clientData.nombre,
       isPersonaFisica: clientData.isPersonaFisica,
-      categoria: clientData.categoria,
+      idCategoria: clientData.idCategoria,
       correo: clientData.correo,
       telefono: clientData.telefono,
       direccion: clientData.direccion,
@@ -197,7 +197,7 @@ const ClientesPage = () => {
               {clientes.map((cliente: Cliente) => (
                 <tr key={cliente.idCliente}>
                   <td className="font-medium">{cliente.nombre}</td>
-                  <td>{cliente.nombreCategoria}</td>
+                  <td>{cliente.categoria?.nombre}</td>
                   <td>
                     <span
                       className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${

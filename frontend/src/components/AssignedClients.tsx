@@ -216,7 +216,7 @@ export default function AssignedClients({ user, onClose }: Props) {
                           {c.nombre}
                         </td>
                         <td className="px-3 py-2 text-sm text-gray-700 break-words">
-                          {c.categoria}
+                          {c.categoria?.nombre}
                         </td>
                         <td className="px-3 py-2 text-sm text-gray-700 break-words">
                           {renderTipo(c)}

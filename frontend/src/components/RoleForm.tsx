@@ -33,7 +33,8 @@ const RoleForm = ({ onSubmit, onCancel, permissions, initial, readOnly }: Props)
       (p) =>
         p.name.toLowerCase().includes(q) ||
         p.codename.toLowerCase().includes(q) ||
-        p.app_label.toLowerCase().includes(q)
+        p.app_label.toLowerCase().includes(q) ||
+        p.name_es.toLowerCase().includes(q)
     );
   }, [permissions, query]);
 
@@ -101,9 +102,9 @@ const RoleForm = ({ onSubmit, onCancel, permissions, initial, readOnly }: Props)
                         disabled={readOnly}
                       />
                       <div>
-                        <div className="text-sm font-medium text-gray-800">{p.name}</div>
+                        <div className="text-sm font-medium text-gray-800">{p.name_es}</div>
                         <div className="text-xs text-gray-500 font-mono">
-                          {p.app_label}.{p.codename}
+                          {p.app_label}
                         </div>
                       </div>
                     </label>

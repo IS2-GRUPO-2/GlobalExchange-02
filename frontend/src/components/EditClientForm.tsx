@@ -1,4 +1,4 @@
-import type { Categoria, Cliente } from "../types/Cliente";
+import type { CategoriaCliente, Cliente } from "../types/Cliente";
 import { yupResolver } from "@hookform/resolvers/yup";
 import * as yup from "yup";
 import { useForm } from "react-hook-form";
@@ -9,7 +9,7 @@ export type EditClientFormData = {
   id: string;
   nombre: string;
   isPersonaFisica: boolean;
-  categoria: string;
+  idCategoria: string;
   documento: string;
   correo: string;
   telefono: string;
@@ -34,7 +34,7 @@ const clientSchema = yup.object().shape({
     .required("Este campo es requerido")
     .email("Ingrese una dirección de correo válida"),
   isPersonaFisica: yup.boolean().required("Este campo es requerido."),
-  categoria: yup.mixed<Categoria>().required("Este campo es requerido."),
+  idCategoria: yup.string().required("Este campo es requerido."),
   documento: yup
     .string()
     .required("Este campo es requerido.")
@@ -53,7 +53,7 @@ const clientSchema = yup.object().shape({
 });
 
 const EditClientForm = ({ onSubmit, onCancel, cliente, readOnly }: Props) => {
-  const [categorias, setCategorias] = useState<Categoria[]>([]);
+  const [categorias, setCategorias] = useState<CategoriaCliente[]>([]);
   const [loadingCategorias, setLoadingCategorias] = useState(true);
   
   const {
@@ -61,12 +61,13 @@ const EditClientForm = ({ onSubmit, onCancel, cliente, readOnly }: Props) => {
     handleSubmit,
     formState: { errors, isSubmitting },
     reset,
+    setValue
   } = useForm<EditClientFormData>({
     resolver: yupResolver(clientSchema),
     defaultValues: {
       id: cliente.idCliente,
       nombre: cliente.nombre,
-      categoria: cliente.categoria,
+      idCategoria: cliente.idCategoria,
       documento: cliente.isPersonaFisica ? cliente.cedula : cliente.ruc,
       isPersonaFisica: cliente.isPersonaFisica,
       direccion: cliente.direccion,
@@ -80,6 +81,8 @@ const EditClientForm = ({ onSubmit, onCancel, cliente, readOnly }: Props) => {
       try {
         const response = await getCategorias();
         setCategorias(response.data);
+        setValue("idCategoria", cliente.idCategoria);
+
       } catch (error) {
         console.error("Error al cargar categorías:", error);
         toast.error("Error al cargar las categorías");
@@ -223,9 +226,9 @@ const EditClientForm = ({ onSubmit, onCancel, cliente, readOnly }: Props) => {
           </label>
           <select
             id="categoria"
-            {...register("categoria")}
+            {...register("idCategoria")}
             className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
-              errors.categoria ? "border-red-500" : "border-gray-300"
+              errors.idCategoria ? "border-red-500" : "border-gray-300"
             }`}
             disabled={readOnly}
           >
@@ -238,9 +241,9 @@ const EditClientForm = ({ onSubmit, onCancel, cliente, readOnly }: Props) => {
               </option>
             ))}
           </select>
-          {errors.categoria && (
+          {errors.idCategoria && (
             <p className="mt-1 text-sm text-red-600">
-              {errors.categoria.message}
+              {errors.idCategoria.message}
             </p>
           )}
         </div>
