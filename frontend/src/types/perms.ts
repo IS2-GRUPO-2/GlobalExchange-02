@@ -28,6 +28,27 @@ export const PERMISOS = {
   VIEW: "auth.view_permission",
 } as const;
 
+export const CATEGORIAS_CLIENTE = {
+  ADD: "clientes.add_categoriacliente",
+  CHANGE: "clientes.change_categoriacliente",
+  DELETE: "clientes.delete_categoriacliente",
+  VIEW: "clientes.view_categoriacliente",
+} as const;
+
+export const TASAS = {
+  ADD: "cotizaciones.add_tasa",
+  CHANGE: "cotizaciones.change_tasa",
+  DELETE: "cotizaciones.delete_tasa",
+  VIEW: "cotizaciones.view_tasa",
+} as const;
+
+export const DENOMINACIONES = {
+  ADD: "divisas.add_denominacion",
+  CHANGE: "divisas.change_denominacion",
+  DELETE: "divisas.delete_denominacion",
+  VIEW: "divisas.view_denominacion",
+} as const;
+
 export const DIVISAS = {
   ADD: "divisas.add_divisa",
   CHANGE: "divisas.change_divisa",

@@ -17,7 +17,7 @@ import {
   DIVISAS,
   METODOS_FINANCIEROS, ROLES,
   TASAS,
-  USUARIOS, CONFIGURACIONES,
+  USUARIOS,
 } from "../types/perms";
 import CotizacionesPage from "../pages/CotizacionesPage";
 import RequireAuth from "./RequiereAuth";
