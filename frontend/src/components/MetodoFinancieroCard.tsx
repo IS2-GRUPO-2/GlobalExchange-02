@@ -13,15 +13,13 @@ interface MetodoFinancieroCardProps {
   onView: (item: MetodoFinancieroItem) => void;
   onEdit: (item: MetodoFinancieroItem) => void;
   onToggleActive: (item: MetodoFinancieroItem) => void;
-  isAdminView?: boolean;
 }
 
 const MetodoFinancieroCard: React.FC<MetodoFinancieroCardProps> = ({
   item,
   onView,
   onEdit,
-  onToggleActive,
-  isAdminView = false
+  onToggleActive
 }) => {
   const getIcon = () => {
     switch (item.tipo) {
