@@ -619,7 +619,6 @@ const MetodosFinancierosClientePage = () => {
                 onView={openViewModal}
                 onEdit={openEditModal}
                 onToggleActive={handleToggleActive}
-                isAdminView={false}
               />
             ))}
           </div>
