@@ -1,9 +1,14 @@
+"""
+Serializadores para validar los datos de entrada en las simulaciones.
+"""
+
 from rest_framework import serializers
 
 
 class SimulacionPrivadaSerializer(serializers.Serializer):
     """
-    Para usuarios autenticados: requiere cliente_id además de divisas y método.
+    Serializer para usuarios autenticados.
+    Requiere un cliente_id además de divisas, monto y método.
     """
     cliente_id = serializers.UUIDField()
     divisa_origen = serializers.IntegerField()
@@ -14,7 +19,8 @@ class SimulacionPrivadaSerializer(serializers.Serializer):
 
 class SimulacionPublicaSerializer(serializers.Serializer):
     """
-    Para usuarios invitados: no se requiere cliente_id.
+    Serializer para usuarios invitados.
+    No requiere cliente_id, solo datos básicos de conversión.
     """
     divisa_origen = serializers.IntegerField()
     divisa_destino = serializers.IntegerField()

@@ -1,3 +1,8 @@
+"""
+Definición de rutas para la aplicación de simulación.
+Prefijo raíz: /api/conversiones/
+"""
+
 from django.urls import path
 from .views import (
     simular_conversion,

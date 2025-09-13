@@ -1,3 +1,8 @@
+"""
+Vistas de la aplicación de simulación.
+Exponen la lógica de servicios a través de endpoints REST.
+"""
+
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
 from rest_framework import status, permissions
@@ -14,7 +19,11 @@ from apps.operaciones.serializers import MetodoFinancieroSerializer
 @api_view(["POST"])
 @permission_classes([permissions.IsAuthenticated])
 def simular_conversion(request):
-    """Simulación con cliente autenticado"""
+    """
+    Endpoint de simulación privada (requiere login y cliente).
+    - Recibe datos de conversión + cliente_id.
+    - Devuelve resultado detallado con descuentos de categoría y comisiones.
+    """
     serializer = SimulacionPrivadaSerializer(data=request.data)
     if serializer.is_valid():
         try:
@@ -35,7 +44,11 @@ def simular_conversion(request):
 @api_view(["POST"])
 @permission_classes([permissions.AllowAny])
 def simular_conversion_publica(request):
-    """Simulación sin cliente (landing pública)"""
+    """
+    Endpoint de simulación pública (landing page).
+    - No requiere login ni cliente.
+    - Devuelve resultado usando tasas y comisiones base.
+    """
     serializer = SimulacionPublicaSerializer(data=request.data)
     if serializer.is_valid():
         try:
@@ -56,8 +69,9 @@ def simular_conversion_publica(request):
 @permission_classes([permissions.AllowAny])
 def listar_metodos_disponibles(request):
     """
-    Lista métodos disponibles según divisa_origen y divisa_destino.
-    El backend infiere la operación de la casa.
+    Endpoint que lista los métodos disponibles según divisa_origen y divisa_destino.
+    - El backend infiere si la operación es compra o venta.
+    - Devuelve { operacion_casa, metodos[] }.
     """
     try:
         divisa_origen = request.query_params.get("divisa_origen")
