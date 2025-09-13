@@ -111,3 +111,7 @@ export const TARJETAS = {
   DELETE: "operaciones.delete_tarjeta",
   VIEW: "operaciones.view_tarjeta",
 } as const;
+
+export const SIMULACION = {
+  USE: "usuarios.can_use_simulacion",
+} as const;
