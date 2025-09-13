@@ -433,7 +433,7 @@ class CuentaBancariaViewSet(viewsets.ModelViewSet):
         queryset = CuentaBancaria.objects.select_related('metodo_financiero_detalle', 'banco').all()
         
         if self.request.user.has_perm('operaciones.view_metodofinanciero'):
-            return  queryset.filter(es_cuenta_casa=True)
+            return queryset.filter(metodo_financiero_detalle__es_cuenta_casa=True)
         else:
             # Usuarios regulares ven las cuentas de sus clientes asignados
             return queryset.filter(
@@ -495,7 +495,7 @@ class BilleteraDigitalViewSet(viewsets.ModelViewSet):
         queryset = BilleteraDigital.objects.select_related('metodo_financiero_detalle', 'plataforma').all()
         
         if self.request.user.has_perm('operaciones.view_metodofinanciero'):
-            return queryset.filter(es_cuenta_casa=True)
+            return queryset.filter(metodo_financiero_detalle__es_cuenta_casa=True)
         else:
             # Usuarios regulares ven las billeteras de sus clientes asignados
             return queryset.filter(

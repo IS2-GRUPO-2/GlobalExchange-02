@@ -48,6 +48,7 @@ type ExtendedItem = (CuentaBancaria | BilleteraDigital) & {
   tipo: InstanceTabType;
   is_active: boolean;
   detalle_id?: number;
+  desactivado_por_catalogo?: boolean;
 };
 
 type CatalogItem = (Banco | BilleteraDigitalCatalogo) & {
@@ -190,7 +191,8 @@ const MetodosFinancierosPage = () => {
         ...item,
         tipo,
         is_active: detalle?.is_active ?? true,
-        detalle_id: detalle?.id
+        detalle_id: detalle?.id,
+        desactivado_por_catalogo: detalle?.desactivado_por_catalogo ?? false
       };
     });
   };
@@ -383,28 +385,6 @@ const MetodosFinancierosPage = () => {
     if (!item.detalle_id) return;
     
     try {
-      // Verificar si el elemento padre (banco o billetera) está activo SOLO cuando intentamos activar una instancia
-      if (!item.is_active) { // Si estamos intentando activar (cambiar de inactivo a activo)
-        if (item.tipo === 'cuentas') {
-          const cuenta = item as CuentaBancaria & ExtendedItem;
-          // Buscar el banco correspondiente
-          const bancoAsociado = bancos.find(b => b.id === cuenta.banco);
-          if (bancoAsociado && !bancoAsociado.is_active) {
-            toast.error(`No se puede activar esta cuenta porque el banco ${bancoAsociado.nombre} está desactivado.`);
-            return;
-          }
-        } else if (item.tipo === 'billeteras digitales') {
-          const billetera = item as BilleteraDigital & ExtendedItem;
-          // Buscar la plataforma correspondiente
-          const plataformaAsociada = billeterasCatalogo.find(p => p.id === billetera.plataforma);
-          if (plataformaAsociada && !plataformaAsociada.is_active) {
-            toast.error(`No se puede activar esta billetera porque la plataforma ${plataformaAsociada.nombre} está desactivada.`);
-            return;
-          }
-        }
-      }
-      // Para desactivar, no hay restricciones - siempre se permite
-      
       await toggleActiveMetodoFinanciero(item.detalle_id);
       toast.success(`${getInstanceTabSingularTitle(item.tipo)} de la casa ${item.is_active ? 'desactivado' : 'activado'} exitosamente!`);
       fetchAllData();
