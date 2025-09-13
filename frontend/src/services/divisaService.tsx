@@ -144,3 +144,9 @@ export const getDivisasSinTasa = async (params: { page?: number; search?: string
   const res = await axios.get<PaginatedDivisas>("/api/divisas/sin_tasa/", { params });
   return res.data;
 };
+
+
+export const getDivisasConTasa = async (params: { page?: number; search?: string } = {}) => {
+  const res = await axios.get<PaginatedDivisas>("/api/divisas/con_tasa/", { params });
+  return res.data;
+};

@@ -18,9 +18,12 @@ import {
   METODOS_FINANCIEROS, ROLES,
   TASAS,
   USUARIOS,
+  SIMULACION
 } from "../types/perms";
 import CotizacionesPage from "../pages/CotizacionesPage";
 import RequireAuth from "./RequiereAuth";
+import SimulacionOperacionPage from "../pages/SimulacionOperacionPage";
+
 
 export const router = createBrowserRouter([
   {
@@ -41,6 +44,7 @@ export const router = createBrowserRouter([
           </RequireAuth>
         ),
       },
+      
 
       // RUTAS QUE REQUIEREN LOGIN Y PERMISOS
       {
@@ -56,6 +60,14 @@ export const router = createBrowserRouter([
         element: (
           <RequireAuth anyOf={[ROLES.VIEW]}>
             <RolesPage />
+          </RequireAuth>
+        ),
+      },
+      {
+        path: "simulacion-operacion",
+        element: (
+          <RequireAuth anyOf={[SIMULACION.USE]}>
+            <SimulacionOperacionPage />
           </RequireAuth>
         ),
       },

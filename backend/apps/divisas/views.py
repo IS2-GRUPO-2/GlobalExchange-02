@@ -151,7 +151,7 @@ class DivisaViewset(viewsets.ModelViewSet):
         """
         Lista solo las divisas ACTIVAS que NO tienen Tasa asociada.
         Respeta SearchFilter (?search=USD).
-        Pagina usando tu DivisaPagination.
+        Pagina usando DivisaPagination.
         """
         qs = Divisa.objects.filter(is_active=True, tasa__isnull=True)
         qs = self.filter_queryset(qs)
@@ -162,7 +162,35 @@ class DivisaViewset(viewsets.ModelViewSet):
 
         serializer = self.get_serializer(qs, many=True)
         return Response(serializer.data)
+    
 
+    @swagger_auto_schema(
+        operation_summary="Divisas activas con tasa",
+        operation_description="Devuelve divisas activas que tienen una Tasa asociada. Soporta ?search=",
+        manual_parameters=[
+            openapi.Parameter("search", openapi.IN_QUERY, description="Buscar por código/nombre", type=openapi.TYPE_STRING),
+            openapi.Parameter("page", openapi.IN_QUERY, description="Número de página", type=openapi.TYPE_INTEGER),
+            openapi.Parameter("page_size", openapi.IN_QUERY, description="Tamaño de página", type=openapi.TYPE_INTEGER),
+        ],
+        responses={200: DivisaPaginatedResponseSerializer},
+    )
+    @action(detail=False, methods=["get"], url_path="con_tasa", permission_classes=[permissions.AllowAny])
+    def con_tasa(self, request):
+        """
+        Lista solo las divisas ACTIVAS que tienen una Tasa asociada.
+        Respeta SearchFilter (?search=USD).
+        Pagina usando DivisaPagination.
+        """
+        qs = Divisa.objects.filter(is_active=True, tasa__isnull=False).distinct()
+        qs = self.filter_queryset(qs)
+        page = self.paginate_queryset(qs)
+        if page is not None:
+            serializer = self.get_serializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
+
+        serializer = self.get_serializer(qs, many=True)
+        return Response(serializer.data)
+    
     
 class DenominacionViewset(viewsets.ModelViewSet):
     serializer_class = DenominacionSerializer

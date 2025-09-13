@@ -1,27 +1,21 @@
 import { useState, useEffect } from "react";
-import { simularConversion, getMetodosDisponibles } from "../services/conversionService";
-import { type SimulacionResponse } from "../types/Conversion";
-import { getUserClients } from "../services/usuarioService";
-import { type Cliente } from "../types/Cliente";
-import { type MetodoFinanciero } from "../types/MetodoFinanciero";
-import { getDivisasConTasa, getDivisas } from "../services/divisaService";
+import { simularConversionPublica, getMetodosDisponibles } from "../services/conversionService";
+import { type SimulacionResponse, type MetodosDisponiblesResponse } from "../types/Conversion";
 import { type Divisa } from "../types/Divisa";
-import type { DecodedToken } from "../types/User";
-import { jwtDecode } from "jwt-decode";
+import { type MetodoFinanciero } from "../types/MetodoFinanciero";
+import { getDivisasConTasa } from "../services/divisaService";
 
-export default function SimulacionConversion() {
+export default function SimulacionPublica() {
   const [monto, setMonto] = useState<number>(0);
   const [resultado, setResultado] = useState<SimulacionResponse | null>(null);
 
-  // Clientes
-  const [clientes, setClientes] = useState<Cliente[]>([]);
-  const [clienteSeleccionado, setClienteSeleccionado] = useState<string>("");
-
   // Divisas
   const [divisas, setDivisas] = useState<Divisa[]>([]);
-  const [divisaBase, setDivisaBase] = useState<Divisa | null>(null);
   const [divisaOrigen, setDivisaOrigen] = useState<string>("");
   const [divisaDestino, setDivisaDestino] = useState<string>("");
+
+  // Guardar la divisa base
+  const [divisaBase, setDivisaBase] = useState<Divisa | null>(null);
 
   // Métodos
   const [metodos, setMetodos] = useState<MetodoFinanciero[]>([]);
@@ -29,23 +23,6 @@ export default function SimulacionConversion() {
 
   // Operación inferida desde backend
   const [operacionCasa, setOperacionCasa] = useState<"compra" | "venta" | null>(null);
-
-  useEffect(() => {
-    const fetchClientes = async () => {
-      try {
-        const token = localStorage.getItem("token");
-        if (!token) return;
-        const userId = jwtDecode<DecodedToken>(token).user_id;
-        const res = await getUserClients(Number(userId));
-        const data = res.data;
-        setClientes(data);
-        if (data.length > 0) setClienteSeleccionado(data[0].idCliente);
-      } catch (err) {
-        console.error("Error cargando clientes", err);
-      }
-    };
-    fetchClientes();
-  }, []);
 
   useEffect(() => {
     const fetchDivisas = async () => {
@@ -68,7 +45,10 @@ export default function SimulacionConversion() {
     const fetchMetodos = async () => {
       if (!divisaOrigen || !divisaDestino) return;
       try {
-        const data = await getMetodosDisponibles(Number(divisaOrigen), Number(divisaDestino));
+        const data: MetodosDisponiblesResponse = await getMetodosDisponibles(
+          Number(divisaOrigen),
+          Number(divisaDestino)
+        );
         setMetodos(data.metodos);
         setOperacionCasa(data.operacion_casa);
         if (data.metodos.length > 0) {
@@ -82,13 +62,12 @@ export default function SimulacionConversion() {
   }, [divisaOrigen, divisaDestino]);
 
   const handleSimular = async () => {
-    if (!clienteSeleccionado || !divisaOrigen || !divisaDestino || !metodoSeleccionado) {
-      alert("Debes seleccionar cliente, divisas y método");
+    if (!divisaOrigen || !divisaDestino || !metodoSeleccionado) {
+      alert("Debes seleccionar divisas y método");
       return;
     }
     try {
-      const res = await simularConversion({
-        cliente_id: clienteSeleccionado,
+      const res = await simularConversionPublica({
         divisa_origen: Number(divisaOrigen),
         divisa_destino: Number(divisaDestino),
         monto,
@@ -96,12 +75,12 @@ export default function SimulacionConversion() {
       });
       setResultado(res);
     } catch (err) {
-      console.error("Error en simulación", err);
+      console.error("Error en simulación pública", err);
     }
   };
 
   return (
-    <section id="convert" className="flex flex-col items-center p-6">
+    <section id="convert-public" className="flex flex-col items-center p-6">
       <div className="w-full max-w-md bg-white rounded-xl shadow overflow-hidden border border-gray-200">
         {/* Encabezado */}
         <div className="bg-zinc-900 text-white text-center py-3 rounded-t-xl">
@@ -109,28 +88,6 @@ export default function SimulacionConversion() {
         </div>
 
         <div className="p-6 space-y-5">
-          {/* Select Cliente */}
-          <div className="flex flex-col">
-            <label htmlFor="cliente" className="mb-1 text-sm font-medium text-gray-700">
-              Cliente
-            </label>
-            <select
-              id="cliente"
-              value={clienteSeleccionado}
-              onChange={(e) => {
-                setClienteSeleccionado(e.target.value);
-                setResultado(null);
-              }}
-              className="w-full border border-gray-300 rounded-lg p-2 focus:ring-2 focus:ring-zinc-700 focus:outline-none text-sm"
-            >
-              {clientes.map((cliente) => (
-                <option key={cliente.idCliente} value={cliente.idCliente}>
-                  {cliente.nombre}
-                </option>
-              ))}
-            </select>
-          </div>
-
           {/* Divisas Origen/Destino */}
           <div className="flex items-center space-x-2">
             <div className="flex-1">
@@ -257,12 +214,12 @@ export default function SimulacionConversion() {
           {/* Resultado */}
           {resultado && (
             <div className="mt-6 space-y-4 text-gray-700 border-t pt-4">
-              {/* Tipo de operación (cliente) */}
+              {/* Operación cliente */}
               <div className="bg-gray-100 border border-gray-300 text-gray-800 rounded-lg p-3 text-center font-semibold text-base">
                 Operación: {resultado.operacion_cliente.toUpperCase()}
               </div>
 
-              {/* Conversión realizada */}
+              {/* Conversión */}
               <div className="text-center text-lg font-bold text-gray-900">
                 {resultado.monto_origen.toLocaleString()} {resultado.divisa_origen} →{" "}
                 {resultado.monto_destino.toLocaleString()} {resultado.divisa_destino}
@@ -272,9 +229,6 @@ export default function SimulacionConversion() {
               <div className="space-y-1 text-sm">
                 <p><strong>Precio base:</strong> {resultado.parametros.precio_base}</p>
                 <p><strong>Comisión base:</strong> {resultado.parametros.comision_base}</p>
-                {"descuento_categoria" in resultado.parametros && (
-                  <p><strong>Descuento categoría:</strong> {resultado.parametros.descuento_categoria}%</p>
-                )}
                 <p><strong>Comisión método:</strong> {resultado.parametros.comision_metodo}%</p>
                 <p><strong>Tasa final:</strong> {resultado.tc_final}</p>
                 <p><strong>Método:</strong> {resultado.metodo}</p>

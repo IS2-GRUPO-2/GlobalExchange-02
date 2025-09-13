@@ -10,7 +10,7 @@ import {
 import { Bars3Icon, BellIcon, XMarkIcon } from "@heroicons/react/24/outline";
 import Can from "./Can";
 import { useAuth } from "../context/useAuth";
-import { CATEGORIAS_CLIENTE, CLIENTES, DIVISAS, ROLES, TASAS, USUARIOS } from "../types/perms";
+import { CATEGORIAS_CLIENTE, CLIENTES, DIVISAS, ROLES, TASAS, USUARIOS, SIMULACION} from "../types/perms";
 
 const navigation = [
   { name: "Menú", href: "/", current: true, permisos: [] },
@@ -18,6 +18,7 @@ const navigation = [
   { name: "Usuarios", href: "/usuarios", current: false, permisos: [USUARIOS.VIEW] },
   { name: "Roles", href: "/roles", current: false, permisos: [ROLES.VIEW] },
   { name: "Cotizaciones", href: "/cotizaciones", current: false, permisos: [TASAS.VIEW] },
+  { name: "Simulación de Operaciones", href: "/simulacion-operacion", current: false, permisos: [SIMULACION.USE] },
   {
     name: "Admin Config",
     href: "/configuraciones",
