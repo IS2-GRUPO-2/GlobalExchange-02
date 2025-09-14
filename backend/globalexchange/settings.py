@@ -58,6 +58,7 @@ INSTALLED_APPS = [
     'apps.conversiones',
     'apps.operaciones',
     'apps.cotizaciones',
+    'apps.notificaciones',
     'drf_yasg'
 ]
 
@@ -77,7 +78,9 @@ ROOT_URLCONF = 'globalexchange.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': [
+            BASE_DIR / 'templates',
+        ],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
