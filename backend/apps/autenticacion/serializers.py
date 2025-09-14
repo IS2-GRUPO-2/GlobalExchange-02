@@ -2,10 +2,9 @@ from rest_framework import serializers
 from django.contrib.auth import get_user_model
 from .models import EmailVerificationCode
 import random
-from django.core.mail import send_mail
-
+from apps.notificaciones.notification_service import NotificationService
 User = get_user_model()
-
+notification_service = NotificationService()
 class RegisterSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True)
 
@@ -24,14 +23,15 @@ class RegisterSerializer(serializers.ModelSerializer):
         # generar código
         code = f"{random.randint(0, 999999):06d}"
         EmailVerificationCode.objects.create(user=user, code=code)
-
         # enviar email
-        send_mail(
-            "Código de verificación",
-            f"Tu código de verificación es: {code}",
-            "noreply@miapp.com",
-            [user.email],
+        notification_service.send_notification(
+            channel="email",
+            subject="Código de verificación",
+            template_name="emails/verification_code.html",
+            context={"code": code, "user": user},
+            recipient_list=[user.email],
         )
+
         return user
 
 
