@@ -6,7 +6,8 @@ class Tasa(models.Model):
     divisa = models.OneToOneField(Divisa, on_delete=models.CASCADE, related_name="tasa")
 
     precioBase = models.DecimalField(max_digits=30, decimal_places=10)
-    comisionBase = models.DecimalField(max_digits=30, decimal_places=10, default=0)
+    comisionBaseCompra = models.DecimalField(max_digits=30, decimal_places=10, default=0)
+    comisionBaseVenta = models.DecimalField(max_digits=30, decimal_places=10, default=0)
 
     activo = models.BooleanField(default=True)
     fechaCreacion = models.DateTimeField(auto_now_add=True)

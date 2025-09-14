@@ -11,7 +11,7 @@ class TasaService:
         Calcula la tasa de compra final.
         Formula temporal: precioBase - comisionBase
         """
-        return Decimal(tasa.precioBase) - Decimal(tasa.comisionBase)
+        return Decimal(tasa.precioBase) - Decimal(tasa.comisionBaseCompra)
 
     @staticmethod
     def calcular_tasa_venta(tasa: Tasa) -> Decimal:
@@ -19,7 +19,7 @@ class TasaService:
         Calcula la tasa de venta final.
         Formula temporal: precioBase + comisionBase
         """
-        return Decimal(tasa.precioBase) + Decimal(tasa.comisionBase)
+        return Decimal(tasa.precioBase) + Decimal(tasa.comisionBaseVenta)
     
     @staticmethod
     def crear_historial(tasa: Tasa) -> HistorialTasa:
