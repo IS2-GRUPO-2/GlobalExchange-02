@@ -146,7 +146,7 @@ export const UserProvider = ({ children }: Props) => {
     setUser(null);
     setToken("");
     setRefresh("");
-    navigate("/login");
+    navigate("/");
   };
 
   return (
