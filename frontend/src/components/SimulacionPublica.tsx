@@ -45,10 +45,7 @@ export default function SimulacionPublica() {
     const fetchMetodos = async () => {
       if (!divisaOrigen || !divisaDestino) return;
       try {
-        const data: MetodosDisponiblesResponse = await getMetodosDisponibles(
-          Number(divisaOrigen),
-          Number(divisaDestino)
-        );
+        const data = await getMetodosDisponibles(Number(divisaOrigen), Number(divisaDestino));
         setMetodos(data.metodos);
         setOperacionCasa(data.operacion_casa);
         if (data.metodos.length > 0) {
@@ -60,6 +57,7 @@ export default function SimulacionPublica() {
     };
     fetchMetodos();
   }, [divisaOrigen, divisaDestino]);
+
 
   const handleSimular = async () => {
     if (!divisaOrigen || !divisaDestino || !metodoSeleccionado) {
@@ -102,20 +100,22 @@ export default function SimulacionPublica() {
 
                   if (origen && !origen.es_base && divisaBase) {
                     setDivisaDestino(divisaBase.id.toString());
-                  } else {
-                    setDivisaDestino("");
-                  }
+                  } 
+                  
 
                   setResultado(null);
                 }}
                 className="w-full border border-gray-300 rounded-lg p-2 focus:ring-2 focus:ring-zinc-700 focus:outline-none text-sm"
               >
                 <option value="">Seleccionar...</option>
-                {divisas.map((divisa) => (
-                  <option key={divisa.id} value={divisa.id}>
-                    {divisa.codigo} - {divisa.nombre}
-                  </option>
-                ))}
+                {divisas
+                  .filter((divisa) => divisa.id.toString() !== divisaDestino) // excluir la seleccionada en destino
+                  .map((divisa) => (
+                    <option key={divisa.id} value={divisa.id}>
+                      {divisa.codigo} - {divisa.nombre}
+                    </option>
+                  ))
+                }
               </select>
             </div>
 
@@ -148,11 +148,14 @@ export default function SimulacionPublica() {
                 className="w-full border border-gray-300 rounded-lg p-2 focus:ring-2 focus:ring-zinc-700 focus:outline-none text-sm disabled:bg-gray-100"
               >
                 <option value="">Seleccionar...</option>
-                {divisas.map((divisa) => (
-                  <option key={divisa.id} value={divisa.id}>
-                    {divisa.codigo} - {divisa.nombre}
-                  </option>
-                ))}
+                {divisas
+                  .filter((divisa) => divisa.id.toString() !== divisaOrigen) // excluir la seleccionada en origen
+                  .map((divisa) => (
+                    <option key={divisa.id} value={divisa.id}>
+                      {divisa.codigo} - {divisa.nombre}
+                    </option>
+                  ))
+                }
               </select>
             </div>
           </div>

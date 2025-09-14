@@ -145,8 +145,6 @@ export default function SimulacionConversion() {
 
                   if (origen && !origen.es_base && divisaBase) {
                     setDivisaDestino(divisaBase.id.toString());
-                  } else {
-                    setDivisaDestino("");
                   }
 
                   setResultado(null);
@@ -154,11 +152,14 @@ export default function SimulacionConversion() {
                 className="w-full border border-gray-300 rounded-lg p-2 focus:ring-2 focus:ring-zinc-700 focus:outline-none text-sm"
               >
                 <option value="">Seleccionar...</option>
-                {divisas.map((divisa) => (
-                  <option key={divisa.id} value={divisa.id}>
-                    {divisa.codigo} - {divisa.nombre}
-                  </option>
-                ))}
+                {divisas
+                  .filter((divisa) => divisa.id.toString() !== divisaDestino) // excluir la seleccionada en destino
+                  .map((divisa) => (
+                    <option key={divisa.id} value={divisa.id}>
+                      {divisa.codigo} - {divisa.nombre}
+                    </option>
+                  ))
+                }
               </select>
             </div>
 
@@ -191,11 +192,14 @@ export default function SimulacionConversion() {
                 className="w-full border border-gray-300 rounded-lg p-2 focus:ring-2 focus:ring-zinc-700 focus:outline-none text-sm disabled:bg-gray-100"
               >
                 <option value="">Seleccionar...</option>
-                {divisas.map((divisa) => (
-                  <option key={divisa.id} value={divisa.id}>
-                    {divisa.codigo} - {divisa.nombre}
-                  </option>
-                ))}
+                {divisas
+                  .filter((divisa) => divisa.id.toString() !== divisaOrigen) // excluir la seleccionada en origen
+                  .map((divisa) => (
+                    <option key={divisa.id} value={divisa.id}>
+                      {divisa.codigo} - {divisa.nombre}
+                    </option>
+                  ))
+                }
               </select>
             </div>
           </div>
