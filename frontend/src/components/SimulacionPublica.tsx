@@ -1,9 +1,16 @@
 import { useState, useEffect } from "react";
-import { simularConversionPublica, getMetodosDisponibles } from "../services/conversionService";
-import { type SimulacionResponse, type MetodosDisponiblesResponse } from "../types/Conversion";
+import {
+  simularConversionPublica,
+  getMetodosDisponibles,
+} from "../services/conversionService";
+import {
+  type SimulacionResponse,
+  type MetodosDisponiblesResponse,
+} from "../types/Conversion";
 import { type Divisa } from "../types/Divisa";
 import { type MetodoFinanciero } from "../types/MetodoFinanciero";
 import { getDivisasConTasa } from "../services/divisaService";
+import { toast } from "react-toastify";
 
 export default function SimulacionPublica() {
   const [monto, setMonto] = useState<number>(0);
@@ -22,7 +29,9 @@ export default function SimulacionPublica() {
   const [metodoSeleccionado, setMetodoSeleccionado] = useState<string>("");
 
   // Operación inferida desde backend
-  const [operacionCasa, setOperacionCasa] = useState<"compra" | "venta" | null>(null);
+  const [operacionCasa, setOperacionCasa] = useState<"compra" | "venta" | null>(
+    null
+  );
 
   useEffect(() => {
     const fetchDivisas = async () => {
@@ -45,7 +54,7 @@ export default function SimulacionPublica() {
     const fetchMetodos = async () => {
       if (!divisaOrigen || !divisaDestino) return;
       try {
-        const data: MetodosDisponiblesResponse = await getMetodosDisponibles(
+        const data = await getMetodosDisponibles(
           Number(divisaOrigen),
           Number(divisaDestino)
         );
@@ -63,7 +72,7 @@ export default function SimulacionPublica() {
 
   const handleSimular = async () => {
     if (!divisaOrigen || !divisaDestino || !metodoSeleccionado) {
-      alert("Debes seleccionar divisas y método");
+      toast.error("Debes seleccionar divisas y método");
       return;
     }
     try {
@@ -98,12 +107,12 @@ export default function SimulacionPublica() {
                   const origenId = e.target.value;
                   setDivisaOrigen(origenId);
 
-                  const origen = divisas.find((d) => d.id.toString() === origenId);
+                  const origen = divisas.find(
+                    (d) => d.id.toString() === origenId
+                  );
 
                   if (origen && !origen.es_base && divisaBase) {
                     setDivisaDestino(divisaBase.id.toString());
-                  } else {
-                    setDivisaDestino("");
                   }
 
                   setResultado(null);
@@ -111,11 +120,13 @@ export default function SimulacionPublica() {
                 className="w-full border border-gray-300 rounded-lg p-2 focus:ring-2 focus:ring-zinc-700 focus:outline-none text-sm"
               >
                 <option value="">Seleccionar...</option>
-                {divisas.map((divisa) => (
-                  <option key={divisa.id} value={divisa.id}>
-                    {divisa.codigo} - {divisa.nombre}
-                  </option>
-                ))}
+                {divisas
+                  .filter((divisa) => divisa.id.toString() !== divisaDestino) // excluir la seleccionada en destino
+                  .map((divisa) => (
+                    <option key={divisa.id} value={divisa.id}>
+                      {divisa.codigo} - {divisa.nombre}
+                    </option>
+                  ))}
               </select>
             </div>
 
@@ -139,7 +150,8 @@ export default function SimulacionPublica() {
                 value={divisaDestino}
                 disabled={
                   divisaOrigen &&
-                  !divisas.find((d) => d.id.toString() === divisaOrigen)?.es_base
+                  !divisas.find((d) => d.id.toString() === divisaOrigen)
+                    ?.es_base
                 }
                 onChange={(e) => {
                   setDivisaDestino(e.target.value);
@@ -148,18 +160,23 @@ export default function SimulacionPublica() {
                 className="w-full border border-gray-300 rounded-lg p-2 focus:ring-2 focus:ring-zinc-700 focus:outline-none text-sm disabled:bg-gray-100"
               >
                 <option value="">Seleccionar...</option>
-                {divisas.map((divisa) => (
-                  <option key={divisa.id} value={divisa.id}>
-                    {divisa.codigo} - {divisa.nombre}
-                  </option>
-                ))}
+                {divisas
+                  .filter((divisa) => divisa.id.toString() !== divisaOrigen) // excluir la seleccionada en origen
+                  .map((divisa) => (
+                    <option key={divisa.id} value={divisa.id}>
+                      {divisa.codigo} - {divisa.nombre}
+                    </option>
+                  ))}
               </select>
             </div>
           </div>
 
           {/* Select Método */}
           <div className="flex flex-col">
-            <label htmlFor="metodo" className="mb-1 text-sm font-medium text-gray-700">
+            <label
+              htmlFor="metodo"
+              className="mb-1 text-sm font-medium text-gray-700"
+            >
               {operacionCasa === "venta"
                 ? "Método de Pago"
                 : operacionCasa === "compra"
@@ -185,9 +202,13 @@ export default function SimulacionPublica() {
 
           {/* Input monto vistoso */}
           <div className="bg-gray-50 border border-gray-300 rounded-lg p-4 text-center">
-            <label htmlFor="monto" className="block text-sm font-medium text-gray-700 mb-2">
+            <label
+              htmlFor="monto"
+              className="block text-sm font-medium text-gray-700 mb-2"
+            >
               Cantidad en{" "}
-              {divisas.find((d) => d.id.toString() === divisaOrigen)?.nombre || "Divisa origen"}
+              {divisas.find((d) => d.id.toString() === divisaOrigen)?.nombre ||
+                "Divisa origen"}
             </label>
             <input
               id="monto"
@@ -199,7 +220,8 @@ export default function SimulacionPublica() {
               className="w-full text-2xl font-semibold text-gray-900 text-center bg-transparent focus:outline-none"
             />
             <span className="text-sm text-gray-500">
-              {divisas.find((d) => d.id.toString() === divisaOrigen)?.codigo || ""}
+              {divisas.find((d) => d.id.toString() === divisaOrigen)?.codigo ||
+                ""}
             </span>
           </div>
 
@@ -221,17 +243,32 @@ export default function SimulacionPublica() {
 
               {/* Conversión */}
               <div className="text-center text-lg font-bold text-gray-900">
-                {resultado.monto_origen.toLocaleString()} {resultado.divisa_origen} →{" "}
-                {resultado.monto_destino.toLocaleString()} {resultado.divisa_destino}
+                {resultado.monto_origen.toLocaleString()}{" "}
+                {resultado.divisa_origen} →{" "}
+                {resultado.monto_destino.toLocaleString()}{" "}
+                {resultado.divisa_destino}
               </div>
 
               {/* Detalles */}
               <div className="space-y-1 text-sm">
-                <p><strong>Precio base:</strong> {resultado.parametros.precio_base}</p>
-                <p><strong>Comisión base:</strong> {resultado.parametros.comision_base}</p>
-                <p><strong>Comisión método:</strong> {resultado.parametros.comision_metodo}%</p>
-                <p><strong>Tasa final:</strong> {resultado.tc_final}</p>
-                <p><strong>Método:</strong> {resultado.metodo}</p>
+                <p>
+                  <strong>Precio base:</strong>{" "}
+                  {resultado.parametros.precio_base}
+                </p>
+                <p>
+                  <strong>Comisión base:</strong>{" "}
+                  {resultado.parametros.comision_base}
+                </p>
+                <p>
+                  <strong>Comisión método:</strong>{" "}
+                  {resultado.parametros.comision_metodo}%
+                </p>
+                <p>
+                  <strong>Tasa final:</strong> {resultado.tc_final}
+                </p>
+                <p>
+                  <strong>Método:</strong> {resultado.metodo}
+                </p>
               </div>
             </div>
           )}

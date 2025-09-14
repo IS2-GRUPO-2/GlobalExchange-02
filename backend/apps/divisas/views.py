@@ -1,4 +1,5 @@
 from rest_framework import permissions, viewsets, filters, status
+from django.db.models import Q
 from .serializers import DivisaSerializer, DivisaPaginatedResponseSerializer, DenominacionSerializer
 from .models import Divisa, Denominacion
 from rest_framework.response import Response
@@ -165,8 +166,8 @@ class DivisaViewset(viewsets.ModelViewSet):
     
 
     @swagger_auto_schema(
-        operation_summary="Divisas activas con tasa",
-        operation_description="Devuelve divisas activas que tienen una Tasa asociada. Soporta ?search=",
+        operation_summary="Divisas activas con tasa + divisa base",
+        operation_description="Devuelve divisas activas que tienen una Tasa asociada más la divisa base. Soporta ?search=",
         manual_parameters=[
             openapi.Parameter("search", openapi.IN_QUERY, description="Buscar por código/nombre", type=openapi.TYPE_STRING),
             openapi.Parameter("page", openapi.IN_QUERY, description="Número de página", type=openapi.TYPE_INTEGER),
@@ -177,11 +178,14 @@ class DivisaViewset(viewsets.ModelViewSet):
     @action(detail=False, methods=["get"], url_path="con_tasa", permission_classes=[permissions.AllowAny])
     def con_tasa(self, request):
         """
-        Lista solo las divisas ACTIVAS que tienen una Tasa asociada.
+        Lista divisas ACTIVAS con Tasa asociada + la divisa base.
         Respeta SearchFilter (?search=USD).
         Pagina usando DivisaPagination.
         """
-        qs = Divisa.objects.filter(is_active=True, tasa__isnull=False).distinct()
+        qs = Divisa.objects.filter(is_active=True).filter(
+            Q(tasa__isnull=False) | Q(es_base=True)
+        ).distinct()
+
         qs = self.filter_queryset(qs)
         page = self.paginate_queryset(qs)
         if page is not None:
