@@ -1,3 +1,9 @@
+"""
+Módulo de vistas para la gestión de tasas de divisas.
+
+Define el ViewSet principal para exponer operaciones CRUD sobre tasas,
+junto con un endpoint público para la consulta de cotizaciones activas.
+"""
 from rest_framework import viewsets, permissions, filters
 from apps.cotizaciones.models import Tasa
 from apps.cotizaciones.serializers import TasaSerializer
@@ -13,6 +19,16 @@ from rest_framework.permissions import DjangoModelPermissions
 
 
 class TasaViewSet(viewsets.ModelViewSet):
+    """
+    ViewSet para operaciones CRUD de tasas.
+    
+    Permite gestionar tasas asociadas a divisas, aplicando eliminación lógica,
+    búsqueda por código/nombre de divisa y acceso controlado mediante permisos.
+    
+    Endpoints personalizados:
+        - public_rates: Retorna las tasas activas en formato simplificado
+          para su uso en vistas públicas (ej. landing page).
+    """
     queryset = Tasa.objects.select_related("divisa").all()
     serializer_class = TasaSerializer
 
@@ -23,6 +39,12 @@ class TasaViewSet(viewsets.ModelViewSet):
     search_fields = ["divisa__codigo", "divisa__nombre"]
 
     def perform_destroy(self, instance):
+        """
+        Elimina lógicamente una tasa, marcándola como inactiva.
+        
+        Args:
+            instance (Tasa): Instancia de la tasa a desactivar.
+        """
         instance.activo = False
         instance.save()
 
@@ -35,7 +57,17 @@ class TasaViewSet(viewsets.ModelViewSet):
     def public_rates(self, request):
         """
         Endpoint para vista pública (landing page).
-        Devuelve {codigo, nombre, simbolo, compra, venta}.
+        
+        Devuelve un listado de cotizaciones activas con los campos:
+            - codigo: Código de la divisa (ej. USD).
+            - nombre: Nombre de la divisa (ej. Dólar estadounidense).
+            - simbolo: Símbolo de la divisa base.
+            - compra: Valor de la tasa de compra.
+            - venta: Valor de la tasa de venta.
+            - flag: Emoji representativo de la bandera asociada.
+        
+        Returns:
+            Response: Lista de cotizaciones activas en formato simplificado.
         """
         tasas = (
             Tasa.objects.filter(activo=True, divisa__is_active=True)
