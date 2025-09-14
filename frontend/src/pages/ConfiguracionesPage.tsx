@@ -11,8 +11,10 @@ import {
   Tag,
   Users,
   User,
+  UserPen,
+  Bell
 } from "lucide-react";
-import { CATEGORIAS_CLIENTE, CLIENTES, DIVISAS, ROLES, TASAS, USUARIOS } from "../types/perms";
+import { CATEGORIAS_CLIENTE, CLIENTES, DIVISAS, METODOS_FINANCIEROS, ROLES, TASAS, USUARIOS } from "../types/perms";
 import Can from "../components/Can";
 
 type ConfigItem = {
@@ -87,18 +89,9 @@ const ConfiguracionesPage = () => {
       nombre: "Métodos de pago/cobro",
       descripcion: "Definir métodos de pago y cobro habilitados",
       icon: <CreditCard className="w-6 h-6 text-purple-600" />,
-      path: "/configuraciones/metodos",
-      habilitado: false,
-      permisos: [],
-    },
-    {
-      id: "comisiones",
-      nombre: "Comisiones",
-      descripcion: "Configurar comisiones aplicadas a operaciones",
-      icon: <Wallet className="w-6 h-6 text-teal-600" />,
-      path: "/configuraciones/comisiones",
-      habilitado: false,
-      permisos: [],
+      path: "/metodos-financieros",
+      habilitado: true,
+      permisos: [METODOS_FINANCIEROS.VIEW],
     },
     {
       id: "documentos",
