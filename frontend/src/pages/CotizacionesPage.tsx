@@ -56,8 +56,9 @@ const CotizacionesPage = () => {
 
   const fetchDivisaBase = async () => {
     try {
-      const res: PaginatedDivisas = await getDivisas({ search: "", page: 1 });
-      const base = res.results.find((d) => d.es_base);
+      const res: PaginatedDivisas = await getDivisas({ search: "", page: 1 , es_base: true});
+      const base = res.results?.[0] ?? null;
+      console.log("Divisa base:", base);
       if (base) setDivisaBase(base);
     } catch (e) {
       console.error("Error obteniendo divisa base", e);
@@ -130,9 +131,10 @@ const CotizacionesPage = () => {
       const byCode = d?.codigo?.toLowerCase().includes(q) ?? false;
       const byName = d?.nombre?.toLowerCase().includes(q) ?? false;
       const byBase = String(t.precioBase).toLowerCase().includes(q);
-      const byCom = String(t.comisionBase).toLowerCase().includes(q);
+      const byComC = String(t.comisionBaseCompra).toLowerCase().includes(q);
+      const byComV = String(t.comisionBaseVenta).toLowerCase().includes(q);
       const byId = String(t.divisa).toLowerCase().includes(q); // por si el map aún no cargó
-      return byCode || byName || byBase || byCom || byId;
+      return byCode || byName || byBase || byComC || byComV || byId;
     });
     setTasas(filtered);
   }, [searchQuery, tasasRaw, divisasMap]);
@@ -148,7 +150,8 @@ const CotizacionesPage = () => {
     const payload: Tasa = {
       divisa: data.divisa,
       precioBase: data.precioBase,
-      comisionBase: data.comisionBase,
+      comisionBaseCompra: data.comisionBaseCompra,
+      comisionBaseVenta: data.comisionBaseVenta,
       activo: data.activo,
     };
 
@@ -193,7 +196,8 @@ const CotizacionesPage = () => {
     const payload: Tasa = {
       divisa: data.divisa,
       precioBase: data.precioBase,
-      comisionBase: data.comisionBase,
+      comisionBaseCompra: data.comisionBaseCompra,
+      comisionBaseVenta: data.comisionBaseVenta,
       activo: data.activo,
     };
 
@@ -315,7 +319,8 @@ const CotizacionesPage = () => {
                 <th>Divisa</th>
                 <th>Nombre</th>
                 <th>Precio base</th>
-                <th>Comisión base</th>
+                <th>Comisión base Compra</th>
+                <th>Comisión base Venta</th>
                 <th>Compra</th>
                 <th>Venta</th>
                 <th>Estado</th>
@@ -356,7 +361,8 @@ const CotizacionesPage = () => {
                         : tasa.divisa}
                     </td>
                     <td>{formatNumber(tasa.precioBase)} {divisaBase?.simbolo ?? ""}</td>
-                    <td>{formatNumber(tasa.comisionBase)} {divisaBase?.simbolo ?? ""}</td>
+                    <td>{formatNumber(tasa.comisionBaseCompra)} {divisaBase?.simbolo ?? ""}</td>
+                    <td>{formatNumber(tasa.comisionBaseVenta)} {divisaBase?.simbolo ?? ""}</td>
                     <td>{formatNumber(tasa.tasaCompra)} {divisaBase?.simbolo ?? ""}</td>
                     <td>{formatNumber(tasa.tasaVenta)} {divisaBase?.simbolo ?? ""}</td>
                     <td>

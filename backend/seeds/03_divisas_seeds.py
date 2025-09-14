@@ -61,7 +61,8 @@ def run():
             'simbolo': '₲',
             'is_active': True,
             'max_digitos': 15,
-            'precision': 0
+            'precision': 0,
+            'es_base': True
         },
         {
             'nombre': 'Sol Peruano',

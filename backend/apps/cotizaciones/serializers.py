@@ -14,7 +14,7 @@ class TasaSerializer(serializers.ModelSerializer):
         model = Tasa
         fields = (
             "id", "divisa",
-            "precioBase", "comisionBase", "activo",
+            "precioBase", "comisionBaseCompra", "comisionBaseVenta", "activo",
             "tasaCompra", "tasaVenta",
             "fechaCreacion", "fechaActualizacion",
         )
@@ -60,17 +60,19 @@ class TasaSerializer(serializers.ModelSerializer):
 
     def update(self, instance, validated_data):
         old_precio   = Decimal(instance.precioBase)
-        old_comision = Decimal(instance.comisionBase)
+        old_comision_compra = Decimal(instance.comisionBaseCompra)
+        old_comision_venta = Decimal(instance.comisionBaseVenta)
 
         instance.precioBase   = validated_data.get("precioBase", instance.precioBase)
-        instance.comisionBase = validated_data.get("comisionBase", instance.comisionBase)
+        instance.comisionBaseCompra = validated_data.get("comisionBaseCompra", instance.comisionBaseCompra)
+        instance.comisionBaseVenta = validated_data.get("comisionBaseVenta", instance.comisionBaseVenta)
 
         if "activo" in validated_data:
             instance.activo = validated_data["activo"]
 
         instance.save()
 
-        if Decimal(instance.precioBase) != old_precio or Decimal(instance.comisionBase) != old_comision:
+        if Decimal(instance.precioBase) != old_precio or Decimal(instance.comisionBaseCompra) != old_comision_compra or Decimal(instance.comisionBaseVenta) != old_comision_venta:
             TasaService.crear_historial(instance)
 
         return instance
