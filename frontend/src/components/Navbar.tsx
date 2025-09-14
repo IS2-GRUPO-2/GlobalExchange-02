@@ -7,31 +7,18 @@ import {
   MenuItem,
   MenuItems,
 } from "@headlessui/react";
-import { Bars3Icon, BellIcon, XMarkIcon } from "@heroicons/react/24/outline";
+import { Bars3Icon, XMarkIcon } from "@heroicons/react/24/outline";
+import { Bell, CircleUser, ChevronDown} from "lucide-react";
 import Can from "./Can";
 import { useAuth } from "../context/useAuth";
-import { CATEGORIAS_CLIENTE, CLIENTES, DIVISAS, ROLES, TASAS, USUARIOS, SIMULACION} from "../types/perms";
+import logoWhite from "../assets/logo-white.svg";
+import {
+  SIMULACION,
+} from "../types/perms";
 
 const navigation = [
-  { name: "Menú", href: "/", current: true, permisos: [] },
-  { name: "Clientes", href: "/clientes", current: false, permisos: [CLIENTES.VIEW] },
-  { name: "Usuarios", href: "/usuarios", current: false, permisos: [USUARIOS.VIEW] },
-  { name: "Roles", href: "/roles", current: false, permisos: [ROLES.VIEW] },
-  { name: "Cotizaciones", href: "/cotizaciones", current: false, permisos: [TASAS.VIEW] },
+  { name: "Inicio", href: "/", current: true, permisos: [] },
   { name: "Simulación de Operaciones", href: "/simulacion-operacion", current: false, permisos: [SIMULACION.USE] },
-  {
-    name: "Admin Config",
-    href: "/configuraciones",
-    current: false,
-    permisos: [
-      DIVISAS.VIEW,
-      ROLES.VIEW,
-      CATEGORIAS_CLIENTE.VIEW,
-      TASAS.VIEW,
-      USUARIOS.VIEW,
-      CLIENTES.VIEW,
-    ],
-  },
   { name: "Iniciar sesión", href: "/login", current: false, permisos: [] },
   { name: "Registrarse", href: "/register", current: false, permisos: [] },
 ];
@@ -41,9 +28,8 @@ function classNames(...classes: (string | undefined | false | null)[]): string {
 }
 
 export default function Navbar() {
-  const { logout, isLoggedIn } = useAuth();
+  const { logout, isLoggedIn, user } = useAuth();
 
-  // Filtrar navegación: ocultar login/register si está logueado
   const filteredNavigation = navigation.filter((item) => {
     if (
       isLoggedIn() &&
@@ -60,30 +46,25 @@ export default function Navbar() {
       className="relative bg-zinc-900 after:pointer-events-none after:absolute after:inset-x-0 after:bottom-0 after:h-px after:bg-white/10"
     >
       <div className="mx-auto max-w-7xl px-2 sm:px-6 lg:px-8">
-        <div className="relative flex h-16 items-center justify-between">
+        <div className="relative flex min-h-16 items-center justify-between py-2">
+          {/* Botón menú mobile */}
           <div className="absolute inset-y-0 left-0 flex items-center sm:hidden">
-            <DisclosureButton className="group relative inline-flex items-center justify-center rounded-md p-2 text-gray-400 hover:bg-white/5 hover:text-white focus:outline-2 focus:-outline-offset-1 focus:outline-indigo-500">
-              <span className="absolute -inset-0.5" />
-              <span className="sr-only">Open main menu</span>
-              <Bars3Icon
-                aria-hidden="true"
-                className="block size-6 group-data-open:hidden"
-              />
-              <XMarkIcon
-                aria-hidden="true"
-                className="hidden size-6 group-data-open:block"
-              />
+            <DisclosureButton className="group relative inline-flex items-center justify-center rounded-md p-2 text-gray-400 hover:bg-white/5 hover:text-white">
+              <Bars3Icon aria-hidden="true" className="block size-6 group-data-open:hidden" />
+              <XMarkIcon aria-hidden="true" className="hidden size-6 group-data-open:block" />
             </DisclosureButton>
           </div>
+
+          {/* Logo + Links */}
           <div className="flex flex-1 items-center justify-center sm:items-stretch sm:justify-start">
-            <div className="flex shrink-0 items-center">
+            <a href="/" className="flex shrink-0 items-center">
               <img
-                alt="Your Company"
-                src="https://tailwindcss.com/plus-assets/img/logos/mark.svg?color=indigo&shade=500"
-                className="h-8 w-auto"
+              alt="Logo"
+              src={logoWhite}
+              className="h-20 w-auto sm:h-12 md:h-14"
               />
-            </div>
-            <div className="hidden sm:ml-6 sm:block">
+            </a>
+            <div className="hidden sm:ml-6 sm:block self-center">
               <div className="flex space-x-4">
                 {filteredNavigation.map((item) => (
                   <Can key={item.name} anyOf={item.permisos}>
@@ -105,63 +86,56 @@ export default function Navbar() {
             </div>
           </div>
 
-          <div className="absolute inset-y-0 right-0 flex items-center pr-2 sm:static sm:inset-auto sm:ml-6 sm:pr-0">
-            {isLoggedIn() && (
-              <>
-                <button
-                  type="button"
-                  className="relative rounded-full p-1 text-gray-400 hover:text-white focus:outline-2 focus:outline-offset-2 focus:outline-indigo-500"
-                >
-                  <span className="absolute -inset-1.5" />
-                  <span className="sr-only">View notifications</span>
-                  <BellIcon aria-hidden="true" className="size-6" />
-                </button>
+          {/* Dropdown usuario */}
+          {isLoggedIn() && (
+            <div className="absolute inset-y-0 right-0 flex items-center space-x-3 pr-2 sm:static sm:inset-auto sm:ml-6 sm:pr-0">
+              {/* 🔔 Notificaciones */}
+              <button
+                type="button"
+                className="relative rounded-full p-1 text-gray-300 hover:text-white"
+              >
+                <Bell className="w-6 h-6" />
+              </button>
 
-                {/* Profile dropdown */}
-                <Menu as="div" className="relative ml-3">
-                  <MenuButton className="relative flex rounded-full focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-500">
-                    <span className="absolute -inset-1.5" />
-                    <span className="sr-only">Open user menu</span>
-                    <img
-                      alt=""
-                      src="https://img.icons8.com/?size=100&id=ABBSjQJK83zf&format=png&color=000000"
-                      className="size-8 rounded-full bg-gray-800 outline -outline-offset-1 outline-white/10"
-                    />
-                  </MenuButton>
-
-                  <MenuItems
-                    transition
-                    className="absolute right-0 z-10 mt-2 w-48 origin-top-right rounded-md bg-gray-800 py-1 outline -outline-offset-1 outline-white/10 transition data-closed:scale-95 data-closed:transform data-closed:opacity-0 data-enter:duration-100 data-enter:ease-out data-leave:duration-75 data-leave:ease-in"
-                  >
-                    <MenuItem>
-                      <a
-                        href="#"
-                        className="block px-4 py-2 text-sm text-gray-300 data-focus:bg-white/5 data-focus:outline-hidden"
-                      >
-                        Cuenta
-                      </a>
-                    </MenuItem>
-                    <MenuItem>
-                      <a
-                        href="configuraciones"
-                        className="block px-4 py-2 text-sm text-gray-300 data-focus:bg-white/5 data-focus:outline-hidden"
-                      >
-                        Configuraciones
-                      </a>
-                    </MenuItem>
-                    <MenuItem>
-                      <button
-                        onClick={logout}
-                        className="block w-full text-left px-4 py-2 text-sm text-gray-300 data-focus:bg-white/5 data-focus:outline-hidden"
-                      >
-                        Cerrar sesión
-                      </button>
-                    </MenuItem>
-                  </MenuItems>
-                </Menu>
-              </>
-            )}
-          </div>
+              {/* Usuario + Nombre + Flechita */}
+              <Menu as="div" className="relative">
+                {({ open }) => (
+                  <>
+                    <MenuButton className="flex items-center space-x-2 rounded-full p-1.5 focus:outline-none transition-colors hover:bg-white/5 group">
+                      <CircleUser className="w-6 h-6 text-gray-300 group-hover:text-white" />
+                      <span className="hidden md:block text-sm font-medium text-gray-300 group-hover:text-white">
+                        {user?.first_name || user?.username || "Usuario"}
+                      </span>
+                      <ChevronDown 
+                        className={`w-4 h-4 text-gray-300 group-hover:text-white transition-transform duration-200 ${open ? 'rotate-180' : ''}`} 
+                      />
+                    </MenuButton>
+                    
+                    <MenuItems className="absolute right-0 z-10 mt-2 w-48 origin-top-right rounded-md bg-zinc-900 py-1 shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
+                      <MenuItem>
+                        <a href="#" className="block px-4 py-2 text-sm text-gray-300 hover:bg-white/5">
+                          Cuenta
+                        </a>
+                      </MenuItem>
+                      <MenuItem>
+                        <a href="/configuraciones" className="block px-4 py-2 text-sm text-gray-300 hover:bg-white/5">
+                          Configuraciones
+                        </a>
+                      </MenuItem>
+                      <MenuItem>
+                        <button
+                          onClick={logout}
+                          className="block w-full text-left px-4 py-2 text-sm text-gray-300 hover:bg-white/5"
+                        >
+                          Cerrar sesión
+                        </button>
+                      </MenuItem>
+                    </MenuItems>
+                  </>
+                )}
+              </Menu>
+            </div>
+          )}
         </div>
       </div>
 

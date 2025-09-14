@@ -123,7 +123,7 @@ export const router = createBrowserRouter([
               USUARIOS.VIEW,
               CLIENTES.VIEW,
             ]}
-          >
+            >
             <ConfiguracionesPage />
           </RequireAuth>
         ),
