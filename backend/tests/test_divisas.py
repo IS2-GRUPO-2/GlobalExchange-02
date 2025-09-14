@@ -3,7 +3,7 @@ from django.urls import reverse
 from rest_framework.test import APIClient
 from rest_framework import status
 from apps.divisas.models import Divisa, Denominacion
-
+from apps.cotizaciones.models import Tasa
 
 @pytest.fixture
 def api_client(db, django_user_model):
@@ -125,3 +125,37 @@ def test_destroy_denominacion_inactive(api_client, denominacion):
     url = reverse("denominacion-detail", args=[denominacion.id])
     response = api_client.delete(url)
     assert response.status_code == status.HTTP_404_NOT_FOUND
+
+
+@pytest.mark.django_db
+def test_divisas_con_tasa_incluye_base_y_extranjeras(api_client):
+    # Crear divisa base (PYG)
+    base = Divisa.objects.create(
+        codigo="PYG", nombre="Guaraní", simbolo="₲", es_base=True, is_active=True
+    )
+
+    # Crear divisa con tasa activa
+    usd = Divisa.objects.create(
+        codigo="USD", nombre="Dólar", simbolo="$", es_base=False, is_active=True
+    )
+    Tasa.objects.create(divisa=usd, precioBase=7000, comisionBase=100, activo=True)
+
+    #Crear divisa sin tasa (no debe aparecer)
+    eur = Divisa.objects.create(
+        codigo="EUR", nombre="Euro", simbolo="€", es_base=False, is_active=True
+    )
+
+    url = reverse("divisa-con-tasa")  # usa el nombre del @action
+    response = api_client.get(url)
+
+    assert response.status_code == status.HTTP_200_OK
+
+    data = response.json()
+    assert "results" in data
+
+    codigos = [d["codigo"] for d in data["results"]]
+
+    #Validaciones
+    assert "PYG" in codigos  # siempre incluye la base
+    assert "USD" in codigos  # incluye la que tiene tasa
+    assert "EUR" not in codigos  # no incluye la sin tasa

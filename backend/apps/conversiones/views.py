@@ -80,13 +80,22 @@ def listar_metodos_disponibles(request):
         if not divisa_origen or not divisa_destino:
             return Response({"error": "Debe indicar divisa_origen y divisa_destino"}, status=400)
 
+        if divisa_origen == divisa_destino:
+            return Response(
+                {"error": "La divisa de origen y destino no pueden ser iguales."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
         operacion_casa, metodos = listar_metodos_por_divisas(divisa_origen, divisa_destino)
 
         serializer = MetodoFinancieroSerializer(metodos, many=True)
-        return Response({
-            "operacion_casa": operacion_casa,
-            "metodos": serializer.data
-        }, status=status.HTTP_200_OK)
+        return Response(
+            {
+                "operacion_casa": operacion_casa,
+                "metodos": serializer.data,
+            },
+            status=status.HTTP_200_OK,
+        )
 
     except Exception as e:
         return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
