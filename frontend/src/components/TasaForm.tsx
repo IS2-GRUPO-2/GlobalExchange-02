@@ -7,7 +7,8 @@ import { getDivisasSinTasa, getDivisa } from "../services/divisaService";
 export type TasaFormData = {
   divisa: number;
   precioBase: string;
-  comisionBase: string;
+  comisionBaseCompra: string;
+  comisionBaseVenta: string;
   activo: boolean;
 };
 
@@ -28,12 +29,13 @@ const TasaForm = ({ onSubmit, onCancel, isEditForm, tasa }: Props) => {
   const [form, setForm] = useState<TasaFormData>({
     divisa: tasa?.divisa ?? 0,
     precioBase: tasa?.precioBase ?? "",
-    comisionBase: tasa?.comisionBase ?? "",
+    comisionBaseCompra: tasa?.comisionBaseCompra ?? "",
+    comisionBaseVenta: tasa?.comisionBaseVenta ?? "",
     activo: tasa?.activo ?? true,
   });
 
   const handleDecimalChange =
-    (field: "precioBase" | "comisionBase") =>
+    (field: "precioBase" | "comisionBaseCompra" | "comisionBaseVenta") =>
     (e: React.ChangeEvent<HTMLInputElement>) => {
       const raw = e.target.value.replace(",", ".");
       if (raw === "" || DECIMAL_REGEX.test(raw)) {
@@ -83,19 +85,24 @@ const TasaForm = ({ onSubmit, onCancel, isEditForm, tasa }: Props) => {
   }, [isEditForm, tasa?.divisa]);
 
   const base = Number(form.precioBase || "0");
-  const comi = Number(form.comisionBase || "0");
+  const comiC = Number(form.comisionBaseCompra || "0");
+  const comiV = Number(form.comisionBaseVenta || "0");
   const comisionMayorQueBase =
     form.precioBase !== "" &&
-    form.comisionBase !== "" &&
+    form.comisionBaseCompra !== "" &&
+    form.comisionBaseVenta !== "" &&
     !isNaN(base) &&
-    !isNaN(comi) &&
-    comi > base;
+    !isNaN(comiC) &&
+    !isNaN(comiV) &&
+    comiC > base &&
+    comiV > base;
 
   const isValid = useMemo(() => {
     const okDivisa = isEditForm ? true : form.divisa > 0;
     const okBase = form.precioBase !== "" && !isNaN(Number(form.precioBase));
-    const okCom = form.comisionBase !== "" && !isNaN(Number(form.comisionBase));
-    return okDivisa && okBase && okCom && !comisionMayorQueBase;
+    const okComC = form.comisionBaseCompra !== "" && !isNaN(Number(form.comisionBaseCompra));
+    const okComV = form.comisionBaseVenta !== "" && !isNaN(Number(form.comisionBaseVenta));
+    return okDivisa && okBase && okComC && okComV && !comisionMayorQueBase;
   }, [form, isEditForm, comisionMayorQueBase]);
 
   return (
@@ -158,15 +165,34 @@ const TasaForm = ({ onSubmit, onCancel, isEditForm, tasa }: Props) => {
           />
         </div>
 
-        {/* Comisión base */}
+        {/* Comisión base Compra*/}
         <div>
-          <label className="block text-sm font-semibold mb-1 text-gray-700">Comisión base</label>
+          <label className="block text-sm font-semibold mb-1 text-gray-700">Comisión base Compra</label>
           <input
             className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             type="text"
             inputMode="decimal"
-            value={form.comisionBase}
-            onChange={handleDecimalChange("comisionBase")}
+            value={form.comisionBaseCompra}
+            onChange={handleDecimalChange("comisionBaseCompra")}
+            placeholder="Ej: 50.0000000000"
+            autoComplete="off"
+          />
+          {comisionMayorQueBase && (
+            <p className="mt-1 text-xs text-red-600 font-medium">
+              La comisión no puede ser mayor al precio base.
+            </p>
+          )}
+        </div>
+
+        {/* Comisión base venta */}
+        <div>
+          <label className="block text-sm font-semibold mb-1 text-gray-700">Comisión base venta</label>
+          <input
+            className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            type="text"
+            inputMode="decimal"
+            value={form.comisionBaseVenta}
+            onChange={handleDecimalChange("comisionBaseVenta")}
             placeholder="Ej: 50.0000000000"
             autoComplete="off"
           />
