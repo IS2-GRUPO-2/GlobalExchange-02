@@ -64,14 +64,6 @@ def run():
             'precision': 0,
             'es_base': True
         },
-        {
-            'nombre': 'Sol Peruano',
-            'codigo': 'PEN',
-            'simbolo': 'S',
-            'is_active': True,
-            'max_digitos': 15,
-            'precision': 2
-        }
     ]
     
     divisas_creadas = []
@@ -86,22 +78,12 @@ def run():
     
     # Denominaciones para ARS (Peso Argentino)
     ars = Divisa.objects.get(codigo='ARS')
-    denominaciones_ars = [
-        {'valor': 10, 'denominacion': 'Billete de $10'},
-        {'valor': 20, 'denominacion': 'Billete de $20'},
-        {'valor': 50, 'denominacion': 'Billete de $50'},
-        {'valor': 100, 'denominacion': 'Billete de $100'},
-        {'valor': 200, 'denominacion': 'Billete de $200'},
-        {'valor': 500, 'denominacion': 'Billete de $500'},
-        {'valor': 1000, 'denominacion': 'Billete de $1000'},
-        {'valor': 2000, 'denominacion': 'Billete de $2000'},
-        {'valor': 10000, 'denominacion': 'Billete de $10000'},
-    ]
+    denominaciones_ars = [10, 20, 50, 100, 200, 500, 1000, 2000, 10000]
     
-    for denom_data in denominaciones_ars:
+    for valor in denominaciones_ars:
         Denominacion.objects.get_or_create(
             divisa=ars,
-            denominacion=denom_data['valor'],
+            denominacion=valor,
             defaults={
                 'is_active': True
             }
@@ -109,19 +91,12 @@ def run():
     
     # Denominaciones para USD (Dólar)
     usd = Divisa.objects.get(codigo='USD')
-    denominaciones_usd = [
-        {'valor': 1, 'denominacion': 'Billete de $1'},
-        {'valor': 5, 'denominacion': 'Billete de $5'},
-        {'valor': 10, 'denominacion': 'Billete de $10'},
-        {'valor': 20, 'denominacion': 'Billete de $20'},
-        {'valor': 50, 'denominacion': 'Billete de $50'},
-        {'valor': 100, 'denominacion': 'Billete de $100'},
-    ]
+    denominaciones_usd = [1, 5, 10, 20, 50, 100]
     
-    for denom_data in denominaciones_usd:
+    for valor in denominaciones_usd:
         Denominacion.objects.get_or_create(
             divisa=usd,
-            denominacion=denom_data['valor'],
+            denominacion=valor,
             defaults={
                 'is_active': True
             }
@@ -129,20 +104,12 @@ def run():
     
     # Denominaciones para EUR (Euro)
     eur = Divisa.objects.get(codigo='EUR')
-    denominaciones_eur = [
-        {'valor': 5, 'denominacion': 'Billete de €5'},
-        {'valor': 10, 'denominacion': 'Billete de €10'},
-        {'valor': 20, 'denominacion': 'Billete de €20'},
-        {'valor': 50, 'denominacion': 'Billete de €50'},
-        {'valor': 100, 'denominacion': 'Billete de €100'},
-        {'valor': 200, 'denominacion': 'Billete de €200'},
-        {'valor': 500, 'denominacion': 'Billete de €500'},
-    ]
+    denominaciones_eur = [5, 10, 20, 50, 100, 200, 500]
     
-    for denom_data in denominaciones_eur:
+    for valor in denominaciones_eur:
         Denominacion.objects.get_or_create(
             divisa=eur,
-            denominacion=denom_data['valor'],
+            denominacion=valor,
             defaults={
                 'is_active': True
             }

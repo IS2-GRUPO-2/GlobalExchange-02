@@ -265,10 +265,20 @@ export default function SimulacionConversion() {
               id="monto"
               type="number"
               min={0}
-              value={monto}
-              onChange={(e) => setMonto(Number(e.target.value))}
+              value={monto === 0 ? "" : monto}
+              onChange={(e) => {
+                const value = Number(e.target.value);
+                if (value >= 0 || e.target.value === "") {
+                  setMonto(value);
+                }
+              }}
+              onKeyDown={(e) => {
+                if (e.key === '-' || e.key === 'e' || e.key === 'E') {
+                  e.preventDefault();
+                }
+              }}
               placeholder="Ingrese el monto"
-              className="w-full text-2xl font-semibold text-gray-900 text-center bg-transparent focus:outline-none"
+              className="w-full text-2xl font-semibold text-gray-900 text-center bg-transparent focus:outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
             />
             <span className="text-sm text-gray-500">
               {divisas.find((d) => d.id.toString() === divisaOrigen)?.codigo ||

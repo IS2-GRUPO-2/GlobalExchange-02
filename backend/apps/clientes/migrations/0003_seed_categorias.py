@@ -1,23 +1,7 @@
 from django.db import migrations
-import uuid
-def crear_categorias(apps, schema_editor):
-    CategoriaCliente = apps.get_model("clientes", "CategoriaCliente")
 
-    categorias = [
-        {"nombre": "MINORISTA", "descuento": 0.00},
-        {"nombre": "MAYORISTA", "descuento": 5.00},
-        {"nombre": "VIP", "descuento": 10.00},
-    ]
-
-    for cat in categorias:
-        CategoriaCliente.objects.update_or_create(
-            nombre=cat["nombre"], defaults={"descuento": cat["descuento"]}
-        )
-
-
-def eliminar_categorias(apps, schema_editor):
-    CategoriaCliente = apps.get_model("clientes", "CategoriaCliente")
-    CategoriaCliente.objects.filter(nombre__in=["MINORISTA", "MAYORISTA", "VIP"]).delete()
+# Esta migración anteriormente insertaba datos de categorías directamente.
+# Los datos han sido movidos a seeds para mejor separación de responsabilidades.
 
 class Migration(migrations.Migration):
 
@@ -26,5 +10,5 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.RunPython(crear_categorias, eliminar_categorias),
+        # Migración vacía - los datos de categorías ahora se manejan via seeds
     ]

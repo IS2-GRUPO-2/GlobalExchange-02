@@ -1,32 +1,46 @@
 from apps.clientes.models import CategoriaCliente
 
 def run():
-    """Crear categorías de clientes adicionales (las básicas ya existen por migración)"""
+    """Crear todas las categorías de clientes del sistema"""
     
-    print("🔧 Verificando categorías de clientes existentes...")
+    print("🔧 Creando categorías de clientes...")
     
-    # Verificar categorías existentes de la migración
-    categorias_existentes = list(CategoriaCliente.objects.values_list('nombre', flat=True))
-    print(f"  → Categorías existentes: {categorias_existentes}")
-    
-    # Agregar categorías adicionales si no existen
-    categorias_adicionales = [
+    # Todas las categorías del sistema con sus campos completos
+    categorias_data = [
+        {
+            'nombre': 'MINORISTA',
+            'descripcion': 'Cliente minorista con beneficios básicos',
+            'descuento': 0.00,
+        },
+        {
+            'nombre': 'MAYORISTA',
+            'descripcion': 'Cliente mayorista con descuentos intermedios',
+            'descuento': 5.00,
+        },
+        {
+            'nombre': 'VIP',
+            'descripcion': 'Cliente VIP con beneficios preferenciales',
+            'descuento': 10.00,
+        },
         {
             'nombre': 'PREMIUM',
-            'descripcion': 'Cliente premium con beneficios especiales',
+            'descripcion': 'Cliente premium con beneficios especiales y servicios exclusivos',
             'descuento': 15.00,
         },
         {
             'nombre': 'CORPORATIVO',
-            'descripcion': 'Cliente corporativo con límites especiales',
+            'descripcion': 'Cliente corporativo con límites especiales y gestión personalizada',
             'descuento': 20.00,
         }
     ]
     
-    for categoria_data in categorias_adicionales:
+    for categoria_data in categorias_data:
         categoria, created = CategoriaCliente.objects.get_or_create(
             nombre=categoria_data['nombre'],
-            defaults=categoria_data
+            defaults={
+                'descripcion': categoria_data['descripcion'],
+                'descuento': categoria_data['descuento']
+            }
         )
         if created:
             print(f"  → Categoría creada: {categoria.nombre} ({categoria.descuento}% descuento)")

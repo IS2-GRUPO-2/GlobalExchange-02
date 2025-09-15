@@ -294,3 +294,7 @@ def run():
     except Exception as e:
         print(f"⚠️  Error creando métodos financieros detallados: {e}")
     
+    print(f"✅ Bancos: {Banco.objects.count()} total")
+    print(f"✅ Billeteras digitales: {BilleteraDigitalCatalogo.objects.count()} total")
+    print(f"✅ Métodos financieros: {MetodoFinanciero.objects.count()} total")
+    print(f"✅ Métodos financieros detallados: {MetodoFinancieroDetalle.objects.count()} total")
