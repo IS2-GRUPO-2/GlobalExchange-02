@@ -18,7 +18,8 @@ import {
   METODOS_FINANCIEROS, ROLES,
   TASAS,
   USUARIOS,
-  SIMULACION
+  SIMULACION,
+  METODOS_FINANCIEROS_DETALLE
 } from "../types/perms";
 import CotizacionesPage from "../pages/CotizacionesPage";
 import RequireAuth from "./RequiereAuth";
@@ -122,6 +123,7 @@ export const router = createBrowserRouter([
               TASAS.VIEW,
               USUARIOS.VIEW,
               CLIENTES.VIEW,
+              METODOS_FINANCIEROS_DETALLE.VIEW,
             ]}
             >
             <ConfiguracionesPage />
