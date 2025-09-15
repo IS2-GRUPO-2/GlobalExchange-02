@@ -342,6 +342,14 @@ const MetodosFinancierosClientePage = () => {
     }
   };
 
+  const getTabSingular = (tab: TabType) => {
+    switch (tab) {
+      case 'cuentas': return 'Cuenta Bancaria';
+      case 'billeteras digitales': return 'Billetera Digital';
+      case 'tarjetas': return 'Tarjeta';
+    }
+  };
+
   const renderForm = () => {
     const initialData = selectedItem || undefined;
     
@@ -562,7 +570,7 @@ const MetodosFinancierosClientePage = () => {
           className="btn-primary flex items-center justify-center"
         >
           <Plus size={18} className="mr-2" />
-          Crear
+          Crear {getTabSingular(activeTab)}
         </button>
       </div>
 
@@ -629,7 +637,7 @@ const MetodosFinancierosClientePage = () => {
       <Modal isOpen={createModalOpen} onClose={closeCreateModal}>
         <div>
           <h2 className="text-2xl font-bold mb-4 text-gray-800">
-            Crear {getTabLabel(activeTab).slice(0, -1)}
+            Crear {getTabSingular(activeTab)}
           </h2>
           {renderForm()}
         </div>
@@ -638,7 +646,7 @@ const MetodosFinancierosClientePage = () => {
       <Modal isOpen={editModalOpen} onClose={closeEditModal}>
         <div>
           <h2 className="text-2xl font-bold mb-4 text-gray-800">
-            Editar {getTabLabel(activeTab).slice(0, -1)}
+            Editar {getTabSingular(activeTab)}
           </h2>
           {renderForm()}
         </div>
