@@ -1,3 +1,7 @@
+/**
+ * @fileoverview Página de inicio de sesión para usuarios
+ */
+
 import * as Yup from "yup";
 import { useAuth } from "../context/useAuth";
 import { useForm } from "react-hook-form";
@@ -6,16 +10,46 @@ import { yupResolver } from "@hookform/resolvers/yup";
 // Props vacío, así que podemos removerlo o dejarlo como componente sin props
 // type Props = {};
 
+/**
+ * @typedef {Object} LoginFormInputs
+ * @property {string} username - Nombre de usuario
+ * @property {string} password - Contraseña del usuario
+ */
 type LoginFormInputs = {
   username: string;
   password: string;
 };
 
+/** Esquema de validación para el formulario de login */
 const validation = Yup.object().shape({
   username: Yup.string().required("El nombre de usuario es necesario"),
   password: Yup.string().required("La contraseña de usuario es necesaria"),
 });
 
+/**
+ * Página de inicio de sesión
+ * @component LoginPage
+ * @returns {JSX.Element} Página de login con formulario de autenticación
+ * 
+ * @description
+ * - Formulario de autenticación con validación usando Yup y React Hook Form
+ * - Campos para username y password con validaciones requeridas
+ * - Opción "Recordarme" para persistir sesión
+ * - Link para recuperación de contraseña
+ * - Link de redirección a página de registro
+ * - Manejo de errores de validación en tiempo real
+ * - Redirección automática después del login exitoso
+ * 
+ * @features
+ * - Validación de formulario en cliente
+ * - Diseño responsivo y centrado
+ * - Mensajes de error amigables
+ * - Integración con contexto de autenticación
+ * 
+ * @example
+ * // Se accede mediante la ruta /login
+ * <Route path="/login" element={<LoginPage />} />
+ */
 const LoginPage = () => {
   const { loginUser } = useAuth();
   const {
@@ -24,6 +58,16 @@ const LoginPage = () => {
     formState: { errors },
   } = useForm<LoginFormInputs>({ resolver: yupResolver(validation) });
 
+  /**
+   * Maneja el envío del formulario de login
+   * @function handleLogin
+   * @param {LoginFormInputs} form - Datos del formulario
+   * @returns {void}
+   * 
+   * @description
+   * - Llama a la función loginUser del contexto
+   * - Redirecciona automáticamente si el login es exitoso
+   */
   const handleLogin = (form: LoginFormInputs) => {
     loginUser(form.username, form.password);
   };
