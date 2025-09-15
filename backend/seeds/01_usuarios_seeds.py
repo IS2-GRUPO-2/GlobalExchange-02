@@ -14,15 +14,19 @@ def run():
             'username': 'admin',
             'first_name': 'Super',
             'last_name': 'Admin',
-            'is_staff': True,
-            'is_superuser': False,
+            'is_staff': False,  # Cambiado a False
+            'is_superuser': False,  # Cambiado a False
             'is_active': True,
             'email_verified': True,
             'password': make_password('admin123'),
         }
     )
     if created:
-        print(f"  → Usuario creado: {admin.email}")
+        # Asignar grupo 'Administrador'
+        admin_group = Group.objects.get(name='Administrador')
+        admin.groups.add(admin_group)
+
+        print("✔ Usuario 'admin' creado con grupo 'Administrador'.")
     
     # Usuario administrador
     operador, created = User.objects.get_or_create(

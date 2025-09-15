@@ -18,3 +18,11 @@ https://chatgpt.com/share/68c6d6df-faf0-8007-b739-ea46b4453eb5
 
 IS2-107-Documentacion-frontend
 https://chatgpt.com/share/68c812d8-1604-8007-8d56-fadd061b6085
+
+IS2-112-CRUD-cotizacion
+https://chatgpt.com/share/68ba10d2-95ac-800a-92df-a99cf01a0d55
+https://chatgpt.com/share/68ba10d2-95ac-800a-92df-a99cf01a0d55 (test unitarios)
+
+IS2-43-Mostrar-tasas-cambios
+https://chatgpt.com/share/68ba10d2-95ac-800a-92df-a99cf01a0d55
+
