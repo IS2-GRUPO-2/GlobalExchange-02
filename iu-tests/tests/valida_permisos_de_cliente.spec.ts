@@ -32,7 +32,7 @@ test('test permite ver clientes', async ({ page }) => {
     await page.waitForTimeout(2000);
     await getLocatorAt(rolesPage.tabla, 0, 3).getByRole('button', { name: 'Editar' }).click();
     
-    // Quitar permiso de ver divisas
+    // Quitar permiso de ver cliente
     await page.getByRole('textbox', { name: 'Buscar (nombre, codename o' }).click();
     await page.getByRole('textbox', { name: 'Buscar (nombre, codename o' }).fill('cliente');
     await expect(page.locator('label').filter({ hasText: 'Puede ver cliente' })).toBeVisible();
@@ -44,12 +44,12 @@ test('test permite ver clientes', async ({ page }) => {
     await page.getByRole('button', { name: 'Guardar' }).click();
     await expect(page.getByText('Rol actualizado con éxito!')).toBeVisible();
 
-    // Verificar que no puede ver divisas
+    // Verificar que no puede ver cliente
     await clientesPage.goto();
     await expect(page.getByText('No tenés permisos para ver este contenido.')).toBeVisible();
     await page.waitForTimeout(2000);
     
-    // Volver a roles para poner el permiso de ver divisas
+    // Volver a roles para poner el permiso de ver cliente
     await rolesPage.goto();
 
     // Editar rol Administrador
@@ -58,7 +58,7 @@ test('test permite ver clientes', async ({ page }) => {
     await page.waitForTimeout(2000);
     await getLocatorAt(rolesPage.tabla, 0, 3).getByRole('button', { name: 'Editar' }).click();
     
-    // Poner permiso de ver divisas
+    // Poner permiso de ver cliente
     await page.getByRole('textbox', { name: 'Buscar (nombre, codename o' }).click();
     await page.getByRole('textbox', { name: 'Buscar (nombre, codename o' }).fill('cliente');
     await expect(page.locator('label').filter({ hasText: 'Puede ver cliente' })).toBeVisible();
