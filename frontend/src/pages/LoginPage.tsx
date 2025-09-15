@@ -29,9 +29,9 @@ const LoginPage = () => {
   };
 
   return (
-    <section className="bg-gray-50">
-      <div className="flex flex-col items-center justify-center px-6 py-8 mx-auto md:h-screen lg:py-0">
-        <div className="w-full bg-white rounded-lg shadow md:mb-20 sm:max-w-md xl:p-0 ">
+    <section className="bg-gray-50 min-h-screen">
+      <div className="flex flex-col items-center justify-center px-6 py-8 mx-auto min-h-screen">
+        <div className="w-full bg-white rounded-lg shadow-lg sm:max-w-md xl:p-0 my-8">
           <div className="pl-8 pt-6">
             <h1 className="text-xl leading-tight tracking-tight text-gray-900 md:text-2xl">
               Bienvenido!

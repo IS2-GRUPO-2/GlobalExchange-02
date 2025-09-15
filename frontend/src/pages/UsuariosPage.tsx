@@ -178,7 +178,7 @@ const UsuariosPage = () => {
             className="btn-primary flex items-center justify-center"
           >
             <UserPlus size={18} className="mr-2" />
-            Agregar Usuario
+            Crear Usuario
           </button>
         </Can>
       </div>

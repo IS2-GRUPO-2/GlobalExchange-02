@@ -7,7 +7,7 @@ class PermissionMiniSerializer(serializers.ModelSerializer):
     name_es = serializers.SerializerMethodField()
 
     ACTION_ES = {
-        'add': 'agregar',
+        'add': 'Crear',
         'change': 'modificar',
         'delete': 'eliminar',
         'view': 'ver',

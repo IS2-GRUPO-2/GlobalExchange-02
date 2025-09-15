@@ -5,7 +5,7 @@ import Navbar from "./components/Navbar";
 import { ToastContainer } from "react-toastify";
 import { AuthZProvider } from "./context/AuthZContext";
 
-const HIDE_NAV_ROUTES = ["/login", "/register"];
+const HIDE_NAV_ROUTES = ["/login", "/register","/Register","/Login"];
 
 function App() {
   const { pathname } = useLocation();
