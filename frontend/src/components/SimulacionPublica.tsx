@@ -104,29 +104,36 @@ export default function SimulacionPublica() {
               <select
                 value={divisaOrigen}
                 onChange={(e) => {
-                  const origenId = e.target.value;
-                  setDivisaOrigen(origenId);
-
-                  const origen = divisas.find(
-                    (d) => d.id.toString() === origenId
-                  );
-
-                  if (origen && !origen.es_base && divisaBase) {
-                    setDivisaDestino(divisaBase.id.toString());
-                  }
-
+                  setDivisaOrigen(e.target.value);
                   setResultado(null);
+
+                  const origen = divisas.find((d) => d.id.toString() === e.target.value);
+                  if (origen && origen.es_base && divisaBase && divisaDestino.es_base) {
+                    setDivisaDestino("");
+                  }
                 }}
                 className="w-full border border-gray-300 rounded-lg p-2 focus:ring-2 focus:ring-zinc-700 focus:outline-none text-sm"
               >
                 <option value="">Seleccionar...</option>
-                {divisas
-                  .filter((divisa) => divisa.id.toString() !== divisaDestino) // excluir la seleccionada en destino
-                  .map((divisa) => (
-                    <option key={divisa.id} value={divisa.id}>
-                      {divisa.codigo} - {divisa.nombre}
-                    </option>
-                  ))}
+                {(() => {
+                  // si en destino hay extranjera, limitar origen solo a base
+                  const destino = divisas.find((d) => d.id.toString() === divisaDestino);
+                  if (destino && !destino.es_base && divisaBase) {
+                    return (
+                      <option key={divisaBase.id} value={divisaBase.id}>
+                        {divisaBase.codigo} - {divisaBase.nombre}
+                      </option>
+                    );
+                  }
+                  // caso normal
+                  return divisas
+                    .filter((divisa) => divisa.id.toString() !== divisaDestino)
+                    .map((divisa) => (
+                      <option key={divisa.id} value={divisa.id}>
+                        {divisa.codigo} - {divisa.nombre}
+                      </option>
+                    ));
+                })()}
               </select>
             </div>
 
@@ -148,25 +155,32 @@ export default function SimulacionPublica() {
               <label className="text-xs font-medium text-gray-600">A</label>
               <select
                 value={divisaDestino}
-                disabled={
-                  divisaOrigen &&
-                  !divisas.find((d) => d.id.toString() === divisaOrigen)
-                    ?.es_base
-                }
                 onChange={(e) => {
                   setDivisaDestino(e.target.value);
                   setResultado(null);
                 }}
-                className="w-full border border-gray-300 rounded-lg p-2 focus:ring-2 focus:ring-zinc-700 focus:outline-none text-sm disabled:bg-gray-100"
+                className="w-full border border-gray-300 rounded-lg p-2 focus:ring-2 focus:ring-zinc-700 focus:outline-none text-sm"
               >
                 <option value="">Seleccionar...</option>
-                {divisas
-                  .filter((divisa) => divisa.id.toString() !== divisaOrigen) // excluir la seleccionada en origen
-                  .map((divisa) => (
-                    <option key={divisa.id} value={divisa.id}>
-                      {divisa.codigo} - {divisa.nombre}
-                    </option>
-                  ))}
+                {(() => {
+                  // si en origen hay extranjera, limitar destino solo a base
+                  const origen = divisas.find((d) => d.id.toString() === divisaOrigen);
+                  if (origen && !origen.es_base && divisaBase) {
+                    return (
+                      <option key={divisaBase.id} value={divisaBase.id}>
+                        {divisaBase.codigo} - {divisaBase.nombre}
+                      </option>
+                    );
+                  }
+                  // caso normal
+                  return divisas
+                    .filter((divisa) => divisa.id.toString() !== divisaOrigen)
+                    .map((divisa) => (
+                      <option key={divisa.id} value={divisa.id}>
+                        {divisa.codigo} - {divisa.nombre}
+                      </option>
+                    ));
+                })()}
               </select>
             </div>
           </div>
