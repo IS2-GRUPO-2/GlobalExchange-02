@@ -6,63 +6,17 @@ def run():
     
     print("🔧 Creando roles base usando Groups de Django...")
     
+    # Obtener todos los permisos disponibles para el administrador
+    all_permissions = list(Permission.objects.all().values_list('content_type__app_label', 'codename'))
+    admin_permissions = [f"{app_label}.{codename}" for app_label, codename in all_permissions]
+    
+    print(f"  → Se encontraron {len(admin_permissions)} permisos en total para el administrador")
+    
     # Roles básicos del sistema
     roles_data = [
         {
             'name': 'Administrador',
-            'permissions': [
-                # Permisos de usuarios
-                'usuarios.add_user',
-                'usuarios.change_user',
-                'usuarios.delete_user',
-                'usuarios.view_user',
-                'usuarios.can_assign_clients',
-                'usuarios.can_assign_roles',
-                
-                # Permisos de clientes
-                'clientes.add_cliente',
-                'clientes.change_cliente',
-                'clientes.delete_cliente',
-                'clientes.view_cliente',
-                'clientes.add_categoriacliente',
-                'clientes.change_categoriacliente',
-                'clientes.delete_categoriacliente',
-                'clientes.view_categoriacliente',
-                
-                # Permisos de divisas
-                'divisas.add_divisa',
-                'divisas.change_divisa',
-                'divisas.delete_divisa',
-                'divisas.view_divisa',
-                'divisas.add_denominacion',
-                'divisas.change_denominacion',
-                'divisas.delete_denominacion',
-                'divisas.view_denominacion',
-                
-                # Permisos de operaciones
-                'operaciones.add_banco',
-                'operaciones.change_banco',
-                'operaciones.delete_banco',
-                'operaciones.view_banco',
-                'operaciones.add_billeteradigitalcatalogo',
-                'operaciones.change_billeteradigitalcatalogo',
-                'operaciones.delete_billeteradigitalcatalogo',
-                'operaciones.view_billeteradigitalcatalogo',
-                'operaciones.add_metodofinancierodetalle',
-                'operaciones.change_metodofinancierodetalle',
-                'operaciones.delete_metodofinancierodetalle',
-                'operaciones.view_metodofinancierodetalle',
-                
-                # Permisos de grupos y permisos
-                'auth.add_group',
-                'auth.change_group',
-                'auth.delete_group',
-                'auth.view_group',
-                'auth.add_permission',
-                'auth.change_permission',
-                'auth.delete_permission',
-                'auth.view_permission',
-            ]
+            'permissions': admin_permissions  # TODOS los permisos disponibles en el sistema
         },
         {
             'name': 'Operador',
@@ -79,10 +33,19 @@ def run():
                 'operaciones.view_metodofinancierodetalle',
                 'operaciones.view_banco',
                 'operaciones.view_billeteradigitalcatalogo',
+                'operaciones.view_metodofinanciero',
+                
+                # Cotizaciones
+                'cotizaciones.view_tasa',
+                'cotizaciones.view_historialtasa',
+                'cotizaciones.change_tasa',  # Para actualizar precios
                 
                 # Divisas solo lectura
                 'divisas.view_divisa',
                 'divisas.view_denominacion',
+                
+                # Conversiones
+                'conversiones.can_use_simulacion',
             ]
         },
         {
@@ -101,10 +64,18 @@ def run():
                 'operaciones.change_metodofinancierodetalle',
                 'operaciones.view_banco',
                 'operaciones.view_billeteradigitalcatalogo',
+                'operaciones.view_metodofinanciero',
+                
+                # Cotizaciones
+                'cotizaciones.view_tasa',
+                'cotizaciones.view_historialtasa',
                 
                 # Divisas solo lectura
                 'divisas.view_divisa',
                 'divisas.view_denominacion',
+                
+                # Conversiones
+                'conversiones.can_use_simulacion',
             ]
         },
         {
@@ -115,15 +86,17 @@ def run():
                 'operaciones.view_metodofinancierodetalle',
                 'operaciones.add_metodofinancierodetalle',
                 'divisas.view_divisa',
+                'cotizaciones.view_tasa',
+                'cotizaciones.view_historialtasa',
+                'conversiones.can_use_simulacion',
             ]
         },
         {
             'name': 'Cliente Regular',
             'permissions': [
                 # Permisos básicos para clientes
-                'clientes.view_cliente',
                 'operaciones.view_metodofinancierodetalle',
-                'divisas.view_divisa',
+                'conversiones.can_use_simulacion',
             ]
         },
         {
@@ -136,6 +109,9 @@ def run():
                 'operaciones.view_metodofinancierodetalle',
                 'operaciones.view_banco',
                 'operaciones.view_billeteradigitalcatalogo',
+                'operaciones.view_metodofinanciero',
+                'cotizaciones.view_tasa',
+                'cotizaciones.view_historialtasa',
                 'divisas.view_divisa',
                 'divisas.view_denominacion',
             ]

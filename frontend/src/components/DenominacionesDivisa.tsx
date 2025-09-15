@@ -181,7 +181,7 @@ const DenominacionesDivisa = ({ onSubmit, onCancel, divisa }: Props) => {
           className="btn-primary flex items-center justify-center"
         >
           <Plus size={18} className="mr-2" />
-          Agregar denominación
+          Crear denominación
         </button>
       </div>
       <div className="card">

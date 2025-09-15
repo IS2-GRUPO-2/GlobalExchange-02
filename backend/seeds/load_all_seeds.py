@@ -2,7 +2,7 @@ import os
 import sys
 import django
 
-# Agregar el directorio raíz al PYTHONPATH
+# Crear el directorio raíz al PYTHONPATH
 current_dir = os.path.dirname(os.path.abspath(__file__))
 project_root = os.path.dirname(current_dir)
 sys.path.insert(0, project_root)
@@ -16,7 +16,8 @@ def run():
         '03_divisas_seeds',
         '04_categorias_clientes_seeds',
         '05_clientes_seeds',
-        '06_operaciones_seeds'
+        '06_operaciones_seeds',
+        '07_cotizaciones_seeds'
     ]
     
     print("🌱 Iniciando carga de seeds...")

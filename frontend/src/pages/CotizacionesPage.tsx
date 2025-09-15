@@ -306,7 +306,7 @@ const CotizacionesPage = () => {
           className="btn-primary flex items-center justify-center"
         >
           <Plus size={18} className="mr-2" />
-          Agregar Cotización
+          Crear Cotización
         </button>
       </div>
 

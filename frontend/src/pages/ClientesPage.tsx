@@ -176,7 +176,7 @@ const ClientesPage = () => {
           className="btn-primary flex items-center justify-center"
         >
           <UserPlus size={18} className="mr-2" />
-          Agregar Cliente
+          Crear Cliente
         </button>
       </div>
 

@@ -113,5 +113,5 @@ export const TARJETAS = {
 } as const;
 
 export const SIMULACION = {
-  USE: "usuarios.can_use_simulacion",
+  USE: "conversiones.can_use_simulacion",
 } as const;

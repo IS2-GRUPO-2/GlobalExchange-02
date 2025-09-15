@@ -1,3 +1,7 @@
+/**
+ * @fileoverview Componente de navegación principal de la aplicación
+ */
+
 import {
   Disclosure,
   DisclosureButton,
@@ -16,6 +20,7 @@ import {
   SIMULACION,
 } from "../types/perms";
 
+/** Configuración de elementos de navegación */
 const navigation = [
   { name: "Inicio", href: "/", current: true, permisos: [] },
   { name: "Simulación de Operaciones", href: "/simulacion-operacion", current: false, permisos: [SIMULACION.USE] },
@@ -23,10 +28,40 @@ const navigation = [
   { name: "Registrarse", href: "/register", current: false, permisos: [] },
 ];
 
+/**
+ * Función utilitaria para combinar clases CSS condicionalmente
+ * @function classNames
+ * @param {...(string|undefined|false|null)} classes - Clases CSS a combinar
+ * @returns {string} String con las clases válidas unidas
+ */
 function classNames(...classes: (string | undefined | false | null)[]): string {
   return classes.filter(Boolean).join(" ");
 }
 
+/**
+ * Componente de barra de navegación principal
+ * @component Navbar
+ * @returns {JSX.Element} Barra de navegación responsiva
+ * 
+ * @description
+ * - Barra de navegación responsiva con menú desplegable en móviles
+ * - Maneja navegación entre páginas según permisos del usuario
+ * - Muestra menú de usuario autenticado con opciones de cuenta
+ * - Incluye notificaciones y opción de cerrar sesión
+ * - Filtra elementos de navegación según estado de autenticación
+ * - Responsive: menú hamburguesa en móviles, horizontal en desktop
+ * 
+ * @features
+ * - Logo de la aplicación
+ * - Enlaces de navegación con control de permisos
+ * - Menú desplegable de usuario (cuenta, configuraciones, logout)
+ * - Botón de notificaciones
+ * - Menú móvil responsivo
+ * 
+ * @example
+ * // Se usa automáticamente en App.tsx cuando no se debe ocultar
+ * {!hideNavbar && <Navbar />}
+ */
 export default function Navbar() {
   const { logout, isLoggedIn, user } = useAuth();
 

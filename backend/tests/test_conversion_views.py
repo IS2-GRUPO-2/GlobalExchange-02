@@ -20,7 +20,13 @@ def test_simular_conversion_publica_endpoint():
         nombre="Efectivo", comision_pago_porcentaje=1, comision_cobro_porcentaje=2,
         permite_pago=True, permite_cobro=True, is_active=True
     )
-    Tasa.objects.create(divisa=usd, precioBase=Decimal("7300"), comisionBase=Decimal("100"), activo=True)
+    Tasa.objects.create(
+        divisa=usd, 
+        precioBase=Decimal("7300"), 
+        comisionBaseCompra=Decimal("100"), 
+        comisionBaseVenta=Decimal("100"), 
+        activo=True
+    )
 
     url = reverse("simular-conversion-publica")
     payload = {
@@ -53,7 +59,13 @@ def test_simular_conversion_privada_endpoint_authenticated():
         nombre="Transferencia", comision_pago_porcentaje=2, comision_cobro_porcentaje=3,
         permite_pago=True, permite_cobro=True, is_active=True
     )
-    Tasa.objects.create(divisa=usd, precioBase=Decimal("7300"), comisionBase=Decimal("100"), activo=True)
+    Tasa.objects.create(
+        divisa=usd, 
+        precioBase=Decimal("7300"), 
+        comisionBaseCompra=Decimal("100"), 
+        comisionBaseVenta=Decimal("100"), 
+        activo=True
+    )
 
     url = reverse("simular-conversion")
     payload = {

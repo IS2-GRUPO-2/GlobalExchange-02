@@ -115,4 +115,43 @@ def run():
         if created:
             print(f"  → Usuario creado: {usuario.email}")
     
+    # Asignar roles a usuarios principales
+    try:
+        print("\n🔧 Asignando roles a usuarios...")
+        
+        # Obtener roles
+        admin_role = Group.objects.get(name='Administrador')
+        operador_role = Group.objects.get(name='Operador')
+        cliente_regular_role = Group.objects.get(name='Cliente Regular')
+        cliente_premium_role = Group.objects.get(name='Cliente Premium')
+        
+        # Asignar roles
+        admin.groups.add(admin_role)
+        operador.groups.add(operador_role)
+        cliente.groups.add(cliente_regular_role)
+        
+        # Asignar roles a usuarios de prueba
+        if User.objects.filter(email='ana.garcia@email.com').exists():
+            usuario_ana = User.objects.get(email='ana.garcia@email.com')
+            usuario_ana.groups.add(cliente_premium_role)
+        if User.objects.filter(email='carlos.lopez@email.com').exists():
+            usuario_carlos = User.objects.get(email='carlos.lopez@email.com')
+            usuario_carlos.groups.add(cliente_premium_role)
+        if User.objects.filter(email='sofia.martinez@email.com').exists():
+            usuario_sofia = User.objects.get(email='sofia.martinez@email.com')
+            usuario_sofia.groups.add(cliente_regular_role)
+        if User.objects.filter(email='pedro.gonzalez@email.com').exists():
+            usuario_pedro = User.objects.get(email='pedro.gonzalez@email.com')
+            usuario_pedro.groups.add(cliente_regular_role)
+        if User.objects.filter(email='laura.rodriguez@email.com').exists():
+            usuario_laura = User.objects.get(email='laura.rodriguez@email.com')
+            usuario_laura.groups.add(cliente_regular_role)
+        
+        print("  → Roles asignados correctamente")
+        
+    except Group.DoesNotExist:
+        print("  ⚠️  Algunos roles no existen. Ejecutar primero 02_roles_seeds")
+    except Exception as e:
+        print(f"  ⚠️  Error asignando roles: {e}")
+    
     print(f"✅ Usuarios: {User.objects.count()} total")

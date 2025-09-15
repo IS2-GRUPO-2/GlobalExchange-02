@@ -53,7 +53,7 @@ export default function CotizacionesTabla() {
         <table className="table-auto text-base w-full">
           <thead>
             <tr className="bg-gray-100 text-gray-600 uppercase text-sm">
-              <th className="px-6 py-3 text-left">Moneda</th>
+              <th className="px-6 py-3 text-left">Divisa</th>
               <th className="px-6 py-3 text-right">Compra</th>
               <th className="px-6 py-3 text-right">Venta</th>
             </tr>

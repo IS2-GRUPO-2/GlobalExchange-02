@@ -10,6 +10,8 @@ from apps.operaciones.models import (
     BilleteraDigital,
     Tarjeta,
     TipoMetodoFinanciero,
+    Banco,
+    BilleteraDigitalCatalogo,
 )
 
 pytestmark = pytest.mark.django_db
@@ -51,9 +53,26 @@ def detalle_data():
 
 
 @pytest.fixture
-def cuenta_data():
+def banco_instance():
+    banco, _ = Banco.objects.get_or_create(
+        nombre='Banco Test',
+        defaults={'cvu': '0000000000000000000000'}
+    )
+    return banco
+
+@pytest.fixture
+def cuenta_data(banco_instance):
     return {
-        'banco': 'Banco Test',
+        'banco': banco_instance.id,  # Para API - usar ID
+        'numero_cuenta': '123456789',
+        'titular': 'Casa Cambio',
+        'cbu_cvu': '0000000000000000000000',
+    }
+
+@pytest.fixture
+def cuenta_data_orm(banco_instance):
+    return {
+        'banco': banco_instance,  # Para ORM - usar instancia
         'numero_cuenta': '123456789',
         'titular': 'Casa Cambio',
         'cbu_cvu': '0000000000000000000000',
@@ -61,9 +80,26 @@ def cuenta_data():
 
 
 @pytest.fixture
-def billetera_data():
+def plataforma_instance():
+    plataforma, _ = BilleteraDigitalCatalogo.objects.get_or_create(
+        nombre='MercadoPago'
+    )
+    return plataforma
+
+@pytest.fixture
+def billetera_data(plataforma_instance):
     return {
-        'plataforma': 'MercadoPago',
+        'plataforma': plataforma_instance.id,  # Para API - usar ID
+        'usuario_id': 'user_mp_1',
+        'email': 'mp@example.com',
+        'telefono': '555-0000',
+        'alias_billetera': 'MP-Casa'
+    }
+
+@pytest.fixture
+def billetera_data_orm(plataforma_instance):
+    return {
+        'plataforma': plataforma_instance,  # Para ORM - usar instancia
         'usuario_id': 'user_mp_1',
         'email': 'mp@example.com',
         'telefono': '555-0000',
@@ -136,10 +172,10 @@ class TestCuentasBancariasAPI:
         assert response.status_code == status.HTTP_201_CREATED
         assert CuentaBancaria.objects.count() == 1
 
-    def test_eliminar_cuenta_desactiva_detalle(self, api_client, metodo_data, detalle_data, cuenta_data):
+    def test_eliminar_cuenta_desactiva_detalle(self, api_client, metodo_data, detalle_data, cuenta_data_orm):
         metodo = MetodoFinanciero.objects.create(**metodo_data)
         detalle = MetodoFinancieroDetalle.objects.create(metodo_financiero=metodo, es_cuenta_casa=True, alias='Casa-Acc2')
-        cuenta = CuentaBancaria.objects.create(metodo_financiero_detalle=detalle, **cuenta_data)
+        cuenta = CuentaBancaria.objects.create(metodo_financiero_detalle=detalle, **cuenta_data_orm)
 
         response = api_client.delete(f'/api/operaciones/cuentas-bancarias/{cuenta.id}/')
         assert response.status_code == status.HTTP_200_OK
@@ -159,10 +195,10 @@ class TestBilleteraDigitalAPI:
         assert response.status_code == status.HTTP_201_CREATED
         assert BilleteraDigital.objects.count() == 1
 
-    def test_eliminar_billetera_desactiva_detalle(self, api_client, metodo_data, detalle_data, billetera_data):
+    def test_eliminar_billetera_desactiva_detalle(self, api_client, metodo_data, detalle_data, billetera_data_orm):
         metodo = MetodoFinanciero.objects.create(**metodo_data)
         detalle = MetodoFinancieroDetalle.objects.create(metodo_financiero=metodo, es_cuenta_casa=True, alias='Casa-Bill2')
-        billetera = BilleteraDigital.objects.create(metodo_financiero_detalle=detalle, **billetera_data)
+        billetera = BilleteraDigital.objects.create(metodo_financiero_detalle=detalle, **billetera_data_orm)
 
         response = api_client.delete(f'/api/operaciones/billeteras-digitales/{billetera.id}/')
         assert response.status_code == status.HTTP_200_OK

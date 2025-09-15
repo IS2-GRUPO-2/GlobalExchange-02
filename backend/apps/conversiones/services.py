@@ -37,6 +37,22 @@ def _get_tasa_activa(divisa: Divisa) -> Tasa:
     return Tasa.objects.get(divisa=divisa, activo=True)
 
 
+def aplicar_descuento(monto: Decimal, descuento_porcentaje: Decimal) -> Decimal:
+    """
+    Aplica un descuento porcentual a un monto.
+    
+    Args:
+        monto: Monto base al cual aplicar el descuento
+        descuento_porcentaje: Porcentaje de descuento (ej: 10 para 10%)
+    
+    Returns:
+        Monto con descuento aplicado
+    """
+    descuento_decimal = descuento_porcentaje / Decimal('100')
+    descuento_monto = monto * descuento_decimal
+    return monto - descuento_monto
+
+
 def calcular_conversion(cliente_id, divisa_origen_id, divisa_destino_id, monto, metodo_id):
     """
     Simulación para usuario autenticado (con cliente).

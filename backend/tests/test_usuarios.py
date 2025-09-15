@@ -6,12 +6,20 @@ import uuid
 
 from apps.usuarios.models import User
 from apps.usuarios.serializers import UserSerializer
-from apps.clientes.models import Cliente
+from apps.clientes.models import Cliente, CategoriaCliente
 
 pytestmark = pytest.mark.django_db
 
 
 # Fixtures para datos de prueba
+@pytest.fixture
+def authenticated_client():
+    """Cliente API autenticado con permisos para asignar clientes"""
+    from rest_framework.test import APIClient
+    client = APIClient()
+    user = User.objects.create_superuser(username="adminuser", password="adminpass123", email="admin@example.com")
+    client.force_authenticate(user=user)
+    return client
 @pytest.fixture
 def user_data():
     """Datos básicos para crear un usuario"""
@@ -27,10 +35,11 @@ def user_data():
 @pytest.fixture
 def cliente_test():
     """Cliente de prueba"""
+    categoria, _ = CategoriaCliente.objects.get_or_create(nombre='VIP', descuento=10)
     return Cliente.objects.create(
         nombre='Cliente Test',
         isPersonaFisica=True,
-        idCategoria='VIP',
+        idCategoria=categoria,
         correo='cliente.test@example.com',
         telefono='123456789',
         direccion='Dirección de prueba',
@@ -41,10 +50,11 @@ def cliente_test():
 @pytest.fixture
 def cliente_corporativo():
     """Cliente corporativo de prueba"""
+    categoria, _ = CategoriaCliente.objects.get_or_create(nombre='CORPORATIVO', descuento=5)
     return Cliente.objects.create(
         nombre='Cliente Corporativo',
         isPersonaFisica=False,
-        idCategoria='CORPORATIVO',
+        idCategoria=categoria,
         correo='corporativo@example.com',
         telefono='987654321',
         direccion='Dirección corporativa',
@@ -271,20 +281,25 @@ class TestUserAPI:
         assert user_instance.username == 'testuser'  # Sin cambios
     
     def test_eliminar_usuario(self, api_client, user_instance):
-        """Prueba el endpoint para eliminar un usuario"""
+        """Prueba el endpoint para eliminar un usuario (soft delete)"""
         user_id = user_instance.id
         response = api_client.delete(f'/api/usuarios/{user_id}/')
-        
-        assert response.status_code == status.HTTP_204_NO_CONTENT
-        assert User.objects.count() == 0
+
+        assert response.status_code == status.HTTP_200_OK
+        # Verificar que el usuario fue desactivado, no eliminado
+        user_instance.refresh_from_db()
+        assert user_instance.is_active == False
+        # El usuario sigue existiendo en la base de datos pero desactivado
+        assert User.objects.count() == 1
+        assert User.objects.filter(is_active=False).count() == 1
     
-    def test_asignar_clientes_endpoint(self, api_client, user_instance, cliente_test, cliente_corporativo):
+    def test_asignar_clientes_endpoint(self, authenticated_client, user_instance, cliente_test, cliente_corporativo):
         """Prueba el endpoint personalizado para asignar clientes"""
         data = {
             'clientes': [str(cliente_test.idCliente), str(cliente_corporativo.idCliente)]
         }
         
-        response = api_client.post(f'/api/usuarios/{user_instance.id}/asignar_clientes/', data, format='json')
+        response = authenticated_client.post(f'/api/usuarios/{user_instance.id}/asignar_clientes/', data, format='json')
         
         assert response.status_code == status.HTTP_200_OK
         assert response.data['message'] == 'Clientes asignados correctamente'
@@ -295,21 +310,21 @@ class TestUserAPI:
         assert cliente_test in user_instance.clientes.all()
         assert cliente_corporativo in user_instance.clientes.all()
     
-    def test_asignar_clientes_datos_invalidos(self, api_client, user_instance):
+    def test_asignar_clientes_datos_invalidos(self, authenticated_client, user_instance):
         """Prueba el endpoint de asignar clientes con datos inválidos"""
         # Test con clientes que no es una lista
         data = {'clientes': 'not_a_list'}
-        response = api_client.post(f'/api/usuarios/{user_instance.id}/asignar_clientes/', data, format='json')
+        response = authenticated_client.post(f'/api/usuarios/{user_instance.id}/asignar_clientes/', data, format='json')
         
         assert response.status_code == status.HTTP_400_BAD_REQUEST
         assert 'error' in response.data
     
-    def test_asignar_clientes_ids_inexistentes(self, api_client, user_instance):
+    def test_asignar_clientes_ids_inexistentes(self, authenticated_client, user_instance):
         """Prueba asignar clientes con IDs que no existen"""
         fake_uuid = str(uuid.uuid4())
         data = {'clientes': [fake_uuid]}
         
-        response = api_client.post(f'/api/usuarios/{user_instance.id}/asignar_clientes/', data, format='json')
+        response = authenticated_client.post(f'/api/usuarios/{user_instance.id}/asignar_clientes/', data, format='json')
         
         # Debería funcionar pero no asignar ningún cliente
         assert response.status_code == status.HTTP_200_OK
@@ -400,11 +415,11 @@ class TestUserValidations:
         
         assert response.status_code == status.HTTP_400_BAD_REQUEST
     
-    def test_asignar_lista_vacia_clientes(self, api_client, user_instance):
+    def test_asignar_lista_vacia_clientes(self, authenticated_client, user_instance):
         """Prueba asignar lista vacía de clientes"""
         data = {'clientes': []}
         
-        response = api_client.post(f'/api/usuarios/{user_instance.id}/asignar_clientes/', data, format='json')
+        response = authenticated_client.post(f'/api/usuarios/{user_instance.id}/asignar_clientes/', data, format='json')
         
         assert response.status_code == status.HTTP_200_OK
         assert len(response.data['clientes']) == 0

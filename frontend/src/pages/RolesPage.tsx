@@ -150,7 +150,7 @@ const RolesPage = () => {
                   <td className="text-gray-600">
                     {r.permissions
                       .slice(0, 6)
-                      .map((pid) => permById.get(pid)?.codename)
+                      .map((pid) => permById.get(pid)?.name_es)
                       .filter(Boolean)
                       .join(", ")}
                     {r.permissions.length > 6 ? "…" : ""}

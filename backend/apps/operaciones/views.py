@@ -554,10 +554,13 @@ class TarjetaViewSet(viewsets.ModelViewSet):
         """
         queryset = Tarjeta.objects.select_related('metodo_financiero_detalle').all()
 
-        # Usuarios regulares ven las tarjetas de sus clientes asignados
-        return queryset.filter(
-            metodo_financiero_detalle__cliente__in=self.request.user.clientes.all()
-        )
+        if self.request.user.has_perm('operaciones.view_metodofinanciero'):
+            return queryset.filter(metodo_financiero_detalle__es_cuenta_casa=True)
+        else:
+            # Usuarios regulares ven las tarjetas de sus clientes asignados
+            return queryset.filter(
+                metodo_financiero_detalle__cliente__in=self.request.user.clientes.all()
+            )
 
     def get_permissions(self):
         """

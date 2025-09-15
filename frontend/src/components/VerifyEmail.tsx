@@ -53,7 +53,8 @@ export default function VerifyEmail({ email }: Props) {
   };
 
   return (
-    <div className="bg-white rounded-2xl border border-gray-300 p-12 w-full max-w-md mx-auto">
+    <div className="flex items-center justify-center min-h-screen px-6 py-8">
+      <div className="bg-white rounded-2xl border border-gray-300 p-12 w-full max-w-md mx-auto shadow-lg">
       {/* Header */}
       <div className="flex flex-col items-center gap-3 mb-12">
         <h1 className="text-black text-center font-bold text-3xl leading-tight tracking-tight">
@@ -90,13 +91,14 @@ export default function VerifyEmail({ email }: Props) {
           />
         ))}
       </div>
-      <button
-        onClick={handleVerify}
-        disabled={code.join("").length !== 6}
-        className="w-full bg-black text-white font-semibold text-base py-4 px-6 rounded-xl hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-gray-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-      >
-        Verificar
-      </button>
+        <button
+          onClick={handleVerify}
+          disabled={code.join("").length !== 6}
+          className="w-full bg-black text-white font-semibold text-base py-4 px-6 rounded-xl hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-gray-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+        >
+          Verificar
+        </button>
+      </div>
     </div>
   );
 }
