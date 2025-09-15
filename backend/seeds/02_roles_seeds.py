@@ -95,10 +95,7 @@ def run():
             'name': 'Cliente Regular',
             'permissions': [
                 # Permisos básicos para clientes
-                'clientes.view_cliente',
                 'operaciones.view_metodofinancierodetalle',
-                'divisas.view_divisa',
-                'cotizaciones.view_tasa',
                 'conversiones.can_use_simulacion',
             ]
         },

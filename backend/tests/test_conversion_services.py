@@ -44,7 +44,13 @@ def test_calcular_conversion_privada():
         nombre="Transferencia", comision_pago_porcentaje=2, comision_cobro_porcentaje=3,
         permite_pago=True, permite_cobro=True, is_active=True
     )
-    Tasa.objects.create(divisa=usd, precioBase=Decimal("7300"), comisionBase=Decimal("100"), activo=True)
+    Tasa.objects.create(
+        divisa=usd, 
+        precioBase=Decimal("7300"), 
+        comisionBaseCompra=Decimal("100"), 
+        comisionBaseVenta=Decimal("100"), 
+        activo=True
+    )
 
     # Ejecutar simulación
     resultado = calcular_conversion(
@@ -69,7 +75,13 @@ def test_calcular_conversion_publica():
         nombre="Efectivo", comision_pago_porcentaje=1, comision_cobro_porcentaje=2,
         permite_pago=True, permite_cobro=True, is_active=True
     )
-    Tasa.objects.create(divisa=usd, precioBase=Decimal("7300"), comisionBase=Decimal("100"), activo=True)
+    Tasa.objects.create(
+        divisa=usd, 
+        precioBase=Decimal("7300"), 
+        comisionBaseCompra=Decimal("100"), 
+        comisionBaseVenta=Decimal("100"), 
+        activo=True
+    )
 
     resultado = calcular_conversion_publica(
         divisa_origen_id=base.id,

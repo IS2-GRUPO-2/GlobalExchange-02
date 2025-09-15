@@ -138,7 +138,13 @@ def test_divisas_con_tasa_incluye_base_y_extranjeras(api_client):
     usd = Divisa.objects.create(
         codigo="USD", nombre="Dólar", simbolo="$", es_base=False, is_active=True
     )
-    Tasa.objects.create(divisa=usd, precioBase=7000, comisionBase=100, activo=True)
+    Tasa.objects.create(
+        divisa=usd, 
+        precioBase=7000, 
+        comisionBaseCompra=100, 
+        comisionBaseVenta=100, 
+        activo=True
+    )
 
     #Crear divisa sin tasa (no debe aparecer)
     eur = Divisa.objects.create(
