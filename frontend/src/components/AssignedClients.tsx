@@ -95,7 +95,7 @@ export default function AssignedClients({ user, onClose }: Props) {
       const doc = c.isPersonaFisica ? c.cedula ?? "" : c.ruc ?? "";
       return (
         c.nombre.toLowerCase().includes(q) ||
-        c.categoria.toLowerCase().includes(q) ||
+        c.categoria?.nombre?.toLowerCase().includes(q) || // ✅ corregido
         doc.toLowerCase().includes(q)
       );
     });

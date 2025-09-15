@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { Building2 } from 'lucide-react';
 import type { Banco } from '../types/MetodoFinanciero';
 
 interface BancoFormProps {

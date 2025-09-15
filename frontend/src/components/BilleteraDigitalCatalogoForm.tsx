@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { Smartphone } from 'lucide-react';
 import type { BilleteraDigitalCatalogo } from '../types/MetodoFinanciero';
 
 interface BilleteraDigitalCatalogoFormProps {

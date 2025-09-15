@@ -62,14 +62,14 @@ export default function RequireAuth({
 }: {
   allOf?: string[];
   anyOf?: string[];
-  children: JSX.Element;
+  children: React.ReactElement;
 }) {
   const location = useLocation();
-  const { isLoggedIn, loading: authLoading } = useAuth();
+  const { isLoggedIn } = useAuth();
   const { ready, all, any } = useAuthZ();
 
   // 1) Cargando identidad
-  if (authLoading) return null;
+  // if (authLoading) return null;
 
   // 2) No logueado => 401/login
   if (!isLoggedIn()) {

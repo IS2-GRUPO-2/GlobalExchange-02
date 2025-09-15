@@ -5,14 +5,11 @@ import {
   Coins,
   Percent,
   UserCog,
-  Wallet,
   FileText,
   CreditCard,
   Tag,
   Users,
-  User,
-  UserPen,
-  Bell
+  User
 } from "lucide-react";
 import { CATEGORIAS_CLIENTE, CLIENTES, DIVISAS, METODOS_FINANCIEROS, ROLES, TASAS, USUARIOS } from "../types/perms";
 import Can from "../components/Can";
@@ -21,9 +18,10 @@ type ConfigItem = {
   id: string;
   nombre: string;
   descripcion: string;
-  icon: JSX.Element;
+  icon: React.ReactElement;
   path: string;
   habilitado: boolean;
+  permisos: string[];
 };
 
 const ConfiguracionesPage = () => {

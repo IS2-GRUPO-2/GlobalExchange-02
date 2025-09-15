@@ -1,12 +1,12 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { CreditCard, Building2, Smartphone, Plus, Search } from 'lucide-react';
 import { toast } from 'react-toastify';
 import { useAuth } from '../context/useAuth';
 import Modal from '../components/Modal';
 import MetodoFinancieroCard from '../components/MetodoFinancieroCard';
-import CuentaBancariaForm, { type CuentaBancariaFormData } from '../components/CuentaBancariaForm';
-import BilleteraDigitalForm, { type BilleteraDigitalFormData } from '../components/BilleteraDigitalForm';
-import TarjetaForm, { type TarjetaFormData } from '../components/TarjetaForm';
+import CuentaBancariaForm from '../components/CuentaBancariaForm';
+import BilleteraDigitalForm from '../components/BilleteraDigitalForm';
+import TarjetaForm from '../components/TarjetaForm';
 import {
   getCuentasBancarias,
   getBilleterasDigitales,
@@ -17,12 +17,8 @@ import {
   updateCuentaBancaria,
   updateBilleteraDigital,
   updateTarjeta,
-  deactivateCuentaBancaria,
-  deactivateBilleteraDigital,
-  deactivateTarjeta,
   getDetallesMetodosFinancieros,
   createDetalleMetodoFinanciero,
-  updateDetalleMetodoFinanciero,
   toggleActiveMetodoFinanciero,
   getMetodosFinancieros
 } from '../services/metodoFinancieroService';
@@ -161,14 +157,14 @@ const MetodosFinancierosClientePage = () => {
       switch (item.tipo) {
         case 'cuentas':
           const cuenta = item as CuentaBancaria & ExtendedItem;
-          return cuenta.banco.toLowerCase().includes(searchLower) ||
+          return (cuenta.banco_nombre?.toLowerCase().includes(searchLower) ?? false) ||
                  cuenta.titular.toLowerCase().includes(searchLower) ||
                  cuenta.numero_cuenta.includes(searchLower);
         case 'billeteras digitales':
           const billetera = item as BilleteraDigital & ExtendedItem;
-          return billetera.plataforma.toLowerCase().includes(searchLower) ||
+          return (billetera.plataforma_nombre?.toLowerCase().includes(searchLower) ?? false) ||
                  billetera.usuario_id.toLowerCase().includes(searchLower) ||
-                 billetera.email.toLowerCase().includes(searchLower);
+                 (billetera.email?.toLowerCase().includes(searchLower) ?? false);
         case 'tarjetas':
           const tarjeta = item as Tarjeta & ExtendedItem;
           return tarjeta.brand.toLowerCase().includes(searchLower) ||
@@ -494,7 +490,7 @@ const MetodosFinancierosClientePage = () => {
   };
 
   useEffect(() => {
-    if (isLoggedIn) {
+    if (isLoggedIn()) {
       fetchAllData();
     }
   }, [isLoggedIn, search]);
@@ -502,7 +498,7 @@ const MetodosFinancierosClientePage = () => {
   // Actualizar datos cuando la página vuelve a tener foco
   useEffect(() => {
     const handleFocus = () => {
-      if (isLoggedIn) {
+      if (isLoggedIn()) {
         fetchAllData();
       }
     };
@@ -624,9 +620,9 @@ const MetodosFinancierosClientePage = () => {
               <MetodoFinancieroCard
                 key={item.id}
                 item={item}
-                onView={openViewModal}
-                onEdit={openEditModal}
-                onToggleActive={handleToggleActive}
+                onView={openViewModal as any}
+                onEdit={openEditModal as any}
+                onToggleActive={handleToggleActive as any}
               />
             ))}
           </div>

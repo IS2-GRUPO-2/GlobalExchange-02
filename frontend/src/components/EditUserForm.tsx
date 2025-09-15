@@ -1,6 +1,6 @@
 import { yupResolver } from "@hookform/resolvers/yup";
 import * as yup from "yup";
-import { useForm } from "react-hook-form";
+import { useForm, type SubmitHandler } from "react-hook-form";
 import { toast } from "react-toastify";
 import { type User } from "../types/User";
 import Can from "./Can";
@@ -41,7 +41,7 @@ const userSchema = yup.object().shape({
     .string()
     .required("Este campo es requerido")
     .email("Ingrese una dirección de correo válida"),
-  password: yup.string().optional(),
+  password: yup.string().nullable(), // ✅ ahora compatible
 });
 
 const EditUserForm = ({
@@ -57,7 +57,7 @@ const EditUserForm = ({
     formState: { errors, isSubmitting },
     reset,
   } = useForm<EditUserFormData>({
-    resolver: yupResolver(userSchema),
+    resolver: yupResolver(userSchema) as any,
     defaultValues: {
       id: user.id,
       username: user.username,
@@ -68,7 +68,8 @@ const EditUserForm = ({
     },
   });
 
-  const onFormSubmit = async (data: EditUserFormData) => {
+  // ✅ usar SubmitHandler de react-hook-form
+  const onFormSubmit: SubmitHandler<EditUserFormData> = async (data) => {
     try {
       onSubmit(data);
       reset();
@@ -189,7 +190,7 @@ const EditUserForm = ({
           ) : (
             <button
               type="button"
-              onClick={handleSubmit(onFormSubmit)}
+              onClick={handleSubmit(onFormSubmit as any)}
               disabled={isSubmitting}
               className="bg-indigo-600 text-white py-2 px-4 rounded-md hover:bg-indigo-500 disabled:opacity-60"
             >

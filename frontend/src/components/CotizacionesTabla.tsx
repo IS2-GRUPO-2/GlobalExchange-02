@@ -30,6 +30,7 @@ export default function CotizacionesTabla() {
         const data = await getPublicTasas();
         setRates(data);
       } catch (e) {
+        setErr("Error cargando cotizaciones"); // ✅ ahora sí se usa
         toast.error("Error cargando cotizaciones");
       } finally {
         setLoading(false);

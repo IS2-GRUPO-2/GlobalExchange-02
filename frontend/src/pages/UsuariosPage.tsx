@@ -32,7 +32,7 @@ const UsuariosPage = () => {
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [createModalOpen, setCreateModalOpen] = useState<boolean>(false);
   const [editModalOpen, setEditModalOpen] = useState<boolean>(false);
-  const [detailModalOpen, setDetailModalOpen] = useState<boolean>(false);
+
   const [clientsModalOpen, setClientsModalOpen] = useState<boolean>(false);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [rolesModalOpen, setRolesModalOpen] = useState<boolean>(false);
@@ -58,14 +58,7 @@ const UsuariosPage = () => {
     setSelectedUser(null);
   };
 
-  const openDetailModal = (user: User): void => {
-    setSelectedUser(user);
-    setDetailModalOpen(true);
-  };
-  const closeDetailModal = (): void => {
-    setDetailModalOpen(false);
-    setSelectedUser(null);
-  };
+
 
   const openClientsModal = (user: User): void => {
     setSelectedUser(user);
@@ -101,7 +94,7 @@ const UsuariosPage = () => {
 
   const handleCreateUser = async (userData: UserFormData) => {
     try {
-      const nuevoUsuario = await createUsuario(userData);
+      const nuevoUsuario = await createUsuario(userData as any);
       
       if (userData.clientes.length > 0) {
         await asignarClientesAUsuario(nuevoUsuario.id, userData.clientes);

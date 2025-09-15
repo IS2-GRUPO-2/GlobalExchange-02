@@ -53,7 +53,7 @@ const UserForm = ({ onSubmit, onCancel }: Props) => {
     watch,
     setValue,
   } = useForm<UserFormData>({
-    resolver: yupResolver(userSchema),
+    resolver: yupResolver(userSchema) as any,
     defaultValues: {
       username: "",
       first_name: "",
@@ -220,7 +220,7 @@ const UserForm = ({ onSubmit, onCancel }: Props) => {
         <div className="flex space-x-3 pt-4">
           <button
             type="button"
-            onClick={handleSubmit(onFormSubmit)}
+            onClick={handleSubmit(onFormSubmit as any)}
             disabled={isSubmitting}
             className="flex-1 bg-gray-900 text-white py-2 px-4 rounded-md hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >

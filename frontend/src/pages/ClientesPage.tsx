@@ -4,8 +4,7 @@ import {
   createCliente,
   deleteCliente,
   getClientes,
-  updateCliente,
-  getCategoriaCliente
+  updateCliente
 } from "../services/clienteService";
 import {
   Edit,

@@ -3,7 +3,7 @@ import type { CuentaBancaria, Banco } from "../types/MetodoFinanciero";
 import { getBancos } from "../services/metodoFinancieroService";
 
 export interface CuentaBancariaFormData {
-  banco: number; // Cambió de string a number para el ID
+  banco: number;
   numero_cuenta: string;
   titular: string;
   cbu_cvu: string;
@@ -32,14 +32,13 @@ const CuentaBancariaForm: React.FC<CuentaBancariaFormProps> = ({
     metodo_financiero_detalle: initialData?.metodo_financiero_detalle || 0,
   });
 
-  const [errors, setErrors] = useState<Partial<CuentaBancariaFormData>>({});
+  // ✅ usar string para mensajes de error
+  const [errors, setErrors] = useState<Partial<Record<keyof CuentaBancariaFormData, string>>>({});
 
-  // Función auxiliar para obtener el banco seleccionado
   const getSelectedBanco = () => {
     return bancos.find(b => b.id === formData.banco);
   };
 
-  // Cargar lista de bancos activos
   useEffect(() => {
     const fetchBancos = async () => {
       try {
@@ -56,7 +55,7 @@ const CuentaBancariaForm: React.FC<CuentaBancariaFormProps> = ({
   }, []);
 
   const validateForm = (): boolean => {
-    const newErrors: Partial<CuentaBancariaFormData> = {};
+    const newErrors: Partial<Record<keyof CuentaBancariaFormData, string>> = {};
 
     if (!formData.banco) {
       newErrors.banco = "Debe seleccionar un banco";
@@ -70,7 +69,6 @@ const CuentaBancariaForm: React.FC<CuentaBancariaFormProps> = ({
       newErrors.titular = "El titular es requerido";
     }
 
-    // Solo validar CVU si no se auto-llenó desde el banco
     const selectedBanco = getSelectedBanco();
     const isAutoFilledCVU = selectedBanco && selectedBanco.cvu;
     
@@ -101,7 +99,6 @@ const CuentaBancariaForm: React.FC<CuentaBancariaFormProps> = ({
       [field]: value
     };
 
-    // Si se selecciona un banco, llenar automáticamente el CVU
     if (field === 'banco' && value) {
       const selectedBanco = bancos.find(b => b.id === parseInt(e.target.value));
       if (selectedBanco && selectedBanco.cvu) {
@@ -111,7 +108,6 @@ const CuentaBancariaForm: React.FC<CuentaBancariaFormProps> = ({
 
     setFormData(updatedFormData);
     
-    // Limpiar error del campo cuando el usuario empiece a escribir
     if (errors[field]) {
       setErrors(prev => ({
         ...prev,
@@ -122,6 +118,7 @@ const CuentaBancariaForm: React.FC<CuentaBancariaFormProps> = ({
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
+      {/* Banco */}
       <div>
         <label htmlFor="banco" className="block text-sm font-medium text-gray-700">
           Banco
@@ -156,6 +153,7 @@ const CuentaBancariaForm: React.FC<CuentaBancariaFormProps> = ({
         )}
       </div>
 
+      {/* Número de cuenta */}
       <div>
         <label htmlFor="numero_cuenta" className="block text-sm font-medium text-gray-700">
           Número de Cuenta
@@ -173,6 +171,7 @@ const CuentaBancariaForm: React.FC<CuentaBancariaFormProps> = ({
         {errors.numero_cuenta && <p className="mt-1 text-sm text-red-600">{errors.numero_cuenta}</p>}
       </div>
 
+      {/* Titular */}
       <div>
         <label htmlFor="titular" className="block text-sm font-medium text-gray-700">
           Titular
@@ -190,6 +189,7 @@ const CuentaBancariaForm: React.FC<CuentaBancariaFormProps> = ({
         {errors.titular && <p className="mt-1 text-sm text-red-600">{errors.titular}</p>}
       </div>
 
+      {/* CBU/CVU */}
       <div>
         <label htmlFor="cbu_cvu" className="block text-sm font-medium text-gray-700">
           CBU/CVU
@@ -200,19 +200,19 @@ const CuentaBancariaForm: React.FC<CuentaBancariaFormProps> = ({
           value={formData.cbu_cvu}
           onChange={handleInputChange('cbu_cvu')}
           maxLength={22}
-          readOnly={!!formData.banco && getSelectedBanco()?.cvu}
+          readOnly={!!(formData.banco && getSelectedBanco()?.cvu)} // ✅ forzado a boolean
           className={`mt-1 block w-full rounded-md border ${
             errors.cbu_cvu ? 'border-red-300' : 'border-gray-300'
           } px-3 py-2 focus:border-gray-500 focus:outline-none focus:ring-1 focus:ring-gray-500 ${
-            !!formData.banco && getSelectedBanco()?.cvu ? 'bg-gray-100' : ''
+            !!(formData.banco && getSelectedBanco()?.cvu) ? 'bg-gray-100' : ''
           }`}
           placeholder={
-            !!formData.banco && getSelectedBanco()?.cvu 
+            !!(formData.banco && getSelectedBanco()?.cvu) 
               ? "CVU del banco seleccionado" 
               : "22 dígitos del CBU o CVU"
           }
         />
-        {!!formData.banco && getSelectedBanco()?.cvu && (
+        {!!(formData.banco && getSelectedBanco()?.cvu) && (
           <p className="mt-1 text-xs text-blue-600">
             ℹ️ CVU del banco seleccionado (llenado automáticamente)
           </p>
@@ -220,6 +220,7 @@ const CuentaBancariaForm: React.FC<CuentaBancariaFormProps> = ({
         {errors.cbu_cvu && <p className="mt-1 text-sm text-red-600">{errors.cbu_cvu}</p>}
       </div>
 
+      {/* Botón */}
       <div className="flex justify-end space-x-3 pt-4">
         <button
           type="submit"

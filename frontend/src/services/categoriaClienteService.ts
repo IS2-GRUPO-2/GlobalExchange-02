@@ -1,5 +1,5 @@
 import axios from "axios";
-import { type Categoria } from "../types/Cliente";
+import { type CategoriaCliente } from "../types/Cliente";
 
 // Usamos rutas relativas para que las peticiones pasen por el proxy de Nginx
 const API_URL = "/api/clientes/categorias/";
@@ -15,10 +15,10 @@ const getAuthHeaders = () => {
 };
 
 export const getCategoriaClientes = (search: string) =>
-  axios.get<Categoria[]>(API_URL + `?search=${search}`, getAuthHeaders());
+  axios.get<CategoriaCliente[]>(API_URL + `?search=${search}`, getAuthHeaders());
 
 export const getCategoriaCliente = (id: string) =>
-  axios.get<Categoria>(`${API_URL}${id}/`, getAuthHeaders());
+  axios.get<CategoriaCliente>(`${API_URL}${id}/`, getAuthHeaders());
 
-export const updateCategoriaCliente = (id: string, data: Partial<Categoria>) =>
-  axios.patch<Categoria>(`${API_URL}${id}/`, data, getAuthHeaders());
+export const updateCategoriaCliente = (id: string, data: Partial<CategoriaCliente>) =>
+  axios.patch<CategoriaCliente>(`${API_URL}${id}/`, data, getAuthHeaders());

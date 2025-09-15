@@ -108,7 +108,7 @@ export const router = createBrowserRouter([
         path: "cotizaciones",
         element: (
           <RequireAuth anyOf={[TASAS.VIEW]}>
-            <CotizacionesPage />,
+            <CotizacionesPage />
           </RequireAuth>
         ),
       },

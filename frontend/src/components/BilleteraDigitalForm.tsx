@@ -3,7 +3,7 @@ import type { BilleteraDigital, BilleteraDigitalCatalogo } from "../types/Metodo
 import { getBilleterasDigitalesCatalogo } from "../services/metodoFinancieroService";
 
 export interface BilleteraDigitalFormData {
-  plataforma: number; // Cambió de string a number para el ID
+  plataforma: number; // ID de la plataforma
   usuario_id: string;
   email: string;
   telefono?: string;
@@ -32,7 +32,8 @@ const BilleteraDigitalForm: React.FC<BilleteraDigitalFormProps> = ({
     metodo_financiero_detalle: initialData?.metodo_financiero_detalle || 0,
   });
 
-  const [errors, setErrors] = useState<Partial<BilleteraDigitalFormData>>({});
+  // ✅ errores como strings independientes
+  const [errors, setErrors] = useState<Partial<Record<keyof BilleteraDigitalFormData, string>>>({});
 
   // Cargar lista de billeteras digitales activas
   useEffect(() => {
@@ -51,7 +52,7 @@ const BilleteraDigitalForm: React.FC<BilleteraDigitalFormProps> = ({
   }, []);
 
   const validateForm = (): boolean => {
-    const newErrors: Partial<BilleteraDigitalFormData> = {};
+    const newErrors: Partial<Record<keyof BilleteraDigitalFormData, string>> = {};
 
     if (!formData.plataforma) {
       newErrors.plataforma = "Debe seleccionar una plataforma";
@@ -84,7 +85,7 @@ const BilleteraDigitalForm: React.FC<BilleteraDigitalFormProps> = ({
     const value = field === 'plataforma' ? parseInt(e.target.value) : e.target.value;
     setFormData(prev => ({
       ...prev,
-      [field]: value
+      [field]: value as any
     }));
     // Limpiar error del campo cuando el usuario empiece a escribir
     if (errors[field]) {

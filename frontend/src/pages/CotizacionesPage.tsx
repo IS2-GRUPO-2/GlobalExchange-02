@@ -1,8 +1,8 @@
 import { Check, Edit, Plus, Search, X } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "react-toastify";
 
-import type { Tasa } from "../types/Tasa";
+import type { Tasa, TasaCreate } from "../types/Tasa";
 import type { Divisa, PaginatedDivisas } from "../types/Divisa";
 
 import {
@@ -127,7 +127,7 @@ const CotizacionesPage = () => {
       return;
     }
     const filtered = (tasasRaw ?? []).filter((t) => {
-      const d = divisasMap[t.divisa];
+      const d = t.divisa ? divisasMap[t.divisa] : undefined;
       const byCode = d?.codigo?.toLowerCase().includes(q) ?? false;
       const byName = d?.nombre?.toLowerCase().includes(q) ?? false;
       const byBase = String(t.precioBase).toLowerCase().includes(q);
@@ -139,15 +139,11 @@ const CotizacionesPage = () => {
     setTasas(filtered);
   }, [searchQuery, tasasRaw, divisasMap]);
 
-  // Set de divisas que ya tienen tasa (para filtrar en el form de creación)
-  const usedDivisaIds = useMemo(
-    () => new Set((tasasRaw ?? []).map((t) => t.divisa)),
-    [tasasRaw]
-  );
+
 
   // Crear
   const handleCreateTasa = async (data: TasaFormData) => {
-    const payload: Tasa = {
+    const payload: TasaCreate = {
       divisa: data.divisa,
       precioBase: data.precioBase,
       comisionBaseCompra: data.comisionBaseCompra,
@@ -194,6 +190,7 @@ const CotizacionesPage = () => {
     if (!selectedTasa?.id) return;
 
     const payload: Tasa = {
+      id: selectedTasa.id,
       divisa: data.divisa,
       precioBase: data.precioBase,
       comisionBaseCompra: data.comisionBaseCompra,
@@ -351,20 +348,20 @@ const CotizacionesPage = () => {
                 (tasas ?? []).map((tasa) => (
                   <tr key={tasa.id}>
                     <td className="font-medium">
-                      {divisasMap[tasa.divisa]
+                      {tasa.divisa && divisasMap[tasa.divisa]
                         ? `${divisasMap[tasa.divisa].codigo}`
                         : tasa.divisa}
                     </td>
                     <td className="font-medium">
-                      {divisasMap[tasa.divisa]
+                      {tasa.divisa && divisasMap[tasa.divisa]
                         ? `${divisasMap[tasa.divisa].nombre}`
                         : tasa.divisa}
                     </td>
                     <td>{formatNumber(tasa.precioBase)} {divisaBase?.simbolo ?? ""}</td>
                     <td>{formatNumber(tasa.comisionBaseCompra)} {divisaBase?.simbolo ?? ""}</td>
                     <td>{formatNumber(tasa.comisionBaseVenta)} {divisaBase?.simbolo ?? ""}</td>
-                    <td>{formatNumber(tasa.tasaCompra)} {divisaBase?.simbolo ?? ""}</td>
-                    <td>{formatNumber(tasa.tasaVenta)} {divisaBase?.simbolo ?? ""}</td>
+                    <td>{formatNumber(tasa.tasaCompra ?? 0)} {divisaBase?.simbolo ?? ""}</td>
+                    <td>{formatNumber(tasa.tasaVenta ?? 0)} {divisaBase?.simbolo ?? ""}</td>
                     <td>
                       <span
                         className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
@@ -412,7 +409,6 @@ const CotizacionesPage = () => {
             onCancel={closeCreateModal}
             isEditForm={false}
             tasa={null}
-            usedDivisaIds={usedDivisaIds}
           />
         </Modal>
 

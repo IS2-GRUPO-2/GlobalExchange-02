@@ -7,10 +7,10 @@ import { type SimulacionResponse } from "../types/Conversion";
 import { getUserClients } from "../services/usuarioService";
 import { type Cliente } from "../types/Cliente";
 import { type MetodoFinanciero } from "../types/MetodoFinanciero";
-import { getDivisasConTasa, getDivisas } from "../services/divisaService";
+import { getDivisasConTasa } from "../services/divisaService";
 import { type Divisa } from "../types/Divisa";
 import type { DecodedToken } from "../types/User";
-import { jwtDecode } from "jwt-decode";
+import { jwtDecode } from "jwt-decode"; // ✅ named import
 import { toast } from "react-toastify";
 
 export default function SimulacionConversion() {
@@ -57,7 +57,6 @@ export default function SimulacionConversion() {
     const fetchDivisas = async () => {
       try {
         const data = await getDivisasConTasa({});
-        // const data = await getDivisas({})
         setDivisas(data.results);
 
         const base = data.results.find((d: Divisa) => d.es_base);
@@ -69,7 +68,6 @@ export default function SimulacionConversion() {
     fetchDivisas();
   }, []);
 
-  // Cargar métodos al cambiar divisa origen/destino
   useEffect(() => {
     const fetchMetodos = async () => {
       if (!divisaOrigen || !divisaDestino) return;
@@ -158,8 +156,9 @@ export default function SimulacionConversion() {
                   setDivisaOrigen(e.target.value);
                   setResultado(null);
 
-                  const origen = divisas.find((d) => d.id.toString() === e.target.value);
-                  if (origen && origen.es_base && divisaBase && divisaDestino.es_base) {
+                  const origen = divisas.find((d) => d.id?.toString() === e.target.value);
+                  const destino = divisas.find((d) => d.id?.toString() === divisaDestino); // ✅ buscar destino
+                  if (origen && origen.es_base && divisaBase && destino?.es_base) {
                     setDivisaDestino("");
                   }
                 }}
@@ -167,8 +166,7 @@ export default function SimulacionConversion() {
               >
                 <option value="">Seleccionar...</option>
                 {(() => {
-                  // si en destino hay extranjera, limitar origen solo a base
-                  const destino = divisas.find((d) => d.id.toString() === divisaDestino);
+                  const destino = divisas.find((d) => d.id?.toString() === divisaDestino);
                   if (destino && !destino.es_base && divisaBase) {
                     return (
                       <option key={divisaBase.id} value={divisaBase.id}>
@@ -176,9 +174,8 @@ export default function SimulacionConversion() {
                       </option>
                     );
                   }
-                  // caso normal
                   return divisas
-                    .filter((divisa) => divisa.id.toString() !== divisaDestino)
+                    .filter((divisa) => divisa.id?.toString() !== divisaDestino)
                     .map((divisa) => (
                       <option key={divisa.id} value={divisa.id}>
                         {divisa.codigo} - {divisa.nombre}
@@ -214,8 +211,7 @@ export default function SimulacionConversion() {
               >
                 <option value="">Seleccionar...</option>
                 {(() => {
-                  // si en origen hay extranjera, limitar destino solo a base
-                  const origen = divisas.find((d) => d.id.toString() === divisaOrigen);
+                  const origen = divisas.find((d) => d.id?.toString() === divisaOrigen);
                   if (origen && !origen.es_base && divisaBase) {
                     return (
                       <option key={divisaBase.id} value={divisaBase.id}>
@@ -223,9 +219,8 @@ export default function SimulacionConversion() {
                       </option>
                     );
                   }
-                  // caso normal
                   return divisas
-                    .filter((divisa) => divisa.id.toString() !== divisaOrigen)
+                    .filter((divisa) => divisa.id?.toString() !== divisaOrigen)
                     .map((divisa) => (
                       <option key={divisa.id} value={divisa.id}>
                         {divisa.codigo} - {divisa.nombre}
@@ -272,7 +267,7 @@ export default function SimulacionConversion() {
               className="block text-sm font-medium text-gray-700 mb-2"
             >
               Cantidad en{" "}
-              {divisas.find((d) => d.id.toString() === divisaOrigen)?.nombre ||
+              {divisas.find((d) => d.id?.toString() === divisaOrigen)?.nombre ||
                 "Divisa origen"}
             </label>
             <input
@@ -295,7 +290,7 @@ export default function SimulacionConversion() {
               className="w-full text-2xl font-semibold text-gray-900 text-center bg-transparent focus:outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
             />
             <span className="text-sm text-gray-500">
-              {divisas.find((d) => d.id.toString() === divisaOrigen)?.codigo ||
+              {divisas.find((d) => d.id?.toString() === divisaOrigen)?.codigo ||
                 ""}
             </span>
           </div>
@@ -311,12 +306,10 @@ export default function SimulacionConversion() {
           {/* Resultado */}
           {resultado && (
             <div className="mt-6 space-y-4 text-gray-700 border-t pt-4">
-              {/* Tipo de operación (cliente) */}
               <div className="bg-gray-100 border border-gray-300 text-gray-800 rounded-lg p-3 text-center font-semibold text-base">
                 Operación: {resultado.operacion_cliente.toUpperCase()}
               </div>
 
-              {/* Conversión realizada */}
               <div className="text-center text-lg font-bold text-gray-900">
                 {resultado.monto_origen.toLocaleString()}{" "}
                 {resultado.divisa_origen} →{" "}
@@ -324,7 +317,6 @@ export default function SimulacionConversion() {
                 {resultado.divisa_destino}
               </div>
 
-              {/* Detalles */}
               <div className="space-y-1 text-sm">
                 <p>
                   <strong>Precio base:</strong>{" "}

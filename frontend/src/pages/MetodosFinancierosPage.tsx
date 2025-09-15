@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { Building2, Smartphone, Plus, Search, Edit, X, Check } from 'lucide-react';
 import { toast } from 'react-toastify';
 import { useAuth } from '../context/useAuth';
@@ -49,10 +49,6 @@ type ExtendedItem = (CuentaBancaria | BilleteraDigital) & {
   is_active: boolean;
   detalle_id?: number;
   desactivado_por_catalogo?: boolean;
-};
-
-type CatalogItem = (Banco | BilleteraDigitalCatalogo) & {
-  tipo: CatalogTabType;
 };
 
 const getDisplayName = (nombre: string): string => {
@@ -815,7 +811,7 @@ const MetodosFinancierosPage = () => {
   };
 
   useEffect(() => {
-    if (isLoggedIn) {
+    if (isLoggedIn()) {
       fetchAllData();
     }
   }, [isLoggedIn, mainTab, search, page]);
@@ -1202,7 +1198,7 @@ const MetodosFinancierosPage = () => {
                   item={item}
                   onView={openViewModal}
                   onEdit={openEditModal}
-                  onToggleActive={handleToggleInstance}
+                  onToggleActive={handleToggleInstance as any}
                 />
               ))}
             </div>

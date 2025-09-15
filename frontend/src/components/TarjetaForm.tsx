@@ -11,6 +11,16 @@ export interface TarjetaFormData {
   metodo_financiero_detalle: number;
 }
 
+interface TarjetaFormErrors {
+  stripe_payment_method_id?: string;
+  brand?: string;
+  last4?: string;
+  exp_month?: string;
+  exp_year?: string;
+  titular?: string;
+  metodo_financiero_detalle?: string;
+}
+
 interface TarjetaFormProps {
   onSubmit: (data: TarjetaFormData) => void;
   initialData?: Partial<Tarjeta>;
@@ -32,10 +42,10 @@ const TarjetaForm: React.FC<TarjetaFormProps> = ({
     metodo_financiero_detalle: initialData?.metodo_financiero_detalle || 0,
   });
 
-  const [errors, setErrors] = useState<Partial<TarjetaFormData>>({});
+  const [errors, setErrors] = useState<TarjetaFormErrors>({});
 
   const validateForm = (): boolean => {
-    const newErrors: Partial<TarjetaFormData> = {};
+    const newErrors: TarjetaFormErrors = {};
 
     if (!formData.stripe_payment_method_id.trim()) {
       newErrors.stripe_payment_method_id = "El ID de método de pago es requerido";

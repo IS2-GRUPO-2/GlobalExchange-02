@@ -16,7 +16,7 @@
  * @property {string} [fechaActualizacion] - Fecha de última actualización
  */
 export interface Tasa {
-  id: number;
+  id?: number;
   divisa?: number;
   precioBase: string;
   comisionBaseCompra: string;
@@ -27,3 +27,5 @@ export interface Tasa {
   fechaCreacion?: string;
   fechaActualizacion?: string;
 }
+
+export type TasaCreate = Omit<Tasa, 'id'> & { divisa: number };
