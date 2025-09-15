@@ -11,8 +11,8 @@ def run():
     """Cargar todas las seeds en orden"""
     
     seeds_order = [
-        '01_usuarios_seeds',
         '02_roles_seeds',
+        '01_usuarios_seeds',
         '03_divisas_seeds',
         '04_categorias_clientes_seeds',
         '05_clientes_seeds',
