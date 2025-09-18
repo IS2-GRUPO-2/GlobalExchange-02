@@ -96,6 +96,7 @@ WSGI_APPLICATION = 'globalexchange.wsgi.application'
 
 
 # Database
+# pruebas
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
 DATABASES = {
