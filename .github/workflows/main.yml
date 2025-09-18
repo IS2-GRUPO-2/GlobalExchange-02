@@ -2,21 +2,21 @@ name: Run Backend Tests
 
 on:
   push:
-    branches: ["**"]   # en todas las ramas
+    branches: ["**"]   # todas las ramas
   pull_request:
-    branches: ["**"]   # en todos los PRs
+    branches: ["**"]   # todos los PRs
 
 jobs:
   test-backend:
     runs-on: ubuntu-latest
 
     services:
-      postgres:
+      db:
         image: postgres:15
         env:
           POSTGRES_USER: postgres
-          POSTGRES_PASSWORD: postgres
-          POSTGRES_DB: test_db
+          POSTGRES_PASSWORD: admin
+          POSTGRES_DB: globalexchange_development
         ports:
           - 5432:5432
         options: >-
@@ -41,11 +41,23 @@ jobs:
           pip install pytest pytest-django
 
       - name: Run migrations
+        env:
+          POSTGRES_NAME: globalexchange_development
+          POSTGRES_USER: postgres
+          POSTGRES_PASS: admin
+          POSTGRES_HOST: db
+          POSTGRES_PORT: 5432
         run: |
           cd backend
           python manage.py migrate --noinput
 
       - name: Run tests
+        env:
+          POSTGRES_NAME: globalexchange_development
+          POSTGRES_USER: postgres
+          POSTGRES_PASS: admin
+          POSTGRES_HOST: db
+          POSTGRES_PORT: 5432
         run: |
           cd backend
           pytest -v
