@@ -1,7 +1,6 @@
 import { useState, useEffect } from "react";
 import { useAuth } from "../context/useAuth";
 import Modal from "../components/Modal";
-import React from "react";
 import { useMetodosFinancieros } from "../features/financiero/hooks/useMetodosFinancieros";
 import { useInstancias } from "../features/financiero/hooks/useInstancias";
 import { useCatalogos } from "../features/financiero/hooks/useCatalogos";
