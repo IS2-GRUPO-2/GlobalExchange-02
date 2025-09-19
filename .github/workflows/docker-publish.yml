@@ -2,10 +2,8 @@ name: Docker
 
 on:
   push:
-    branches: [main] 
+    branches: ["**"] 
     tags: [ 'v*.*.*' ]
-  workflow_dispatch: 
-  
 env:
   REGISTRY: ghcr.io
   IMAGE_NAME_FRONTEND: "frontend"
