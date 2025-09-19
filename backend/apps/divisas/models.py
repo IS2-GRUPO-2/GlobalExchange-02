@@ -27,3 +27,4 @@ class Denominacion(models.Model):
     divisa = models.ForeignKey(Divisa, on_delete=models.PROTECT)
     denominacion = models.IntegerField()
     is_active = models.BooleanField(default=True)
+
