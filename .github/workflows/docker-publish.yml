@@ -68,7 +68,7 @@ jobs:
       # Agregar el .env
       - name: Add .env.prod file
         run: |
-          cat ${{ secrets.PROD_ENV }} > .env
+          echo "${{ secrets.PROD_ENV }}" > .env
 
       # Build frontend dist
       - name: Compilar el frontend
