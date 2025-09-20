@@ -51,7 +51,12 @@ jobs:
       # Generar archivos estáticos del backend
       - name: Generar archivos estáticos del backend
         run: |
-          docker compose run --rm backend python manage.py collectstatic --noinput
+          docker compose run --rm --user root backend sh -c "
+            mkdir -p /app/static /app/media &&
+            chown -R django:django /app/static /app/media &&
+            chmod 755 /app/static /app/media &&
+            su django -s /bin/sh -c 'python manage.py collectstatic --noinput'
+          "
 
       # Metadata Backend
       - name: Extract Docker metadata (backend)
