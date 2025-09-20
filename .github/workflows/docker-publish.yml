@@ -64,6 +64,11 @@ jobs:
           labels: ${{ steps.meta-backend.outputs.labels }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
+      
+      # Agregar el .env
+      - name: Add .env.prod file
+        run: |
+          cat ${{ secrets.PROD_ENV }} > .env
 
       # Build frontend dist
       - name: Compilar el frontend
