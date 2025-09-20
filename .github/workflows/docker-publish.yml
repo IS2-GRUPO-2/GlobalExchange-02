@@ -38,6 +38,21 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      # Crear archivo .env antes de cualquier build
+      - name: Crear archivo .env
+        run: |
+          echo "${{ secrets.PROD_ENV }}" > .env
+
+      # Build frontend dist ANTES de usar los archivos
+      - name: Compilar el frontend
+        run: |
+          docker compose run --rm frontend npm run build
+
+      # Generar archivos estáticos del backend
+      - name: Generar archivos estáticos del backend
+        run: |
+          docker compose run --rm backend python manage.py collectstatic --noinput
+
       # Metadata Backend
       - name: Extract Docker metadata (backend)
         id: meta-backend
@@ -64,23 +79,13 @@ jobs:
           labels: ${{ steps.meta-backend.outputs.labels }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
-      
-      # Agregar el .env
-      - name: Add .env.prod file
-        run: |
-          echo "${{ secrets.PROD_ENV }}" > .env
 
-      # Build frontend dist
-      - name: Compilar el frontend
-        run: |
-          docker compose run --rm frontend npm run build
-
-      # Build frontend (Nginx)
+      # Build frontend (Nginx) - ahora con el contexto completo
       - name: Build and push frontend
         id: build-frontend
         uses: docker/build-push-action@v5.0.0
         with:
-          context: ./nginx
+          context: .  # Cambiar contexto a la raíz del proyecto
           file: ./nginx/dockerfile
           push: true
           tags: ${{ steps.meta-frontend.outputs.tags }}
