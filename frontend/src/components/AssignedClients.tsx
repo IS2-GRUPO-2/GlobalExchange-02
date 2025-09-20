@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import type { User } from "../types/User";
 import type { Cliente } from "../types/Cliente";
-import { getClientes } from "../services/clienteService";
+import { getAllClientes } from "../services/clienteService";
 import {
   getUserClients,
   asignarClientesAUsuario,
@@ -32,7 +32,7 @@ export default function AssignedClients({ user, onClose }: Props) {
       setError(null);
 
       const [allRes, assignedRes] = await Promise.all([
-        getClientes(""),
+        getAllClientes(),
         getUserClients(user.id),
       ]);
 

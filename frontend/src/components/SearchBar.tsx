@@ -4,7 +4,6 @@ type Props = {
   search: string;
   setSearch: (search: string) => void;
   onSearch: () => void;
-  onEnterPressed: () => void;
 };
 
 const SearchBar = ({ search, setSearch, onSearch }: Props) => {
@@ -16,7 +15,7 @@ const SearchBar = ({ search, setSearch, onSearch }: Props) => {
         </div>
         <input
           type="text"
-          placeholder="Buscar divisa..."
+          placeholder="Buscar..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           onKeyDown={(e) => {
