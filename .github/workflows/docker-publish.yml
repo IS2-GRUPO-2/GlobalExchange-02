@@ -2,12 +2,14 @@ name: Docker
 
 on:
   push:
-    branches: ["**"] 
+    branches: ["**"]
     tags: [ 'v*.*.*' ]
+    
 env:
   REGISTRY: ghcr.io
   IMAGE_NAME_FRONTEND: "frontend"
   IMAGE_NAME_BACKEND: "backend"
+
 
 jobs:
   build:
