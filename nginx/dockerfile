@@ -1,0 +1,13 @@
+# Imagen base de Nginx
+FROM nginx:alpine
+
+# Copiar el archivo de configuración de Nginx a la carpeta de conf.d
+COPY ./default.conf /etc/nginx/conf.d/default.conf
+
+# Copiar los archivos compilados del frontend (dist) al directorio de Nginx
+COPY ../frontend/dist /usr/share/nginx/html
+
+# Copiar los directorios de estáticos y media (si los tenés generados)
+COPY ../backend/static /app/static
+COPY ../backend/media /app/media
+
