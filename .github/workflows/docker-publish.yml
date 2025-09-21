@@ -64,6 +64,9 @@ jobs:
         uses: docker/metadata-action@v5.0.0
         with:
           images: ${{ env.REGISTRY }}/${{ github.repository }}/${{ env.IMAGE_NAME_BACKEND }}
+          tags: |
+            type=sha
+            type=raw,value=latest
 
       # Metadata Frontend
       - name: Extract Docker metadata (frontend)
@@ -71,6 +74,9 @@ jobs:
         uses: docker/metadata-action@v5.0.0
         with:
           images: ${{ env.REGISTRY }}/${{ github.repository }}/${{ env.IMAGE_NAME_FRONTEND }}
+          tags: |
+            type=sha
+            type=raw,value=latest
 
       # Build backend
       - name: Build and push backend
