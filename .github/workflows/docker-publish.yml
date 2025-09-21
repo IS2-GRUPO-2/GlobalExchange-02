@@ -64,6 +64,9 @@ jobs:
         uses: docker/metadata-action@v5.0.0
         with:
           images: ${{ env.REGISTRY }}/${{ github.repository }}/${{ env.IMAGE_NAME_BACKEND }}
+          tags: |
+            type=sha
+            type=raw,value=latest
 
       # Metadata Frontend
       - name: Extract Docker metadata (frontend)
@@ -71,6 +74,9 @@ jobs:
         uses: docker/metadata-action@v5.0.0
         with:
           images: ${{ env.REGISTRY }}/${{ github.repository }}/${{ env.IMAGE_NAME_FRONTEND }}
+          tags: |
+            type=sha
+            type=raw,value=latest
 
       # Build backend
       - name: Build and push backend
@@ -122,8 +128,7 @@ jobs:
           script: |
             cd /srv/globalexchange
             echo "${{ secrets.PROD_ENV}}" > .env
-            echo "${{ secrets.GHCR }}" >> .env
-            echo "$GHCR_PAT" | docker login ghcr.io -u "$GHCR_USER" --password-stdin
+            echo "${{ secrets.GHCR_PAT}}" | docker login ghcr.io -u "${{ secrets.GHCR_USER}}" --password-stdin
             docker compose pull
             docker compose up -d
 
