@@ -15,6 +15,8 @@ import AssignedUsers from "../features/clientes/components/AssignedUsers";
 import { useClientes } from "../features/clientes/hooks/useCliente";
 import { useModal } from "../hooks/useModal";
 import SearchBar from "../components/SearchBar";
+import { CLIENTES } from "../types/perms";
+import Can from "../components/Can";
 
 const ClientesPage = () => {
   const [searchQuery, setSearchQuery] = useState<string>("");
@@ -72,13 +74,15 @@ const ClientesPage = () => {
             onSearch={onSearch}
           />
         </div>
-        <button
-          onClick={modalHook.openCreateModal}
-          className="btn-primary flex items-center justify-center"
-        >
-          <UserPlus size={18} className="mr-2" />
-          Crear Cliente
-        </button>
+        <Can anyOf = {[CLIENTES.ADD]}>
+          <button
+            onClick={modalHook.openCreateModal}
+            className="btn-primary flex items-center justify-center"
+          >
+            <UserPlus size={18} className="mr-2" />
+            Crear Cliente
+          </button>
+        </Can>
       </div>
 
       {/* Tabla */}
@@ -121,24 +125,28 @@ const ClientesPage = () => {
                   </td>
                   <td>
                     <div className="flex items-center space-x-2">
-                      <button
-                        onClick={() => modalHook.openEditModal(cliente)}
-                        className="p-1 text-gray-500 hover:text-blue-600 rounded-full hover:bg-gray-100"
-                        title="Editar"
-                      >
-                        <Edit size={16} />
-                      </button>
-                      <button
-                        onClick={() => handleToggleClient(cliente)}
-                        className="p-1 text-gray-500 hover:text-red-600 rounded-full hover:bg-gray-100"
-                        title={cliente.isActive ? "Desactivar" : "Activar"}
-                      >
-                        {cliente.isActive ? (
-                          <UserX size={16} />
-                        ) : (
-                          <UserCheck size={16} />
-                        )}
-                      </button>
+                      <Can anyOf = {[CLIENTES.CHANGE]}>
+                        <button
+                          onClick={() => modalHook.openEditModal(cliente)}
+                          className="p-1 text-gray-500 hover:text-blue-600 rounded-full hover:bg-gray-100"
+                          title="Editar"
+                        >
+                          <Edit size={16} />
+                        </button>
+                      </Can>
+                      <Can anyOf = {cliente.isActive? [CLIENTES.DELETE] : [CLIENTES.CHANGE]}>
+                        <button
+                          onClick={() => handleToggleClient(cliente)}
+                          className="p-1 text-gray-500 hover:text-red-600 rounded-full hover:bg-gray-100"
+                          title={cliente.isActive ? "Desactivar" : "Activar"}
+                        >
+                          {cliente.isActive ? (
+                            <UserX size={16} />
+                          ) : (
+                            <UserCheck size={16} />
+                          )}
+                        </button>
+                      </Can>
                       <button
                         onClick={() => modalHook.openViewModal(cliente)}
                         className="p-1 text-gray-500 hover:text-green-600 rounded-full hover:bg-gray-100"
