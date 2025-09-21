@@ -24,7 +24,7 @@ def authenticated_client():
 def user_data():
     """Datos básicos para crear un usuario"""
     return {
-        'username': 'testuser',
+        'username': 'testuser1',
         'email': 'test@example.com',
         'password': 'testpass123',
         'first_name': 'Test',
