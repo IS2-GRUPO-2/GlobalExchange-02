@@ -8,7 +8,6 @@ services:
                python -m seeds.load_all_seeds &&
                gunicorn globalexchange.wsgi:application --bind 0.0.0.0:8000"
     volumes:
-      - ./backend:/app:delegated
       - static_volume:/app/static
       - media_volume:/app/media
     env_file:
