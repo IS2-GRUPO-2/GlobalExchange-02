@@ -17,6 +17,8 @@ import { getDivisas } from "../services/divisaService";
 import { useAuth } from "../context/useAuth";
 import Modal from "../components/Modal";
 import TasaForm, { type TasaFormData } from "../components/TasaForm";
+import Can from "../components/Can";
+import { TASAS } from "../types/perms";
 
 const CotizacionesPage = () => {
   // datos
@@ -298,13 +300,15 @@ const CotizacionesPage = () => {
           />
         </div>
 
-        <button
-          onClick={openCreateModal}
-          className="btn-primary flex items-center justify-center"
-        >
-          <Plus size={18} className="mr-2" />
-          Crear Cotización
-        </button>
+        <Can anyOf = {[TASAS.ADD]}>
+          <button
+            onClick={openCreateModal}
+            className="btn-primary flex items-center justify-center"
+          >
+            <Plus size={18} className="mr-2" />
+            Crear Cotización
+          </button>
+        </Can>
       </div>
 
       {/* Tabla */}
@@ -321,7 +325,9 @@ const CotizacionesPage = () => {
                 <th>Compra</th>
                 <th>Venta</th>
                 <th>Estado</th>
-                <th>Acciones</th>
+                <Can anyOf = {[TASAS.CHANGE, TASAS.DELETE]}>
+                  <th>Acciones</th>
+                </Can>
               </tr>
             </thead>
 
@@ -375,24 +381,28 @@ const CotizacionesPage = () => {
                     </td>
                     <td>
                       <div className="flex items-center space-x-2">
-                        <button
-                          onClick={() => openEditModal(tasa)}
-                          className="p-1 text-gray-500 hover:text-blue-600 rounded-full hover:bg-gray-100"
-                          title="Editar"
-                        >
-                          <Edit size={16} />
-                        </button>
-                        <button
-                          onClick={
-                            tasa.activo
-                              ? () => handleDeactivateTasa(tasa.id!)
-                              : () => handleActivateTasa(tasa)
-                          }
-                          className="p-1 text-gray-500 hover:text-red-600 rounded-full hover:bg-gray-100"
-                          title={tasa.activo ? "Desactivar" : "Activar"}
-                        >
-                          {tasa.activo ? <X size={16} /> : <Check size={16} />}
-                        </button>
+                        <Can anyOf = {[TASAS.CHANGE]}>
+                          <button
+                            onClick={() => openEditModal(tasa)}
+                            className="p-1 text-gray-500 hover:text-blue-600 rounded-full hover:bg-gray-100"
+                            title="Editar"
+                          >
+                            <Edit size={16} />
+                          </button>
+                        </Can>
+                        <Can allOf={tasa.activo ? [TASAS.DELETE] : [TASAS.CHANGE]}>
+                          <button
+                            onClick={
+                              tasa.activo
+                                ? () => handleDeactivateTasa(tasa.id!)
+                                : () => handleActivateTasa(tasa)
+                            }
+                            className="p-1 text-gray-500 hover:text-red-600 rounded-full hover:bg-gray-100"
+                            title={tasa.activo ? "Desactivar" : "Activar"}
+                          >
+                            {tasa.activo ? <X size={16} /> : <Check size={16} />}
+                          </button>
+                        </Can>
                       </div>
                     </td>
                   </tr>
