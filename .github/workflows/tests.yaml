@@ -1,0 +1,58 @@
+name: Backend Tests
+
+on:
+  push:
+    branches:
+      - '**'   # se ejecuta en push a cualquier rama
+  pull_request:
+    branches:
+      - '**'   # se ejecuta en cualquier PR
+
+jobs:
+  test:
+    name: Correr Tests
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Clonar repositorio
+        uses: actions/checkout@v4
+        
+      - name: Crear archivo .env a partir de secrets
+        run: |
+          # Variables de entorno para el backend
+          echo "POSTGRES_NAME=${{ secrets.POSTGRES_NAME || 'globalexchange_test' }}" >> .env
+          echo "POSTGRES_USER=${{ secrets.POSTGRES_USER || 'postgres' }}" >> .env
+          echo "POSTGRES_PASS=${{ secrets.POSTGRES_PASS || 'admin' }}" >> .env
+          echo "POSTGRES_HOST=db" >> .env
+          echo "POSTGRES_PORT=5432" >> .env
+          echo "DJANGO_DEBUG=${{ secrets.DJANGO_DEBUG || 'True' }}" >> .env
+          echo "HOST_ALLOW_ORIGINS=${{ secrets.HOST_ALLOW_ORIGINS || '*' }}" >> .env
+          echo "EMAIL_HOST_USER=${{ secrets.EMAIL_HOST_USER || '' }}" >> .env
+          echo "EMAIL_HOST_PASSWORD=${{ secrets.EMAIL_HOST_PASSWORD || '' }}" >> .env
+          
+          # Variables de entorno para la base de datos (compose)
+          echo "POSTGRES_DB=${{ secrets.POSTGRES_NAME || 'globalexchange_test' }}" >> .env
+          echo "POSTGRES_PASSWORD=${{ secrets.POSTGRES_PASS || 'admin' }}" >> .env
+          
+      - name: Modificar comando del backend para pruebas
+        run: |
+          cat > docker-compose.override.yml <<'EOF'
+          services:
+            backend:
+              command: >
+                bash -c "python manage.py migrate --noinput &&
+                         python -m pytest --verbose --tb=short"
+          EOF
+          
+      - name: Ejecutar pruebas con Docker Compose
+        run: |
+          docker compose up backend db \
+            --build \
+            --exit-code-from backend \
+            --abort-on-container-exit
+            
+      - name: Limpiar contenedores de prueba
+        if: always()
+        run: |
+          docker compose down --volumes --remove-orphans || true
+          docker system prune -f || true
