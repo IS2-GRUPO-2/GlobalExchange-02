@@ -1,5 +1,5 @@
 /**
- * @fileoverview Tipos de datos para operaciones de conversión y simulaciones
+ * @fileoverview Tipos de datos para simulaciones de operaciones.
  */
 
 import {type MetodoFinanciero} from './MetodoFinanciero'
@@ -27,14 +27,13 @@ export type SimulacionRequest = {
  * @property {string} divisa_origen - Código de la divisa de origen
  * @property {string} divisa_destino - Código de la divisa de destino
  * @property {Object} parametros - Parámetros utilizados en el cálculo
- * @property {number} parametros.precio_base - Precio base de la divisa
- * @property {number} parametros.comision_base - Comisión base aplicada
+ * @property {string} [parametros.nombre_categoria] - Nombre de la categoría del cliente
  * @property {number} [parametros.descuento_categoria] - Descuento por categoría del cliente
+ * @property {string} parametros.nombre_metodo - Nombre del método financiero utilizado
  * @property {number} [parametros.comision_metodo] - Comisión del método financiero
  * @property {number} tc_final - Tipo de cambio final aplicado
  * @property {number} monto_origen - Monto en divisa de origen
  * @property {number} monto_destino - Monto resultante en divisa de destino
- * @property {string} metodo - Nombre del método financiero utilizado
  */
 export type SimulacionResponse = {
   operacion_cliente: "compra" | "venta";
@@ -42,15 +41,14 @@ export type SimulacionResponse = {
   divisa_origen: string;
   divisa_destino: string;
   parametros: {
-    precio_base: number;
-    comision_base: number;
+    nombre_categoria?: string;
     descuento_categoria?: number;
+    nombre_metodo: string;
     comision_metodo?: number;
   };
   tc_final: number;
   monto_origen: number;
   monto_destino: number;
-  metodo: string;
 };
 
 /**
