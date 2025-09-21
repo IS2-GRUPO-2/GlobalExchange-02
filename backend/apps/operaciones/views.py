@@ -10,7 +10,7 @@ financieros (`MetodoFinanciero`) y sus implementaciones específicas
 from rest_framework import viewsets, status, filters, permissions
 from rest_framework.response import Response
 from rest_framework.pagination import PageNumberPagination
-from rest_framework.decorators import action
+from rest_framework.decorators import action, api_view, permission_classes
 from rest_framework.exceptions import PermissionDenied
 from .models import (
     Banco,
@@ -29,7 +29,15 @@ from .serializers import (
     CuentaBancariaSerializer,
     BilleteraDigitalSerializer,
     TarjetaSerializer,
+    SimulacionPrivadaSerializer,
+    SimulacionPublicaSerializer
 )
+from .services import (
+    calcular_simulacion_operacion_publica,
+    calcular_simulacion_operacion_privada,
+    listar_metodos_por_divisas,
+)
+
 
 
 class OperacionesPagination(PageNumberPagination):
@@ -587,3 +595,93 @@ class TarjetaViewSet(viewsets.ModelViewSet):
         detalle.is_active = False
         detalle.save()
         return Response({"message": f"Tarjeta {instance.brand} ****{instance.last4} desactivada (eliminado lógico)."}, status=status.HTTP_200_OK)
+    
+
+
+#=============================================================
+# Vistas para simulaciones de operaciones
+#=============================================================
+
+@api_view(["POST"])
+@permission_classes([permissions.IsAuthenticated])
+def simular_operacion_privada(request):
+    """
+    Endpoint de simulación privada (requiere login y cliente).
+    - Recibe datos de op con cliente_id.
+    - Devuelve resultado detallado con descuentos de categoría y comisiones.
+    """
+    serializer = SimulacionPrivadaSerializer(data=request.data)
+    if serializer.is_valid():
+        try:
+            data = serializer.validated_data
+            resultado = calcular_simulacion_operacion_privada(
+                cliente_id=data["cliente_id"],
+                divisa_origen_id=data["divisa_origen"],
+                divisa_destino_id=data["divisa_destino"],
+                monto=data["monto"],
+                metodo_id=data["metodo_id"],
+            )
+            return Response(resultado, status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+@api_view(["POST"])
+@permission_classes([permissions.AllowAny])
+def simular_operacion_publica(request):
+    """
+    Endpoint de simulación pública (landing page).
+    - No requiere login ni cliente.
+    - Devuelve resultado usando tasas y comision de metodo financiero.
+    """
+    serializer = SimulacionPublicaSerializer(data=request.data)
+    if serializer.is_valid():
+        try:
+            data = serializer.validated_data
+            resultado = calcular_simulacion_operacion_publica(
+                divisa_origen_id=data["divisa_origen"],
+                divisa_destino_id=data["divisa_destino"],
+                monto=data["monto"],
+                metodo_id=data["metodo_id"],
+            )
+            return Response(resultado, status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+@api_view(["GET"])
+@permission_classes([permissions.AllowAny])
+def listar_metodos_disponibles(request):
+    """
+    Endpoint que lista los métodos disponibles según divisa_origen y divisa_destino.
+    - El backend infiere si la operación es compra o venta.
+    - Devuelve { operacion_casa, metodos[] }.
+    """
+    try:
+        divisa_origen = request.query_params.get("divisa_origen")
+        divisa_destino = request.query_params.get("divisa_destino")
+
+        if not divisa_origen or not divisa_destino:
+            return Response({"error": "Debe indicar divisa_origen y divisa_destino"}, status=400)
+
+        if divisa_origen == divisa_destino:
+            return Response(
+                {"error": "La divisa de origen y destino no pueden ser iguales."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        operacion_casa, metodos = listar_metodos_por_divisas(divisa_origen, divisa_destino)
+
+        serializer = MetodoFinancieroSerializer(metodos, many=True)
+        return Response(
+            {
+                "operacion_casa": operacion_casa,
+                "metodos": serializer.data,
+            },
+            status=status.HTTP_200_OK,
+        )
+
+    except Exception as e:
+        return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)

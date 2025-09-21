@@ -1,9 +1,9 @@
 import { useState, useEffect } from "react";
 import {
-  simularConversion,
+  simularOperacionPrivada,
   getMetodosDisponibles,
-} from "../services/conversionService";
-import { type SimulacionResponse } from "../types/Conversion";
+} from "../services/simulacionService";
+import { type SimulacionResponse } from "../types/Simulacion";
 import { getUserClients } from "../services/usuarioService";
 import { type Cliente } from "../types/Cliente";
 import { type MetodoFinanciero } from "../types/MetodoFinanciero";
@@ -13,7 +13,7 @@ import type { DecodedToken } from "../types/User";
 import { jwtDecode } from "jwt-decode";
 import { toast } from "react-toastify";
 
-export default function SimulacionConversion() {
+export default function SimulacionOperacionPrivada() {
   const [monto, setMonto] = useState<number>(0);
   const [resultado, setResultado] = useState<SimulacionResponse | null>(null);
 
@@ -99,7 +99,7 @@ export default function SimulacionConversion() {
       return;
     }
     try {
-      const res = await simularConversion({
+      const res = await simularOperacionPrivada({
         cliente_id: clienteSeleccionado,
         divisa_origen: Number(divisaOrigen),
         divisa_destino: Number(divisaDestino),
@@ -117,7 +117,7 @@ export default function SimulacionConversion() {
       <div className="w-full max-w-md bg-white rounded-xl shadow overflow-hidden border border-gray-200">
         {/* Encabezado */}
         <div className="bg-zinc-900 text-white text-center py-3 rounded-t-xl">
-          <h2 className="text-lg font-semibold">Simulación de Conversión</h2>
+          <h2 className="text-lg font-semibold">Simulación de Operación</h2>
         </div>
 
         <div className="p-6 space-y-5">

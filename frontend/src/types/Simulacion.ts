@@ -1,5 +1,5 @@
 /**
- * @fileoverview Tipos de datos para operaciones de conversión y simulaciones
+ * @fileoverview Tipos de datos para simulaciones de operaciones.
  */
 
 import {type MetodoFinanciero} from './MetodoFinanciero'

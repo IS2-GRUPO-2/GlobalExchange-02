@@ -55,7 +55,6 @@ INSTALLED_APPS = [
     'apps.clientes',
     'apps.autenticacion',
     'apps.divisas',
-    'apps.conversiones',
     'apps.operaciones',
     'apps.cotizaciones',
     'apps.notificaciones',

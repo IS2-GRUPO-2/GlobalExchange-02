@@ -2,7 +2,7 @@ from decimal import Decimal
 from apps.clientes.models import Cliente
 from apps.divisas.models import Divisa
 from apps.cotizaciones.models import Tasa
-from apps.operaciones.models import MetodoFinanciero
+from .models import MetodoFinanciero
 from apps.cotizaciones.service import TasaService
 
 def _get_divisa(id_divisa: int) -> Divisa:
@@ -37,7 +37,7 @@ def _get_tasa_activa(divisa: Divisa) -> Tasa:
     return Tasa.objects.get(divisa=divisa, activo=True)
 
 
-def calcular_conversion(cliente_id, divisa_origen_id, divisa_destino_id, monto, metodo_id):
+def calcular_simulacion_operacion_privada(cliente_id, divisa_origen_id, divisa_destino_id, monto, metodo_id):
     """
     Simulación para usuario autenticado (con cliente).
     Aplica descuentos de categoría + comisiones personalizadas.
@@ -83,7 +83,7 @@ def calcular_conversion(cliente_id, divisa_origen_id, divisa_destino_id, monto, 
     }
 
 
-def calcular_conversion_publica(divisa_origen_id, divisa_destino_id, monto, metodo_id):
+def calcular_simulacion_operacion_publica(divisa_origen_id, divisa_destino_id, monto, metodo_id):
     """
     Simulación pública (landing).
     Usa tasas actuales + comisiones base. No aplica descuento de cliente.

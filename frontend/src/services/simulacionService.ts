@@ -1,20 +1,20 @@
 import axios from "axios";
-import { type SimulacionRequest, type SimulacionResponse, type MetodosDisponiblesResponse } from "../types/Conversion";
+import { type SimulacionRequest, type SimulacionResponse, type MetodosDisponiblesResponse } from "../types/Simulacion";
 
-const API_URL = "/api/conversiones/";
+const API_URL = "/api/operaciones/";
 
-export const simularConversion = async (
+export const simularOperacionPrivada = async (
   data: SimulacionRequest
 ): Promise<SimulacionResponse> => {
-  const url = API_URL + "simular/";
+  const url = API_URL + "simular_privada/";
   const response = await axios.post(url, data);
   return response.data;
 };
 
-export const simularConversionPublica = async (
+export const simularOperacionPublica = async (
   data: Omit<SimulacionRequest, "cliente_id">
 ): Promise<SimulacionResponse> => {
-  const url = API_URL + "simular-publica/";
+  const url = API_URL + "simular_publica/";
   const response = await axios.post(url, data);
   return response.data;
 };
