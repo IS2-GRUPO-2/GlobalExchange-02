@@ -122,8 +122,7 @@ jobs:
           script: |
             cd /srv/globalexchange
             echo "${{ secrets.PROD_ENV}}" > .env
-            echo "${{ secrets.GHCR }}" >> .env
-            echo "$GHCR_PAT" | docker login ghcr.io -u "$GHCR_USER" --password-stdin
+            echo "${{ secrets.GHCR_PAT}}" | docker login ghcr.io -u "${{ secrets.GHCR_USER}}" --password-stdin
             docker compose pull
             docker compose up -d
 
