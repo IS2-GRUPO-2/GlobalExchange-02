@@ -21,7 +21,7 @@ from apps.operaciones.serializers import MetodoFinancieroSerializer
 def simular_conversion(request):
     """
     Endpoint de simulación privada (requiere login y cliente).
-    - Recibe datos de conversión + cliente_id.
+    - Recibe datos de conversión con cliente_id.
     - Devuelve resultado detallado con descuentos de categoría y comisiones.
     """
     serializer = SimulacionPrivadaSerializer(data=request.data)
@@ -47,7 +47,7 @@ def simular_conversion_publica(request):
     """
     Endpoint de simulación pública (landing page).
     - No requiere login ni cliente.
-    - Devuelve resultado usando tasas y comisiones base.
+    - Devuelve resultado usando tasas y comision de metodo financiero.
     """
     serializer = SimulacionPublicaSerializer(data=request.data)
     if serializer.is_valid():

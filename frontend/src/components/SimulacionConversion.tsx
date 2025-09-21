@@ -10,7 +10,7 @@ import { type MetodoFinanciero } from "../types/MetodoFinanciero";
 import { getDivisasConTasa } from "../services/divisaService";
 import { type Divisa } from "../types/Divisa";
 import type { DecodedToken } from "../types/User";
-import { jwtDecode } from "jwt-decode"; // ✅ named import
+import { jwtDecode } from "jwt-decode";
 import { toast } from "react-toastify";
 
 export default function SimulacionConversion() {
@@ -319,28 +319,33 @@ export default function SimulacionConversion() {
 
               <div className="space-y-1 text-sm">
                 <p>
-                  <strong>Precio base:</strong>{" "}
-                  {resultado.parametros.precio_base}
+                  <strong>Categoría:</strong>{" "}
+                  {resultado.parametros.nombre_categoria ||
+                    "Sin categoría"}
                 </p>
+               
                 <p>
-                  <strong>Comisión base:</strong>{" "}
-                  {resultado.parametros.comision_base}
+                  <strong>Descuento categoría:</strong>{" "}
+                  {resultado.parametros.descuento_categoria}%
                 </p>
-                {"descuento_categoria" in resultado.parametros && (
+
+                {operacionCasa == "venta" && (
+                    <p>
+                      <strong>Método de Pago:</strong> {resultado.parametros.nombre_metodo}
+                    </p>
+                  )}
+                {operacionCasa == "compra" && (
                   <p>
-                    <strong>Descuento categoría:</strong>{" "}
-                    {resultado.parametros.descuento_categoria}%
+                    <strong>Método de Cobro:</strong> {resultado.parametros.nombre_metodo}
                   </p>
                 )}
+
                 <p>
                   <strong>Comisión método:</strong>{" "}
                   {resultado.parametros.comision_metodo}%
                 </p>
                 <p>
-                  <strong>Tasa final:</strong> {resultado.tc_final}
-                </p>
-                <p>
-                  <strong>Método:</strong> {resultado.metodo}
+                  <strong>Tasa final aplicada:</strong> {resultado.tc_final}
                 </p>
               </div>
             </div>

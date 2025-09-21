@@ -1,7 +1,7 @@
 import axios from "axios";
 import { type SimulacionRequest, type SimulacionResponse, type MetodosDisponiblesResponse } from "../types/Conversion";
 
-const API_URL = "http://localhost:8000/api/conversiones/";
+const API_URL = "/api/conversiones/";
 
 export const simularConversion = async (
   data: SimulacionRequest

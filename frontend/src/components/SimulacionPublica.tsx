@@ -275,24 +275,24 @@
 
                 {/* Detalles */}
                 <div className="space-y-1 text-sm">
-                  <p>
-                    <strong>Precio base:</strong>{" "}
-                    {resultado.parametros.precio_base}
-                  </p>
-                  <p>
-                    <strong>Comisión base:</strong>{" "}
-                    {resultado.parametros.comision_base}
-                  </p>
+                  {operacionCasa == "venta" && (
+                    <p>
+                      <strong>Método de Pago:</strong> {resultado.parametros.nombre_metodo}
+                    </p>
+                  )}
+                  {operacionCasa == "compra" && (
+                    <p>
+                      <strong>Método de Cobro:</strong> {resultado.parametros.nombre_metodo}
+                    </p>
+                  )}
                   <p>
                     <strong>Comisión método:</strong>{" "}
                     {resultado.parametros.comision_metodo}%
                   </p>
                   <p>
-                    <strong>Tasa final:</strong> {resultado.tc_final}
+                    <strong>Tasa final aplicada:</strong> {resultado.tc_final}
                   </p>
-                  <p>
-                    <strong>Método:</strong> {resultado.metodo}
-                  </p>
+                  
                 </div>
               </div>
             )}
