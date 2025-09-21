@@ -1,4 +1,4 @@
-import SimulacionPublica from "../components/SimulacionPublica";
+import SimulacionOperacionPublica from "../components/SimulacionOperacionPublica";
 import CotizacionesTabla from "../components/CotizacionesTabla";
 
 
@@ -6,7 +6,7 @@ export default function MainMenuPage() {
   return (
     <div className="flex flex-col min-h-screen bg-gray-50">
       <main className="flex-grow">
-        <SimulacionPublica />
+        <SimulacionOperacionPublica />
         <CotizacionesTabla />
       </main>
     </div>

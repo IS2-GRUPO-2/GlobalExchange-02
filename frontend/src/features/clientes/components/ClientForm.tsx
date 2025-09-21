@@ -1,12 +1,13 @@
-import type { CategoriaCliente, Cliente } from "../types/Cliente";
+import type { CategoriaCliente, Cliente } from "../../../types/Cliente";
 import { yupResolver } from "@hookform/resolvers/yup";
 import * as yup from "yup";
 import { useForm } from "react-hook-form";
 import { toast } from "react-toastify";
 import { useEffect, useState } from "react";
 import { getCategorias } from "../services/clienteService";
-export type EditClientFormData = {
-  id: string;
+
+export type ClientFormData = {
+  id?: number;
   nombre: string;
   isPersonaFisica: boolean;
   idCategoria: string;
@@ -17,14 +18,14 @@ export type EditClientFormData = {
 };
 
 type Props = {
-  onSubmit: (clientData: EditClientFormData) => void;
+  onSubmit: (clientData: ClientFormData) => void;
   onCancel: () => void;
-  cliente: Cliente;
+  isEditForm: boolean;
+  cliente: Cliente | null;
   readOnly: boolean;
 };
 
 const clientSchema = yup.object().shape({
-  id: yup.string().required(),
   nombre: yup
     .string()
     .required("Este campo es requerido.")
@@ -52,28 +53,46 @@ const clientSchema = yup.object().shape({
     .min(2, "Debe tener al menos 2 caracteres."),
 });
 
-const EditClientForm = ({ onSubmit, onCancel, cliente, readOnly }: Props) => {
+const ClientForm = ({
+  onSubmit,
+  onCancel,
+  isEditForm,
+  cliente,
+  readOnly,
+}: Props) => {
   const [categorias, setCategorias] = useState<CategoriaCliente[]>([]);
   const [loadingCategorias, setLoadingCategorias] = useState(true);
-  
+
   const {
     register,
     handleSubmit,
     formState: { errors, isSubmitting },
     reset,
-    setValue
-  } = useForm<EditClientFormData>({
+    setValue,
+  } = useForm<ClientFormData>({
     resolver: yupResolver(clientSchema),
-    defaultValues: {
-      id: cliente.idCliente,
-      nombre: cliente.nombre,
-      idCategoria: cliente.idCategoria,
-      documento: cliente.isPersonaFisica ? cliente.cedula : cliente.ruc,
-      isPersonaFisica: cliente.isPersonaFisica,
-      direccion: cliente.direccion,
-      telefono: cliente.telefono,
-      correo: cliente.correo,
-    },
+    defaultValues:
+      isEditForm || readOnly
+        ? {
+            nombre: cliente?.nombre,
+            idCategoria: cliente?.idCategoria,
+            documento: cliente?.isPersonaFisica
+              ? cliente?.cedula
+              : cliente?.ruc,
+            isPersonaFisica: cliente?.isPersonaFisica,
+            direccion: cliente?.direccion,
+            telefono: cliente?.telefono,
+            correo: cliente?.correo,
+          }
+        : {
+            nombre: "",
+            idCategoria: "",
+            documento: "",
+            isPersonaFisica: false,
+            direccion: "",
+            telefono: "",
+            correo: "",
+          },
   });
   // Cargar categorías al montar el componente
   useEffect(() => {
@@ -81,8 +100,10 @@ const EditClientForm = ({ onSubmit, onCancel, cliente, readOnly }: Props) => {
       try {
         const response = await getCategorias();
         setCategorias(response.data);
-        setValue("idCategoria", cliente.idCategoria);
 
+        if ((isEditForm || readOnly) && cliente?.idCategoria) {
+          setValue("idCategoria", cliente.idCategoria);
+        }
       } catch (error) {
         console.error("Error al cargar categorías:", error);
         toast.error("Error al cargar las categorías");
@@ -93,18 +114,23 @@ const EditClientForm = ({ onSubmit, onCancel, cliente, readOnly }: Props) => {
 
     fetchCategorias();
   }, []);
-  const onFormSubmit = async (data: EditClientFormData) => {
+
+  const onFormSubmit = async (data: ClientFormData) => {
     try {
       onSubmit(data);
       reset();
     } catch (err) {
-      toast.error("Error al registrar cliente!");
+      isEditForm
+        ? toast.error("Error al registrar cliente!: ")
+        : toast.error("Error al editar cliente!");
     }
   };
 
   return (
     <div>
-      <h2 className="text-2xl font-bold mb-4 text-gray-800">Editar cliente</h2>
+      <h2 className="text-2xl font-bold mb-4 text-gray-800">
+        {isEditForm ? "Editar cliente" : "Registrar cliente"}
+      </h2>
       <div className="space-y-4">
         <div>
           <label
@@ -120,6 +146,7 @@ const EditClientForm = ({ onSubmit, onCancel, cliente, readOnly }: Props) => {
             className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
               errors.nombre ? "border-red-500" : "border-gray-300"
             }`}
+            placeholder="Nombre"
             readOnly={readOnly}
           />
           {errors.nombre && (
@@ -141,6 +168,7 @@ const EditClientForm = ({ onSubmit, onCancel, cliente, readOnly }: Props) => {
             className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
               errors.correo ? "border-red-500" : "border-gray-300"
             }`}
+            placeholder="Correo electrónico"
             readOnly={readOnly}
           />
           {errors.correo && (
@@ -162,6 +190,7 @@ const EditClientForm = ({ onSubmit, onCancel, cliente, readOnly }: Props) => {
             className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
               errors.documento ? "border-red-500" : "border-gray-300"
             }`}
+            placeholder="Documento (Cédula o RUC)"
             readOnly={readOnly}
           />
           {errors.documento && (
@@ -185,6 +214,7 @@ const EditClientForm = ({ onSubmit, onCancel, cliente, readOnly }: Props) => {
             className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
               errors.telefono ? "border-red-500" : "border-gray-300"
             }`}
+            placeholder="Número de teléfono"
             readOnly={readOnly}
           />
           {errors.telefono && (
@@ -208,6 +238,7 @@ const EditClientForm = ({ onSubmit, onCancel, cliente, readOnly }: Props) => {
             className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
               errors.direccion ? "border-red-500" : "border-gray-300"
             }`}
+            placeholder="Dirección"
             readOnly={readOnly}
           />
           {errors.direccion && (
@@ -233,7 +264,9 @@ const EditClientForm = ({ onSubmit, onCancel, cliente, readOnly }: Props) => {
             disabled={readOnly}
           >
             <option value="">
-              {loadingCategorias ? "Cargando categorías..." : "Seleccione una categoría"}
+              {loadingCategorias
+                ? "Cargando categorías..."
+                : "Seleccione una categoría"}
             </option>
             {categorias.map((categoria) => (
               <option key={categoria.idCategoria} value={categoria.idCategoria}>
@@ -260,8 +293,10 @@ const EditClientForm = ({ onSubmit, onCancel, cliente, readOnly }: Props) => {
               className={`mr-2 h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded ${
                 errors.isPersonaFisica ? "border-red-500" : ""
               }`}
-              checked={cliente.isPersonaFisica}
-              readOnly={readOnly}
+              defaultChecked={
+                isEditForm || readOnly ? cliente?.isPersonaFisica : true
+              }
+              disabled={readOnly}
             />
             Persona física
           </label>
@@ -280,7 +315,11 @@ const EditClientForm = ({ onSubmit, onCancel, cliente, readOnly }: Props) => {
               disabled={isSubmitting}
               className="flex-1 bg-gray-900 text-white py-2 px-4 rounded-md hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              Editar
+              {isSubmitting
+                ? "Creando..."
+                : isEditForm
+                ? "Editar Cliente"
+                : "Crear cliente"}
             </button>
           )}
           <button
@@ -297,4 +336,4 @@ const EditClientForm = ({ onSubmit, onCancel, cliente, readOnly }: Props) => {
   );
 };
 
-export default EditClientForm;
+export default ClientForm;

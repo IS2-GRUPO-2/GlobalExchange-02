@@ -1,19 +1,19 @@
 import { useState, useEffect } from "react";
 import {
-  simularConversion,
+  simularOperacionPrivada,
   getMetodosDisponibles,
-} from "../services/conversionService";
-import { type SimulacionResponse } from "../types/Conversion";
+} from "../services/simulacionService";
+import { type SimulacionResponse } from "../types/Simulacion";
 import { getUserClients } from "../services/usuarioService";
 import { type Cliente } from "../types/Cliente";
 import { type MetodoFinanciero } from "../types/MetodoFinanciero";
 import { getDivisasConTasa } from "../services/divisaService";
 import { type Divisa } from "../types/Divisa";
 import type { DecodedToken } from "../types/User";
-import { jwtDecode } from "jwt-decode"; // ✅ named import
+import { jwtDecode } from "jwt-decode";
 import { toast } from "react-toastify";
 
-export default function SimulacionConversion() {
+export default function SimulacionOperacionPrivada() {
   const [monto, setMonto] = useState<number>(0);
   const [resultado, setResultado] = useState<SimulacionResponse | null>(null);
 
@@ -99,7 +99,7 @@ export default function SimulacionConversion() {
       return;
     }
     try {
-      const res = await simularConversion({
+      const res = await simularOperacionPrivada({
         cliente_id: clienteSeleccionado,
         divisa_origen: Number(divisaOrigen),
         divisa_destino: Number(divisaDestino),
@@ -117,7 +117,7 @@ export default function SimulacionConversion() {
       <div className="w-full max-w-md bg-white rounded-xl shadow overflow-hidden border border-gray-200">
         {/* Encabezado */}
         <div className="bg-zinc-900 text-white text-center py-3 rounded-t-xl">
-          <h2 className="text-lg font-semibold">Simulación de Conversión</h2>
+          <h2 className="text-lg font-semibold">Simulación de Operación</h2>
         </div>
 
         <div className="p-6 space-y-5">
@@ -319,28 +319,33 @@ export default function SimulacionConversion() {
 
               <div className="space-y-1 text-sm">
                 <p>
-                  <strong>Precio base:</strong>{" "}
-                  {resultado.parametros.precio_base}
+                  <strong>Categoría:</strong>{" "}
+                  {resultado.parametros.nombre_categoria ||
+                    "Sin categoría"}
                 </p>
+               
                 <p>
-                  <strong>Comisión base:</strong>{" "}
-                  {resultado.parametros.comision_base}
+                  <strong>Descuento categoría:</strong>{" "}
+                  {resultado.parametros.descuento_categoria}%
                 </p>
-                {"descuento_categoria" in resultado.parametros && (
+
+                {operacionCasa == "venta" && (
+                    <p>
+                      <strong>Método de Pago:</strong> {resultado.parametros.nombre_metodo}
+                    </p>
+                  )}
+                {operacionCasa == "compra" && (
                   <p>
-                    <strong>Descuento categoría:</strong>{" "}
-                    {resultado.parametros.descuento_categoria}%
+                    <strong>Método de Cobro:</strong> {resultado.parametros.nombre_metodo}
                   </p>
                 )}
+
                 <p>
                   <strong>Comisión método:</strong>{" "}
                   {resultado.parametros.comision_metodo}%
                 </p>
                 <p>
-                  <strong>Tasa final:</strong> {resultado.tc_final}
-                </p>
-                <p>
-                  <strong>Método:</strong> {resultado.metodo}
+                  <strong>Tasa final aplicada:</strong> {resultado.tc_final}
                 </p>
               </div>
             </div>

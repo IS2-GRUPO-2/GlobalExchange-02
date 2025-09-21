@@ -43,3 +43,10 @@ export type CategoriaCliente = {
   descripcion: string;
   descuento: number;
 };
+
+export type PaginatedCliente = {
+  count: number;
+  next: string | null;
+  previous: string | null;
+  results: Cliente[];
+};

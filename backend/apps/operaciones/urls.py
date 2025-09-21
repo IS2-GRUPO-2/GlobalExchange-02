@@ -7,7 +7,10 @@ from .views import (
     MetodoFinancieroDetalleViewSet,
     CuentaBancariaViewSet,
     BilleteraDigitalViewSet,
-    TarjetaViewSet
+    TarjetaViewSet,
+    simular_operacion_privada,
+    simular_operacion_publica,
+    listar_metodos_disponibles
 )
 
 router = DefaultRouter()
@@ -21,4 +24,8 @@ router.register(r'tarjetas', TarjetaViewSet, basename='tarjeta')
 
 urlpatterns = [
     path('', include(router.urls)),
+    path("simular_privada/", simular_operacion_privada, name="simular-operacion-privada"),
+    path("simular_publica/", simular_operacion_publica, name="simular-operacion-publica"),
+    path("metodos-disponibles/", listar_metodos_disponibles, name="metodos-disponibles"),
+
 ]

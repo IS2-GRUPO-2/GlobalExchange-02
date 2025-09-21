@@ -1,6 +1,6 @@
 import axios from "axios";
-import type { PaginatedCliente, Cliente } from "../types/Cliente";
-import { type User } from "../types/User";
+import type { PaginatedCliente, Cliente } from "../../../types/Cliente";
+import { type User } from "../../../types/User";
 
 // Usamos rutas relativas para que las peticiones pasen por el proxy de Nginx
 const API_URL = "/api/clientes/";
@@ -29,17 +29,6 @@ export const getClientes = async (params: GetParams) => {
     throw err;
   }
 };
-
-export const getAllClientes = async () => {
-  try {
-    const res = await axios.get<Cliente[]>(`${API_URL}?all=true`);
-    return res;
-  } catch (err) {
-    console.error("Error en get all clientes");
-    throw err;
-  }
-};
-
 export const getCliente = (id: string) =>
   axios.get<Cliente>(`${API_URL}${id}/`, getAuthHeaders());
 

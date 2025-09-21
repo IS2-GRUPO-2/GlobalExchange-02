@@ -45,3 +45,9 @@ class ClienteSerializer(serializers.ModelSerializer):
     class Meta:
         model = Cliente
         fields = "__all__"
+
+class ClientePaginatedResponseSerializer(serializers.Serializer):
+    count    = serializers.IntegerField()
+    next     = serializers.CharField(allow_null=True)
+    previous = serializers.CharField(allow_null=True)
+    results  = ClienteSerializer(many=True)
