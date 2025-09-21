@@ -1,12 +1,6 @@
 import { useEffect, useState } from "react";
 import type { Cliente } from "../types/Cliente";
 import {
-  createCliente,
-  deleteCliente,
-  getClientes,
-  updateCliente
-} from "../services/clienteService";
-import {
   Edit,
   UserX,
   UserCheck,
@@ -14,164 +8,72 @@ import {
   Search,
   BookUser,
 } from "lucide-react";
-import type { ClientFormData } from "../components/ClientForm";
-import type { EditClientFormData } from "../components/EditClientForm";
-import { toast } from "react-toastify";
+import type { ClientFormData } from "../features/clientes/components/ClientForm";
 import Modal from "../components/Modal";
-import ClientForm from "../components/ClientForm";
-import EditClientForm from "../components/EditClientForm";
-import AssignedUsers from "../components/AssignedUsers";
+import ClientForm from "../features/clientes/components/ClientForm";
+import AssignedUsers from "../features/clientes/components/AssignedUsers";
+import { useClientes } from "../features/clientes/hooks/useCliente";
+import { useModal } from "../hooks/useModal";
+import SearchBar from "../components/SearchBar";
 
 const ClientesPage = () => {
-  const [clientes, setClientes] = useState<Cliente[]>([]);
   const [searchQuery, setSearchQuery] = useState<string>("");
-  const [createModalOpen, setCreateModalOpen] = useState<boolean>(false);
-  const [editModalOpen, setEditModalOpen] = useState<boolean>(false);
-  const [detailModalOpen, setDetailModalOpen] = useState<boolean>(false);
-  const [usersModalOpen, setUsersModalOpen] = useState<boolean>(false);
-  const [selectedClient, setSelectedClient] = useState<Cliente | null>(null);
 
-  const openCreateModal = (): void => setCreateModalOpen(true);
-  const closeCreateModal = (): void => setCreateModalOpen(false);
-
-  const openEditModal = (client: Cliente): void => {
-    setSelectedClient(client);
-    setEditModalOpen(true);
-  };
-  const closeEditModal = (): void => {
-    setEditModalOpen(false);
-    setSelectedClient(null);
-  };
-
-  const openDetailModal = (client: Cliente): void => {
-    setSelectedClient(client);
-    setDetailModalOpen(true);
-  };
-  const closeDetailModal = (): void => {
-    setDetailModalOpen(false);
-    setSelectedClient(null);
-  };
-
-  const openUsersModal = (client: Cliente): void => {
-    setSelectedClient(client);
-    setUsersModalOpen(true);
-  };
-  const closeUsersModal = (): void => {
-    setUsersModalOpen(false);
-    setSelectedClient(null);
-  };
-
-  const fetchClientes = async () => {
-    const res = await getClientes(searchQuery);
-    setClientes(res.data);
-  };
+  const clientesHook = useClientes();
+  const modalHook = useModal();
 
   useEffect(() => {
-    fetchClientes();
-  }, [searchQuery]);
+    clientesHook.fetchClientes(searchQuery, clientesHook.page);
+  }, [clientesHook.page]);
 
   const handleCreateClient = async (clientData: ClientFormData) => {
-    let clienteData: Partial<Cliente> = {
-      nombre: clientData.nombre,
-      isPersonaFisica: clientData.isPersonaFisica,
-      idCategoria: clientData.idCategoria,
-      correo: clientData.correo,
-      telefono: clientData.telefono,
-      direccion: clientData.direccion,
-      isActive: true,
-    };
+    modalHook.setIsSubmitting(true);
+    const success = await clientesHook.registerCliente(clientData);
+    if (success) {
+      clientesHook.fetchClientes(searchQuery, clientesHook.page);
+      modalHook.closeCreateModal();
+    }
+    modalHook.setIsSubmitting(false);
+  };
 
-    clientData.isPersonaFisica
-      ? (clienteData.cedula = clientData.documento)
-      : (clienteData.ruc = clientData.documento);
+  const handleEditClient = async (clientData: ClientFormData) => {
+    modalHook.setIsSubmitting(true);
+    const success = await clientesHook.updateClient(
+      clientData,
+      clientesHook.selectedClient?.idCliente!
+    );
+    if (success) {
+      clientesHook.fetchClientes(searchQuery, clientesHook.page);
+      modalHook.closeCreateModal();
+    }
+    modalHook.setIsSubmitting(false);
+  };
 
-    try {
-      const res = await createCliente(clienteData);
-      if (res.status === 201) {
-        toast.success("Cliente creado con éxito!");
-        fetchClientes();
-      }
-    } catch (err) {
-      toast.error("Ha ocurrido un error al crear al cliente.");
-    } finally {
-      closeCreateModal();
+  const handleToggleClient = async (cliente: Cliente) => {
+    const success = await clientesHook.toggleCliente(cliente);
+    if (success) {
+      clientesHook.fetchClientes(searchQuery, clientesHook.page);
     }
   };
 
-  const handleEditClient = async (clientData: EditClientFormData) => {
-    let clienteData: Partial<Cliente> = {
-      idCliente: clientData.id,
-      nombre: clientData.nombre,
-      isPersonaFisica: clientData.isPersonaFisica,
-      idCategoria: clientData.idCategoria,
-      correo: clientData.correo,
-      telefono: clientData.telefono,
-      direccion: clientData.direccion,
-      isActive: true,
-    };
-
-    if (clientData.isPersonaFisica) {
-      clienteData.cedula = clientData.documento;
-      clienteData.ruc = "";
-    } else {
-      clienteData.ruc = clientData.documento;
-      clienteData.cedula = "";
-    }
-
-    try {
-      const res = await updateCliente(clientData.id, clienteData);
-      if (res.status === 200) {
-        toast.success("Cliente actualizado con éxito!");
-        fetchClientes();
-      }
-    } catch (err) {
-      toast.error("Ha ocurrido un error al actualizar al cliente.");
-    } finally {
-      closeEditModal();
-    }
-  };
-
-  const handleDeactivateClient = async (id: string) => {
-    try {
-      const res = await deleteCliente(id);
-      if (res.status === 200) toast.success("Cliente desactivado con éxito");
-      fetchClientes();
-    } catch (e) {
-      toast.error("Ha ocurrido un error");
-    }
-  };
-
-  const handleActivateClient = async (cliente: Cliente) => {
-    cliente.isActive = true;
-    try {
-      const res = await updateCliente(cliente.idCliente, cliente);
-      if (res.status === 200) {
-        toast.success("Cliente activado con éxito");
-        fetchClientes();
-      }
-    } catch (e) {
-      toast.error("Ha ocurrido un error");
-    }
+  const onSearch = () => {
+    clientesHook.setPage(1);
+    clientesHook.fetchClientes(searchQuery, clientesHook.page);
   };
 
   return (
     <div className="bg-gray-50 min-h-screen flex-1 overflow-y-auto p-6">
+      {/* Header: buscador + botón */}
       <div className="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div className="relative w-full sm:w-64 md:w-96 pl-4">
-          <div className="absolute inset-y-0 left-0 p-8 pt-5 flex items-center pointer-events-none">
-            <Search size={18} className="text-gray-400" />
-          </div>
-          <input
-            type="text"
-            placeholder="Buscar clientes..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-10 pr-4 py-2 w-full border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-700 focus:border-transparent"
+        <div className="flex w-full sm:w-64 md:w-96 gap-2">
+          <SearchBar
+            search={searchQuery}
+            setSearch={setSearchQuery}
+            onSearch={onSearch}
           />
         </div>
-
         <button
-          onClick={openCreateModal}
+          onClick={modalHook.openCreateModal}
           className="btn-primary flex items-center justify-center"
         >
           <UserPlus size={18} className="mr-2" />
@@ -179,6 +81,7 @@ const ClientesPage = () => {
         </button>
       </div>
 
+      {/* Tabla */}
       <div className="card">
         <div className="table-container">
           <table className="table">
@@ -193,7 +96,7 @@ const ClientesPage = () => {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200">
-              {clientes.map((cliente: Cliente) => (
+              {clientesHook.clientes.map((cliente: Cliente) => (
                 <tr key={cliente.idCliente}>
                   <td className="font-medium">{cliente.nombre}</td>
                   <td>{cliente.categoria?.nombre}</td>
@@ -219,18 +122,14 @@ const ClientesPage = () => {
                   <td>
                     <div className="flex items-center space-x-2">
                       <button
-                        onClick={() => openEditModal(cliente)}
+                        onClick={() => modalHook.openEditModal(cliente)}
                         className="p-1 text-gray-500 hover:text-blue-600 rounded-full hover:bg-gray-100"
                         title="Editar"
                       >
                         <Edit size={16} />
                       </button>
                       <button
-                        onClick={
-                          cliente.isActive
-                            ? () => handleDeactivateClient(cliente.idCliente)
-                            : () => handleActivateClient(cliente)
-                        }
+                        onClick={() => handleToggleClient(cliente)}
                         className="p-1 text-gray-500 hover:text-red-600 rounded-full hover:bg-gray-100"
                         title={cliente.isActive ? "Desactivar" : "Activar"}
                       >
@@ -241,14 +140,14 @@ const ClientesPage = () => {
                         )}
                       </button>
                       <button
-                        onClick={() => openDetailModal(cliente)}
+                        onClick={() => modalHook.openViewModal(cliente)}
                         className="p-1 text-gray-500 hover:text-green-600 rounded-full hover:bg-gray-100"
                         title="Ver detalles"
                       >
                         <Search size={16} />
                       </button>
                       <button
-                        onClick={() => openUsersModal(cliente)}
+                        onClick={() => clientesHook.openUsersModal(cliente)}
                         className="p-1 text-gray-500 hover:text-yellow-700 rounded-full hover:bg-gray-100"
                         title="Ver operadores"
                       >
@@ -259,33 +158,84 @@ const ClientesPage = () => {
                 </tr>
               ))}
             </tbody>
+            <tfoot>
+              <tr>
+                <td colSpan={7}>
+                  <div className="flex justify-between items-center mt-4">
+                    <div className="text-sm text-gray-600">
+                      Página {clientesHook.page} de {clientesHook.totalPages}
+                    </div>
+                    <div className="flex space-x-4">
+                      <button
+                        onClick={() =>
+                          clientesHook.setPage((p) => Math.max(p - 1, 1))
+                        }
+                        disabled={clientesHook.page === 1}
+                        className="px-3 py-1 btn-primary disabled:opacity-50"
+                      >
+                        Anterior
+                      </button>
+                      <button
+                        onClick={() =>
+                          clientesHook.setPage((p) =>
+                            Math.min(p + 1, clientesHook.totalPages)
+                          )
+                        }
+                        disabled={clientesHook.page === clientesHook.totalPages}
+                        className="px-3 py-1 btn-primary disabled:opacity-50"
+                      >
+                        Siguiente
+                      </button>
+                    </div>
+                  </div>
+                </td>
+              </tr>
+            </tfoot>
           </table>
         </div>
 
-        <Modal isOpen={createModalOpen} onClose={closeCreateModal}>
+        {/* Modales */}
+        <Modal
+          isOpen={modalHook.createModalOpen}
+          onClose={modalHook.closeCreateModal}
+        >
           <ClientForm
             onSubmit={handleCreateClient}
-            onCancel={closeCreateModal}
-          />
-        </Modal>
-        <Modal isOpen={editModalOpen} onClose={closeEditModal}>
-          <EditClientForm
-            onSubmit={handleEditClient}
-            onCancel={closeEditModal}
-            cliente={selectedClient!}
+            onCancel={modalHook.closeCreateModal}
+            isEditForm={false}
+            cliente={null}
             readOnly={false}
           />
         </Modal>
-        <Modal isOpen={detailModalOpen} onClose={closeDetailModal}>
-          <EditClientForm
+        <Modal
+          isOpen={modalHook.editModalOpen}
+          onClose={modalHook.closeEditModal}
+        >
+          <ClientForm
             onSubmit={handleEditClient}
-            onCancel={closeDetailModal}
-            cliente={selectedClient!}
+            onCancel={modalHook.closeEditModal}
+            cliente={modalHook.selectedItem}
+            isEditForm={true}
+            readOnly={false}
+          />
+        </Modal>
+        <Modal
+          isOpen={modalHook.viewModalOpen}
+          onClose={modalHook.closeViewModal}
+        >
+          <ClientForm
+            onSubmit={handleEditClient}
+            onCancel={modalHook.closeViewModal}
+            cliente={modalHook.selectedItem}
+            isEditForm={false}
             readOnly={true}
           />
         </Modal>
-        <Modal isOpen={usersModalOpen} onClose={closeUsersModal}>
-          <AssignedUsers cliente={selectedClient!} />
+        <Modal
+          isOpen={clientesHook.usersModalOpen}
+          onClose={clientesHook.closeUsersModal}
+        >
+          <AssignedUsers cliente={clientesHook.selectedClient!} />
         </Modal>
       </div>
     </div>
