@@ -10,7 +10,7 @@ on:
 
 jobs:
   test:
-    name: Correr Tests
+    name: Ejecutar Tests
     runs-on: ubuntu-latest
     
     steps:
