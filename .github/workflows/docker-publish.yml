@@ -41,7 +41,7 @@ jobs:
       # Crear archivo .env antes de cualquier build
       - name: Crear archivo .env
         run: |
-          echo "${{ secrets.PROD_ENV }}" > .env
+          echo "${{ secrets.DEV_ENV }}" > .env
 
       # Build frontend dist ANTES de usar los archivos
       - name: Compilar el frontend
@@ -111,3 +111,20 @@ jobs:
           TAGS: ${{ steps.meta-frontend.outputs.tags }}
           DIGEST: ${{ steps.build-frontend.outputs.digest }}
         run: echo "${TAGS}" | xargs -I {} cosign sign --yes {}@${DIGEST}
+
+      # SSH al vps
+      - name: Deploy en VPS
+        uses: appleboy/ssh-action@v1.0.0
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          script: |
+            cd /srv/globalexchange
+            echo "${{ secrets.PROD_ENV}}" > .env
+            echo "${{ secrets.GHCR }}" >> .env
+            echo "$GHCR_PAT" | docker login ghcr.io -u "$GHCR_USER" --password-stdin
+            docker compose pull
+            docker compose up -d
+
+      
