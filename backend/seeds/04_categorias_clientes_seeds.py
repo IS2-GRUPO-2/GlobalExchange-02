@@ -11,26 +11,31 @@ def run():
             'nombre': 'MINORISTA',
             'descripcion': 'Cliente minorista con beneficios básicos',
             'descuento': 0.00,
+            'isActive': True 
         },
         {
             'nombre': 'MAYORISTA',
             'descripcion': 'Cliente mayorista con descuentos intermedios',
             'descuento': 5.00,
+            'isActive': True
         },
         {
             'nombre': 'VIP',
             'descripcion': 'Cliente VIP con beneficios preferenciales',
             'descuento': 10.00,
+            'isActive': True
         },
         {
             'nombre': 'PREMIUM',
             'descripcion': 'Cliente premium con beneficios especiales y servicios exclusivos',
             'descuento': 15.00,
+            'isActive': True
         },
         {
             'nombre': 'CORPORATIVO',
             'descripcion': 'Cliente corporativo con límites especiales y gestión personalizada',
             'descuento': 20.00,
+            'isActive': True
         }
     ]
     
