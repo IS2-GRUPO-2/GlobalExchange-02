@@ -4,7 +4,7 @@ import * as yup from "yup";
 import { useForm } from "react-hook-form";
 import { toast } from "react-toastify";
 import { useEffect, useState } from "react";
-import { getCategorias } from "../services/clienteService";
+import { getActiveCategoriaClientes } from "../../../services/categoriaClienteService";
 
 export type ClientFormData = {
   id?: number;
@@ -98,7 +98,7 @@ const ClientForm = ({
   useEffect(() => {
     const fetchCategorias = async () => {
       try {
-        const response = await getCategorias();
+        const response = await getActiveCategoriaClientes();
         setCategorias(response.data);
 
         if ((isEditForm || readOnly) && cliente?.idCategoria) {
@@ -120,9 +120,11 @@ const ClientForm = ({
       onSubmit(data);
       reset();
     } catch (err) {
-      isEditForm
-        ? toast.error("Error al registrar cliente!: ")
-        : toast.error("Error al editar cliente!");
+      if (isEditForm) {
+        toast.error("Error al registrar cliente!: ");
+      } else {
+        toast.error("Error al editar cliente!");
+      }
     }
   };
 

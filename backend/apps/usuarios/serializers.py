@@ -1,7 +1,7 @@
 """
 Módulo de serializers para la gestión de usuarios.
 
-Define los serializers necesarios para la conversión entre objetos User
+Define los serializers necesarios para la operación entre objetos User
 y representaciones JSON en la API REST.
 """
 

@@ -34,6 +34,7 @@ def run():
                 'operaciones.view_banco',
                 'operaciones.view_billeteradigitalcatalogo',
                 'operaciones.view_metodofinanciero',
+                'operaciones.can_use_simulacion',
                 
                 # Cotizaciones
                 'cotizaciones.view_tasa',
@@ -44,8 +45,6 @@ def run():
                 'divisas.view_divisa',
                 'divisas.view_denominacion',
                 
-                # Conversiones
-                'conversiones.can_use_simulacion',
             ]
         },
         {
@@ -65,6 +64,7 @@ def run():
                 'operaciones.view_banco',
                 'operaciones.view_billeteradigitalcatalogo',
                 'operaciones.view_metodofinanciero',
+                'operaciones.can_use_simulacion',
                 
                 # Cotizaciones
                 'cotizaciones.view_tasa',
@@ -74,8 +74,6 @@ def run():
                 'divisas.view_divisa',
                 'divisas.view_denominacion',
                 
-                # Conversiones
-                'conversiones.can_use_simulacion',
             ]
         },
         {
@@ -88,7 +86,7 @@ def run():
                 'divisas.view_divisa',
                 'cotizaciones.view_tasa',
                 'cotizaciones.view_historialtasa',
-                'conversiones.can_use_simulacion',
+                'operaciones.can_use_simulacion',
             ]
         },
         {
@@ -96,7 +94,7 @@ def run():
             'permissions': [
                 # Permisos básicos para clientes
                 'operaciones.view_metodofinancierodetalle',
-                'conversiones.can_use_simulacion',
+                'operaciones.can_use_simulacion',
             ]
         },
         {

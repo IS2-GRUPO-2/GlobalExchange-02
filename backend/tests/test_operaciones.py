@@ -1,4 +1,6 @@
 import pytest
+from decimal import Decimal
+from django.urls import reverse
 from rest_framework.test import APIClient
 from rest_framework import status
 from django.contrib.auth import get_user_model
@@ -13,6 +15,16 @@ from apps.operaciones.models import (
     Banco,
     BilleteraDigitalCatalogo,
 )
+
+from apps.operaciones.services import (
+    _inferir_operacion,
+    calcular_simulacion_operacion_privada,
+    calcular_simulacion_operacion_publica,
+)
+
+from apps.divisas.models import Divisa
+from apps.cotizaciones.models import Tasa
+from apps.clientes.models import Cliente, CategoriaCliente
 
 pytestmark = pytest.mark.django_db
 
@@ -227,3 +239,157 @@ class TestTarjetaAPI:
         assert response.status_code == status.HTTP_200_OK
         detalle.refresh_from_db()
         assert detalle.is_active is False
+
+
+#===============================SIMULACION SERVICES TESTS=================================
+
+
+
+def test_inferir_operacion_compra_y_venta():
+    base = Divisa.objects.create(codigo="PYG", nombre="Guaraní", simbolo="₲", es_base=True)
+    usd = Divisa.objects.create(codigo="USD", nombre="Dólar", simbolo="$", es_base=False)
+
+    cliente_op, casa_op = _inferir_operacion(base, usd)
+    assert cliente_op == "compra"
+    assert casa_op == "venta"
+
+    cliente_op, casa_op = _inferir_operacion(usd, base)
+    assert cliente_op == "venta"
+    assert casa_op == "compra"
+
+
+
+def test_calcular_simulacion_operacion_privada():
+    # Setup
+    base = Divisa.objects.create(codigo="PYG", nombre="Guaraní", simbolo="₲", es_base=True)
+    usd = Divisa.objects.create(codigo="USD", nombre="Dólar", simbolo="$", es_base=False)
+    categoria, _= CategoriaCliente.objects.get_or_create(nombre="VIP", descuento=10)
+    cliente = Cliente.objects.create(nombre="Juan Perez", idCategoria=categoria)
+    metodo = MetodoFinanciero.objects.create(
+        nombre="Transferencia", comision_pago_porcentaje=2, comision_cobro_porcentaje=3,
+        permite_pago=True, permite_cobro=True, is_active=True
+    )
+    Tasa.objects.create(
+        divisa=usd, 
+        precioBase=Decimal("7300"), 
+        comisionBaseCompra=Decimal("100"), 
+        comisionBaseVenta=Decimal("100"), 
+        activo=True
+    )
+
+    # Ejecutar simulación
+    resultado = calcular_simulacion_operacion_privada(
+        cliente_id=cliente.idCliente,
+        divisa_origen_id=base.id,
+        divisa_destino_id=usd.id,
+        monto=1000,
+        metodo_id=metodo.id
+    )
+
+    assert resultado["operacion_cliente"] == "compra"
+    assert resultado["operacion_casa"] == "venta"
+    assert "tc_final" in resultado
+    assert "monto_destino" in resultado
+
+
+
+def test_calcular_simulacion_operacion_publica():
+    base = Divisa.objects.create(codigo="PYG", nombre="Guaraní", simbolo="₲", es_base=True)
+    usd = Divisa.objects.create(codigo="USD", nombre="Dólar", simbolo="$", es_base=False)
+    metodo = MetodoFinanciero.objects.create(
+        nombre="Efectivo", comision_pago_porcentaje=1, comision_cobro_porcentaje=2,
+        permite_pago=True, permite_cobro=True, is_active=True
+    )
+    Tasa.objects.create(
+        divisa=usd, 
+        precioBase=Decimal("7300"), 
+        comisionBaseCompra=Decimal("100"), 
+        comisionBaseVenta=Decimal("100"), 
+        activo=True
+    )
+
+    resultado = calcular_simulacion_operacion_publica(
+        divisa_origen_id=base.id,
+        divisa_destino_id=usd.id,
+        monto=5000,
+        metodo_id=metodo.id
+    )
+
+    assert resultado["operacion_cliente"] == "compra"
+    assert resultado["divisa_origen"] == "PYG"
+    assert resultado["divisa_destino"] == "USD"
+
+
+#===============================SIMULACION VIEWS TESTS=================================
+
+@pytest.mark.django_db
+def test_simular_operacion_publica_endpoint():
+    client = APIClient()
+
+    base = Divisa.objects.create(codigo="PYG", nombre="Guaraní", simbolo="₲", es_base=True)
+    usd = Divisa.objects.create(codigo="USD", nombre="Dólar", simbolo="$", es_base=False)
+    metodo = MetodoFinanciero.objects.create(
+        nombre="Efectivo", comision_pago_porcentaje=1, comision_cobro_porcentaje=2,
+        permite_pago=True, permite_cobro=True, is_active=True
+    )
+    Tasa.objects.create(
+        divisa=usd, 
+        precioBase=Decimal("7300"), 
+        comisionBaseCompra=Decimal("100"), 
+        comisionBaseVenta=Decimal("100"), 
+        activo=True
+    )
+
+    url = reverse("simular-operacion-publica")
+    payload = {
+        "divisa_origen": base.id,
+        "divisa_destino": usd.id,
+        "monto": 1000,
+        "metodo_id": metodo.id
+    }
+
+    response = client.post(url, payload, format="json")
+    assert response.status_code == 200
+    data = response.json()
+    assert data["operacion_cliente"] == "compra"
+    assert "monto_destino" in data
+
+
+
+def test_simular_operacion_privada_endpoint_authenticated():
+    client = APIClient()
+
+    # Crear usuario autenticado
+    user = User.objects.create_user(username="test", password="1234")
+    client.force_authenticate(user=user)
+
+    base = Divisa.objects.create(codigo="PYG", nombre="Guaraní", simbolo="₲", es_base=True)
+    usd = Divisa.objects.create(codigo="USD", nombre="Dólar", simbolo="$", es_base=False)
+    categoria, _ = CategoriaCliente.objects.get_or_create(nombre="VIP", descuento=10)
+    cliente = Cliente.objects.create(nombre="Carlos", idCategoria=categoria)
+    metodo = MetodoFinanciero.objects.create(
+        nombre="Transferencia", comision_pago_porcentaje=2, comision_cobro_porcentaje=3,
+        permite_pago=True, permite_cobro=True, is_active=True
+    )
+    Tasa.objects.create(
+        divisa=usd, 
+        precioBase=Decimal("7300"), 
+        comisionBaseCompra=Decimal("100"), 
+        comisionBaseVenta=Decimal("100"), 
+        activo=True
+    )
+
+    url = reverse("simular-operacion-privada")
+    payload = {
+        "cliente_id": cliente.idCliente,
+        "divisa_origen": base.id,
+        "divisa_destino": usd.id,
+        "monto": 2000,
+        "metodo_id": metodo.id
+    }
+
+    response = client.post(url, payload, format="json")
+    assert response.status_code == 200
+    data = response.json()
+    assert data["operacion_casa"] == "venta"
+    assert "tc_final" in data

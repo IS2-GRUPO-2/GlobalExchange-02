@@ -9,11 +9,13 @@ class CategoriaCliente(models.Model):
         nombre (str): Nombre de la categoría.
         descripcion (str): Descripción de la categoría.
         descuento (Decimal): Porcentaje de descuento asociado a la categoría.
+        isActive (bool): Indica si la categoría está activa.
     """
     idCategoria = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     nombre = models.CharField(max_length=50, unique=True)
     descripcion = models.TextField(blank=True, null=True)
     descuento = models.DecimalField(max_digits=5, decimal_places=2, default=0.00, help_text="Porcentaje de descuento en la comisión")
+    isActive = models.BooleanField(default=True)
 
     def __str__(self):
         return f"{self.nombre} ({self.descuento}%)"

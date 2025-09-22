@@ -227,3 +227,18 @@ class Cheque(models.Model):
     def __str__(self):
         return f"Cheque {self.numero} - {self.banco_emisor.nombre} ({self.estado})"
 
+
+#======================== MODELO SIMULACION PARA PERMISOS ========================
+class Simulacion(models.Model):
+    """
+    Modelo simbólico para asociar permisos de simulación.
+
+    Nota:
+    - No se persisten simulaciones en la base de datos.
+    - Sirve para registrar permisos personalizados en la UI.
+    """
+    class Meta:
+        default_permissions = ()
+        permissions = [
+            ("can_use_simulacion", "Puede usar simulación de operaciones"),
+        ]

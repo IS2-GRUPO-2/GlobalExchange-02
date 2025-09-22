@@ -1,70 +1,128 @@
 import { useEffect, useState } from "react";
-import { Edit, Search } from "lucide-react";
+import {
+  getCategoriaClientes,
+  createCategoriaCliente,
+  updateCategoriaCliente,
+} from "../services/categoriaClienteService";
+import { type CategoriaCliente } from "../types/Cliente";
+import { Edit, Search, Plus, Check, X, Eye } from "lucide-react";
 import { toast } from "react-toastify";
 import Modal from "../components/Modal";
-import { getCategoriaClientes, updateCategoriaCliente } from "../services/categoriaClienteService";
-import EditCategoriaForm from "../components/EditCategoriaClientesForm"; 
-interface CategoriaCliente {
-  idCategoria: string;
+import CategoriaClienteForm from "../components/CategoriaClientesForm";
+import Can from "../components/Can";
+import { CATEGORIAS_CLIENTE } from "../types/perms";
+
+// Type for the form submission data
+interface FormCategoriaCliente {
+  idCategoria?: string;
   nombre: string;
   descripcion: string;
   descuento: number;
-}
-
-interface EditCategoriaFormData {
-  idCategoria: string;
-  descripcion: string;
-  descuento: number;
+  isActive?: boolean;
 }
 
 const CategoriasPage = () => {
   const [categorias, setCategorias] = useState<CategoriaCliente[]>([]);
   const [searchQuery, setSearchQuery] = useState<string>("");
+
+  const [createModalOpen, setCreateModalOpen] = useState<boolean>(false);
   const [editModalOpen, setEditModalOpen] = useState<boolean>(false);
-  const [selectedCategoria, setSelectedCategoria] = useState<CategoriaCliente | null>(null);
+  const [detailsModalOpen, setDetailsModalOpen] = useState<boolean>(false);
+
+  const [selectedCategoria, setSelectedCategoria] =
+    useState<CategoriaCliente | null>(null);
 
   const fetchCategorias = async () => {
     try {
-      const res = await getCategoriaClientes(searchQuery); 
+      const params = searchQuery.trim() ? { search: searchQuery.trim() } : {};
+      const res = await getCategoriaClientes({ ...params, all: true });
       setCategorias(res.data);
-    } catch (err) {
-      toast.error("Error al cargar las categorías");
+    } catch {
+      toast.error("Error al cargar categorías");
     }
   };
 
   useEffect(() => {
     fetchCategorias();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchQuery]);
 
-  const openEditModal = (categoria: CategoriaCliente) => {
-    setSelectedCategoria(categoria);
+  const openCreateModal = (): void => setCreateModalOpen(true);
+  const closeCreateModal = (): void => setCreateModalOpen(false);
+
+  const openEditModal = (cat: CategoriaCliente): void => {
+    setSelectedCategoria(cat);
     setEditModalOpen(true);
   };
-
-  const closeEditModal = () => {
+  const closeEditModal = (): void => {
     setEditModalOpen(false);
     setSelectedCategoria(null);
   };
 
-  const handleEditCategoria = async (data: EditCategoriaFormData) => {
+  const openDetailsModal = (cat: CategoriaCliente): void => {
+    setSelectedCategoria(cat);
+    setDetailsModalOpen(true);
+  };
+  const closeDetailsModal = (): void => {
+    setDetailsModalOpen(false);
+    setSelectedCategoria(null);
+  };
+
+  const handleCreateCategoria = async (data: FormCategoriaCliente) => {
     try {
-      const res = await updateCategoriaCliente(data.idCategoria, {
+      await createCategoriaCliente({
+        nombre: data.nombre,
         descripcion: data.descripcion,
         descuento: data.descuento,
-      }); // ✅ nombre correcto
-      if (res.status === 200) {
-        toast.success("Categoría actualizada con éxito");
-        fetchCategorias();
+        isActive: true,
+      });
+      toast.success("Categoría creada con éxito!");
+      fetchCategorias();
+    } catch {
+      toast.error("Ha ocurrido un error al crear la categoría.");
+    } finally {
+      closeCreateModal();
+    }
+  };
+
+  const handleEditCategoria = async (data: FormCategoriaCliente) => {
+    try {
+      if (!data.idCategoria) {
+        toast.error("ID de categoría no válido");
+        return;
       }
-    } catch (err) {
-      toast.error("Error al actualizar la categoría");
+      
+      await updateCategoriaCliente(data.idCategoria, {
+        descripcion: data.descripcion,
+        descuento: data.descuento,
+        isActive: data.isActive,
+      });
+      toast.success("Categoría actualizada con éxito!");
+      fetchCategorias();
+    } catch {
+      toast.error("Ha ocurrido un error al actualizar la categoría.");
     } finally {
       closeEditModal();
     }
   };
 
+  const handleToggleActive = async (cat: CategoriaCliente) => {
+    try {
+      await updateCategoriaCliente(cat.idCategoria, {
+        isActive: !cat.isActive,
+      });
+      toast.success(
+        `Categoría ${cat.isActive ? "inactivada" : "activada"} con éxito`
+      );
+      fetchCategorias();
+    } catch {
+      toast.error("Ha ocurrido un error al cambiar estado de la categoría.");
+    }
+  };
+
   return (
     <div className="bg-gray-50 min-h-screen flex-1 overflow-y-auto p-6">
+
       <div className="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div className="relative w-full sm:w-64 md:w-96 pl-4">
           <div className="absolute inset-y-0 left-0 p-8 pt-5 flex items-center pointer-events-none">
@@ -78,7 +136,18 @@ const CategoriasPage = () => {
             className="pl-10 pr-4 py-2 w-full border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-700 focus:border-transparent"
           />
         </div>
+
+        <Can anyOf={[CATEGORIAS_CLIENTE.ADD]}>
+          <button
+            onClick={openCreateModal}
+            className="btn-primary flex items-center justify-center"
+          >
+            <Plus size={18} className="mr-2" />
+            Crear Categoría
+          </button>
+        </Can>
       </div>
+
 
       <div className="card">
         <div className="table-container">
@@ -88,6 +157,7 @@ const CategoriasPage = () => {
                 <th>Nombre</th>
                 <th>Descripción</th>
                 <th>Descuento (%)</th>
+                <th>Estado</th>
                 <th>Acciones</th>
               </tr>
             </thead>
@@ -96,15 +166,50 @@ const CategoriasPage = () => {
                 <tr key={cat.idCategoria}>
                   <td className="font-medium">{cat.nombre}</td>
                   <td>{cat.descripcion || "-"}</td>
-                  <td>{cat.descuento}</td>
+                  <td>{cat.descuento}%</td>
                   <td>
-                    <button
-                      onClick={() => openEditModal(cat)}
-                      className="p-1 text-gray-500 hover:text-blue-600 rounded-full hover:bg-gray-100"
-                      title="Editar"
+                    <span
+                      className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                        cat.isActive
+                          ? "bg-green-100 text-green-800"
+                          : "bg-red-100 text-red-900"
+                      }`}
                     >
-                      <Edit size={16} />
-                    </button>
+                      {cat.isActive ? "Activo" : "Inactivo"}
+                    </span>
+                  </td>
+                  <td>
+                    <div className="flex items-center space-x-2">
+                      <button
+                        onClick={() => openDetailsModal(cat)}
+                        className="p-1 text-gray-500 hover:text-green-600 rounded-full hover:bg-gray-100"
+                        title="Ver detalles"
+                      >
+                        <Eye size={16} />
+                      </button>
+                      <Can anyOf={[CATEGORIAS_CLIENTE.CHANGE]}>
+                        <button
+                          onClick={() => openEditModal(cat)}
+                          className="p-1 text-gray-500 hover:text-blue-600 rounded-full hover:bg-gray-100"
+                          title="Editar"
+                        >
+                          <Edit size={16} />
+                        </button>
+                      </Can>
+                      <Can anyOf={[CATEGORIAS_CLIENTE.CHANGE]}>
+                        <button
+                          onClick={() => handleToggleActive(cat)}
+                          className="p-1 text-gray-500 hover:text-red-600 rounded-full hover:bg-gray-100"
+                          title={cat.isActive ? "Desactivar" : "Activar"}
+                        >
+                          {cat.isActive ? (
+                            <X size={16} />
+                          ) : (
+                            <Check size={16} />
+                          )}
+                        </button>
+                      </Can>
+                    </div>
                   </td>
                 </tr>
               ))}
@@ -112,13 +217,79 @@ const CategoriasPage = () => {
           </table>
         </div>
 
+
+        <Modal isOpen={createModalOpen} onClose={closeCreateModal}>
+          <CategoriaClienteForm
+            onSubmit={handleCreateCategoria}
+            onCancel={closeCreateModal}
+            isEditForm={false}
+            categoria={null}
+          />
+        </Modal>
+
+
         <Modal isOpen={editModalOpen} onClose={closeEditModal}>
           {selectedCategoria && (
-            <EditCategoriaForm
-              categoria={selectedCategoria}
+            <CategoriaClienteForm
               onSubmit={handleEditCategoria}
               onCancel={closeEditModal}
+              isEditForm={true}
+              categoria={selectedCategoria}
             />
+          )}
+        </Modal>
+
+        <Modal isOpen={detailsModalOpen} onClose={closeDetailsModal}>
+          {selectedCategoria && (
+            <div className="p-2">
+              <h2 className="text-2xl font-bold mb-6 text-gray-800">Detalles de Categoría</h2>
+              
+              <div className="bg-white rounded-lg shadow-sm p-6 space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <h3 className="text-sm font-medium text-gray-500">Nombre</h3>
+                    <p className="mt-1 text-lg font-semibold">{selectedCategoria.nombre}</p>
+                  </div>
+                  
+                  <div>
+                    <h3 className="text-sm font-medium text-gray-500">Descuento</h3>
+                    <p className="mt-1 text-lg font-semibold">{selectedCategoria.descuento}%</p>
+                  </div>
+                  
+                  <div className="md:col-span-2">
+                    <h3 className="text-sm font-medium text-gray-500">Descripción</h3>
+                    <p className="mt-1">{selectedCategoria.descripcion || "-"}</p>
+                  </div>
+                  
+                  <div>
+                    <h3 className="text-sm font-medium text-gray-500">Estado</h3>
+                    <span
+                      className={`inline-flex mt-1 items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                        selectedCategoria.isActive
+                          ? "bg-green-100 text-green-800"
+                          : "bg-red-100 text-red-900"
+                      }`}
+                    >
+                      {selectedCategoria.isActive ? "Activo" : "Inactivo"}
+                    </span>
+                  </div>
+                  
+                  <div>
+                    <h3 className="text-sm font-medium text-gray-500">ID</h3>
+                    <p className="mt-1 text-sm text-gray-500">{selectedCategoria.idCategoria}</p>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="mt-6 flex justify-end">
+                <button
+                  onClick={closeDetailsModal}
+                  className="px-4 py-2 bg-gray-800 text-white rounded-md hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2"
+                >
+                  Cerrar
+                </button>
+              </div>
+            </div>
           )}
         </Modal>
       </div>

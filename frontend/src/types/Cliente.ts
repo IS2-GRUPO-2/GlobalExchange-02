@@ -36,12 +36,14 @@ export type Cliente = {
  * @property {string} nombre - Nombre de la categoría
  * @property {string} descripcion - Descripción de la categoría
  * @property {number} descuento - Porcentaje de descuento aplicable (0-100)
+ * @property {boolean} isActive - Estado activo/inactivo de la categoría
  */
 export type CategoriaCliente = {
   idCategoria: string;
   nombre: string;
   descripcion: string;
   descuento: number;
+  isActive: boolean;
 };
 
 export type PaginatedCliente = {

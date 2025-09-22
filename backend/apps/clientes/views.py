@@ -96,13 +96,7 @@ La respuesta está paginada con las siguientes características:
         usuarios = cliente.usuarios.all()
         serializer = UserSerializer(usuarios, many=True)
         return Response(serializer.data)
-    
-    @action(detail=False, methods=['get'], url_path="categorias")
-    def get_categorias(self, request):
-        """Este endpoint retorna todas las categorías disponibles."""
-        categorias = CategoriaCliente.objects.all()
-        serializer = CategoriaClienteSerializer(categorias, many=True)
-        return Response(serializer.data)
+
 
 class CategoriaClienteViewSet(viewsets.ModelViewSet):
     """
@@ -114,4 +108,26 @@ class CategoriaClienteViewSet(viewsets.ModelViewSet):
     permission_classes = [permissions.IsAuthenticated, DjangoModelPermissions]
     filter_backends = [filters.SearchFilter]
     search_fields = ["nombre", "descuento", "descripcion"]
+    
+    def list(self, request, *args, **kwargs):
+        """
+        Obtener listado de categorías. Por defecto solo muestra las activas.
+        Usar ?all=true para mostrar también las inactivas.
+        """
+        if request.query_params.get('all', '').lower() == 'true':
+            queryset = self.filter_queryset(self.get_queryset())
+        else:
+            queryset = self.filter_queryset(self.get_queryset().filter(isActive=True))
+            
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)
+    def destroy(self, request, *args, **kwargs):
+        instance = self.get_object()
+        if (not instance.isActive):
+            return Response(status=status.HTTP_404_NOT_FOUND)
+        instance.isActive = False
+        instance.save()
+        return Response(status=status.HTTP_200_OK)
+    
+
 
