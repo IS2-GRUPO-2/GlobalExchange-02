@@ -2,7 +2,7 @@ export type TipoMetodoFinanciero =
   | 'TRANSFERENCIA_BANCARIA' 
   | 'BILLETERA_DIGITAL' 
   | 'TARJETA' 
-  | 'METALICO' 
+  | 'EFECTIVO' 
   | 'CHEQUE';
 
 // Nuevos tipos para catálogos
