@@ -97,6 +97,7 @@ def calcular_simulacion_operacion_publica(divisa_origen_id, divisa_destino_id, m
     divisa_extranjera = divisa_origen if not divisa_origen.es_base else divisa_destino
     tasa = _get_tasa_activa(divisa_extranjera)
 
+
     if operacion_casa == "compra":
         # Casa COMPRA → Cliente vende
         tc = TasaService.calcular_tasa_compra_metodoPago(tasa, metodo)
