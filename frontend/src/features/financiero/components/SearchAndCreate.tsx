@@ -5,6 +5,8 @@ import type {
   InstanceTabType,
   CatalogTabType,
 } from "../types/MetodoFinanciero";
+import { BANCOS, BILLETERAS_DIGITALES, BILLETERAS_DIGITALES_CATALOGO, CUENTAS_BANCARIAS, METODOS_FINANCIEROS } from "../../../types/perms";
+import Can from "../../../components/Can";
 
 interface SearchAndCreateProps {
   search: string;
@@ -60,6 +62,16 @@ export const SearchAndCreate: React.FC<SearchAndCreateProps> = ({
     return "Crear";
   };
 
+  const getCreatePermision = () => {
+    if (mainTab === "catalogo") 
+      return [METODOS_FINANCIEROS.ADD];
+    if (mainTab === "catalogos")
+      return catalogTab === "bancos" ? [BANCOS.ADD] : [BILLETERAS_DIGITALES_CATALOGO.ADD];
+    if (mainTab === "instancias")
+      return instanceTab === "cuentas" ? [CUENTAS_BANCARIAS.ADD] : [BILLETERAS_DIGITALES.ADD];
+    return [];
+  };
+
   return (
     <div className="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
       <div className="relative w-full sm:w-64 md:w-96 pl-4">
@@ -85,13 +97,15 @@ export const SearchAndCreate: React.FC<SearchAndCreateProps> = ({
           </button>
         </div>
       </div>
-      <button
-        onClick={onCreateClick}
-        className="btn-primary flex items-center justify-center"
-      >
-        <Plus size={18} className="mr-2" />
-        {getCreateButtonText()}
-      </button>
+      <Can anyOf={getCreatePermision()}>
+        <button
+          onClick={onCreateClick}
+          className="btn-primary flex items-center justify-center"
+        >
+          <Plus size={18} className="mr-2" />
+          {getCreateButtonText()}
+        </button>
+      </Can>
     </div>
   );
 };

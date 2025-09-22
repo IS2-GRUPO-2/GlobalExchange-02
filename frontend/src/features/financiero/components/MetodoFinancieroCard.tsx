@@ -13,6 +13,8 @@ import type {
   BilleteraDigital,
   Tarjeta,
 } from "../types/MetodoFinanciero";
+import { BILLETERAS_DIGITALES, BILLETERAS_DIGITALES_CATALOGO, CUENTAS_BANCARIAS } from "../../../types/perms";
+import Can from "../../../components/Can";
 
 type MetodoFinancieroItem = CuentaBancaria | BilleteraDigital | Tarjeta;
 
@@ -43,6 +45,28 @@ export const MetodoFinancieroCard: React.FC<MetodoFinancieroCardProps> = ({
         return <CreditCard className="w-6 h-6 text-blue-600" />;
       default:
         return <CreditCard className="w-6 h-6 text-blue-600" />;
+    }
+  };
+
+  const getChangePerm = () => {
+    switch (item.tipo) {
+      case "cuentas":
+        return [CUENTAS_BANCARIAS.CHANGE];
+      case "billeteras digitales":
+        return [BILLETERAS_DIGITALES.CHANGE];
+      default:
+        return [];
+    }
+  };
+
+  const getDeletePerm = () => {
+    switch (item.tipo) {
+      case "cuentas":
+        return [CUENTAS_BANCARIAS.DELETE];
+      case "billeteras digitales":
+        return [BILLETERAS_DIGITALES.DELETE];
+      default:
+        return [];
     }
   };
 
@@ -178,42 +202,46 @@ export const MetodoFinancieroCard: React.FC<MetodoFinancieroCardProps> = ({
             <span>Ver</span>
           </button>
 
-          <button
-            onClick={() => onEdit(item)}
-            className="flex items-center space-x-1 px-3 py-1.5 text-sm text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded-md transition-colors"
-            title="Editar"
-          >
-            <Edit size={14} />
-            <span>Editar</span>
-          </button>
+          <Can anyOf={getChangePerm()}>
+            <button
+              onClick={() => onEdit(item)}
+              className="flex items-center space-x-1 px-3 py-1.5 text-sm text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded-md transition-colors"
+              title="Editar"
+            >
+              <Edit size={14} />
+              <span>Editar</span>
+            </button>
+          </Can>
 
-          <button
-            onClick={() => onToggleActive(item)}
-            disabled={!item.is_active && item.desactivado_por_catalogo}
-            className={`flex items-center space-x-1 px-3 py-1.5 text-sm rounded-md transition-colors ${
-              !item.is_active && item.desactivado_por_catalogo
-                ? "text-gray-400 bg-gray-100 cursor-not-allowed"
-                : item.is_active
-                ? "text-red-600 hover:bg-red-50"
-                : "text-green-600 hover:bg-green-50"
-            }`}
-            title={
-              !item.is_active && item.desactivado_por_catalogo
-                ? "No se puede reactivar - Desactivado por administrador (catálogo)"
-                : item.is_active
-                ? "Desactivar"
-                : "Activar"
-            }
-          >
-            {item.is_active ? <X size={14} /> : <Check size={14} />}
-            <span>
-              {!item.is_active && item.desactivado_por_catalogo
-                ? "Desactivado por catálogo"
-                : item.is_active
-                ? "Desactivar"
-                : "Activar"}
-            </span>
-          </button>
+          <Can anyOf={item.is_active? getDeletePerm() : getChangePerm()}>
+            <button
+              onClick={() => onToggleActive(item)}
+              disabled={!item.is_active && item.desactivado_por_catalogo}
+              className={`flex items-center space-x-1 px-3 py-1.5 text-sm rounded-md transition-colors ${
+                !item.is_active && item.desactivado_por_catalogo
+                  ? "text-gray-400 bg-gray-100 cursor-not-allowed"
+                  : item.is_active
+                  ? "text-red-600 hover:bg-red-50"
+                  : "text-green-600 hover:bg-green-50"
+              }`}
+              title={
+                !item.is_active && item.desactivado_por_catalogo
+                  ? "No se puede reactivar - Desactivado por administrador (catálogo)"
+                  : item.is_active
+                  ? "Desactivar"
+                  : "Activar"
+              }
+            >
+              {item.is_active ? <X size={14} /> : <Check size={14} />}
+              <span>
+                {!item.is_active && item.desactivado_por_catalogo
+                  ? "Desactivado por catálogo"
+                  : item.is_active
+                  ? "Desactivar"
+                  : "Activar"}
+              </span>
+            </button>
+          </Can>
         </div>
       </div>
     </div>
