@@ -1,6 +1,6 @@
 from django.db import models
 from django.db.models import Q, UniqueConstraint
-
+from apps.clientes.models import CategoriaCliente
 # Create your models here.
 class Divisa(models.Model):
     codigo = models.CharField(verbose_name="Código de divisa", max_length=5, unique=True)
@@ -27,3 +27,12 @@ class Denominacion(models.Model):
     divisa = models.ForeignKey(Divisa, on_delete=models.PROTECT)
     denominacion = models.IntegerField()
     is_active = models.BooleanField(default=True)
+
+
+class LimiteDivisa(models.Model):
+    divisa                = models.ForeignKey(Divisa, on_delete=models.PROTECT)
+    categoria             = models.ForeignKey(CategoriaCliente, on_delete=models.PROTECT)
+    limite_diario_venta   = models.DecimalField(max_digits=30, decimal_places=10)
+    limite_mensual_venta  = models.DecimalField(max_digits=30, decimal_places=10)
+    limite_diario_compra  = models.DecimalField(max_digits=30, decimal_places=10)
+    limite_mensual_compra = models.DecimalField(max_digits=30, decimal_places=10)

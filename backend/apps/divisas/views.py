@@ -1,7 +1,7 @@
 from rest_framework import permissions, viewsets, filters, status
 from django.db.models import Q
-from .serializers import DivisaSerializer, DivisaPaginatedResponseSerializer, DenominacionSerializer
-from .models import Divisa, Denominacion
+from .serializers import DivisaSerializer, DivisaPaginatedResponseSerializer, DenominacionSerializer, LimiteDivisaSerializer
+from .models import Divisa, Denominacion, LimiteDivisa
 from rest_framework.response import Response
 from rest_framework.decorators import action
 from drf_yasg.utils import swagger_auto_schema
@@ -220,3 +220,8 @@ class DenominacionViewset(viewsets.ModelViewSet):
         instance.is_active = False
         instance.save()
         return Response(status=status.HTTP_200_OK)
+    
+class LimiteDivisaViewset(viewsets.ModelViewSet):
+    serializer_class = LimiteDivisaSerializer
+    queryset = LimiteDivisa.objects.all()
+    permission_classes = [permissions.IsAuthenticated, permissions.DjangoModelPermissions]
