@@ -154,7 +154,7 @@ class DivisaViewset(viewsets.ModelViewSet):
         Respeta SearchFilter (?search=USD).
         Pagina usando DivisaPagination.
         """
-        qs = Divisa.objects.filter(is_active=True, tasa__isnull=True)
+        qs = Divisa.objects.filter(is_active=True, tasa__isnull=True, es_base=False)
         qs = self.filter_queryset(qs)
         page = self.paginate_queryset(qs)
         if page is not None:
