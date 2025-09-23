@@ -17,7 +17,7 @@ class Migration(migrations.Migration):
             name='MetodoFinanciero',
             fields=[
                 ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('nombre', models.CharField(choices=[('TRANSFERENCIA_BANCARIA', 'Transferencia Bancaria'), ('BILLETERA_DIGITAL', 'Billetera Digital'), ('TARJETA', 'Tarjeta de Crédito/Débito'), ('METALICO', 'Metalico'), ('CHEQUE', 'Cheque')], max_length=50, unique=True)),
+                ('nombre', models.CharField(choices=[('TRANSFERENCIA_BANCARIA', 'Transferencia Bancaria'), ('BILLETERA_DIGITAL', 'Billetera Digital'), ('TARJETA', 'Tarjeta de Crédito/Débito'), ('EFECTIVO', 'Efectivo'), ('CHEQUE', 'Cheque')], max_length=50, unique=True)),
                 ('permite_cobro', models.BooleanField(default=True, help_text='Casa puede cobrar con este método')),
                 ('permite_pago', models.BooleanField(default=True, help_text='Casa puede pagar con este método')),
                 ('comision_cobro_porcentaje', models.DecimalField(decimal_places=2, default=0, max_digits=5)),

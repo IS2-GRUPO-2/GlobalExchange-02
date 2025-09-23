@@ -205,10 +205,10 @@ export default function AssignedRoles({ user, onClose }: Props) {
                         type="button"
                         onClick={() => toggle(r.id)}
                         className="flex w-full items-center justify-between px-3 py-2 text-left text-sm hover:bg-white"
-                        title="Crear a asignados"
+                        title="Agregar a asignados"
                       >
                         <span className="text-gray-800">{r.name}</span>
-                        <span className="text-xs text-green-700">Crear</span>
+                        <span className="text-xs text-green-700">Agregar</span>
                       </button>
                     </li>
                   ))

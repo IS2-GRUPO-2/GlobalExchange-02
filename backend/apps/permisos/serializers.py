@@ -27,6 +27,7 @@ class PermissionMiniSerializer(serializers.ModelSerializer):
             return 'Roles' if m.group(0)[0].isupper() else 'roles'
 
         s = re.sub(r'\bgroup(s)?\b', _repl_group, s, flags=re.IGNORECASE)
+        s = re.sub(r'\btasa\b', 'cotización', s, flags=re.IGNORECASE) 
         return s
 
     def get_name_es(self, obj: Permission) -> str:

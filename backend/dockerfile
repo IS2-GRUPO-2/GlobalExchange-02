@@ -12,12 +12,13 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 RUN useradd -M -s /usr/sbin/nologin django
 
-
 COPY requirements.txt .
 RUN pip install -r requirements.txt
 
 COPY . /app
 
-RUN chown -R django:django /app
+RUN mkdir -p /app/static /app/media \
+    && chown -R django:django /app
+    
 USER django
 

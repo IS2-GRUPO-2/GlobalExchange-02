@@ -15,6 +15,8 @@ import { useAuth } from "../context/useAuth";
 import DenominacionesDivisa, {
   type DenominacionFormData,
 } from "../components/DenominacionesDivisa";
+import Can from "../components/Can";
+import { DENOMINACIONES, DIVISAS } from "../types/perms";
 
 const DivisasPage = () => {
   const [divisas, setDivisas] = useState<Divisa[]>([]);
@@ -207,13 +209,15 @@ const DivisasPage = () => {
             </button>
           </div>
         </div>
-        <button
-          onClick={openCreateModal}
-          className="btn-primary flex items-center justify-center"
-        >
-          <Plus size={18} className="mr-2" />
-          Crear Divisa
-        </button>
+        <Can anyOf={[DIVISAS.ADD]}>
+          <button
+            onClick={openCreateModal}
+            className="btn-primary flex items-center justify-center"
+          >
+            <Plus size={18} className="mr-2" />
+            Crear Divisa
+          </button>
+        </Can>
       </div>
 
       <div className="card">
@@ -280,35 +284,41 @@ const DivisasPage = () => {
                     </td>
                     <td>
                       <div className="flex items-center space-x-2">
-                        <button
-                          onClick={() => openEditModal(divisa)}
-                          className="p-1 text-gray-500 hover:text-blue-600 rounded-full hover:bg-gray-100"
-                          title="Editar"
-                        >
-                          <Edit size={16} />
-                        </button>
-                        <button
-                          onClick={
-                            divisa.is_active
-                              ? () => handleDeactivateDivisa(divisa.id!)
-                              : () => handleActivateDivisa(divisa)
-                          }
-                          className="p-1 text-gray-500 hover:text-red-600 rounded-full hover:bg-gray-100"
-                          title={divisa.is_active ? "Desactivar" : "Activar"}
-                        >
-                          {divisa.is_active ? (
-                            <X size={16} />
-                          ) : (
-                            <Check size={16} />
-                          )}
-                        </button>
-                        <button
-                          onClick={() => openDenominacionesModal(divisa)}
-                          className="p-1 text-gray-500 hover:text-blue-600 rounded-full hover:bg-gray-100"
-                          title="Gestionar denominaciones"
-                        >
-                          <Coins size={16} />
-                        </button>
+                        <Can anyOf={[DIVISAS.CHANGE]}>
+                          <button
+                            onClick={() => openEditModal(divisa)}
+                            className="p-1 text-gray-500 hover:text-blue-600 rounded-full hover:bg-gray-100"
+                            title="Editar"
+                          >
+                            <Edit size={16} />
+                          </button>
+                        </Can>
+                        <Can anyOf={[DIVISAS.DELETE]}>
+                          <button
+                            onClick={
+                              divisa.is_active
+                                ? () => handleDeactivateDivisa(divisa.id!)
+                                : () => handleActivateDivisa(divisa)
+                            }
+                            className="p-1 text-gray-500 hover:text-red-600 rounded-full hover:bg-gray-100"
+                            title={divisa.is_active ? "Desactivar" : "Activar"}
+                          >
+                            {divisa.is_active ? (
+                              <X size={16} />
+                            ) : (
+                              <Check size={16} />
+                            )}
+                          </button>
+                        </Can>
+                        <Can anyOf={[DENOMINACIONES.VIEW]}>
+                          <button
+                            onClick={() => openDenominacionesModal(divisa)}
+                            className="p-1 text-gray-500 hover:text-blue-600 rounded-full hover:bg-gray-100"
+                            title="Gestionar denominaciones"
+                          >
+                            <Coins size={16} />
+                          </button>
+                        </Can>
                       </div>
                     </td>
                   </tr>
