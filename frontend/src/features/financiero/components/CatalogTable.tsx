@@ -5,6 +5,8 @@ import type {
   BilleteraDigitalCatalogo,
   CatalogTabType,
 } from "../types/MetodoFinanciero";
+import Can from "../../../components/Can";
+import { BANCOS, BILLETERAS_DIGITALES, BILLETERAS_DIGITALES_CATALOGO } from "../../../types/perms";
 
 interface CatalogTableProps {
   bancos: Banco[];
@@ -42,7 +44,9 @@ export const CatalogTable: React.FC<CatalogTableProps> = ({
             <th>Nombre</th>
             <th>Estado</th>
             <th>Fecha Creación</th>
-            <th>Acciones</th>
+            <Can anyOf={catalogTab === "bancos" ? [BANCOS.CHANGE, BANCOS.DELETE] : [BILLETERAS_DIGITALES_CATALOGO.CHANGE, BILLETERAS_DIGITALES_CATALOGO.DELETE]}>
+              <th>Acciones</th>
+            </Can>
           </tr>
         </thead>
         <tbody className="divide-y divide-gray-200">
@@ -78,20 +82,24 @@ export const CatalogTable: React.FC<CatalogTableProps> = ({
                 </td>
                 <td>
                   <div className="flex items-center space-x-2">
-                    <button
-                      onClick={() => onEdit(item)}
-                      className="p-1 text-gray-500 hover:text-blue-600 rounded-full hover:bg-gray-100"
-                      title="Editar"
-                    >
-                      <Edit size={16} />
-                    </button>
-                    <button
-                      onClick={() => onToggle(item, catalogTab)}
-                      className="p-1 text-gray-500 hover:text-red-600 rounded-full hover:bg-gray-100"
-                      title={item.is_active ? "Desactivar" : "Activar"}
-                    >
-                      {item.is_active ? <X size={16} /> : <Check size={16} />}
-                    </button>
+                    <Can anyOf={catalogTab === "bancos" ? [BANCOS.CHANGE] : [BILLETERAS_DIGITALES_CATALOGO.CHANGE]}>
+                      <button
+                        onClick={() => onEdit(item)}
+                        className="p-1 text-gray-500 hover:text-blue-600 rounded-full hover:bg-gray-100"
+                        title="Editar"
+                      >
+                        <Edit size={16} />
+                      </button>
+                    </Can>
+                    <Can anyOf={catalogTab === "bancos" ? (item.is_active? [BANCOS.DELETE] : [BANCOS.CHANGE]) : (item.is_active? [BILLETERAS_DIGITALES_CATALOGO.DELETE] : [BILLETERAS_DIGITALES_CATALOGO.CHANGE])}>
+                      <button
+                        onClick={() => onToggle(item, catalogTab)}
+                        className="p-1 text-gray-500 hover:text-red-600 rounded-full hover:bg-gray-100"
+                        title={item.is_active ? "Desactivar" : "Activar"}
+                      >
+                        {item.is_active ? <X size={16} /> : <Check size={16} />}
+                      </button>
+                    </Can>
                   </div>
                 </td>
               </tr>

@@ -516,7 +516,7 @@ class BilleteraDigitalViewSet(viewsets.ModelViewSet):
         """
         if self.action in ['update', 'partial_update', 'destroy']:
             # Solo admins pueden editar/eliminar billeteras digitales
-            permission_classes = [permissions.IsAuthenticated, permissions.IsAdminUser]
+            permission_classes = [permissions.IsAuthenticated]
         else:
             # Usuarios autenticados pueden ver y crear sus propias billeteras digitales
             permission_classes = [permissions.IsAuthenticated]

@@ -12,6 +12,8 @@ import {
 } from "../services/rolesService";
 import Modal from "../components/Modal";
 import RoleForm, { type RoleFormData } from "../components/RoleForm";
+import Can from "../components/Can";
+import { ROLES } from "../types/perms";
 
 const RolesPage = () => {
   const [roles, setRoles] = useState<Role[]>([]);
@@ -125,10 +127,12 @@ const RolesPage = () => {
           />
         </div>
 
-        <button onClick={openCreateModal} className="btn-primary flex items-center justify-center">
-          <UserPlus size={18} className="mr-2" />
-          Crear Rol
-        </button>
+        <Can anyOf={[ROLES.ADD]}>
+          <button onClick={openCreateModal} className="btn-primary flex items-center justify-center">
+            <UserPlus size={18} className="mr-2" />
+            Crear Rol
+          </button>
+        </Can>
       </div>
 
       <div className="card">
@@ -164,20 +168,24 @@ const RolesPage = () => {
                       >
                         <Eye size={16} />
                       </button>
-                      <button
-                        onClick={() => openEditModal(r)}
-                        className="p-1 text-gray-500 hover:text-blue-600 rounded-full hover:bg-gray-100"
-                        title="Editar"
-                      >
-                        <Edit size={16} />
-                      </button>
-                      <button
-                        onClick={() => handleDeleteRole(r)}
-                        className="p-1 text-gray-500 hover:text-red-600 rounded-full hover:bg-gray-100"
-                        title="Eliminar"
-                      >
-                        <Trash2 size={16} />
-                      </button>
+                      <Can anyOf={[ROLES.CHANGE]}>
+                        <button
+                          onClick={() => openEditModal(r)}
+                          className="p-1 text-gray-500 hover:text-blue-600 rounded-full hover:bg-gray-100"
+                          title="Editar"
+                        >
+                          <Edit size={16} />
+                        </button>
+                      </Can>
+                      <Can anyOf={[ROLES.DELETE]}>
+                        <button
+                          onClick={() => handleDeleteRole(r)}
+                          className="p-1 text-gray-500 hover:text-red-600 rounded-full hover:bg-gray-100"
+                          title="Eliminar"
+                        >
+                          <Trash2 size={16} />
+                        </button>
+                      </Can>
                     </div>
                   </td>
                 </tr>

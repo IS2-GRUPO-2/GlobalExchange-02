@@ -30,7 +30,7 @@ class BilleteraDigitalCatalogo(models.Model):
     fecha_actualizacion = models.DateTimeField(auto_now=True)
     
     class Meta:
-        verbose_name = "Billetera Digital"
+        verbose_name = "Catalogo  de Billetera Digital"
         verbose_name_plural = "Billeteras Digitales"
         ordering = ['nombre']
     
