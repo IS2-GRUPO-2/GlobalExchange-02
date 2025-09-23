@@ -43,7 +43,7 @@ class TipoMetodoFinanciero(models.TextChoices):
     TRANSFERENCIA_BANCARIA = 'TRANSFERENCIA_BANCARIA', 'Transferencia Bancaria'
     BILLETERA_DIGITAL = 'BILLETERA_DIGITAL', 'Billetera Digital'
     TARJETA = 'TARJETA', 'Tarjeta de Crédito/Débito'
-    METALICO = 'METALICO', 'Metalico'
+    EFECTIVO = 'EFECTIVO', 'Efectivo'
     CHEQUE = 'CHEQUE', 'Cheque'
 
 

@@ -20,7 +20,7 @@ const TIPOS_METODO_OPCIONES = [
   { value: 'TRANSFERENCIA_BANCARIA', label: 'Transferencia Bancaria' },
   { value: 'BILLETERA_DIGITAL', label: 'Billetera Digital' },
   { value: 'TARJETA', label: 'Tarjeta de Crédito/Débito' },
-  { value: 'METALICO', label: 'Metálico' },
+  { value: 'EFECTIVO', label: 'Efectivo' },
   { value: 'CHEQUE', label: 'Cheque' },
 ];
 

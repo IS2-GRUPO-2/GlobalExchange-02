@@ -137,7 +137,7 @@ def run():
             'is_active': True
         },
         {
-            'nombre': TipoMetodoFinanciero.METALICO,
+            'nombre': TipoMetodoFinanciero.EFECTIVO,
             'permite_cobro': True,
             'permite_pago': True,
             'comision_cobro_porcentaje': 0.0,
