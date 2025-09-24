@@ -10,7 +10,9 @@ from apps.usuarios.models import User
 class Banco(models.Model):
     """Catálogo de bancos disponibles"""
     nombre = models.CharField(max_length=100, unique=True, help_text="Nombre del banco (ej: Santander, Itaú, BBVA)")
-    cvu = models.CharField(max_length=22, unique=True, help_text="CVU del banco para transferencias interbancarias")
+    cvu = models.CharField(max_length=22, unique=True, null=True, blank=True, help_text="CVU del banco para transferencias interbancarias")
+    comisiones = models.DecimalField(max_digits=5, decimal_places=2, default=0.00, help_text="Comisión por defecto del banco (%)")
+    comision_personalizada = models.BooleanField(default=False, help_text="Permite configurar comisión personalizada")
     is_active = models.BooleanField(default=True, help_text="Indica si el banco está disponible")
     fecha_creacion = models.DateTimeField(auto_now_add=True)
     fecha_actualizacion = models.DateTimeField(auto_now=True)
@@ -27,6 +29,8 @@ class Banco(models.Model):
 class BilleteraDigitalCatalogo(models.Model):
     """Catálogo de billeteras digitales disponibles"""
     nombre = models.CharField(max_length=100, unique=True, help_text="Nombre de la billetera (ej: PayPal, MercadoPago, Binance Pay, TigoMoney)")
+    comisiones = models.DecimalField(max_digits=5, decimal_places=2, default=0.00, help_text="Comisión por defecto de la billetera (%)")
+    comision_personalizada = models.BooleanField(default=False, help_text="Permite configurar comisión personalizada")
     is_active = models.BooleanField(default=True, help_text="Indica si la billetera está disponible")
     fecha_creacion = models.DateTimeField(auto_now_add=True)
     fecha_actualizacion = models.DateTimeField(auto_now=True)
@@ -38,6 +42,24 @@ class BilleteraDigitalCatalogo(models.Model):
     
     def __str__(self):
         return self.nombre
+
+
+class TarjetaLocalCatalogo(models.Model):
+    """Catálogo de marcas de tarjetas locales disponibles"""
+    marca = models.CharField(max_length=50, unique=True, help_text="Marca de la tarjeta (ej: Visa, Mastercard, American Express, Cabal)")
+    comisiones = models.DecimalField(max_digits=5, decimal_places=2, default=0.00, help_text="Comisión por defecto de la tarjeta (%)")
+    comision_personalizada = models.BooleanField(default=False, help_text="Permite configurar comisión personalizada")
+    is_active = models.BooleanField(default=True, help_text="Indica si la marca está disponible")
+    fecha_creacion = models.DateTimeField(auto_now_add=True)
+    fecha_actualizacion = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        verbose_name = "Catálogo de Tarjeta Local"
+        verbose_name_plural = "Catálogo de Tarjetas Locales"
+        ordering = ['marca']
+    
+    def __str__(self):
+        return self.marca
 
 
 class TipoMetodoFinanciero(models.TextChoices):
@@ -180,7 +202,11 @@ class Tarjeta(models.Model):
         on_delete=models.CASCADE,
         related_name='tarjeta'
     )
-    stripe_payment_method_id = models.CharField(max_length=100, unique=True)  # ID de Stripe
+    tipo = models.CharField(max_length=10, choices=[
+        ('LOCAL', 'Local'),
+        ('STRIPE', 'Stripe'),
+    ], default='STRIPE')
+    payment_method_id = models.CharField(max_length=100, unique=True)  # ID de Stripe u otro proveedor
     brand = models.CharField(max_length=50)  # Visa, Mastercard, etc.
     last4 = models.CharField(max_length=4)   # Últimos 4 dígitos
     exp_month = models.IntegerField()
@@ -193,6 +219,28 @@ class Tarjeta(models.Model):
     
     def __str__(self):
         return f"{self.brand} ****{self.last4} ({self.titular})"
+
+
+class TarjetaLocal(models.Model):
+    """Detalles específicos de tarjeta local"""
+    metodo_financiero_detalle = models.OneToOneField(
+        MetodoFinancieroDetalle, 
+        on_delete=models.CASCADE,
+        related_name='tarjeta_local'
+    )
+    marca = models.ForeignKey(TarjetaLocalCatalogo, on_delete=models.PROTECT, help_text="Marca de tarjeta del catálogo")
+    # Campos del formulario (para simulación - no se guardan en producción)
+    last4 = models.CharField(max_length=4, help_text="Últimos 4 dígitos del PAN")
+    titular = models.CharField(max_length=100)
+    exp_month = models.IntegerField()
+    exp_year = models.IntegerField()
+    
+    class Meta:
+        verbose_name = "Tarjeta Local"
+        verbose_name_plural = "Tarjetas Locales"
+    
+    def __str__(self):
+        return f"{self.marca.marca} ****{self.last4} ({self.titular})"
 
 
 

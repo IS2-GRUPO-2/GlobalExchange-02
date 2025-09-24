@@ -17,6 +17,8 @@ const BancoForm: React.FC<BancoFormProps> = ({
   const [formData, setFormData] = useState<Banco>({
     nombre: '',
     cvu: '',
+    comisiones: 0,
+    comision_personalizada: false,
     is_active: true
   });
 
@@ -45,6 +47,12 @@ const BancoForm: React.FC<BancoFormProps> = ({
       newErrors.cvu = 'El CVU debe tener exactamente 22 dígitos';
     } else if (!/^\d+$/.test(formData.cvu)) {
       newErrors.cvu = 'El CVU solo puede contener números';
+    }
+
+    if (formData.comisiones < 0) {
+      newErrors.comisiones = 'Las comisiones no pueden ser negativas';
+    } else if (formData.comisiones > 100) {
+      newErrors.comisiones = 'Las comisiones no pueden exceder 100%';
     }
 
     setErrors(newErrors);
@@ -124,6 +132,47 @@ const BancoForm: React.FC<BancoFormProps> = ({
           {errors.cvu && (
             <p className="mt-1 text-sm text-red-600">{errors.cvu}</p>
           )}
+        </div>
+
+        {/* Comisiones */}
+        <div>
+          <label htmlFor="comisiones" className="block text-sm font-medium text-gray-700 mb-1">
+            Comisiones (%)
+          </label>
+          <input
+            type="number"
+            id="comisiones"
+            name="comisiones"
+            value={formData.comisiones}
+            onChange={handleChange}
+            className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+              errors.comisiones ? 'border-red-500' : 'border-gray-300'
+            }`}
+            placeholder="Ej: 2.5"
+            disabled={isSubmitting}
+            step="0.01"
+            min="0"
+            max="100"
+          />
+          {errors.comisiones && (
+            <p className="mt-1 text-sm text-red-600">{errors.comisiones}</p>
+          )}
+        </div>
+
+        {/* Comisión Personalizada */}
+        <div className="flex items-center">
+          <input
+            type="checkbox"
+            id="comision_personalizada"
+            name="comision_personalizada"
+            checked={formData.comision_personalizada}
+            onChange={handleChange}
+            className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+            disabled={isSubmitting}
+          />
+          <label htmlFor="comision_personalizada" className="ml-2 block text-sm text-gray-700">
+            Permite comisión personalizada
+          </label>
         </div>
 
         {/* Estado Activo */}

@@ -10,6 +10,8 @@ export type Banco = {
   id?: number;
   nombre: string;
   cvu: string;
+  comisiones: number;
+  comision_personalizada: boolean;
   is_active: boolean;
   fecha_creacion?: string;
   fecha_actualizacion?: string;
@@ -18,6 +20,8 @@ export type Banco = {
 export type BilleteraDigitalCatalogo = {
   id?: number;
   nombre: string;
+  comisiones: number;
+  comision_personalizada: boolean;
   is_active: boolean;
   fecha_creacion?: string;
   fecha_actualizacion?: string;

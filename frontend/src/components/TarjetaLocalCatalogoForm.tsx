@@ -1,21 +1,21 @@
 import React, { useState, useEffect } from 'react';
-import type { BilleteraDigitalCatalogo } from '../types/MetodoFinanciero';
+import type { TarjetaLocalCatalogo } from '../features/financiero/types/MetodoFinanciero';
 
-interface BilleteraDigitalCatalogoFormProps {
-  billetera?: BilleteraDigitalCatalogo;
-  onSubmit: (billeteraData: BilleteraDigitalCatalogo) => Promise<void>;
+interface TarjetaLocalCatalogoFormProps {
+  marca?: TarjetaLocalCatalogo;
+  onSubmit: (marcaData: TarjetaLocalCatalogo) => Promise<void>;
   onCancel: () => void;
   isSubmitting?: boolean;
 }
 
-const BilleteraDigitalCatalogoForm: React.FC<BilleteraDigitalCatalogoFormProps> = ({
-  billetera,
+const TarjetaLocalCatalogoForm: React.FC<TarjetaLocalCatalogoFormProps> = ({
+  marca,
   onSubmit,
   onCancel,
   isSubmitting = false
 }) => {
-  const [formData, setFormData] = useState<BilleteraDigitalCatalogo>({
-    nombre: '',
+  const [formData, setFormData] = useState<TarjetaLocalCatalogo>({
+    marca: '',
     comisiones: 0,
     comision_personalizada: false,
     is_active: true
@@ -24,20 +24,20 @@ const BilleteraDigitalCatalogoForm: React.FC<BilleteraDigitalCatalogoFormProps> 
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   useEffect(() => {
-    if (billetera) {
-      setFormData(billetera);
+    if (marca) {
+      setFormData(marca);
     }
-  }, [billetera]);
+  }, [marca]);
 
   const validateForm = (): boolean => {
     const newErrors: Record<string, string> = {};
 
-    if (!formData.nombre.trim()) {
-      newErrors.nombre = 'El nombre de la billetera es obligatorio';
-    } else if (formData.nombre.length < 2) {
-      newErrors.nombre = 'El nombre debe tener al menos 2 caracteres';
-    } else if (formData.nombre.length > 100) {
-      newErrors.nombre = 'El nombre no puede exceder 100 caracteres';
+    if (!formData.marca.trim()) {
+      newErrors.marca = 'La marca de la tarjeta es obligatoria';
+    } else if (formData.marca.length < 2) {
+      newErrors.marca = 'La marca debe tener al menos 2 caracteres';
+    } else if (formData.marca.length > 100) {
+      newErrors.marca = 'La marca no puede exceder 100 caracteres';
     }
 
     if (formData.comisiones < 0) {
@@ -73,32 +73,32 @@ const BilleteraDigitalCatalogoForm: React.FC<BilleteraDigitalCatalogoFormProps> 
     try {
       await onSubmit(formData);
     } catch (error) {
-      console.error('Error submitting billetera digital catálogo form:', error);
+      console.error('Error submitting marca form:', error);
     }
   };
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <div className="space-y-4">
-        {/* Nombre de la Billetera */}
+        {/* Marca de la Tarjeta */}
         <div>
-          <label htmlFor="nombre" className="block text-sm font-medium text-gray-700 mb-1">
-            Nombre de la Billetera Digital
+          <label htmlFor="marca" className="block text-sm font-medium text-gray-700 mb-1">
+            Marca de la Tarjeta Local
           </label>
           <input
             type="text"
-            id="nombre"
-            name="nombre"
-            value={formData.nombre}
+            id="marca"
+            name="marca"
+            value={formData.marca}
             onChange={handleChange}
             className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
-              errors.nombre ? 'border-red-500' : 'border-gray-300'
+              errors.marca ? 'border-red-500' : 'border-gray-300'
             }`}
-            placeholder="Ej: PayPal, MercadoPago, Binance Pay, TigoMoney"
+            placeholder="Ej: Visa, Mastercard, American Express, Cabal"
             disabled={isSubmitting}
           />
-          {errors.nombre && (
-            <p className="mt-1 text-sm text-red-600">{errors.nombre}</p>
+          {errors.marca && (
+            <p className="mt-1 text-sm text-red-600">{errors.marca}</p>
           )}
         </div>
 
@@ -116,7 +116,7 @@ const BilleteraDigitalCatalogoForm: React.FC<BilleteraDigitalCatalogoFormProps> 
             className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
               errors.comisiones ? 'border-red-500' : 'border-gray-300'
             }`}
-            placeholder="Ej: 3.0"
+            placeholder="Ej: 1.5"
             disabled={isSubmitting}
             step="0.01"
             min="0"
@@ -155,7 +155,7 @@ const BilleteraDigitalCatalogoForm: React.FC<BilleteraDigitalCatalogoFormProps> 
             disabled={isSubmitting}
           />
           <label htmlFor="is_active" className="ml-2 block text-sm text-gray-700">
-            Billetera activa (disponible para uso)
+            Marca activa (disponible para uso)
           </label>
         </div>
       </div>
@@ -175,11 +175,11 @@ const BilleteraDigitalCatalogoForm: React.FC<BilleteraDigitalCatalogoFormProps> 
           disabled={isSubmitting}
           className="btn-primary disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          {isSubmitting ? 'Guardando...' : (billetera ? 'Actualizar' : 'Crear')}
+          {isSubmitting ? 'Guardando...' : (marca ? 'Actualizar' : 'Crear')}
         </button>
       </div>
     </form>
   );
 };
 
-export default BilleteraDigitalCatalogoForm;
+export default TarjetaLocalCatalogoForm;

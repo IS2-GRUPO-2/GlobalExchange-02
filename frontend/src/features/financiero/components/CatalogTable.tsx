@@ -3,14 +3,16 @@ import { Edit, X, Check } from "lucide-react";
 import type {
   Banco,
   BilleteraDigitalCatalogo,
+  TarjetaLocalCatalogo,
   CatalogTabType,
 } from "../types/MetodoFinanciero";
 import Can from "../../../components/Can";
-import { BANCOS, BILLETERAS_DIGITALES, BILLETERAS_DIGITALES_CATALOGO } from "../../../types/perms";
+import { BANCOS, BILLETERAS_DIGITALES, BILLETERAS_DIGITALES_CATALOGO, TARJETAS_LOCALES_CATALOGO } from "../../../types/perms";
 
 interface CatalogTableProps {
   bancos: Banco[];
   billeterasCatalogo: BilleteraDigitalCatalogo[];
+  tarjetasLocalesCatalogo: TarjetaLocalCatalogo[];
   catalogTab: CatalogTabType;
   loading: boolean;
   onEdit: (item: any) => void;
@@ -20,6 +22,7 @@ interface CatalogTableProps {
 export const CatalogTable: React.FC<CatalogTableProps> = ({
   bancos,
   billeterasCatalogo,
+  tarjetasLocalesCatalogo,
   catalogTab,
   loading,
   onEdit,
@@ -34,17 +37,24 @@ export const CatalogTable: React.FC<CatalogTableProps> = ({
     );
   }
 
-  const items = catalogTab === "bancos" ? bancos : billeterasCatalogo;
+  const items = catalogTab === "bancos" ? bancos : 
+                catalogTab === "billeteras" ? billeterasCatalogo :
+                tarjetasLocalesCatalogo;
 
   return (
     <div className="table-container">
       <table className="table">
         <thead>
           <tr>
-            <th>Nombre</th>
+            <th>{catalogTab === "bancos" ? "Nombre" : catalogTab === "billeteras" ? "Nombre" : "Marca"}</th>
+            <th>Comisiones (%)</th>
+            <th>Comisión Personalizada</th>
             <th>Estado</th>
-            <th>Fecha Creación</th>
-            <Can anyOf={catalogTab === "bancos" ? [BANCOS.CHANGE, BANCOS.DELETE] : [BILLETERAS_DIGITALES_CATALOGO.CHANGE, BILLETERAS_DIGITALES_CATALOGO.DELETE]}>
+            <Can anyOf={
+              catalogTab === "bancos" ? [BANCOS.CHANGE, BANCOS.DELETE] : 
+              catalogTab === "billeteras" ? [BILLETERAS_DIGITALES_CATALOGO.CHANGE, BILLETERAS_DIGITALES_CATALOGO.DELETE] :
+              [TARJETAS_LOCALES_CATALOGO.CHANGE, TARJETAS_LOCALES_CATALOGO.DELETE]
+            }>
               <th>Acciones</th>
             </Can>
           </tr>
@@ -52,18 +62,36 @@ export const CatalogTable: React.FC<CatalogTableProps> = ({
         <tbody className="divide-y divide-gray-200">
           {items.length === 0 ? (
             <tr>
-              <td colSpan={4} className="text-center py-8">
+              <td colSpan={5} className="text-center py-8">
                 <p className="text-gray-600">
                   No hay{" "}
-                  {catalogTab === "bancos" ? "bancos" : "billeteras digitales"}{" "}
+                  {catalogTab === "bancos" ? "bancos" : 
+                   catalogTab === "billeteras" ? "billeteras digitales" :
+                   "marcas de tarjetas locales"}{" "}
                   registrados
                 </p>
               </td>
             </tr>
           ) : (
-            items.map((item) => (
+            items.map((item: any) => (
               <tr key={item.id}>
-                <td className="font-medium">{item.nombre}</td>
+                <td className="font-medium">
+                  {catalogTab === "tarjetas locales" ? item.marca : item.nombre}
+                </td>
+                <td className="text-sm text-gray-900">
+                  {item.comisiones}%
+                </td>
+                <td>
+                  <span
+                    className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                      item.comision_personalizada
+                        ? "bg-blue-100 text-blue-800"
+                        : "bg-gray-100 text-gray-800"
+                    }`}
+                  >
+                    {item.comision_personalizada ? "Sí" : "No"}
+                  </span>
+                </td>
                 <td>
                   <span
                     className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
@@ -74,11 +102,6 @@ export const CatalogTable: React.FC<CatalogTableProps> = ({
                   >
                     {item.is_active ? "Activo" : "Inactivo"}
                   </span>
-                </td>
-                <td>
-                  {item.fecha_creacion
-                    ? new Date(item.fecha_creacion).toLocaleDateString()
-                    : "-"}
                 </td>
                 <td>
                   <div className="flex items-center space-x-2">

@@ -3,17 +3,21 @@ import { toast } from "react-toastify";
 import {
   getCuentasBancarias,
   getBilleterasDigitales,
+  getTarjetasLocales,
   getDetallesMetodosFinancieros,
   createDetalleMetodoFinanciero,
   createCuentaBancaria,
   createBilleteraDigital,
+  createTarjetaLocal,
   updateCuentaBancaria,
   updateBilleteraDigital,
+  updateTarjetaLocal,
   toggleActiveMetodoFinanciero,
 } from "../services/metodoFinancieroService";
 import type {
   CuentaBancaria,
   BilleteraDigital,
+  TarjetaLocal,
   MetodoFinancieroDetalle,
   InstanceTabType,
   ExtendedItem,
@@ -22,21 +26,24 @@ import type {
 export const useInstancias = () => {
   const [cuentas, setCuentas] = useState<CuentaBancaria[]>([]);
   const [billeteras, setBilleteras] = useState<BilleteraDigital[]>([]);
+  const [tarjetasLocales, setTarjetasLocales] = useState<TarjetaLocal[]>([]);
   const [detalles, setDetalles] = useState<MetodoFinancieroDetalle[]>([]);
   const [loading, setLoading] = useState(false);
 
   const fetchInstancias = useCallback(async (search: string = "") => {
     setLoading(true);
     try {
-      const [detallesRes, cuentasRes, billeterasRes] = await Promise.all([
+      const [detallesRes, cuentasRes, billeterasRes, tarjetasRes] = await Promise.all([
         getDetallesMetodosFinancieros({ search }),
         getCuentasBancarias({ search }),
         getBilleterasDigitales({ search }),
+        getTarjetasLocales({ search }),
       ]);
 
       setDetalles(detallesRes.results.filter((d) => d.es_cuenta_casa));
       setCuentas(cuentasRes.results);
       setBilleteras(billeterasRes.results);
+      setTarjetasLocales(tarjetasRes.results);
     } catch (err) {
       console.error("Error fetching instancias:", err);
       toast.error("Error al cargar instancias");
@@ -57,8 +64,10 @@ export const useInstancias = () => {
           cliente: null,
           es_cuenta_casa: true,
           metodo_financiero: metodoFinancieroId,
-          alias: `Casa - ${
-            tipo === "cuentas" ? "cuenta" : "billetera digital"
+          alias: formData.alias || `Casa - ${
+            tipo === "cuentas" ? "cuenta" : 
+            tipo === "billeteras digitales" ? "billetera digital" :
+            "tarjeta local"
           }`,
           is_active: true,
         };
@@ -70,22 +79,22 @@ export const useInstancias = () => {
         // Crear instancia específica
         if (tipo === "cuentas") {
           await createCuentaBancaria(itemData);
-        } else {
+        } else if (tipo === "billeteras digitales") {
           await createBilleteraDigital(itemData);
+        } else if (tipo === "tarjetas locales") {
+          await createTarjetaLocal(itemData);
         }
 
-        toast.success(
-          `${
-            tipo === "cuentas" ? "Cuenta" : "Billetera digital"
-          } de la casa creada exitosamente!`
-        );
+        const tipoLabel = tipo === "cuentas" ? "Cuenta" : 
+                         tipo === "billeteras digitales" ? "Billetera digital" :
+                         "Tarjeta local";
+        toast.success(`${tipoLabel} de la casa creada exitosamente!`);
         return true;
       } catch (err) {
-        toast.error(
-          `Error al crear ${
-            tipo === "cuentas" ? "cuenta" : "billetera digital"
-          } de la casa`
-        );
+        const tipoLabel = tipo === "cuentas" ? "cuenta" : 
+                         tipo === "billeteras digitales" ? "billetera digital" :
+                         "tarjeta local";
+        toast.error(`Error al crear ${tipoLabel} de la casa`);
         console.error(err);
         return false;
       }
@@ -100,22 +109,22 @@ export const useInstancias = () => {
       try {
         if (item.tipo === "cuentas") {
           await updateCuentaBancaria(formData, item.id);
-        } else {
+        } else if (item.tipo === "billeteras digitales") {
           await updateBilleteraDigital(formData, item.id);
+        } else if (item.tipo === "tarjetas locales") {
+          await updateTarjetaLocal(formData, item.id);
         }
 
-        toast.success(
-          `${
-            item.tipo === "cuentas" ? "Cuenta" : "Billetera digital"
-          } actualizada exitosamente!`
-        );
+        const tipoLabel = item.tipo === "cuentas" ? "Cuenta" : 
+                         item.tipo === "billeteras digitales" ? "Billetera digital" :
+                         "Tarjeta local";
+        toast.success(`${tipoLabel} actualizada exitosamente!`);
         return true;
       } catch (err) {
-        toast.error(
-          `Error al actualizar ${
-            item.tipo === "cuentas" ? "cuenta" : "billetera digital"
-          }`
-        );
+        const tipoLabel = item.tipo === "cuentas" ? "cuenta" : 
+                         item.tipo === "billeteras digitales" ? "billetera digital" :
+                         "tarjeta local";
+        toast.error(`Error al actualizar ${tipoLabel}`);
         console.error(err);
         return false;
       }
@@ -167,6 +176,7 @@ export const useInstancias = () => {
   return {
     cuentas,
     billeteras,
+    tarjetasLocales,
     detalles,
     loading,
     fetchInstancias,

@@ -2,17 +2,21 @@ import axios from "axios";
 import type {
   Banco,
   BilleteraDigitalCatalogo,
+  TarjetaLocalCatalogo,
   MetodoFinanciero,
   MetodoFinancieroDetalle,
   CuentaBancaria,
   BilleteraDigital,
+  TarjetaLocal,
   Tarjeta,
   PaginatedBanco,
   PaginatedBilleteraDigitalCatalogo,
+  PaginatedTarjetaLocalCatalogo,
   PaginatedMetodoFinanciero,
   PaginatedMetodoFinancieroDetalle,
   PaginatedCuentaBancaria,
   PaginatedBilleteraDigital,
+  PaginatedTarjetaLocal,
   PaginatedTarjeta,
 } from "../types/MetodoFinanciero";
 
@@ -340,6 +344,60 @@ export const deactivateTarjeta = async (id: number) => {
   }
 };
 
+// Tarjetas Locales (Instancias)
+export const getTarjetasLocales = async (
+  params: GetParams = {}
+): Promise<PaginatedTarjetaLocal> => {
+  try {
+    const res = await apiClient.get<PaginatedTarjetaLocal>(`${API_URL}tarjetas-locales/`, {
+      params,
+    });
+    return res.data;
+  } catch (err: any) {
+    console.error(
+      "Error fetching tarjetas locales: ",
+      err.response?.data || err.message
+    );
+    throw err;
+  }
+};
+
+export const createTarjetaLocal = async (tarjetaData: any) => {
+  try {
+    const res = await apiClient.post<TarjetaLocal>(
+      `${API_URL}tarjetas-locales/`,
+      tarjetaData
+    );
+    return res;
+  } catch (err) {
+    console.error("Error creating tarjeta local: ", err);
+    throw err;
+  }
+};
+
+export const updateTarjetaLocal = async (tarjetaData: any, id: number) => {
+  try {
+    const res = await apiClient.put<TarjetaLocal>(
+      `${API_URL}tarjetas-locales/${id}/`,
+      tarjetaData
+    );
+    return res;
+  } catch (err) {
+    console.error("Error updating tarjeta local: ", err);
+    throw err;
+  }
+};
+
+export const deactivateTarjetaLocal = async (id: number) => {
+  try {
+    const res = await apiClient.delete(`${API_URL}tarjetas-locales/${id}/`);
+    return res;
+  } catch (err) {
+    console.error("Error deactivating tarjeta local: ", err);
+    throw err;
+  }
+};
+
 // ======================== CATÁLOGOS ========================
 
 // Bancos
@@ -468,6 +526,78 @@ export const toggleActiveBilleteraDigitalCatalogo = async (id: number) => {
     return res.data;
   } catch (err) {
     console.error("Error toggling billetera digital catálogo status: ", err);
+    throw err;
+  }
+};
+
+// Tarjetas Locales Catálogo
+export const getTarjetasLocalesCatalogo = async (
+  params: GetParams = {}
+): Promise<PaginatedTarjetaLocalCatalogo> => {
+  try {
+    const res = await apiClient.get<PaginatedTarjetaLocalCatalogo>(
+      `${API_URL}tarjetas-locales-catalogo/`,
+      { params }
+    );
+    return res.data;
+  } catch (err: any) {
+    console.error(
+      "Error fetching tarjetas locales catálogo: ",
+      err.response?.data || err.message
+    );
+    throw err;
+  }
+};
+
+export const createTarjetaLocalCatalogo = async (
+  tarjetaData: TarjetaLocalCatalogo
+) => {
+  try {
+    const res = await apiClient.post<TarjetaLocalCatalogo>(
+      `${API_URL}tarjetas-locales-catalogo/`,
+      tarjetaData
+    );
+    return res;
+  } catch (err) {
+    console.error("Error creating tarjeta local catálogo: ", err);
+    throw err;
+  }
+};
+
+export const updateTarjetaLocalCatalogo = async (
+  tarjetaData: TarjetaLocalCatalogo,
+  id: number
+) => {
+  try {
+    const res = await apiClient.put<TarjetaLocalCatalogo>(
+      `${API_URL}tarjetas-locales-catalogo/${id}/`,
+      tarjetaData
+    );
+    return res;
+  } catch (err) {
+    console.error("Error updating tarjeta local catálogo: ", err);
+    throw err;
+  }
+};
+
+export const deactivateTarjetaLocalCatalogo = async (id: number) => {
+  try {
+    const res = await apiClient.delete(`${API_URL}tarjetas-locales-catalogo/${id}/`);
+    return res;
+  } catch (err) {
+    console.error("Error deactivating tarjeta local catálogo: ", err);
+    throw err;
+  }
+};
+
+export const toggleActiveTarjetaLocalCatalogo = async (id: number) => {
+  try {
+    const res = await apiClient.post(
+      `${API_URL}tarjetas-locales-catalogo/${id}/toggle_active/`
+    );
+    return res.data;
+  } catch (err) {
+    console.error("Error toggling tarjeta local catálogo status: ", err);
     throw err;
   }
 };
