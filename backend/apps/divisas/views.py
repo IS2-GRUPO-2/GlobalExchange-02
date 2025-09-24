@@ -1,13 +1,14 @@
 from rest_framework import permissions, viewsets, filters, status
 from django.db.models import Q
-from .serializers import DivisaSerializer, DivisaPaginatedResponseSerializer, DenominacionSerializer, LimiteDivisaSerializer
-from .models import Divisa, Denominacion, LimiteDivisa
+from .serializers import DivisaSerializer, DivisaPaginatedResponseSerializer, DenominacionSerializer, LimiteConfigSerializer
+from .models import Divisa, Denominacion, LimiteConfig
 from rest_framework.response import Response
 from rest_framework.decorators import action
 from drf_yasg.utils import swagger_auto_schema
 from drf_yasg import openapi
 from rest_framework.pagination import PageNumberPagination
 from apps.cotizaciones.models import Tasa
+from rest_framework.generics import RetrieveUpdateAPIView
 
 class DivisaPagination(PageNumberPagination):
     page_size = 10
@@ -221,7 +222,10 @@ class DenominacionViewset(viewsets.ModelViewSet):
         instance.save()
         return Response(status=status.HTTP_200_OK)
     
-class LimiteDivisaViewset(viewsets.ModelViewSet):
-    serializer_class = LimiteDivisaSerializer
-    queryset = LimiteDivisa.objects.all()
+class LimiteConfigView(RetrieveUpdateAPIView):
+    serializer_class = LimiteConfigSerializer
     permission_classes = [permissions.IsAuthenticated, permissions.DjangoModelPermissions]
+    queryset = LimiteConfig.objects.all()
+
+    def get_object(self): # type: ignore[override]
+        return LimiteConfig.get_solo()

@@ -3,10 +3,12 @@ cffi==1.17.1
 cryptography==45.0.6
 Django==5.2.5
 django-cors-headers==4.7.0
+django-solo==2.4.0
 djangorestframework==3.16.1
 djangorestframework_simplejwt==5.5.1
 dotenv==0.9.9
 drf-yasg==1.21.10
+gunicorn==22.0.0
 inflection==0.5.1
 iniconfig==2.1.0
 packaging==25.0
@@ -24,4 +26,3 @@ PyYAML==6.0.2
 sqlparse==0.5.3
 tzdata==2025.2
 uritemplate==4.2.0
-gunicorn==22.0.0

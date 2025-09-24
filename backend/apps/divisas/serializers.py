@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Divisa, Denominacion, LimiteDivisa
+from .models import Divisa, Denominacion, LimiteConfig
 
 class DivisaSerializer(serializers.ModelSerializer):
     class Meta:
@@ -18,8 +18,7 @@ class DenominacionSerializer(serializers.ModelSerializer):
         model = Denominacion
         fields = '__all__'
 
-
-class LimiteDivisaSerializer(serializers.ModelSerializer):
+class LimiteConfigSerializer(serializers.ModelSerializer):
     class Meta:
-        model = LimiteDivisa
+        model = LimiteConfig        
         fields = '__all__'
