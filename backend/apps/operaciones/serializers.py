@@ -17,6 +17,7 @@ from .models import (
     CuentaBancaria,
     BilleteraDigital,
     Tarjeta,
+    Cheque,
 )
 
 
@@ -108,6 +109,17 @@ class TarjetaSerializer(serializers.ModelSerializer):
     class Meta:
         model = Tarjeta
         fields = '__all__'  
+
+class ChequeSerializer(serializers.ModelSerializer):
+    """
+    Serializer para cheques.
+
+    Incluye validaciones específicas en el modelo.
+    """
+    class Meta:
+        model = Cheque
+        fields = '__all__'
+        read_only_fields = ('fecha_emision', 'estado', 'fecha_validacion_analista', 'analista')
 
 # ======================== Serializers para vistas de simulación de operación ========================
 """

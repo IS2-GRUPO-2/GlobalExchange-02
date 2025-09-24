@@ -1,6 +1,8 @@
 from django.db import models
 from django.core.exceptions import ValidationError
 from apps.clientes.models import Cliente
+from apps.divisas.models import Divisa
+from apps.usuarios.models import User 
 
 
 # ======================== CATÁLOGOS INDEPENDIENTES ========================
@@ -207,13 +209,25 @@ class Cheque(models.Model):
         ('ADELANTADO', 'Cheque Adelantado')
     ])
     monto = models.DecimalField(max_digits=18, decimal_places=2)
+   
+    # Divisa del cheque (solo PYG, USD, EUR permitidas)
+    DIVISAS_PERMITIDAS = [
+        ("PYG", "Guaraní"),
+        ("USD", "Dólar"),
+        ("EUR", "Euro"),
+    ]
+  
+    divisa = models.CharField(max_length=3, choices=DIVISAS_PERMITIDAS, default="PYG")
+    
+    # Campos para validación por analista
+    analista = models.ForeignKey(User, on_delete=models.PROTECT, null=True, blank=True)
+    fecha_validacion_analista = models.DateTimeField(null=True, blank=True)
     
     # Estados y fechas
     estado = models.CharField(max_length=15, choices=[
         ('PENDIENTE', 'Pendiente'),
         ('ACEPTADO', 'Aceptado'),
         ('RECHAZADO', 'Rechazado'),
-        ('COBRADO', 'Cobrado')
     ], default='PENDIENTE')
     fecha_emision = models.DateTimeField(auto_now_add=True)
     fecha_vencimiento = models.DateTimeField(null=True, blank=True)

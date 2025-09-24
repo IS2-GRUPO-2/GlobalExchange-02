@@ -14,6 +14,7 @@ from apps.operaciones.models import (
     TipoMetodoFinanciero,
     Banco,
     BilleteraDigitalCatalogo,
+    Cheque,
 )
 
 from apps.operaciones.services import (
@@ -393,3 +394,28 @@ def test_simular_operacion_privada_endpoint_authenticated():
     data = response.json()
     assert data["operacion_casa"] == "venta"
     assert "tc_final" in data
+
+
+# =============================== CHEQUE ENDPOINTS ==================================
+def test_cheque_tipos_endpoint(api_client):
+    """
+    Verifica que el endpoint de tipos de cheque devuelva una lista de objetos {value, label}.
+    """
+    url = reverse('cheque-tipos')
+    response = api_client.get(url)
+    assert response.status_code == status.HTTP_200_OK
+    assert isinstance(response.data, list)
+    assert len(response.data) >= 1
+    assert 'value' in response.data[0] and 'label' in response.data[0]
+
+
+def test_cheque_divisas_endpoint(api_client):
+    """
+    Verifica que el endpoint de divisas de cheque devuelva la lista esperada.
+    """
+    url = reverse('cheque-divisas')
+    response = api_client.get(url)
+    assert response.status_code == status.HTTP_200_OK
+    assert isinstance(response.data, list)
+    assert len(response.data) >= 1
+    assert 'value' in response.data[0] and 'label' in response.data[0]

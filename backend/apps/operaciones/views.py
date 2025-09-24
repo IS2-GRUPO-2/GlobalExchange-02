@@ -20,10 +20,12 @@ from .models import (
     CuentaBancaria,
     BilleteraDigital,
     Tarjeta,
+    Cheque,
 )
 from .serializers import (
     BancoSerializer,
     BilleteraDigitalCatalogoSerializer,
+    ChequeSerializer,
     MetodoFinancieroSerializer,
     MetodoFinancieroDetalleSerializer,
     CuentaBancariaSerializer,
@@ -596,7 +598,50 @@ class TarjetaViewSet(viewsets.ModelViewSet):
         detalle.save()
         return Response({"message": f"Tarjeta {instance.brand} ****{instance.last4} desactivada (eliminado lógico)."}, status=status.HTTP_200_OK)
     
+class ChequeViewSet(viewsets.ModelViewSet):
+    queryset = Cheque.objects.all()
+    serializer_class = ChequeSerializer
+    permission_classes = [permissions.IsAuthenticated]
+    filter_backends = [filters.SearchFilter]
+    # Ajuste: los nombres de campo deben coincidir con el modelo
+    search_fields = ['banco_emisor__nombre', 'numero', 'titular']
+    pagination_class = OperacionesPagination
+    
 
+@api_view(["GET"])
+@permission_classes([permissions.AllowAny])
+def obtener_tipos_cheque(request):
+    """
+    Retorna la lista de tipos de cheque admitidos por el sistema.
+
+    Devuelve una lista de objetos { value, label } usando las choices
+    definidas en el campo `tipo` del modelo `Cheque`.
+    """
+    try:
+        choices = [
+            {"value": c[0], "label": c[1]} for c in Cheque._meta.get_field('tipo').choices
+        ]
+        return Response(choices, status=status.HTTP_200_OK)
+    except Exception as e:
+        return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+@api_view(["GET"])
+@permission_classes([permissions.AllowAny])
+def obtener_divisas_cheque(request):
+    """
+    Retorna las divisas permitidas para cheques.
+
+    Devuelve una lista de objetos { value, label } usando la constante
+    `DIVISAS_PERMITIDAS` definida en el modelo `Cheque`.
+    """
+    try:
+        divisas = [{"value": d[0], "label": d[1]} for d in getattr(Cheque, 'DIVISAS_PERMITIDAS', [])]
+        return Response(divisas, status=status.HTTP_200_OK)
+    except Exception as e:
+        return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+   
 
 #=============================================================
 # Vistas para simulaciones de operaciones
@@ -685,3 +730,4 @@ def listar_metodos_disponibles(request):
 
     except Exception as e:
         return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
