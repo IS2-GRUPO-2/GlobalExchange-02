@@ -52,6 +52,19 @@ export const getUserClients = (userId: number) =>
     getAuthHeaders()
   );
 
+export const getClienteActual = (userId: number) =>
+  axios.get<{ clienteActual: Cliente | null }>(
+    `${API_URL}${userId}/cliente_actual/`,
+    getAuthHeaders()
+  );
+
+export const setClienteActual = (userId: number, clienteId: string) =>
+  axios.post(
+    `${API_URL}${userId}/set_cliente_actual/`,
+    { cliente_id: clienteId },
+    getAuthHeaders()
+  );
+
 export const getUserRoles = (userId: number) =>
   axios.get<{id: number; name: string}[]>(`${API_URL}${userId}/roles/`, getAuthHeaders());
 

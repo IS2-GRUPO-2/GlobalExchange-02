@@ -165,6 +165,71 @@ class UserViewSet(viewsets.ModelViewSet):
         data = list(user.groups.values("id", "name"))
         return Response(data, status=status.HTTP_200_OK)
 
+    @action(detail=True, methods=["post"], url_path="set_cliente_actual")
+    def set_cliente_actual(self, request, pk=None):
+        """
+        Establece el cliente actual del usuario.
+        Body esperado: { "cliente_id": 123 }
+        """
+        user = self.get_object()
+        cliente_id = request.data.get("cliente_id")
+
+        if not cliente_id:
+            return Response(
+                {"error": "Debe enviar 'cliente_id'"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        try:
+            cliente = user.clientes.get(pk=cliente_id, isActive=True)
+        except Cliente.DoesNotExist:
+            return Response(
+                {"error": "El cliente no está asignado al usuario o está inactivo"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        user.clienteActual = cliente
+        user.save()
+
+        return Response(
+            {
+                "message": f"Cliente actual actualizado a {cliente.nombre}",
+                "cliente_id": cliente.idCliente,
+            },
+            status=status.HTTP_200_OK,
+        )
+
+
+    @action(detail=True, methods=["get"], url_path="cliente_actual")
+    def get_cliente_actual(self, request, pk=None):
+        """
+        Devuelve el cliente actual del usuario.
+        - Si el actual es inválido (None, inactivo o no asignado), intenta
+        seleccionar automáticamente otro cliente ASIGNADO y ACTIVO,
+        lo persiste en DB y lo retorna.
+        - Solo retorna {"clienteActual": None} si el usuario no tiene clientes asignados.
+        """
+        user = self.get_object()
+
+        activos_qs = user.clientes.filter(isActive=True)
+
+        if not user.clientes.exists():
+            return Response({"clienteActual": None}, status=status.HTTP_200_OK)
+
+        actual = user.clienteActual
+        if actual and actual.isActive and activos_qs.filter(pk=actual.pk).exists():
+            return Response({"clienteActual": ClienteSerializer(actual).data},
+                            status=status.HTTP_200_OK)
+
+        alternativo = activos_qs.order_by("nombre").first()
+        if alternativo:
+            user.clienteActual = alternativo
+            user.save()
+            return Response({"clienteActual": ClienteSerializer(alternativo).data},
+                            status=status.HTTP_200_OK)
+
+        return Response({"clienteActual": None}, status=status.HTTP_200_OK)
+
 @api_view(["GET"])
 @permission_classes([permissions.AllowAny])
 def me_permissions(request):
