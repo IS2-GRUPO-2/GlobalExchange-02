@@ -71,6 +71,12 @@ const ClientPicker: React.FC<Props> = ({
 
     try {
       await setClienteActual(userId, nextId);
+
+      // Emitir evento personalizado cuando cambie el cliente
+      window.dispatchEvent(new CustomEvent('clienteActualChanged', {
+        detail: { cliente: nextClient, userId }
+      }));
+      
     } catch (e) {
       setValue(prevId);
       onChange?.(options.find((c) => c.idCliente === prevId) || null);
