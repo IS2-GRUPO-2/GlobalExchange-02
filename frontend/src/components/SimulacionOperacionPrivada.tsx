@@ -4,7 +4,7 @@ import {
   getMetodosDisponibles,
 } from "../services/simulacionService";
 import { type SimulacionResponse } from "../types/Simulacion";
-import { getUserClients } from "../services/usuarioService";
+import { getClienteActual } from "../services/usuarioService";
 import { type Cliente } from "../types/Cliente";
 import { type MetodoFinanciero } from "../types/MetodoFinanciero";
 import { getDivisasConTasa } from "../services/divisaService";
@@ -17,9 +17,8 @@ export default function SimulacionOperacionPrivada() {
   const [monto, setMonto] = useState<number>(0);
   const [resultado, setResultado] = useState<SimulacionResponse | null>(null);
 
-  // Clientes
-  const [clientes, setClientes] = useState<Cliente[]>([]);
-  const [clienteSeleccionado, setClienteSeleccionado] = useState<string>("");
+  // Cliente actual
+  const [clienteActual, setClienteActual] = useState<Cliente | null>(null);
 
   // Divisas
   const [divisas, setDivisas] = useState<Divisa[]>([]);
@@ -36,21 +35,56 @@ export default function SimulacionOperacionPrivada() {
     null
   );
 
+  // Función para resetear la simulación
+  const resetSimulacion = () => {
+    setResultado(null);
+    setMonto(0);
+    setDivisaOrigen("");
+    setDivisaDestino("");
+    setMetodoSeleccionado("");
+    setMetodos([]);
+  };
+
+    // Función para manejar cambio de cliente
+  const handleClienteChange = (nuevoCliente: Cliente | null) => {
+    resetSimulacion();
+    setClienteActual(nuevoCliente);
+    
+    if (!nuevoCliente) {
+      toast.error("No tienes un cliente asignado. Contacta a soporte.");
+    }
+  };
+
   useEffect(() => {
-    const fetchClientes = async () => {
+    const fetchClienteActual = async () => {
       try {
         const token = localStorage.getItem("token");
         if (!token) return;
         const userId = jwtDecode<DecodedToken>(token).user_id;
-        const res = await getUserClients(Number(userId));
-        const data = res.data;
-        setClientes(data);
-        if (data.length > 0) setClienteSeleccionado(data[0].idCliente);
+        const res = await getClienteActual(Number(userId));
+        const { clienteActual } = res.data;
+        
+        handleClienteChange(clienteActual);
+
       } catch (err) {
-        console.error("Error cargando clientes", err);
+        console.error("Error cargando cliente actual", err);
       }
     };
-    fetchClientes();
+    fetchClienteActual();
+  }, []);
+
+   // Escuchar cambios del cliente desde ClientPicker
+  useEffect(() => {
+    const handleClienteChangeEvent = (event: CustomEvent) => {
+      const { cliente } = event.detail;
+      handleClienteChange(cliente); 
+    };
+
+    window.addEventListener('clienteActualChanged', handleClienteChangeEvent as EventListener);
+    
+    return () => {
+      window.removeEventListener('clienteActualChanged', handleClienteChangeEvent as EventListener);
+    };
   }, []);
 
   useEffect(() => {
@@ -67,6 +101,7 @@ export default function SimulacionOperacionPrivada() {
     };
     fetchDivisas();
   }, []);
+
 
   useEffect(() => {
     const fetchMetodos = async () => {
@@ -90,17 +125,20 @@ export default function SimulacionOperacionPrivada() {
 
   const handleSimular = async () => {
     if (
-      !clienteSeleccionado ||
       !divisaOrigen ||
       !divisaDestino ||
       !metodoSeleccionado
     ) {
-      toast.error("Debes seleccionar cliente, divisas y método");
+      toast.error("Debes seleccionar divisas y método");
+      return;
+    }
+    if (!clienteActual) {
+      toast.error("Debes tener un cliente seleccionado para simular");
       return;
     }
     try {
       const res = await simularOperacionPrivada({
-        cliente_id: clienteSeleccionado,
+        cliente_id: clienteActual.idCliente,
         divisa_origen: Number(divisaOrigen),
         divisa_destino: Number(divisaDestino),
         monto,
@@ -122,7 +160,7 @@ export default function SimulacionOperacionPrivada() {
 
         <div className="p-6 space-y-5">
           {/* Select Cliente */}
-          <div className="flex flex-col">
+          {/* <div className="flex flex-col">
             <label
               htmlFor="cliente"
               className="mb-1 text-sm font-medium text-gray-700"
@@ -144,7 +182,7 @@ export default function SimulacionOperacionPrivada() {
                 </option>
               ))}
             </select>
-          </div>
+          </div> */}
 
           {/* Divisas Origen/Destino */}
           <div className="flex items-center space-x-2">
@@ -157,7 +195,7 @@ export default function SimulacionOperacionPrivada() {
                   setResultado(null);
 
                   const origen = divisas.find((d) => d.id?.toString() === e.target.value);
-                  const destino = divisas.find((d) => d.id?.toString() === divisaDestino); // ✅ buscar destino
+                  const destino = divisas.find((d) => d.id?.toString() === divisaDestino); // buscar destino
                   if (origen && origen.es_base && divisaBase && destino?.es_base) {
                     setDivisaDestino("");
                   }
