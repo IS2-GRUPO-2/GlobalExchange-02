@@ -22,6 +22,12 @@ class User(AbstractUser):
         related_name="usuarios",
         blank=True
     )
+    clienteActual = models.ForeignKey(
+        "clientes.Cliente",
+        null=True, blank=True,
+        on_delete=models.SET_NULL,
+        related_name="usuarios_cliente_actual"
+    )
     class Meta:
         permissions = [
             ("can_assign_clients", "Puede asignar clientes a usuarios"),
