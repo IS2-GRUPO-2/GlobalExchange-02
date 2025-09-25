@@ -514,17 +514,6 @@ const MetodosFinancierosClientePage = () => {
     return () => window.removeEventListener('focus', handleFocus);
   }, [isLoggedIn]);
 
-  // Actualizar datos cada 30 segundos para reflejar cambios en tiempo real
-  useEffect(() => {
-    if (!isLoggedIn) return;
-
-    const interval = setInterval(() => {
-      fetchAllData();
-    }, 30000); // 30 segundos
-
-    return () => clearInterval(interval);
-  }, [isLoggedIn]);
-
   const filteredItems = getFilteredItems();
 
   return (
