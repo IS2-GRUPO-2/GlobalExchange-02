@@ -48,7 +48,7 @@ class BilleteraDigitalCatalogo(models.Model):
         return self.nombre
 
 
-class TarjetaLocalCatalogo(models.Model):
+class TarjetaCatalogo(models.Model):
     """Catálogo de marcas de tarjetas locales disponibles"""
     marca = models.CharField(max_length=50, unique=True, help_text="Marca de la tarjeta (ej: Visa, Mastercard, American Express, Cabal)")
     comision_compra = models.DecimalField(max_digits=5, decimal_places=2, default=0.00, help_text="Comisión por defecto para operaciones de compra (%)")
@@ -213,7 +213,8 @@ class Tarjeta(models.Model):
         ('STRIPE', 'Stripe'),
     ], default='STRIPE')
     payment_method_id = models.CharField(max_length=100, unique=True)  # ID de Stripe u otro proveedor
-    brand = models.CharField(max_length=50)  # Visa, Mastercard, etc.
+    marca = models.ForeignKey(TarjetaCatalogo, on_delete=models.PROTECT, default=None)
+    brand = models.CharField(max_length=50, default=None)  # Visa, Mastercard, etc.
     last4 = models.CharField(max_length=4)   # Últimos 4 dígitos
     exp_month = models.IntegerField()
     exp_year = models.IntegerField()
@@ -225,30 +226,6 @@ class Tarjeta(models.Model):
     
     def __str__(self):
         return f"{self.brand} ****{self.last4} ({self.titular})"
-
-
-class TarjetaLocal(models.Model):
-    """Detalles específicos de tarjeta local"""
-    metodo_financiero_detalle = models.OneToOneField(
-        MetodoFinancieroDetalle, 
-        on_delete=models.CASCADE,
-        related_name='tarjeta_local'
-    )
-    marca = models.ForeignKey(TarjetaLocalCatalogo, on_delete=models.PROTECT, help_text="Marca de tarjeta del catálogo")
-    # Campos del formulario (para simulación - no se guardan en producción)
-    last4 = models.CharField(max_length=4, help_text="Últimos 4 dígitos del PAN")
-    titular = models.CharField(max_length=100)
-    exp_month = models.IntegerField()
-    exp_year = models.IntegerField()
-    
-    class Meta:
-        verbose_name = "Tarjeta Local"
-        verbose_name_plural = "Tarjetas Locales"
-    
-    def __str__(self):
-        return f"{self.marca.marca} ****{self.last4} ({self.titular})"
-
-
 
 
 class Cheque(models.Model):

@@ -109,7 +109,7 @@ export const TabNavigation: React.FC<TabNavigationProps> = ({
         <div className="mb-6">
           <div className="border-b border-gray-200">
             <nav className="-mb-px flex space-x-8">
-              {(["cuentas", "billeteras digitales", "tarjetas locales"] as InstanceTabType[]).map(
+              {(["cuentas", "billeteras digitales"] as InstanceTabType[]).map(
                 (tab) => (
                   <Can key={tab} anyOf={getInstanceViewPerm(tab)}>
                     <button

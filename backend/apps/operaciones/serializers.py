@@ -12,13 +12,12 @@ from rest_framework import serializers
 from .models import (
     Banco,
     BilleteraDigitalCatalogo,
-    TarjetaLocalCatalogo,
+    TarjetaCatalogo,
     MetodoFinanciero,
     MetodoFinancieroDetalle,
     CuentaBancaria,
     BilleteraDigital,
     Tarjeta,
-    TarjetaLocal,
     Cheque,
 )
 
@@ -47,14 +46,14 @@ class BilleteraDigitalCatalogoSerializer(serializers.ModelSerializer):
         read_only_fields = ('fecha_creacion', 'fecha_actualizacion')
 
 
-class TarjetaLocalCatalogoSerializer(serializers.ModelSerializer):
+class TarjetaCatalogoSerializer(serializers.ModelSerializer):
     """
     Serializer para el catálogo de marcas de tarjetas locales.
     
     Permite gestionar la lista de marcas de tarjetas locales disponibles en el sistema.
     """
     class Meta:
-        model = TarjetaLocalCatalogo
+        model = TarjetaCatalogo
         fields = '__all__'
         read_only_fields = ('fecha_creacion', 'fecha_actualizacion')
 
@@ -116,7 +115,7 @@ class TarjetaSerializer(serializers.ModelSerializer):
     """
     Serializer para tarjetas de crédito/débito.
 
-    Nota: `stripe_payment_method_id` es único y obligatorio para la integración
+    Nota: `payment_method_id` es único y obligatorio para la integración
     con Stripe.
     
     """
@@ -124,19 +123,6 @@ class TarjetaSerializer(serializers.ModelSerializer):
         model = Tarjeta
         fields = '__all__'  
 
-
-class TarjetaLocalSerializer(serializers.ModelSerializer):
-    """
-    Serializer para tarjetas locales.
-
-    Incluye información de la marca desde el catálogo.
-    """
-    marca_nombre = serializers.CharField(source='marca.marca', read_only=True)
-    marca_activa = serializers.BooleanField(source='marca.is_active', read_only=True)
-
-    class Meta:
-        model = TarjetaLocal
-        fields = '__all__'  
 
 class ChequeSerializer(serializers.ModelSerializer):
     """
@@ -147,7 +133,6 @@ class ChequeSerializer(serializers.ModelSerializer):
     class Meta:
         model = Cheque
         fields = '__all__'
-        read_only_fields = ('fecha_emision', 'estado', 'fecha_validacion_analista', 'analista')
 
 # ======================== Serializers para vistas de simulación de operación ========================
 """

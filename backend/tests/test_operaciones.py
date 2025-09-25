@@ -14,7 +14,7 @@ from apps.operaciones.models import (
     TipoMetodoFinanciero,
     Banco,
     BilleteraDigitalCatalogo,
-    TarjetaLocalCatalogo,
+    TarjetaCatalogo,
     Cheque,
 )
 
@@ -72,8 +72,10 @@ def banco_instance():
         nombre='Banco Test',
         defaults={
             'cvu': '0000000000000000000000',
-            'comisiones': 2.50,
-            'comision_personalizada': True
+            'comision_compra': 2.50,
+            'comision_venta': 2.00,
+            'comision_personalizada_compra': True,
+            'comision_personalizada_venta': False
         }
     )
     return banco
@@ -102,8 +104,10 @@ def plataforma_instance():
     plataforma, _ = BilleteraDigitalCatalogo.objects.get_or_create(
         nombre='MercadoPago',
         defaults={
-            'comisiones': 3.00,
-            'comision_personalizada': False
+            'comision_compra': 3.00,
+            'comision_venta': 2.50,
+            'comision_personalizada_compra': False,
+            'comision_personalizada_venta': True
         }
     )
     return plataforma
@@ -130,10 +134,38 @@ def billetera_data_orm(plataforma_instance):
 
 
 @pytest.fixture
-def tarjeta_data():
+def tarjeta_catalogo_instance():
+    tarjeta_catalogo, _ = TarjetaCatalogo.objects.get_or_create(
+        marca='Visa',
+        defaults={
+            'comision_compra': 3.00,
+            'comision_venta': 2.50,
+            'comision_personalizada_compra': True,
+            'comision_personalizada_venta': False
+        }
+    )
+    return tarjeta_catalogo
+
+@pytest.fixture
+def tarjeta_data(tarjeta_catalogo_instance):
     return {
+        'tipo': 'STRIPE',
         'payment_method_id': 'pm_test_123',
-        'brand': 'VISA',
+        'marca': tarjeta_catalogo_instance.id,  # Para API - usar ID
+        'brand': 'visa',
+        'last4': '4242',
+        'exp_month': 12,
+        'exp_year': 2030,
+        'titular': 'Casa Cambio'
+    }
+
+@pytest.fixture
+def tarjeta_data_orm(tarjeta_catalogo_instance):
+    return {
+        'tipo': 'STRIPE',
+        'payment_method_id': 'pm_test_123_orm',
+        'marca': tarjeta_catalogo_instance,  # Para ORM - usar instancia
+        'brand': 'visa',
         'last4': '4242',
         'exp_month': 12,
         'exp_year': 2030,
@@ -240,10 +272,10 @@ class TestTarjetaAPI:
         assert response.status_code == status.HTTP_201_CREATED
         assert Tarjeta.objects.count() == 1
 
-    def test_eliminar_tarjeta_desactiva_detalle(self, api_client, metodo_data, detalle_data, tarjeta_data):
+    def test_eliminar_tarjeta_desactiva_detalle(self, api_client, metodo_data, detalle_data, tarjeta_data_orm):
         metodo = MetodoFinanciero.objects.create(**metodo_data)
         detalle = MetodoFinancieroDetalle.objects.create(metodo_financiero=metodo, es_cuenta_casa=True, alias='Casa-Tarj2')
-        tarjeta = Tarjeta.objects.create(metodo_financiero_detalle=detalle, **tarjeta_data)
+        tarjeta = Tarjeta.objects.create(metodo_financiero_detalle=detalle, **tarjeta_data_orm)
 
         response = api_client.delete(f'/api/operaciones/tarjetas/{tarjeta.id}/')
         assert response.status_code == status.HTTP_200_OK
@@ -439,36 +471,48 @@ class TestCatalogoComisiones:
         banco = Banco.objects.create(
             nombre='Banco Comisiones Test',
             cvu='1234567890123456789012',
-            comisiones=2.75,
-            comision_personalizada=True
+            comision_compra=2.75,
+            comision_venta=3.25,
+            comision_personalizada_compra=True,
+            comision_personalizada_venta=False
         )
         
-        assert banco.comisiones == 2.75
-        assert banco.comision_personalizada is True
+        assert banco.comision_compra == 2.75
+        assert banco.comision_venta == 3.25
+        assert banco.comision_personalizada_compra is True
+        assert banco.comision_personalizada_venta is False
         assert banco.is_active is True  # valor por defecto
     
     def test_billetera_digital_campos_comisiones(self):
         """Verifica que el modelo BilleteraDigitalCatalogo tenga los campos de comisiones"""
         billetera = BilleteraDigitalCatalogo.objects.create(
             nombre='PayPal Test',
-            comisiones=3.50,
-            comision_personalizada=False
+            comision_compra=3.50,
+            comision_venta=2.80,
+            comision_personalizada_compra=False,
+            comision_personalizada_venta=True
         )
         
-        assert billetera.comisiones == 3.50
-        assert billetera.comision_personalizada is False
+        assert billetera.comision_compra == 3.50
+        assert billetera.comision_venta == 2.80
+        assert billetera.comision_personalizada_compra is False
+        assert billetera.comision_personalizada_venta is True
         assert billetera.is_active is True  # valor por defecto
     
-    def test_tarjeta_local_campos_comisiones(self):
-        """Verifica que el modelo TarjetaLocalCatalogo tenga los campos de comisiones"""
-        tarjeta = TarjetaLocalCatalogo.objects.create(
+    def test_tarjeta_catalogo_campos_comisiones(self):
+        """Verifica que el modelo TarjetaCatalogo tenga los campos de comisiones"""
+        tarjeta = TarjetaCatalogo.objects.create(
             marca='Visa Test',
-            comisiones=1.25,
-            comision_personalizada=True
+            comision_compra=1.25,
+            comision_venta=1.50,
+            comision_personalizada_compra=True,
+            comision_personalizada_venta=False
         )
         
-        assert tarjeta.comisiones == 1.25
-        assert tarjeta.comision_personalizada is True
+        assert tarjeta.comision_compra == 1.25
+        assert tarjeta.comision_venta == 1.50
+        assert tarjeta.comision_personalizada_compra is True
+        assert tarjeta.comision_personalizada_venta is False
         assert tarjeta.is_active is True  # valor por defecto
     
     def test_valores_por_defecto_comisiones(self):
@@ -480,14 +524,20 @@ class TestCatalogoComisiones:
         billetera = BilleteraDigitalCatalogo.objects.create(
             nombre='Billetera Default Test'
         )
-        tarjeta = TarjetaLocalCatalogo.objects.create(
+        tarjeta = TarjetaCatalogo.objects.create(
             marca='Tarjeta Default Test'
         )
         
         # Verificar valores por defecto
-        assert banco.comisiones == 0.00
-        assert banco.comision_personalizada is False
-        assert billetera.comisiones == 0.00
-        assert billetera.comision_personalizada is False
-        assert tarjeta.comisiones == 0.00
-        assert tarjeta.comision_personalizada is False
+        assert banco.comision_compra == 0.00
+        assert banco.comision_venta == 0.00
+        assert banco.comision_personalizada_compra is False
+        assert banco.comision_personalizada_venta is False
+        assert billetera.comision_compra == 0.00
+        assert billetera.comision_venta == 0.00
+        assert billetera.comision_personalizada_compra is False
+        assert billetera.comision_personalizada_venta is False
+        assert tarjeta.comision_compra == 0.00
+        assert tarjeta.comision_venta == 0.00
+        assert tarjeta.comision_personalizada_compra is False
+        assert tarjeta.comision_personalizada_venta is False

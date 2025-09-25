@@ -148,6 +148,8 @@ const MetodosFinancierosPage = () => {
     const success = await catalogosHook.toggleCatalogItem(item, tipo);
     if (success) {
       catalogosHook.fetchCatalogos(search);
+      // También actualizar las instancias para reflejar cambios en cascada
+      instanciasHook.fetchInstancias(search);
     }
   };
 
@@ -270,19 +272,9 @@ const MetodosFinancierosPage = () => {
             isSubmitting={modalHook.isSubmitting}
           />
         );
-      } else {
-        return (
-          <TarjetaLocalForm
-            onSubmit={
-              modalHook.editModalOpen
-                ? handleUpdateInstancia
-                : handleCreateInstancia
-            }
-            initialData={initialData}
-            isSubmitting={modalHook.isSubmitting}
-          />
-        );
       }
+      // Solo cuentas y billeteras digitales están disponibles para instancias de la casa
+      return null;
     }
 
     return null;
@@ -367,7 +359,7 @@ const MetodosFinancierosPage = () => {
     if (mainTab === "instancias") {
       const tipo = instanceTab === "cuentas" ? "Cuenta" : 
                   instanceTab === "billeteras digitales" ? "Billetera Digital" :
-                  "Tarjeta Local";
+                  "";
       return `${action} ${tipo} de la Casa`;
     }
 

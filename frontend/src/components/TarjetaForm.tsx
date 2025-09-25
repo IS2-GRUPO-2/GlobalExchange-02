@@ -46,7 +46,7 @@ const TarjetaForm: React.FC<TarjetaFormProps> = ({
 }) => {
   const [formData, setFormData] = useState<TarjetaFormData>({
     tipo: initialData?.tipo || 'STRIPE',
-    payment_method_id: initialData?.payment_method_id || "",
+    payment_method_id: "", // Se genera automáticamente
     brand: initialData?.brand || "",
     last4: initialData?.last4 || "",
     exp_month: initialData?.exp_month || new Date().getMonth() + 1,
@@ -150,7 +150,7 @@ const TarjetaForm: React.FC<TarjetaFormProps> = ({
         brand,
         last4,
         payment_method_id: formData.tipo === 'STRIPE' 
-          ? formData.payment_method_id 
+          ? `pm_${Math.random().toString(36).substr(2, 24)}` // ID simulado para Stripe
           : `local_${Date.now()}`, // ID simulado para tarjetas locales
       };
 

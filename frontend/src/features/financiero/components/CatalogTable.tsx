@@ -121,7 +121,11 @@ export const CatalogTable: React.FC<CatalogTableProps> = ({
                 </td>
                 <td>
                   <div className="flex items-center space-x-2">
-                    <Can anyOf={catalogTab === "bancos" ? [BANCOS.CHANGE] : [BILLETERAS_DIGITALES_CATALOGO.CHANGE]}>
+                    <Can anyOf={
+                      catalogTab === "bancos" ? [BANCOS.CHANGE] : 
+                      catalogTab === "billeteras" ? [BILLETERAS_DIGITALES_CATALOGO.CHANGE] :
+                      [TARJETAS_LOCALES_CATALOGO.CHANGE]
+                    }>
                       <button
                         onClick={() => onEdit(item)}
                         className="p-1 text-gray-500 hover:text-blue-600 rounded-full hover:bg-gray-100"
@@ -130,7 +134,11 @@ export const CatalogTable: React.FC<CatalogTableProps> = ({
                         <Edit size={16} />
                       </button>
                     </Can>
-                    <Can anyOf={catalogTab === "bancos" ? (item.is_active? [BANCOS.DELETE] : [BANCOS.CHANGE]) : (item.is_active? [BILLETERAS_DIGITALES_CATALOGO.DELETE] : [BILLETERAS_DIGITALES_CATALOGO.CHANGE])}>
+                    <Can anyOf={
+                      catalogTab === "bancos" ? (item.is_active ? [BANCOS.DELETE] : [BANCOS.CHANGE]) : 
+                      catalogTab === "billeteras" ? (item.is_active ? [BILLETERAS_DIGITALES_CATALOGO.DELETE] : [BILLETERAS_DIGITALES_CATALOGO.CHANGE]) :
+                      (item.is_active ? [TARJETAS_LOCALES_CATALOGO.DELETE] : [TARJETAS_LOCALES_CATALOGO.CHANGE])
+                    }>
                       <button
                         onClick={() => onToggle(item, catalogTab)}
                         className="p-1 text-gray-500 hover:text-red-600 rounded-full hover:bg-gray-100"
