@@ -13,6 +13,8 @@ import TauserForm from "../components/TauserForm";
 import { MapContainer, TileLayer, Marker } from "react-leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
+import Can from "../components/Can";
+import { TAUSER } from "../types/perms";
 
 interface FormTauser {
   idTauser?: string;
@@ -127,10 +129,12 @@ const ConfiguracionTauserPage = () => {
             className="pl-10 pr-4 py-2 w-full border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-700 focus:border-transparent"
           />
         </div>
-        <button onClick={openCreateModal} className="btn-primary flex items-center justify-center">
-          <Plus size={18} className="mr-2" />
-          Crear Tauser
-        </button>
+        <Can anyOf={[TAUSER.ADD]}>
+          <button onClick={openCreateModal} className="btn-primary flex items-center justify-center">
+            <Plus size={18} className="mr-2" />
+            Crear Tauser
+          </button>
+        </Can>
       </div>
 
       <div className="card">
@@ -165,16 +169,20 @@ const ConfiguracionTauserPage = () => {
                       <button onClick={() => openDetailsModal(tauser)} className="p-1 text-gray-500 hover:text-green-600 rounded-full hover:bg-gray-100" title="Ver detalles">
                         <Eye size={16} />
                       </button>
-                      <button onClick={() => openEditModal(tauser)} className="p-1 text-gray-500 hover:text-blue-600 rounded-full hover:bg-gray-100" title="Editar">
-                        <Edit size={16} />
-                      </button>
-                      <button
-                        onClick={() => handleToggleActiveTauser(tauser)}
-                        className={`p-1 text-gray-500 rounded-full hover:bg-gray-100 ${tauser.isActive ? "hover:text-red-600" : "hover:text-green-600"}`}
-                        title={tauser.isActive ? "Inactivar" : "Activar"}
-                      >
-                        {tauser.isActive ? <X size={16} /> : <Check size={16} />}
-                      </button>
+                      <Can anyOf={[TAUSER.CHANGE]}>
+                        <button onClick={() => openEditModal(tauser)} className="p-1 text-gray-500 hover:text-blue-600 rounded-full hover:bg-gray-100" title="Editar">
+                          <Edit size={16} />
+                        </button>
+                      </Can>
+                      <Can anyOf={[TAUSER.DELETE]}>
+                        <button
+                          onClick={() => handleToggleActiveTauser(tauser)}
+                          className={`p-1 text-gray-500 rounded-full hover:bg-gray-100 ${tauser.isActive ? "hover:text-red-600" : "hover:text-green-600"}`}
+                          title={tauser.isActive ? "Inactivar" : "Activar"}
+                        >
+                          {tauser.isActive ? <X size={16} /> : <Check size={16} />}
+                        </button>
+                      </Can>
                     </div>
                   </td>
                 </tr>
