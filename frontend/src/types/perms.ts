@@ -56,6 +56,11 @@ export const DIVISAS = {
   VIEW: "divisas.view_divisa",
 } as const;
 
+export const LIMITES_DIVISA_CONFIG = {
+  CHANGE: "divisas.change_limiteconfig",
+  VIEW: "divisas.view_limiteconfig",
+};
+
 export const BANCOS = {
   ADD: "operaciones.add_banco",
   CHANGE: "operaciones.change_banco",
