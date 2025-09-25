@@ -963,14 +963,13 @@ def listar_metodos_cliente(request):
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-
 class TransaccionViewSet(viewsets.ModelViewSet):
     queryset = Transaccion.objects.select_related(
         'operador', 'cliente', 'divisa_origen', 'divisa_destino', 
         'metodo_financiero', 'tauser'
     ).all()
     filter_backends = [filters.SearchFilter, filters.OrderingFilter]
-    search_fields = ['cliente__nombre', 'cliente__apellido', 'operador__username']
+    search_fields = ['cliente__nombre', 'operador__username']
     filterset_fields = ['operacion', 'estado', 'divisa_origen', 'divisa_destino', 'operador', 'cliente']
     ordering_fields = ['fecha_inicio', 'fecha_fin', 'monto_origen', 'monto_destino', 'created_at']
     ordering = ['-created_at']
@@ -979,6 +978,13 @@ class TransaccionViewSet(viewsets.ModelViewSet):
         if self.action == 'create':
             return TransaccionCreateSerializer
         return TransaccionSerializer
+    
+    def destroy(self, request, *args, **kwargs):
+        return Response(
+            {'error': 'No se permite eliminar transacciones'}, 
+            status=status.HTTP_405_METHOD_NOT_ALLOWED
+        )
+    
     
     @action(detail=True, methods=['patch'])
     def completar(self, request, pk=None):
@@ -1030,7 +1036,7 @@ class TransaccionViewSet(viewsets.ModelViewSet):
         for transaccion in queryset.filter(estado='completada'):
             divisa = transaccion.divisa_origen.codigo
             if divisa not in montos_por_divisa:
-                montos_por_divisa[divisa] = 0
+                montos_por_divisa[divisa] = 0.0
             montos_por_divisa[divisa] += float(transaccion.monto_origen)
         
         return Response({

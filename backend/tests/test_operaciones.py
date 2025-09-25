@@ -17,7 +17,11 @@ from apps.operaciones.models import (
     BilleteraDigitalCatalogo,
     TarjetaLocalCatalogo,
     Cheque,
+    Transaccion
 )
+
+from apps.tauser.models import Tauser
+from django.utils import timezone
 
 from apps.operaciones.services import (
     _inferir_operacion,
@@ -1157,3 +1161,254 @@ class TestComisionEspecifica:
         
         # Debe usar comisión del método (4.5) porque banco no tiene personalizada habilitada
         assert resultado["parametros"]["comision_metodo"] == 4.5
+@pytest.fixture
+def transaccion_data(admin_user, cliente_con_categoria, setup_divisas_y_tasa):
+    """Fixture para datos de creación de transacción"""
+    base = setup_divisas_y_tasa['base']
+    usd = setup_divisas_y_tasa['usd']
+    cliente = cliente_con_categoria
+    
+    # Crear Tauser
+    tauser = Tauser.objects.create(
+        codigo='TAUSER001',
+        nombre='Terminal Test',
+        direccion='Calle Test 123',
+        ciudad='Asunción',
+        departamento='Central',
+        latitud=-25.2637,
+        longitud=-57.5759
+    )
+    
+    # Crear método financiero
+    metodo = MetodoFinanciero.objects.create(
+        nombre=TipoMetodoFinanciero.EFECTIVO,
+        permite_cobro=True,
+        permite_pago=True,
+        is_active=True
+    )
+    
+    return {
+        'operador': admin_user.id,
+        'cliente': cliente.idCliente,
+        'operacion': 'compra',
+        'tasa_aplicada': '7350.00',
+        'tasa_inicial': '7300.00',
+        'divisa_origen': base.id,
+        'divisa_destino': usd.id,
+        'monto_origen': '730000.00',
+        'monto_destino': '100.00',
+        'metodo_financiero': metodo.id,
+        'tauser': tauser.idTauser,
+        'estado': 'pendiente'
+    }
+
+
+@pytest.fixture
+def transaccion_instance(admin_user, cliente_con_categoria, setup_divisas_y_tasa):
+    """Fixture para instancia de transacción"""
+    base = setup_divisas_y_tasa['base']
+    usd = setup_divisas_y_tasa['usd']
+    cliente = cliente_con_categoria
+    
+    # Crear Tauser
+    tauser = Tauser.objects.create(
+        codigo='TAUSER002',
+        nombre='Terminal Test 2',
+        direccion='Calle Test 456',
+        ciudad='Asunción',
+        departamento='Central',
+        latitud=-25.2637,
+        longitud=-57.5759
+    )
+    
+    # Crear método financiero
+    metodo = MetodoFinanciero.objects.create(
+        nombre=TipoMetodoFinanciero.EFECTIVO,
+        permite_cobro=True,
+        permite_pago=True,
+        is_active=True
+    )
+    
+    return Transaccion.objects.create(
+        operador=admin_user,
+        cliente=cliente,
+        operacion='compra',
+        tasa_aplicada=Decimal('7350.00'),
+        tasa_inicial=Decimal('7300.00'),
+        divisa_origen=base,
+        divisa_destino=usd,
+        monto_origen=Decimal('730000.00'),
+        monto_destino=Decimal('100.00'),
+        metodo_financiero=metodo,
+        tauser=tauser,
+        estado='pendiente'
+    )
+
+
+class TestTransaccionAPI:
+    """Tests para el CRUD de transacciones"""
+    
+    def test_crear_transaccion_api(self, api_client, transaccion_data):
+        """Test crear transacción via API"""
+        response = api_client.post('/api/operaciones/transacciones/', transaccion_data, format='json')
+        assert response.status_code == status.HTTP_201_CREATED
+        assert Transaccion.objects.count() == 1
+        
+        transaccion = Transaccion.objects.first()
+        assert transaccion.operacion == 'compra'
+        assert transaccion.estado == 'pendiente'
+
+    def test_listar_transacciones_api(self, api_client, transaccion_instance):
+        """Test listar transacciones via API"""
+        response = api_client.get('/api/operaciones/transacciones/')
+        assert response.status_code == status.HTTP_200_OK
+        
+        assert isinstance(response.data, list)
+        assert len(response.data) >= 1
+
+        transaccion_data = response.data[0]
+        assert transaccion_data['id'] == transaccion_instance.id
+        assert transaccion_data['operacion'] == 'compra'
+
+    def test_obtener_transaccion_detalle_api(self, api_client, transaccion_instance):
+        """Test obtener detalle de transacción via API"""
+        response = api_client.get(f'/api/operaciones/transacciones/{transaccion_instance.id}/')
+        assert response.status_code == status.HTTP_200_OK
+        
+        data = response.data
+        assert data['id'] == transaccion_instance.id
+        assert data['operacion'] == 'compra'
+        assert 'operador_detalle' in data
+        assert 'cliente_detalle' in data
+
+    def test_actualizar_transaccion_api(self, api_client, transaccion_instance):
+        """Test actualizar transacción via API"""
+        update_data = {
+            'estado': 'en_proceso'
+        }
+        response = api_client.patch(f'/api/operaciones/transacciones/{transaccion_instance.id}/', update_data, format='json')
+        assert response.status_code == status.HTTP_200_OK
+        
+        transaccion_instance.refresh_from_db()
+        assert transaccion_instance.estado == 'en_proceso'
+
+    def test_eliminar_transaccion_no_permitido(self, api_client, transaccion_instance):
+        """Test que no se permite eliminar transacciones"""
+        response = api_client.delete(f'/api/operaciones/transacciones/{transaccion_instance.id}/')
+        # El ViewSet debería denegar DELETE - verificar que retorna 405 (Method Not Allowed)
+        assert response.status_code in [status.HTTP_405_METHOD_NOT_ALLOWED, status.HTTP_403_FORBIDDEN]
+
+    def test_completar_transaccion_action(self, api_client, transaccion_instance):
+        """Test action completar transacción"""
+        response = api_client.patch(f'/api/operaciones/transacciones/{transaccion_instance.id}/completar/')
+        assert response.status_code == status.HTTP_200_OK
+        
+        transaccion_instance.refresh_from_db()
+        assert transaccion_instance.estado == 'completada'
+        assert transaccion_instance.fecha_fin is not None
+
+    def test_completar_transaccion_ya_completada_error(self, api_client, transaccion_instance):
+        """Test error al completar transacción ya completada"""
+        # Completar primero
+        transaccion_instance.estado = 'completada'
+        transaccion_instance.fecha_fin = timezone.now()
+        transaccion_instance.save()
+        
+        response = api_client.patch(f'/api/operaciones/transacciones/{transaccion_instance.id}/completar/')
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        assert 'error' in response.data
+
+    def test_cancelar_transaccion_action(self, api_client, transaccion_instance):
+        """Test action cancelar transacción"""
+        response = api_client.patch(f'/api/operaciones/transacciones/{transaccion_instance.id}/cancelar/')
+        assert response.status_code == status.HTTP_200_OK
+        
+        transaccion_instance.refresh_from_db()
+        assert transaccion_instance.estado == 'cancelada'
+        assert transaccion_instance.fecha_fin is not None
+
+    def test_cancelar_transaccion_completada_error(self, api_client, transaccion_instance):
+        """Test error al cancelar transacción completada"""
+        # Completar primero
+        transaccion_instance.estado = 'completada'
+        transaccion_instance.fecha_fin = timezone.now()
+        transaccion_instance.save()
+        
+        response = api_client.patch(f'/api/operaciones/transacciones/{transaccion_instance.id}/cancelar/')
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        assert 'error' in response.data
+
+    def test_estadisticas_transacciones_endpoint(self, api_client):
+        """Test endpoint de estadísticas"""
+        response = api_client.get('/api/operaciones/transacciones/estadisticas/')
+        assert response.status_code == status.HTTP_200_OK
+        
+        data = response.data
+        assert 'total' in data
+        assert 'pendientes' in data
+        assert 'completadas' in data
+        assert 'canceladas' in data
+        assert 'montos_por_divisa' in data
+
+    def test_filtros_transacciones_api(self, api_client, transaccion_instance):
+        """Test filtros en listado de transacciones"""
+        response = api_client.get('/api/operaciones/transacciones/', {'operacion': 'compra'})
+        assert response.status_code == status.HTTP_200_OK
+        
+        results = response.data
+        assert isinstance(results, list)
+        assert len(results) >= 1
+        assert all(t['operacion'] == 'compra' for t in results)
+
+    def test_busqueda_transacciones_api(self, api_client, transaccion_instance):
+        """Test búsqueda en transacciones"""
+        # Buscar por nombre del cliente
+        response = api_client.get('/api/operaciones/transacciones/', {'search': transaccion_instance.cliente.nombre})
+        assert response.status_code == status.HTTP_200_OK
+
+        results = response.data
+        assert isinstance(results, list)
+        assert len(results) >= 1
+
+    def test_ordenamiento_transacciones_api(self, api_client, transaccion_instance):
+        """Test ordenamiento de transacciones"""
+        response = api_client.get('/api/operaciones/transacciones/', {'ordering': '-created_at'})
+        assert response.status_code == status.HTTP_200_OK
+        
+        results = response.data
+        assert isinstance(results, list)
+        assert len(results) >= 1
+
+    def test_validaciones_crear_transaccion(self, api_client, transaccion_data):
+        """Test validaciones al crear transacción"""
+        # Test con divisas iguales
+        invalid_data = transaccion_data.copy()
+        invalid_data['divisa_destino'] = invalid_data['divisa_origen']
+        
+        response = api_client.post('/api/operaciones/transacciones/', invalid_data, format='json')
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        
+        # Test con monto negativo
+        invalid_data = transaccion_data.copy()
+        invalid_data['monto_origen'] = '-100.00'
+        
+        response = api_client.post('/api/operaciones/transacciones/', invalid_data, format='json')
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+
+    def test_serializer_campos_detallados(self, api_client, transaccion_instance):
+        """Test que el serializer incluye campos detallados"""
+        response = api_client.get(f'/api/operaciones/transacciones/{transaccion_instance.id}/')
+        assert response.status_code == status.HTTP_200_OK
+        
+        data = response.data
+        # Verificar campos detallados
+        assert 'operador_detalle' in data
+        assert 'cliente_detalle' in data
+        assert 'divisa_origen_detalle' in data
+        assert 'divisa_destino_detalle' in data
+        assert 'metodo_financiero_detalle' in data
+        assert 'tauser_detalle' in data
+        
+        # Verificar estructura de campos detallados
+        assert data['operador_detalle']['username'] == transaccion_instance.operador.username
+        assert data['cliente_detalle']['nombre'] == transaccion_instance.cliente.nombre
