@@ -267,9 +267,9 @@
 
                 {/* Operación */}
                 <div className="text-center text-lg font-bold text-gray-900">
-                  {resultado.monto_origen.toLocaleString()}{" "}
+                  {resultado.monto_origen.toLocaleString('es-PY')}{" "}
                   {resultado.divisa_origen} →{" "}
-                  {resultado.monto_destino.toLocaleString()}{" "}
+                  {resultado.monto_destino.toLocaleString('es-PY')}{" "}
                   {resultado.divisa_destino}
                 </div>
 

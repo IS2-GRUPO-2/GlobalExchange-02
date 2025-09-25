@@ -1,24 +1,60 @@
+import { Building2, MapPin } from "lucide-react";
 import { type SimulacionResponse } from "../types/Simulacion";
+import type { OperacionCompleta } from "../types/Transaccion";
 
 interface EtapaResultadoProps {
-  resultado: SimulacionResponse;
+  resultado: SimulacionResponse | OperacionCompleta;
   onRetroceder: () => void;
-  onNuevaSimulacion: () => void;
+  onNuevaSimulacion?: () => void;
+  onContinuar?: () => void;
+  esOperacionReal?: boolean;
 }
 
 export default function EtapaResultado({
   resultado,
   onRetroceder,
-  onNuevaSimulacion
+  onNuevaSimulacion,
+  onContinuar,
+  esOperacionReal = false
 }: EtapaResultadoProps) {
+  // Determinar si es OperacionCompleta (tiene tauser_seleccionado) o SimulacionResponse
+  const tieneTerminal = 'tauser_seleccionado' in resultado;
+  
+  const getTitulo = () => {
+    if (esOperacionReal) return "Resumen de tu Operación";
+    return "Resultado de tu Operación";
+  };
+
+  const getDescripcion = () => {
+    if (esOperacionReal) return "Revisa los detalles antes de proceder";
+    return "Aquí tienes los detalles de tu simulación";
+  };
+
+  const getBotonSecundario = () => {
+    if (esOperacionReal) return "Modificar Terminal";
+    return "Modificar Datos";
+  };
+
+  const getBotonPrimario = () => {
+    if (esOperacionReal) return "Revisar Términos";
+    return "Nueva Simulación";
+  };
+
+  const manejarBotonPrimario = () => {
+    if (esOperacionReal && onContinuar) {
+      onContinuar();
+    } else if (!esOperacionReal && onNuevaSimulacion) {
+      onNuevaSimulacion();
+    }
+  };
   return (
     <div className="space-y-6 select-none">
       <div className="text-center">
         <h3 className="text-lg font-semibold text-gray-800 mb-2">
-          Resultado de tu Operación
+          {getTitulo()}
         </h3>
         <p className="text-sm text-gray-600">
-          Aquí tienes los detalles de tu simulación
+          {getDescripcion()}
         </p>
       </div>
 
@@ -65,19 +101,50 @@ export default function EtapaResultado({
         </div>
       </div>
 
+      {/* Información del Terminal - Solo para operaciones reales */}
+      {esOperacionReal && 'tauser_seleccionado' in resultado && (
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+          <h4 className="font-semibold text-blue-800 border-b border-blue-200 pb-2 mb-3 flex items-center gap-2">
+            <Building2 className="w-4 h-4" />
+            Terminal de Autoservicio
+          </h4>
+          
+          <div className="space-y-2">
+            <div className="flex justify-between">
+              <span className="font-medium text-blue-700">Nombre:</span>
+              <span className="text-blue-900">{resultado.tauser_seleccionado.nombre}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="font-medium text-blue-700">Código:</span>
+              <span className="text-blue-900">{resultado.tauser_seleccionado.codigo}</span>
+            </div>
+            <div className="flex items-start justify-between">
+              <span className="font-medium text-blue-700 flex items-center gap-1">
+                <MapPin className="w-3 h-3" />
+                Ubicación:
+              </span>
+              <div className="text-right text-blue-900 text-sm">
+                <p>{resultado.tauser_seleccionado.direccion}</p>
+                <p>{resultado.tauser_seleccionado.ciudad}, {resultado.tauser_seleccionado.departamento}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Botones navegación */}
       <div className="flex justify-between">
         <button
           onClick={onRetroceder}
           className="px-6 py-2 border border-gray-300 text-gray-700 rounded-lg font-medium hover:bg-gray-50"
         >
-          Modificar Datos
+          {getBotonSecundario()}
         </button>
         <button
-          onClick={onNuevaSimulacion}
+          onClick={manejarBotonPrimario}
           className="px-6 py-2 bg-zinc-900 text-white rounded-lg font-medium hover:bg-zinc-700"
         >
-          Nueva Simulación
+          {getBotonPrimario()}
         </button>
       </div>
     </div>

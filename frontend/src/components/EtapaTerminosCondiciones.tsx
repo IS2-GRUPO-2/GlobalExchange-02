@@ -37,9 +37,9 @@ export default function EtapaTerminosCondiciones({
       <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
         <h4 className="font-medium text-gray-800 mb-2">Resumen de tu operación:</h4>
         <div className="text-center text-lg font-semibold text-gray-900 py-2">
-          {resultado.monto_origen.toLocaleString()} {resultado.divisa_origen} 
+          {resultado.monto_origen.toLocaleString('es-PY')} {resultado.divisa_origen} 
           <span className="mx-2 text-gray-600">→</span>
-          {resultado.monto_destino.toLocaleString()} {resultado.divisa_destino}
+          {resultado.monto_destino.toLocaleString('es-PY')} {resultado.divisa_destino}
         </div>
         <p className="text-sm text-gray-600 text-center">
           en {resultado.tauser_seleccionado.nombre}

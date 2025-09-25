@@ -11,7 +11,7 @@ import { simularOperacionCompleta, crearTransaccion } from "../services/transacc
 import EtapaSeleccionDivisas from "./EtapaSeleccionDivisas";
 import EtapaSeleccionMetodo from "./EtapaSeleccionMetodo";
 import EtapaSeleccionTauser from "./EtapaSeleccionTauser";
-import EtapaResultadoOperacion from "./EtapaResultadoOperacion";
+import EtapaResultado from "./EtapaResultado";
 import EtapaTerminosCondiciones from "./EtapaTerminosCondiciones";
 
 type EtapaActual = 1 | 2 | 3 | 4 | 5;
@@ -258,10 +258,11 @@ export default function OperacionCompraVenta() {
         );
       case 4:
         return resultado ? (
-          <EtapaResultadoOperacion
+          <EtapaResultado
             resultado={resultado}
             onRetroceder={retrocederEtapa4}
             onContinuar={avanzarEtapa4}
+            esOperacionReal={true}
           />
         ) : null;
       case 5:
