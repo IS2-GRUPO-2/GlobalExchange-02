@@ -91,10 +91,13 @@ def _get_comision_especifica(detalle_metodo, operacion_casa):
     return None
 
 
-def listar_metodos_cliente_por_divisas(cliente_id, divisa_origen_id, divisa_destino_id):
+def listar_metodos_cliente_por_divisas(cliente_id, divisa_origen_id, divisa_destino_id, es_operacion_real=False):
     """
     Dada una combinación de divisas y un cliente, devuelve los métodos financieros
     disponibles organizados por tipo con las instancias específicas del cliente.
+    
+    Args:
+        es_operacion_real: Si es True, excluye métodos genéricos que requieren instancia específica
     """
     cliente = Cliente.objects.get(idCliente=cliente_id)
     divisa_origen = Divisa.objects.get(id=divisa_origen_id)
@@ -178,6 +181,17 @@ def listar_metodos_cliente_por_divisas(cliente_id, divisa_origen_id, divisa_dest
 
             instancias_data.append(instancia_data)
 
+        # Para operaciones reales, filtrar métodos que requieren instancia específica
+        # Solo incluir el método si:
+        # 1. NO es operación real, O
+        # 2. Es operación real Y (tiene instancias específicas O es método que permite uso genérico)
+        metodos_que_permiten_uso_generico = ['EFECTIVO', 'CHEQUE']
+        
+        if es_operacion_real:
+            # Si es operación real y no tiene instancias, solo incluir si permite uso genérico
+            if not instancias_data and metodo.nombre not in metodos_que_permiten_uso_generico:
+                continue
+        
         metodos_organizados[metodo.nombre] = {
             'metodo_financiero': {
                 'id': metodo.id,
@@ -265,7 +279,6 @@ def calcular_simulacion_operacion_privada_con_instancia(cliente_id, divisa_orige
             "comision_metodo": float(com_metodo),
         },
         "tc_final": round(tc, 4),
-        "tasa_inicial": round(tc, 4),  # Añadir tasa inicial
         "monto_origen": float(monto),
         "monto_destino": round(monto_destino, 2)
     }
@@ -310,7 +323,6 @@ def calcular_simulacion_operacion_privada(cliente_id, divisa_origen_id, divisa_d
             "comision_metodo": float(com_metodo),
         },
         "tc_final": round(tc, 4),
-        "tasa_inicial": round(float(tasa.precioBase), 4),  # Añadir tasa inicial
         "monto_origen": float(monto),
         "monto_destino": round(monto_destino, 2)
     }
@@ -403,7 +415,7 @@ def crear_transaccion_desde_simulacion(operador_id, cliente_id, divisa_origen_id
         cliente=cliente,
         operacion=simulacion_data['operacion_cliente'],
         tasa_aplicada=simulacion_data['tc_final'],
-        tasa_inicial=simulacion_data.get('tasa_inicial', simulacion_data['tc_final']),
+        tasa_inicial=simulacion_data['tc_final'],
         divisa_origen=divisa_origen,
         divisa_destino=divisa_destino,
         monto_origen=simulacion_data['monto_origen'],

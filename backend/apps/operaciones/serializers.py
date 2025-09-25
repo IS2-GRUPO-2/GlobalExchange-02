@@ -204,6 +204,7 @@ class MetodosClienteSerializer(serializers.Serializer):
     cliente_id = serializers.UUIDField()
     divisa_origen = serializers.IntegerField()
     divisa_destino = serializers.IntegerField()
+    es_operacion_real = serializers.BooleanField(required=False, default=False)
 
 class SimulacionPublicaSerializer(serializers.Serializer):
     """

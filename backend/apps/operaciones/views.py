@@ -949,7 +949,8 @@ def listar_metodos_cliente(request):
             operacion_casa, metodos_organizados = listar_metodos_cliente_por_divisas(
                 data["cliente_id"],
                 data["divisa_origen"],
-                data["divisa_destino"]
+                data["divisa_destino"],
+                data.get("es_operacion_real", False)
             )
 
             return Response(

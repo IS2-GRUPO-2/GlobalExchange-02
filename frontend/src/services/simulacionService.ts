@@ -58,12 +58,13 @@ export const getMetodosDisponibles = async (
 export const getMetodosCliente = async (
   cliente_id: string,
   divisa_origen: number,
-  divisa_destino: number
+  divisa_destino: number,
+  es_operacion_real: boolean = false
 ): Promise<MetodosClienteResponse> => {
   try {
     const res = await axios.get<MetodosClienteResponse>(
       `${API_URL}metodos-cliente/`,
-      { params: { cliente_id, divisa_origen, divisa_destino } }
+      { params: { cliente_id, divisa_origen, divisa_destino, es_operacion_real } }
     );
     return res.data;
   } catch (err: any) {

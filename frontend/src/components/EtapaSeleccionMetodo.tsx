@@ -43,7 +43,8 @@ export default function EtapaSeleccionMetodo({
         const data: MetodosClienteResponse = await getMetodosCliente(
           clienteId,
           Number(divisaOrigen),
-          Number(divisaDestino)
+          Number(divisaDestino),
+          esOperacionReal
         );
         setMetodos(data.metodos);
         setOperacionCasa(data.operacion_casa);
@@ -69,7 +70,7 @@ export default function EtapaSeleccionMetodo({
       }
     };
     fetchMetodos();
-  }, [divisaOrigen, divisaDestino, clienteId]);
+  }, [divisaOrigen, divisaDestino, clienteId, esOperacionReal]);
 
   const puedeSimular = (detalleMetodoSeleccionado || metodoGenericoSeleccionado);
 
@@ -128,7 +129,7 @@ export default function EtapaSeleccionMetodo({
         case 'cuenta_bancaria':
           return (
             <div className="space-y-1">
-              <div className="text-xs text-gray-600">
+              <div className="text-xs text-gray-600 truncate">
                 <span className="font-medium">Titular: </span>
                 {instancia.detalles.titular}
               </div>
@@ -141,12 +142,12 @@ export default function EtapaSeleccionMetodo({
         case 'billetera_digital':
           return (
             <div className="space-y-1">
-              <div className="text-xs text-gray-600">
+              <div className="text-xs text-gray-600 truncate">
                 <span className="font-medium">Usuario: </span>
                 {instancia.detalles.usuario_id || instancia.detalles.email}
               </div>
               {instancia.detalles.telefono && (
-                <div className="text-xs text-gray-600">
+                <div className="text-xs text-gray-600 truncate">
                   <span className="font-medium">Tel: </span>
                   {instancia.detalles.telefono}
                 </div>
@@ -156,7 +157,7 @@ export default function EtapaSeleccionMetodo({
         case 'tarjeta':
           return (
             <div className="space-y-1">
-              <div className="text-xs text-gray-600">
+              <div className="text-xs text-gray-600 truncate">
                 <span className="font-medium">Titular: </span>
                 {instancia.detalles.titular}
               </div>
@@ -169,7 +170,7 @@ export default function EtapaSeleccionMetodo({
         case 'tarjeta_local':
           return (
             <div className="space-y-1">
-              <div className="text-xs text-gray-600">
+              <div className="text-xs text-gray-600 truncate">
                 <span className="font-medium">Titular: </span>
                 {instancia.detalles.titular}
               </div>
@@ -199,11 +200,11 @@ export default function EtapaSeleccionMetodo({
       >
         <div className="flex items-start space-x-2">
           {getMetodoIcon(metodoTipo)}
-          <div className="flex-1 min-w-0">
+          <div className="flex-1 min-w-0 overflow-hidden">
             <h4 className="text-sm font-medium text-gray-900 truncate">
               {getCardTitle()}
             </h4>
-            <div className="mt-1">
+            <div className="mt-1 overflow-hidden">
               {getCardDetails()}
             </div>
           </div>
@@ -300,8 +301,10 @@ export default function EtapaSeleccionMetodo({
                   renderInstanciaCard(instancia, metodoTipo)
                 )}
                 
-                {/* Método genérico */}
-                {renderMetodoGenerico(metodoInfo, metodoTipo)}
+                {/* Método genérico - Solo mostrar si no es operación real O si es operación real pero es un método que permite uso genérico */}
+                {(!esOperacionReal || ['EFECTIVO', 'CHEQUE'].includes(metodoTipo)) && 
+                  renderMetodoGenerico(metodoInfo, metodoTipo)
+                }
               </div>
             </div>
           ))}
