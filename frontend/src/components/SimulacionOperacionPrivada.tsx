@@ -142,6 +142,7 @@ export default function SimulacionOperacionPrivada() {
             divisaOrigen={divisaOrigen}
             divisaDestino={divisaDestino}
             monto={monto}
+            clienteActual={clienteActual} // Pasar el cliente actual
             onDivisaOrigenChange={setDivisaOrigen}
             onDivisaDestinoChange={setDivisaDestino}
             onMontoChange={setMonto}

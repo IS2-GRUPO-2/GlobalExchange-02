@@ -61,8 +61,6 @@ export type MetodosDisponiblesResponse = {
   metodos: MetodoFinanciero[];
 };
 
-
-
 export interface SimulacionRequestConInstancia {
   cliente_id: string;
   divisa_origen: number;
@@ -75,7 +73,7 @@ export interface SimulacionRequestConInstancia {
 export interface InstanciaMetodo {
   id: number;
   alias: string;
-  tipo_especifico: 'cuenta_bancaria' | 'billetera_digital' | 'tarjeta' | null;
+  tipo_especifico: 'cuenta_bancaria' | 'billetera_digital' | 'tarjeta' | 'tarjeta_local' | null;
   detalles: {
     [key: string]: any;
   };

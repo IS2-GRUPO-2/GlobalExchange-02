@@ -2,7 +2,7 @@ from decimal import Decimal
 from apps.clientes.models import Cliente
 from apps.divisas.models import Divisa
 from apps.cotizaciones.models import Tasa
-from .models import MetodoFinanciero, MetodoFinancieroDetalle, CuentaBancaria, BilleteraDigital, Tarjeta
+from .models import MetodoFinanciero, MetodoFinancieroDetalle, CuentaBancaria, BilleteraDigital, Tarjeta, TarjetaLocal
 from apps.cotizaciones.service import TasaService
 
 def _get_divisa(id_divisa: int) -> Divisa:
@@ -35,6 +35,60 @@ def _get_tasa_activa(divisa: Divisa) -> Tasa:
     if divisa.es_base:
         raise ValueError("La tasa solo aplica a divisas extranjeras")
     return Tasa.objects.get(divisa=divisa, activo=True)
+
+
+def _get_comision_especifica(detalle_metodo, operacion_casa):
+    """
+    Obtiene la comisión específica del catálogo si está habilitada,
+    sino devuelve None para usar la comisión por defecto del MetodoFinanciero.
+    
+    Args:
+        detalle_metodo: MetodoFinancieroDetalle instance
+        operacion_casa: "compra" o "venta"
+    
+    Returns:
+        Decimal|None: Comisión específica del catálogo o None
+    """
+    try:
+        # Verificar si tiene cuenta bancaria específica
+        if hasattr(detalle_metodo, 'cuenta_bancaria'):
+            banco = detalle_metodo.cuenta_bancaria.banco
+            if operacion_casa == "compra":
+                # Casa compra = cliente vende = pago para casa
+                if banco.comision_personalizada_compra:
+                    return banco.comision_compra
+            else:  # operacion_casa == "venta"
+                # Casa vende = cliente compra = cobro para casa
+                if banco.comision_personalizada_venta:
+                    return banco.comision_venta
+        
+        # Verificar si tiene billetera digital específica
+        elif hasattr(detalle_metodo, 'billetera_digital'):
+            billetera_catalogo = detalle_metodo.billetera_digital.plataforma
+            if operacion_casa == "compra":
+                if billetera_catalogo.comision_personalizada_compra:
+                    return billetera_catalogo.comision_compra
+            else:  # operacion_casa == "venta"
+                if billetera_catalogo.comision_personalizada_venta:
+                    return billetera_catalogo.comision_venta
+        
+        # Verificar si tiene tarjeta local específica
+        elif hasattr(detalle_metodo, 'tarjeta_local'):
+            tarjeta_catalogo = detalle_metodo.tarjeta_local.marca
+            if operacion_casa == "compra":
+                if tarjeta_catalogo.comision_personalizada_compra:
+                    return tarjeta_catalogo.comision_compra
+            else:  # operacion_casa == "venta"
+                if tarjeta_catalogo.comision_personalizada_venta:
+                    return tarjeta_catalogo.comision_venta
+        
+        # Para tarjetas de Stripe no hay catálogo específico, usar MetodoFinanciero
+        
+    except AttributeError:
+        # Si no tiene instancia específica asociada, usar comisión por defecto
+        pass
+    
+    return None
 
 
 def listar_metodos_cliente_por_divisas(cliente_id, divisa_origen_id, divisa_destino_id):
@@ -108,6 +162,16 @@ def listar_metodos_cliente_por_divisas(cliente_id, divisa_origen_id, divisa_dest
                         'exp_month': tarjeta.exp_month,
                         'exp_year': tarjeta.exp_year
                     }
+                elif hasattr(instancia, 'tarjeta_local'):
+                    tarjeta_local = instancia.tarjeta_local
+                    instancia_data['tipo_especifico'] = 'tarjeta_local'
+                    instancia_data['detalles'] = {
+                        'marca_nombre': tarjeta_local.marca.marca,
+                        'last4': tarjeta_local.last4,
+                        'titular': tarjeta_local.titular,
+                        'exp_month': tarjeta_local.exp_month,
+                        'exp_year': tarjeta_local.exp_year
+                    }
             except:
                 # Si no tiene instancia específica, usar datos básicos
                 pass
@@ -127,10 +191,14 @@ def listar_metodos_cliente_por_divisas(cliente_id, divisa_origen_id, divisa_dest
 
     return operacion_casa, metodos_organizados
 
+
 def calcular_simulacion_operacion_privada_con_instancia(cliente_id, divisa_origen_id, divisa_destino_id, monto, detalle_metodo_id=None, metodo_id=None):
     """
     Simulación para usuario autenticado (con cliente).
     Puede usar una instancia específica (detalle_metodo_id) o un método genérico (metodo_id).
+    
+    Si usa instancia específica, aplicará comisión del catálogo específico si está habilitada,
+    sino usará la comisión por defecto del MetodoFinanciero.
     """
     monto = Decimal(monto)
     cliente = Cliente.objects.get(idCliente=cliente_id)
@@ -138,29 +206,52 @@ def calcular_simulacion_operacion_privada_con_instancia(cliente_id, divisa_orige
     divisa_origen = _get_divisa(divisa_origen_id)
     divisa_destino = _get_divisa(divisa_destino_id)
 
-    # Determinar el método financiero a usar
+    # Determinar el método financiero a usar y la comisión específica
     if detalle_metodo_id:
-        detalle = MetodoFinancieroDetalle.objects.get(id=detalle_metodo_id, cliente=cliente)
+        detalle = MetodoFinancieroDetalle.objects.select_related(
+            'metodo_financiero'
+        ).prefetch_related(
+            'cuenta_bancaria__banco',
+            'billetera_digital__plataforma',
+            'tarjeta_local__marca'
+        ).get(id=detalle_metodo_id, cliente=cliente)
+        
         metodo = detalle.metodo_financiero
         metodo_nombre = f"{detalle.alias} ({metodo.get_nombre_display()})"
     else:
         metodo = _get_metodo(metodo_id)
         metodo_nombre = metodo.get_nombre_display()
+        detalle = None
 
     operacion_cliente, operacion_casa = _inferir_operacion(divisa_origen, divisa_destino)
     divisa_extranjera = divisa_origen if not divisa_origen.es_base else divisa_destino
     tasa = _get_tasa_activa(divisa_extranjera)
 
+    # Determinar la comisión a usar
     if operacion_casa == "compra":
         # Casa COMPRA → Cliente vende
+        # Buscar comisión específica del catálogo si existe instancia
+        comision_especifica = None
+        if detalle:
+            comision_especifica = _get_comision_especifica(detalle, operacion_casa)
+        
+        # Usar comisión específica o por defecto
+        com_metodo = comision_especifica if comision_especifica is not None else metodo.comision_pago_porcentaje
+        
         tc = TasaService.calcular_tasa_compra_metodoPago_cliente(tasa, metodo, cliente)
         monto_destino = monto * tc
-        com_metodo = metodo.comision_pago_porcentaje
     else:
         # Casa VENDE → Cliente compra
+        # Buscar comisión específica del catálogo si existe instancia
+        comision_especifica = None
+        if detalle:
+            comision_especifica = _get_comision_especifica(detalle, operacion_casa)
+        
+        # Usar comisión específica o por defecto
+        com_metodo = comision_especifica if comision_especifica is not None else metodo.comision_cobro_porcentaje
+        
         tc = TasaService.calcular_tasa_venta_metodoPago_cliente(tasa, metodo, cliente)
         monto_destino = monto / tc
-        com_metodo = metodo.comision_cobro_porcentaje
 
     return {
         "operacion_cliente": operacion_cliente,
@@ -199,13 +290,11 @@ def calcular_simulacion_operacion_privada(cliente_id, divisa_origen_id, divisa_d
         # Casa COMPRA → Cliente vende
         tc = TasaService.calcular_tasa_compra_metodoPago_cliente(tasa, metodo, cliente)
         monto_destino = monto * tc
-        # com_base = tasa.comisionBaseCompra
         com_metodo = metodo.comision_pago_porcentaje
     else:
         # Casa VENDE → Cliente compra
         tc = TasaService.calcular_tasa_venta_metodoPago_cliente(tasa, metodo, cliente)
         monto_destino = monto / tc
-        # com_base = tasa.comisionBaseVenta
         com_metodo = metodo.comision_cobro_porcentaje
 
     return {
@@ -243,13 +332,11 @@ def calcular_simulacion_operacion_publica(divisa_origen_id, divisa_destino_id, m
         # Casa COMPRA → Cliente vende
         tc = TasaService.calcular_tasa_compra_metodoPago(tasa, metodo)
         monto_destino = monto * tc
-        # com_base = tasa.comisionBaseCompra
         com_metodo = metodo.comision_pago_porcentaje
     else:
         # Casa VENDE → Cliente compra
         tc = TasaService.calcular_tasa_venta_metodoPago(tasa, metodo)
         monto_destino = monto / tc
-        # com_base = tasa.comisionBaseVenta
         com_metodo = metodo.comision_cobro_porcentaje
 
     return {

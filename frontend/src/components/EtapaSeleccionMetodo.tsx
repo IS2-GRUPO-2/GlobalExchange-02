@@ -114,6 +114,8 @@ export default function EtapaSeleccionMetodo({
           return instancia.detalles.plataforma_nombre || 'Billetera Digital';
         case 'tarjeta':
           return `**** ${instancia.detalles.last4}`;
+        case 'tarjeta_local':
+          return `${instancia.detalles.marca_nombre} **** ${instancia.detalles.last4}`;
         default:
           return instancia.alias;
       }
@@ -150,6 +152,19 @@ export default function EtapaSeleccionMetodo({
             </div>
           );
         case 'tarjeta':
+          return (
+            <div className="space-y-1">
+              <div className="text-xs text-gray-600">
+                <span className="font-medium">Titular: </span>
+                {instancia.detalles.titular}
+              </div>
+              <div className="text-xs text-gray-600">
+                <span className="font-medium">Vence: </span>
+                {instancia.detalles.exp_month?.toString()?.padStart(2, '0')}/{instancia.detalles.exp_year}
+              </div>
+            </div>
+          );
+        case 'tarjeta_local':
           return (
             <div className="space-y-1">
               <div className="text-xs text-gray-600">
