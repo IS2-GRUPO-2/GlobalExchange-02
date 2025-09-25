@@ -6,6 +6,7 @@ from drf_yasg import openapi
 from .models import Tauser
 from .serializers import TauserSerializer, TauserPaginatedResponseSerializer
 from rest_framework.permissions import DjangoModelPermissions
+from rest_framework.decorators import action
 
 
 class TauserPagination(PageNumberPagination):
@@ -31,11 +32,11 @@ class TauserViewSet(viewsets.ModelViewSet):
         operation_summary="Listar Tausers",
         operation_description="""Obtiene un listado paginado de todos los Tausers registrados en el sistema.
         
-La respuesta está paginada con las siguientes características:
-- Tamaño de página predeterminado: 10 items
-- Tamaño máximo de página: 100 items
-- Se puede navegar usando los parámetros page y page_size
-""",
+        La respuesta está paginada con las siguientes características:
+        - Tamaño de página predeterminado: 10 items
+        - Tamaño máximo de página: 100 items
+        - Se puede navegar usando los parámetros page y page_size
+        """,
         manual_parameters=[
             openapi.Parameter(
                 "page",
