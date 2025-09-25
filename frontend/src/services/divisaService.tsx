@@ -1,3 +1,4 @@
+import type { LimiteDivisaFormData } from "../features/divisas/types/Limite";
 import type { Denominacion, Divisa, PaginatedDivisas } from "../types/Divisa";
 import axios from "axios";
 const API_URL = "/api/divisas/";
@@ -6,19 +7,18 @@ interface GetDivisasParams {
   page?: number;
   search?: string;
   es_base?: boolean;
-
 }
 
 export const getDivisas = async (
   params: GetDivisasParams = {}
 ): Promise<PaginatedDivisas> => {
   try {
-    const res = await axios.get<PaginatedDivisas>(API_URL, { 
+    const res = await axios.get<PaginatedDivisas>(API_URL, {
       params: {
         ...params,
         es_base: params.es_base !== undefined ? params.es_base : undefined,
       },
-     });
+    });
     return res.data;
   } catch (err: any) {
     console.error("Error fetching divisas: ", err.res?.data || err.message);
@@ -140,13 +140,43 @@ export const updateDenominacion = async (
   }
 };
 
-export const getDivisasSinTasa = async (params: { page?: number; search?: string } = {}) => {
-  const res = await axios.get<PaginatedDivisas>("/api/divisas/sin_tasa/", { params });
+export const getDivisasSinTasa = async (
+  params: { page?: number; search?: string } = {}
+) => {
+  const res = await axios.get<PaginatedDivisas>("/api/divisas/sin_tasa/", {
+    params,
+  });
   return res.data;
 };
 
-
-export const getDivisasConTasa = async (params: { page?: number; search?: string } = {}) => {
-  const res = await axios.get<PaginatedDivisas>("/api/divisas/con_tasa/", { params });
+export const getDivisasConTasa = async (
+  params: { page?: number; search?: string } = {}
+) => {
+  const res = await axios.get<PaginatedDivisas>("/api/divisas/con_tasa/", {
+    params,
+  });
   return res.data;
+};
+
+export const getLimiteConfig = async () => {
+  try {
+    const res = await axios.get<LimiteDivisaFormData>("/api/limite-config/");
+    return res.data;
+  } catch (err) {
+    console.log(err);
+    throw err;
+  }
+};
+
+export const updateLimiteConfig = async (limite: LimiteDivisaFormData) => {
+  try {
+    const res = await axios.put<LimiteDivisaFormData>("/api/limite-config/", {
+      limite_diario: limite.limite_diario,
+      limite_mensual: limite.limite_mensual,
+    });
+    return res;
+  } catch (err) {
+    console.log(err);
+    throw err;
+  }
 };
