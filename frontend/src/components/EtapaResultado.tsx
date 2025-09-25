@@ -28,9 +28,9 @@ export default function EtapaResultado({
       </div>
 
       <div className="text-center text-2xl font-bold text-gray-900 py-4 bg-green-50 rounded-lg border border-green-200">
-        {resultado.monto_origen.toLocaleString()} {resultado.divisa_origen} 
+        {resultado.monto_origen.toLocaleString('es-PY')} {resultado.divisa_origen} 
         <span className="mx-4 text-green-600">→</span>
-        {resultado.monto_destino.toLocaleString()} {resultado.divisa_destino}
+        {resultado.monto_destino.toLocaleString('es-PY')} {resultado.divisa_destino}
       </div>
 
       {/* Detalles */}
