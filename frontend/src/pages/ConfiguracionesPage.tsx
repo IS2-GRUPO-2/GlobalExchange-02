@@ -9,7 +9,8 @@ import {
   CreditCard,
   Tag,
   Users,
-  User
+  User,
+  Monitor
 } from "lucide-react";
 import { CATEGORIAS_CLIENTE, CLIENTES, DIVISAS, METODOS_FINANCIEROS, ROLES, TASAS, USUARIOS } from "../types/perms";
 import Can from "../components/Can";
@@ -97,6 +98,15 @@ const ConfiguracionesPage = () => {
       descripcion: "Definir métodos de pago y cobro habilitados",
       icon: <CreditCard className="w-6 h-6 text-purple-600" />,
       path: "/metodos-financieros-cliente",
+      habilitado: true,
+      permisos: [],
+    },
+    {
+      id: "tausers",
+      nombre: "Tausers",
+      descripcion: "Configurar tausers para operaciones financieras",
+      icon: <Monitor className="w-6 h-6 text-yellow-600" />,
+      path: "/configuracion-tausers",
       habilitado: true,
       permisos: [],
     },
