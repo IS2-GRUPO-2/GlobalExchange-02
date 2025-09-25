@@ -1,2 +1,8 @@
 feature/IS2-129-CI-CD-Git-actions
 https://chatgpt.com/share/68d04b87-b4a0-800a-a517-c1f296945ad0
+
+feature/IS2-145-CRUD-Tauser
+https://chatgpt.com/share/68d4839c-4bd4-8007-9787-4fb8429bb824
+
+https://chatgpt.com/share/68d483bc-e3a0-8007-8690-9cce1ca10750
+https://chatgpt.com/share/68d49b6a-d548-8007-92d8-07df21b8921b
