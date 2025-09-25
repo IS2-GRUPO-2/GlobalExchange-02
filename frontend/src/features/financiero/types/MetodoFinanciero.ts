@@ -6,7 +6,7 @@ export type TipoMetodoFinanciero =
   | 'CHEQUE';
 
 export type MainTabType = "catalogo" | "instancias" | "catalogos";
-export type InstanceTabType = "cuentas" | "billeteras digitales" | "tarjetas locales";
+export type InstanceTabType = "cuentas" | "billeteras digitales" | "tarjetas";
 export type CatalogTabType = "bancos" | "billeteras" | "tarjetas locales";
 
 // Nuevos tipos para catálogos
@@ -98,29 +98,23 @@ export type BilleteraDigital = {
 export type Tarjeta = {
   id?: number;
   metodo_financiero_detalle: number;
-  tipo?: 'LOCAL' | 'STRIPE';
+  tipo: 'LOCAL' | 'STRIPE';
   payment_method_id: string;
-  brand: string;
+  // Campos para tarjetas STRIPE
+  brand?: string; // Visa, Mastercard, etc. (para Stripe)
+  // Campos para tarjetas LOCAL
+  marca?: number; // ID de la marca del catálogo (para Local)
+  marca_nombre?: string; // Nombre de la marca (solo lectura, para Local)
+  marca_activa?: boolean; // Estado de la marca (solo lectura, para Local)
+  // Campos comunes
   last4: string;
   exp_month: number;
   exp_year: number;
   titular: string;
-};
-
-export type TarjetaLocal = {
-  id?: number;
-  metodo_financiero_detalle: number;
-  marca: number; // ID de la marca del catálogo
-  marca_nombre?: string; // Nombre de la marca (solo lectura)
-  marca_activa?: boolean; // Estado de la marca (solo lectura)
-  last4: string;
-  titular: string;
-  exp_month: number;
-  exp_year: number;
 };
 
 // Tipo extendido que combina instancias con información adicional
-export type ExtendedItem = (CuentaBancaria | BilleteraDigital | TarjetaLocal) & {
+export type ExtendedItem = (CuentaBancaria | BilleteraDigital | Tarjeta) & {
   tipo: InstanceTabType;
   is_active: boolean;
   detalle_id?: number;
@@ -175,13 +169,6 @@ export type PaginatedBilleteraDigital = {
   next: string | null;
   previous: string | null;
   results: BilleteraDigital[];
-};
-
-export type PaginatedTarjetaLocal = {
-  count: number;
-  next: string | null;
-  previous: string | null;
-  results: TarjetaLocal[];
 };
 
 export type PaginatedTarjeta = {

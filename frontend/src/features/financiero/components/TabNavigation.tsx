@@ -6,7 +6,7 @@ import type {
   CatalogTabType,
 } from "../types/MetodoFinanciero";
 import Can from "../../../components/Can";
-import { BANCOS, BILLETERAS_DIGITALES, BILLETERAS_DIGITALES_CATALOGO, CUENTAS_BANCARIAS, METODOS_FINANCIEROS, TARJETAS_LOCALES, TARJETAS_LOCALES_CATALOGO } from "../../../types/perms";
+import { BANCOS, BILLETERAS_DIGITALES, BILLETERAS_DIGITALES_CATALOGO, CUENTAS_BANCARIAS, METODOS_FINANCIEROS, TARJETAS, TARJETAS_LOCALES_CATALOGO } from "../../../types/perms";
 
 interface TabNavigationProps {
   mainTab: MainTabType;
@@ -23,7 +23,7 @@ const getInstanceTabIcon = (tab: InstanceTabType) => {
       return <Building2 className="w-5 h-5" />;
     case "billeteras digitales":
       return <Smartphone className="w-5 h-5" />;
-    case "tarjetas locales":
+    case "tarjetas":
       return <CreditCard className="w-5 h-5" />;
   }
 };
@@ -34,8 +34,8 @@ const getInstanceTabLabel = (tab: InstanceTabType) => {
       return "Cuentas";
     case "billeteras digitales":
       return "Billeteras Digitales";
-    case "tarjetas locales":
-      return "Tarjetas Locales";
+    case "tarjetas":
+      return "Tarjetas";
   }
 };
 
@@ -45,8 +45,8 @@ const getInstanceViewPerm = (tab: InstanceTabType) => {
       return [CUENTAS_BANCARIAS.VIEW];
     case "billeteras digitales":
       return [BILLETERAS_DIGITALES.VIEW];
-    case "tarjetas locales":
-      return [TARJETAS_LOCALES.VIEW];
+    case "tarjetas":
+      return [TARJETAS.VIEW];
   }
 };
 
@@ -88,7 +88,7 @@ export const TabNavigation: React.FC<TabNavigationProps> = ({
                 Catálogos de Entidades
               </button>
             </Can>
-            <Can anyOf={[CUENTAS_BANCARIAS.VIEW, BILLETERAS_DIGITALES.VIEW, TARJETAS_LOCALES.VIEW]}>
+            <Can anyOf={[CUENTAS_BANCARIAS.VIEW, BILLETERAS_DIGITALES.VIEW, TARJETAS.VIEW]}>
               <button
                 onClick={() => setMainTab("instancias")}
                 className={`py-2 px-1 border-b-2 font-medium text-sm ${
@@ -109,7 +109,7 @@ export const TabNavigation: React.FC<TabNavigationProps> = ({
         <div className="mb-6">
           <div className="border-b border-gray-200">
             <nav className="-mb-px flex space-x-8">
-              {(["cuentas", "billeteras digitales"] as InstanceTabType[]).map(
+              {(["cuentas", "billeteras digitales", "tarjetas"] as InstanceTabType[]).map(
                 (tab) => (
                   <Can key={tab} anyOf={getInstanceViewPerm(tab)}>
                     <button

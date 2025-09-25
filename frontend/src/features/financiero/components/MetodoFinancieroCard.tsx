@@ -57,7 +57,8 @@ const MetodoFinancieroCard: React.FC<MetodoFinancieroCardProps> = ({
         const billetera = item as BilleteraDigital;
         return billetera.plataforma_nombre || `Plataforma ID: ${billetera.plataforma}`;
       case "tarjetas":
-        return `**** ${(item as Tarjeta).last4}`;
+        const tarjeta = item as any;
+        return `**** ${tarjeta.last4}`;
       default:
         return "Método Financiero";
     }
@@ -96,7 +97,7 @@ const MetodoFinancieroCard: React.FC<MetodoFinancieroCardProps> = ({
           </div>
         );
       case "tarjetas":
-        const tarjeta = item as Tarjeta;
+        const tarjeta = item as any;
         return (
           <div className="space-y-2">
             <div>
@@ -119,9 +120,9 @@ const MetodoFinancieroCard: React.FC<MetodoFinancieroCardProps> = ({
   const getChangePerm = () => {
     switch (item.tipo) {
       case "cuentas":
-        return [CUENTAS_BANCARIAS.change];
+        return [CUENTAS_BANCARIAS.CHANGE];
       case "billeteras digitales":
-        return [BILLETERAS_DIGITALES.change];
+        return [BILLETERAS_DIGITALES.CHANGE];
       default:
         return [];
     }
@@ -130,9 +131,9 @@ const MetodoFinancieroCard: React.FC<MetodoFinancieroCardProps> = ({
   const getDeletePerm = () => {
     switch (item.tipo) {
       case "cuentas":
-        return [CUENTAS_BANCARIAS.delete];
+        return [CUENTAS_BANCARIAS.DELETE];
       case "billeteras digitales":
-        return [BILLETERAS_DIGITALES.delete];
+        return [BILLETERAS_DIGITALES.DELETE];
       default:
         return [];
     }

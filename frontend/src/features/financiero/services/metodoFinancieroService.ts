@@ -7,7 +7,6 @@ import type {
   MetodoFinancieroDetalle,
   CuentaBancaria,
   BilleteraDigital,
-  TarjetaLocal,
   Tarjeta,
   PaginatedBanco,
   PaginatedBilleteraDigitalCatalogo,
@@ -16,7 +15,6 @@ import type {
   PaginatedMetodoFinancieroDetalle,
   PaginatedCuentaBancaria,
   PaginatedBilleteraDigital,
-  PaginatedTarjetaLocal,
   PaginatedTarjeta,
 } from "../types/MetodoFinanciero";
 
@@ -340,60 +338,6 @@ export const deactivateTarjeta = async (id: number) => {
     return res;
   } catch (err) {
     console.error("Error deactivating tarjeta: ", err);
-    throw err;
-  }
-};
-
-// Tarjetas Locales (Instancias)
-export const getTarjetasLocales = async (
-  params: GetParams = {}
-): Promise<PaginatedTarjetaLocal> => {
-  try {
-    const res = await apiClient.get<PaginatedTarjetaLocal>(`${API_URL}tarjetas-locales/`, {
-      params,
-    });
-    return res.data;
-  } catch (err: any) {
-    console.error(
-      "Error fetching tarjetas locales: ",
-      err.response?.data || err.message
-    );
-    throw err;
-  }
-};
-
-export const createTarjetaLocal = async (tarjetaData: any) => {
-  try {
-    const res = await apiClient.post<TarjetaLocal>(
-      `${API_URL}tarjetas-locales/`,
-      tarjetaData
-    );
-    return res;
-  } catch (err) {
-    console.error("Error creating tarjeta local: ", err);
-    throw err;
-  }
-};
-
-export const updateTarjetaLocal = async (tarjetaData: any, id: number) => {
-  try {
-    const res = await apiClient.put<TarjetaLocal>(
-      `${API_URL}tarjetas-locales/${id}/`,
-      tarjetaData
-    );
-    return res;
-  } catch (err) {
-    console.error("Error updating tarjeta local: ", err);
-    throw err;
-  }
-};
-
-export const deactivateTarjetaLocal = async (id: number) => {
-  try {
-    const res = await apiClient.delete(`${API_URL}tarjetas-locales/${id}/`);
-    return res;
-  } catch (err) {
-    console.error("Error deactivating tarjeta local: ", err);
     throw err;
   }
 };

@@ -1,7 +1,7 @@
 import type {
   CuentaBancaria,
   BilleteraDigital,
-  TarjetaLocal,
+  Tarjeta,
   MetodoFinancieroDetalle,
   InstanceTabType,
   ExtendedItem,
@@ -11,7 +11,7 @@ import type {
 export const filterInstances = (
   cuentas: CuentaBancaria[],
   billeteras: BilleteraDigital[],
-  tarjetasLocales: TarjetaLocal[],
+  tarjetas: Tarjeta[],
   detalles: MetodoFinancieroDetalle[],
   instanceTab: InstanceTabType,
   search: string,
@@ -26,8 +26,8 @@ export const filterInstances = (
     case "billeteras digitales":
       items = getExtendedItems(billeteras, "billeteras digitales");
       break;
-    case "tarjetas locales":
-      items = getExtendedItems(tarjetasLocales, "tarjetas locales");
+    case "tarjetas":
+      items = getExtendedItems(tarjetas, "tarjetas");
       break;
   }
 
@@ -59,13 +59,15 @@ export const filterInstances = (
           (billetera.email &&
             billetera.email.toLowerCase().includes(searchLower))
         );
-      case "tarjetas locales":
-        const tarjeta = item as TarjetaLocal & ExtendedItem;
+      case "tarjetas":
+        const tarjeta = item as Tarjeta & ExtendedItem;
         return (
-          (tarjeta.marca_nombre &&
-            tarjeta.marca_nombre.toLowerCase().includes(searchLower)) ||
-          tarjeta.titular.toLowerCase().includes(searchLower) ||
-          tarjeta.last4.includes(searchLower)
+          ((tarjeta as any).brand &&
+            (tarjeta as any).brand.toLowerCase().includes(searchLower)) ||
+          ((tarjeta as any).marca_nombre &&
+            (tarjeta as any).marca_nombre.toLowerCase().includes(searchLower)) ||
+          ((tarjeta as any).titular?.toLowerCase().includes(searchLower) ?? false) ||
+          ((tarjeta as any).last4?.includes(searchLower) ?? false)
         );
       default:
         return false;
@@ -83,7 +85,7 @@ export const getMetodoFinancieroId = (
         return m.nombre === "TRANSFERENCIA_BANCARIA";
       case "billeteras digitales":
         return m.nombre === "BILLETERA_DIGITAL";
-      case "tarjetas locales":
+      case "tarjetas":
         return m.nombre === "TARJETA";
       default:
         return false;

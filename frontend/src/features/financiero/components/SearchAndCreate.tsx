@@ -5,7 +5,7 @@ import type {
   InstanceTabType,
   CatalogTabType,
 } from "../types/MetodoFinanciero";
-import { BANCOS, BILLETERAS_DIGITALES, BILLETERAS_DIGITALES_CATALOGO, CUENTAS_BANCARIAS, METODOS_FINANCIEROS, TARJETAS_LOCALES_CATALOGO } from "../../../types/perms";
+import { BANCOS, BILLETERAS_DIGITALES, BILLETERAS_DIGITALES_CATALOGO, CUENTAS_BANCARIAS, METODOS_FINANCIEROS, TARJETAS, TARJETAS_LOCALES_CATALOGO } from "../../../types/perms";
 import Can from "../../../components/Can";
 
 interface SearchAndCreateProps {
@@ -24,6 +24,8 @@ const getInstanceTabLabel = (tab: InstanceTabType) => {
       return "Cuentas";
     case "billeteras digitales":
       return "Billeteras Digitales";
+    case "tarjetas":
+      return "Tarjetas";
   }
 };
 
@@ -33,6 +35,8 @@ const getInstanceTabSingularTitle = (tab: InstanceTabType) => {
       return "Cuenta";
     case "billeteras digitales":
       return "Billetera Digital";
+    case "tarjetas":
+      return "Tarjeta";
   }
 };
 
@@ -73,8 +77,11 @@ export const SearchAndCreate: React.FC<SearchAndCreateProps> = ({
       if (catalogTab === "billeteras") return [BILLETERAS_DIGITALES_CATALOGO.ADD];
       if (catalogTab === "tarjetas locales") return [TARJETAS_LOCALES_CATALOGO.ADD];
     }
-    if (mainTab === "instancias")
-      return instanceTab === "cuentas" ? [CUENTAS_BANCARIAS.ADD] : [BILLETERAS_DIGITALES.ADD];
+    if (mainTab === "instancias") {
+      if (instanceTab === "cuentas") return [CUENTAS_BANCARIAS.ADD];
+      if (instanceTab === "billeteras digitales") return [BILLETERAS_DIGITALES.ADD];
+      if (instanceTab === "tarjetas") return [TARJETAS.ADD];
+    }
     return [];
   };
 

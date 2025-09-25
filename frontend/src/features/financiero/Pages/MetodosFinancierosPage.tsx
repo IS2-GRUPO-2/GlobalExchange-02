@@ -16,7 +16,7 @@ import { ItemDetailsView } from "../components/ItemDetailsView";
 
 import CuentaBancariaForm from "../components/CuentaBancariaForm";
 import BilleteraDigitalForm from "../components/BilleteraDigitalForm";
-import TarjetaLocalForm from "../components/TarjetaLocalForm";
+import TarjetaForm from "../components/TarjetaForm";
 import BancoForm from "../components/BancoForm";
 import BilleteraDigitalCatalogoForm from "../components/BilleteraDigitalCatalogoForm";
 import TarjetaLocalCatalogoForm from "../components/TarjetaLocalCatalogoForm";
@@ -173,9 +173,8 @@ const MetodosFinancierosPage = () => {
     if (mainTab === "catalogo") {
       return (
         <MetodoFinancieroForm
-          selectedItem={modalHook.selectedItem}
-          editModalOpen={modalHook.editModalOpen}
-          isSubmitting={modalHook.isSubmitting}
+          metodo={modalHook.selectedItem}
+          isEditForm={modalHook.editModalOpen}
           onSubmit={
             modalHook.editModalOpen ? handleUpdateMetodo : handleCreateMetodo
           }
@@ -272,8 +271,19 @@ const MetodosFinancierosPage = () => {
             isSubmitting={modalHook.isSubmitting}
           />
         );
+      } else if (instanceTab === "tarjetas") {
+        return (
+          <TarjetaForm
+            onSubmit={
+              modalHook.editModalOpen
+                ? handleUpdateInstancia
+                : handleCreateInstancia
+            }
+            initialData={initialData}
+            isSubmitting={modalHook.isSubmitting}
+          />
+        );
       }
-      // Solo cuentas y billeteras digitales están disponibles para instancias de la casa
       return null;
     }
 
@@ -317,7 +327,7 @@ const MetodosFinancierosPage = () => {
       const filteredItems = filterInstances(
         instanciasHook.cuentas,
         instanciasHook.billeteras,
-        instanciasHook.tarjetasLocales,
+        instanciasHook.tarjetas,
         instanciasHook.detalles,
         instanceTab,
         search,
@@ -359,6 +369,7 @@ const MetodosFinancierosPage = () => {
     if (mainTab === "instancias") {
       const tipo = instanceTab === "cuentas" ? "Cuenta" : 
                   instanceTab === "billeteras digitales" ? "Billetera Digital" :
+                  instanceTab === "tarjetas" ? "Tarjeta" :
                   "";
       return `${action} ${tipo} de la Casa`;
     }
