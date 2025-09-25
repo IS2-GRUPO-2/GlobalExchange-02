@@ -11,6 +11,7 @@ from .views import (
     TarjetaViewSet,
     TarjetaLocalViewSet,
     ChequeViewSet,
+    TransaccionViewSet,
     simular_operacion_privada,
     simular_operacion_privada_con_instancia,
     simular_operacion_publica,
@@ -30,6 +31,7 @@ router.register(r'billeteras-digitales', BilleteraDigitalViewSet, basename='bill
 router.register(r'tarjetas', TarjetaViewSet, basename='tarjeta')
 router.register(r'tarjetas-locales', TarjetaLocalViewSet, basename='tarjetalocal')
 router.register(r'cheques', ChequeViewSet, basename='cheque')
+router.register(r'transacciones', TransaccionViewSet, basename='transaccion')
 
 urlpatterns = [
     path('', include(router.urls)),

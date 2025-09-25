@@ -12,6 +12,7 @@ from rest_framework.response import Response
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.decorators import action, api_view, permission_classes
 from rest_framework.exceptions import PermissionDenied
+from django.utils import timezone
 from .models import (
     Banco,
     BilleteraDigitalCatalogo,
@@ -23,6 +24,7 @@ from .models import (
     Tarjeta,
     TarjetaLocal,
     Cheque,
+    Transaccion
 )
 from .serializers import (
     BancoSerializer,
@@ -38,7 +40,9 @@ from .serializers import (
     SimulacionPrivadaSerializer,
     SimulacionPrivadaConInstanciaSerializer,
     SimulacionPublicaSerializer,
-    MetodosClienteSerializer
+    MetodosClienteSerializer,
+    TransaccionSerializer,
+    TransaccionCreateSerializer
 )
 from .services import (
     calcular_simulacion_operacion_publica,
@@ -958,3 +962,81 @@ def listar_metodos_cliente(request):
             return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+
+
+class TransaccionViewSet(viewsets.ModelViewSet):
+    queryset = Transaccion.objects.select_related(
+        'operador', 'cliente', 'divisa_origen', 'divisa_destino', 
+        'metodo_financiero', 'tauser'
+    ).all()
+    filter_backends = [filters.SearchFilter, filters.OrderingFilter]
+    search_fields = ['cliente__nombre', 'cliente__apellido', 'operador__username']
+    filterset_fields = ['operacion', 'estado', 'divisa_origen', 'divisa_destino', 'operador', 'cliente']
+    ordering_fields = ['fecha_inicio', 'fecha_fin', 'monto_origen', 'monto_destino', 'created_at']
+    ordering = ['-created_at']
+    
+    def get_serializer_class(self):
+        if self.action == 'create':
+            return TransaccionCreateSerializer
+        return TransaccionSerializer
+    
+    @action(detail=True, methods=['patch'])
+    def completar(self, request, pk=None):
+        """Marcar transacción como completada"""
+        transaccion = self.get_object()
+        if transaccion.estado != 'pendiente' and transaccion.estado != 'en_proceso':
+            return Response(
+                {'error': 'Solo se pueden completar transacciones pendientes o en proceso'}, 
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        transaccion.estado = 'completada'
+        transaccion.fecha_fin = timezone.now()
+        transaccion.save()
+        
+        serializer = self.get_serializer(transaccion)
+        return Response(serializer.data)
+    
+    @action(detail=True, methods=['patch'])
+    def cancelar(self, request, pk=None):
+        """Cancelar transacción"""
+        transaccion = self.get_object()
+        if transaccion.estado == 'completada':
+            return Response(
+                {'error': 'No se puede cancelar una transacción completada'}, 
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        transaccion.estado = 'cancelada'
+        transaccion.fecha_fin = timezone.now()
+        transaccion.save()
+        
+        serializer = self.get_serializer(transaccion)
+        return Response(serializer.data)
+    
+    @action(detail=False, methods=['get'])
+    def estadisticas(self, request):
+        """Obtener estadísticas de transacciones"""
+        queryset = self.get_queryset()
+        
+        total = queryset.count()
+        pendientes = queryset.filter(estado='pendiente').count()
+        completadas = queryset.filter(estado='completada').count()
+        canceladas = queryset.filter(estado='cancelada').count()
+        
+        # Montos por divisa
+        from django.db.models import Sum
+        montos_por_divisa = {}
+        for transaccion in queryset.filter(estado='completada'):
+            divisa = transaccion.divisa_origen.codigo
+            if divisa not in montos_por_divisa:
+                montos_por_divisa[divisa] = 0
+            montos_por_divisa[divisa] += float(transaccion.monto_origen)
+        
+        return Response({
+            'total': total,
+            'pendientes': pendientes,
+            'completadas': completadas,
+            'canceladas': canceladas,
+            'montos_por_divisa': montos_por_divisa
+        })

@@ -20,7 +20,12 @@ from .models import (
     Tarjeta,
     TarjetaLocal,
     Cheque,
+    Transaccion,
 )
+from apps.clientes.serializers import ClienteSerializer
+from apps.divisas.serializers import DivisaSerializer
+from apps.usuarios.serializers import UserSerializer
+from apps.tauser.serializers import TauserSerializer
 
 
 class BancoSerializer(serializers.ModelSerializer):
@@ -209,3 +214,48 @@ class SimulacionPublicaSerializer(serializers.Serializer):
     divisa_destino = serializers.IntegerField()
     monto = serializers.DecimalField(max_digits=30, decimal_places=2)
     metodo_id = serializers.IntegerField()
+
+
+class TransaccionSerializer(serializers.ModelSerializer):
+    operador_detalle = UserSerializer(source='operador', read_only=True)
+    cliente_detalle = ClienteSerializer(source='cliente', read_only=True)
+    divisa_origen_detalle = DivisaSerializer(source='divisa_origen', read_only=True)
+    divisa_destino_detalle = DivisaSerializer(source='divisa_destino', read_only=True)
+    metodo_financiero_detalle = MetodoFinancieroSerializer(source='metodo_financiero', read_only=True)
+    tauser_detalle = TauserSerializer(source='tauser', read_only=True)
+    
+    class Meta:
+        model = Transaccion
+        fields = [
+            'id', 'operador', 'cliente', 'operacion', 'tasa_aplicada', 'tasa_inicial',
+            'divisa_origen', 'divisa_destino', 'monto_origen', 'monto_destino',
+            'metodo_financiero', 'fecha_inicio', 'fecha_fin', 'tauser', 'estado',
+            'created_at', 'updated_at',
+            # Campos detallados para lectura
+            'operador_detalle', 'cliente_detalle', 'divisa_origen_detalle',
+            'divisa_destino_detalle', 'metodo_financiero_detalle', 'tauser_detalle'
+        ]
+        read_only_fields = ['id', 'fecha_inicio', 'created_at', 'updated_at']
+
+class TransaccionCreateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Transaccion
+        fields = [
+            'operador', 'cliente', 'operacion', 'tasa_aplicada', 'tasa_inicial',
+            'divisa_origen', 'divisa_destino', 'monto_origen', 'monto_destino',
+            'metodo_financiero', 'tauser', 'estado'
+        ]
+    
+    def validate(self, data):
+        # Validar que las divisas sean diferentes
+        if data['divisa_origen'] == data['divisa_destino']:
+            raise serializers.ValidationError("La divisa de origen y destino deben ser diferentes")
+        
+        # Validar montos positivos
+        if data['monto_origen'] <= 0:
+            raise serializers.ValidationError("El monto de origen debe ser mayor a 0")
+        
+        if data['monto_destino'] <= 0:
+            raise serializers.ValidationError("El monto de destino debe ser mayor a 0")
+        
+        return data
