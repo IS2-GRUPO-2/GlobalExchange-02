@@ -6,10 +6,10 @@ export type TipoMetodoFinanciero =
   | "CHEQUE";
 
 export type MainTabType = "catalogo" | "instancias" | "catalogos";
-export type InstanceTabType = "cuentas" | "billeteras digitales";
-export type CatalogTabType = "bancos" | "billeteras";
+export type InstanceTabType = "cuentas" | "billeteras digitales" | "tarjetas locales";
+export type CatalogTabType = "bancos" | "billeteras" | "tarjetas locales";
 
-export type ExtendedItem = (CuentaBancaria | BilleteraDigital) & {
+export type ExtendedItem = (CuentaBancaria | BilleteraDigital | TarjetaLocal) & {
   tipo: InstanceTabType;
   is_active: boolean;
   detalle_id?: number;
@@ -20,7 +20,10 @@ export type ExtendedItem = (CuentaBancaria | BilleteraDigital) & {
 export type Banco = {
   id?: number;
   nombre: string;
-  cvu: string;
+  comision_compra: number;
+  comision_venta: number;
+  comision_personalizada_compra: boolean;
+  comision_personalizada_venta: boolean;
   is_active: boolean;
   fecha_creacion?: string;
   fecha_actualizacion?: string;
@@ -29,6 +32,22 @@ export type Banco = {
 export type BilleteraDigitalCatalogo = {
   id?: number;
   nombre: string;
+  comision_compra: number;
+  comision_venta: number;
+  comision_personalizada_compra: boolean;
+  comision_personalizada_venta: boolean;
+  is_active: boolean;
+  fecha_creacion?: string;
+  fecha_actualizacion?: string;
+};
+
+export type TarjetaLocalCatalogo = {
+  id?: number;
+  marca: string;
+  comision_compra: number;
+  comision_venta: number;
+  comision_personalizada_compra: boolean;
+  comision_personalizada_venta: boolean;
   is_active: boolean;
   fecha_creacion?: string;
   fecha_actualizacion?: string;
@@ -85,12 +104,25 @@ export type BilleteraDigital = {
 export type Tarjeta = {
   id?: number;
   metodo_financiero_detalle: number;
-  stripe_payment_method_id: string;
+  tipo?: 'LOCAL' | 'STRIPE';
+  payment_method_id: string;
   brand: string;
   last4: string;
   exp_month: number;
   exp_year: number;
   titular: string;
+};
+
+export type TarjetaLocal = {
+  id?: number;
+  metodo_financiero_detalle: number;
+  marca: number; // ID de la marca del catálogo
+  marca_nombre?: string; // Nombre de la marca (solo lectura)
+  marca_activa?: boolean; // Estado de la marca (solo lectura)
+  last4: string;
+  titular: string;
+  exp_month: number;
+  exp_year: number;
 };
 
 // Tipos de paginación
@@ -106,6 +138,13 @@ export type PaginatedBilleteraDigitalCatalogo = {
   next: string | null;
   previous: string | null;
   results: BilleteraDigitalCatalogo[];
+};
+
+export type PaginatedTarjetaLocalCatalogo = {
+  count: number;
+  next: string | null;
+  previous: string | null;
+  results: TarjetaLocalCatalogo[];
 };
 
 export type PaginatedMetodoFinanciero = {
@@ -134,6 +173,13 @@ export type PaginatedBilleteraDigital = {
   next: string | null;
   previous: string | null;
   results: BilleteraDigital[];
+};
+
+export type PaginatedTarjetaLocal = {
+  count: number;
+  next: string | null;
+  previous: string | null;
+  results: TarjetaLocal[];
 };
 
 export type PaginatedTarjeta = {
