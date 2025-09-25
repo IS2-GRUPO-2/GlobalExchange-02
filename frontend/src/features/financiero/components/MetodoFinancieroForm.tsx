@@ -75,11 +75,6 @@ const MetodoFinancieroForm: React.FC<MetodoFinancieroFormProps> = ({
   };
 
   return (
-    <div className="bg-white p-6 rounded-lg shadow-lg max-w-md mx-auto">
-      <h2 className="text-xl font-semibold mb-4">
-        {isEditForm ? 'Editar Método Financiero' : 'Crear Método Financiero'}
-      </h2>
-      
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
           <label htmlFor="nombre" className="block text-sm font-medium text-gray-700 mb-1">
@@ -176,7 +171,7 @@ const MetodoFinancieroForm: React.FC<MetodoFinancieroFormProps> = ({
         <div className="flex space-x-3 pt-4">
           <button
             type="submit"
-            className="flex-1 bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="flex-1 btn-primary text-white py-2 px-4 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
           >
             {isEditForm ? 'Actualizar' : 'Crear'}
           </button>
@@ -189,7 +184,6 @@ const MetodoFinancieroForm: React.FC<MetodoFinancieroFormProps> = ({
           </button>
         </div>
       </form>
-    </div>
   );
 };
 
