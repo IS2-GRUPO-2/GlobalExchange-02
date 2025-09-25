@@ -259,3 +259,32 @@ class TransaccionCreateSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError("El monto de destino debe ser mayor a 0")
         
         return data
+
+
+class TransaccionOperacionSerializer(serializers.Serializer):
+    """
+    Serializer para crear transacciones desde simulación de operación.
+    """
+    cliente_id = serializers.UUIDField()
+    divisa_origen = serializers.IntegerField()
+    divisa_destino = serializers.IntegerField()
+    monto = serializers.DecimalField(max_digits=30, decimal_places=2)
+    detalle_metodo_id = serializers.IntegerField(required=False, allow_null=True)
+    metodo_id = serializers.IntegerField(required=False, allow_null=True)
+    tauser_id = serializers.UUIDField()
+    terminos_aceptados = serializers.BooleanField()
+
+    def validate(self, data):
+        if not data.get('terminos_aceptados'):
+            raise serializers.ValidationError("Debe aceptar los términos y condiciones")
+        
+        detalle_metodo_id = data.get('detalle_metodo_id')
+        metodo_id = data.get('metodo_id')
+        
+        if not detalle_metodo_id and not metodo_id:
+            raise serializers.ValidationError("Debe proporcionar detalle_metodo_id o metodo_id")
+        
+        if detalle_metodo_id and metodo_id:
+            raise serializers.ValidationError("No puede proporcionar ambos detalle_metodo_id y metodo_id")
+        
+        return data

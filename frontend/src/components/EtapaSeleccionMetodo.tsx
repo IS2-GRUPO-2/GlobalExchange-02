@@ -15,6 +15,7 @@ interface EtapaSeleccionMetodoProps {
   onMetodoGenericoChange: (metodoId: string) => void;
   onRetroceder: () => void;
   onSimular: () => void;
+  esOperacionReal?: boolean; // Nueva prop para diferenciar simulación de operación real
 }
 
 export default function EtapaSeleccionMetodo({
@@ -26,7 +27,8 @@ export default function EtapaSeleccionMetodo({
   onDetalleMetodoChange,
   onMetodoGenericoChange,
   onRetroceder,
-  onSimular
+  onSimular,
+  esOperacionReal = false
 }: EtapaSeleccionMetodoProps) {
   const [metodos, setMetodos] = useState<{[nombre_metodo: string]: MetodoClienteOrganizado}>({});
   const [operacionCasa, setOperacionCasa] = useState<"compra" | "venta" | null>(null);
@@ -332,7 +334,7 @@ export default function EtapaSeleccionMetodo({
               : 'bg-gray-300 text-gray-500 cursor-not-allowed'
           }`}
         >
-          Simular Operación
+          {esOperacionReal ? 'Continuar' : 'Simular Operación'}
         </button>
       </div>
     </div>

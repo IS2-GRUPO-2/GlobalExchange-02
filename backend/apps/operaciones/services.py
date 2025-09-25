@@ -265,6 +265,7 @@ def calcular_simulacion_operacion_privada_con_instancia(cliente_id, divisa_orige
             "comision_metodo": float(com_metodo),
         },
         "tc_final": round(tc, 4),
+        "tasa_inicial": round(tc, 4),  # Añadir tasa inicial
         "monto_origen": float(monto),
         "monto_destino": round(monto_destino, 2)
     }
@@ -309,6 +310,7 @@ def calcular_simulacion_operacion_privada(cliente_id, divisa_origen_id, divisa_d
             "comision_metodo": float(com_metodo),
         },
         "tc_final": round(tc, 4),
+        "tasa_inicial": round(float(tasa.precioBase), 4),  # Añadir tasa inicial
         "monto_origen": float(monto),
         "monto_destino": round(monto_destino, 2)
     }
@@ -352,6 +354,66 @@ def calcular_simulacion_operacion_publica(divisa_origen_id, divisa_destino_id, m
         "monto_origen": float(monto),
         "monto_destino": round(monto_destino, 2)
     }
+
+
+def crear_transaccion_desde_simulacion(operador_id, cliente_id, divisa_origen_id, divisa_destino_id, monto, detalle_metodo_id=None, metodo_id=None, tauser_id=None):
+    """
+    Crea una transacción basada en una simulación de operación.
+    
+    Args:
+        operador_id: ID del usuario que opera (request.user)
+        cliente_id: ID del cliente
+        divisa_origen_id: ID de divisa origen
+        divisa_destino_id: ID de divisa destino
+        monto: Monto a convertir
+        detalle_metodo_id: ID del método específico (opcional)
+        metodo_id: ID del método genérico (opcional)
+        tauser_id: ID del terminal de autoservicio
+    
+    Returns:
+        Transaccion: Instancia de la transacción creada
+    """
+    from apps.usuarios.models import User
+    from apps.tauser.models import Tauser
+    
+    # Obtener datos de la simulación
+    simulacion_data = calcular_simulacion_operacion_privada_con_instancia(
+        cliente_id, divisa_origen_id, divisa_destino_id, monto, 
+        detalle_metodo_id, metodo_id
+    )
+    
+    # Obtener instancias necesarias
+    operador = User.objects.get(id=operador_id)
+    cliente = Cliente.objects.get(idCliente=cliente_id)
+    divisa_origen = _get_divisa(divisa_origen_id)
+    divisa_destino = _get_divisa(divisa_destino_id)
+    tauser = Tauser.objects.get(idTauser=tauser_id)
+    
+    # Determinar el método financiero a usar
+    if detalle_metodo_id:
+        detalle_metodo = MetodoFinancieroDetalle.objects.get(id=detalle_metodo_id)
+        metodo_financiero = detalle_metodo.metodo_financiero
+    else:
+        metodo_financiero = _get_metodo(metodo_id)
+    
+    # Crear la transacción
+    from .models import Transaccion
+    transaccion = Transaccion.objects.create(
+        operador=operador,
+        cliente=cliente,
+        operacion=simulacion_data['operacion_cliente'],
+        tasa_aplicada=simulacion_data['tc_final'],
+        tasa_inicial=simulacion_data.get('tasa_inicial', simulacion_data['tc_final']),
+        divisa_origen=divisa_origen,
+        divisa_destino=divisa_destino,
+        monto_origen=simulacion_data['monto_origen'],
+        monto_destino=simulacion_data['monto_destino'],
+        metodo_financiero=metodo_financiero,
+        tauser=tauser,
+        estado='pendiente'
+    )
+    
+    return transaccion
 
 
 def listar_metodos_por_divisas(divisa_origen_id, divisa_destino_id):

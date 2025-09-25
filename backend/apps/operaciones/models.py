@@ -310,6 +310,7 @@ class Simulacion(models.Model):
         default_permissions = ()
         permissions = [
             ("can_use_simulacion", "Puede usar simulación de operaciones"),
+            ("can_use_operacion", "Puede realizar operaciones de compra y venta"),
         ]
 
 

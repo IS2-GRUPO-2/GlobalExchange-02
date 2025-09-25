@@ -42,14 +42,16 @@ from .serializers import (
     SimulacionPublicaSerializer,
     MetodosClienteSerializer,
     TransaccionSerializer,
-    TransaccionCreateSerializer
+    TransaccionCreateSerializer,
+    TransaccionOperacionSerializer
 )
 from .services import (
     calcular_simulacion_operacion_publica,
     calcular_simulacion_operacion_privada,
     calcular_simulacion_operacion_privada_con_instancia,
     listar_metodos_por_divisas,
-    listar_metodos_cliente_por_divisas
+    listar_metodos_cliente_por_divisas,
+    crear_transaccion_desde_simulacion
 )
 
 
@@ -960,6 +962,41 @@ def listar_metodos_cliente(request):
 
         except Exception as e:
             return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+@api_view(["POST"])
+@permission_classes([permissions.IsAuthenticated])
+def crear_transaccion_operacion(request):
+    """
+    Endpoint para crear una transacción desde una simulación de operación.
+    - Requiere datos de simulación + tauser_id.
+    - Crea la transacción en estado pendiente.
+    """
+    serializer = TransaccionOperacionSerializer(data=request.data)
+    if serializer.is_valid():
+        try:
+            data = serializer.validated_data
+            
+            # Crear la transacción
+            transaccion = crear_transaccion_desde_simulacion(
+                operador_id=request.user.id,
+                cliente_id=data["cliente_id"],
+                divisa_origen_id=data["divisa_origen"],
+                divisa_destino_id=data["divisa_destino"],
+                monto=data["monto"],
+                detalle_metodo_id=data.get("detalle_metodo_id"),
+                metodo_id=data.get("metodo_id"),
+                tauser_id=data["tauser_id"]
+            )
+            
+            # Serializar la respuesta
+            transaccion_serializer = TransaccionSerializer(transaccion)
+            return Response(transaccion_serializer.data, status=status.HTTP_201_CREATED)
+            
+        except Exception as e:
+            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+    
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 

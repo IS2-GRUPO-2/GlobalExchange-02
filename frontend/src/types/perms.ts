@@ -136,3 +136,14 @@ export const TAUSER = {
   DELETE: "tauser.delete_tauser",
   VIEW: "tauser.view_tauser",
 } as const;
+
+export const TRANSACCIONES = {
+  ADD: "operaciones.add_transaccion",
+  CHANGE: "operaciones.change_transaccion",
+  DELETE: "operaciones.delete_transaccion",
+  VIEW: "operaciones.view_transaccion",
+} as const;
+
+export const OPERACION = {
+  USE: "operaciones.can_use_operacion",
+} as const;
