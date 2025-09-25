@@ -6,7 +6,7 @@ import type {
   CatalogTabType,
 } from "../types/MetodoFinanciero";
 import Can from "../../../components/Can";
-import { BANCOS, BILLETERAS_DIGITALES, BILLETERAS_DIGITALES_CATALOGO } from "../../../types/perms";
+import { BANCOS, BILLETERAS_DIGITALES_CATALOGO } from "../../../types/perms";
 
 interface CatalogTableProps {
   bancos: Banco[];

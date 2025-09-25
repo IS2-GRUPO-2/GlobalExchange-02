@@ -13,7 +13,7 @@ import type {
   BilleteraDigital,
   Tarjeta,
 } from "../types/MetodoFinanciero";
-import { BILLETERAS_DIGITALES, BILLETERAS_DIGITALES_CATALOGO, CUENTAS_BANCARIAS } from "../../../types/perms";
+import { BILLETERAS_DIGITALES, CUENTAS_BANCARIAS } from "../../../types/perms";
 import Can from "../../../components/Can";
 
 type MetodoFinancieroItem = CuentaBancaria | BilleteraDigital | Tarjeta;

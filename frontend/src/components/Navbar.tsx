@@ -133,7 +133,7 @@ export default function Navbar() {
                 <Bell className="w-6 h-6" />
               </button>
 
-              <ClientPicker userId={user.id} className="w-56" />
+              {user && <ClientPicker userId={user.id} className="w-56" />}
 
               {/* Usuario + Nombre + Flechita */}
               <Menu as="div" className="relative">
