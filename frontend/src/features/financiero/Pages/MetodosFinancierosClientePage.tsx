@@ -28,10 +28,10 @@ import type {
   Tarjeta, 
   MetodoFinancieroDetalle,
   MetodoFinanciero,
-  InstanceTabType
+  ClienteTabType
 } from '../types/MetodoFinanciero';
 
-type TabType = InstanceTabType;
+type TabType = ClienteTabType;
 
 // ExtendedItem específico para esta página que maneja Tarjetas unificadas (LOCAL y STRIPE)
 type ExtendedItem = (CuentaBancaria | BilleteraDigital | Tarjeta) & {

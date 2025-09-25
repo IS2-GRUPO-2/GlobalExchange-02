@@ -213,8 +213,8 @@ class Tarjeta(models.Model):
         ('STRIPE', 'Stripe'),
     ], default='STRIPE')
     payment_method_id = models.CharField(max_length=100, unique=True)  # ID de Stripe u otro proveedor
-    marca = models.ForeignKey(TarjetaCatalogo, on_delete=models.PROTECT, default=None)
-    brand = models.CharField(max_length=50, default=None)  # Visa, Mastercard, etc.
+    marca = models.ForeignKey(TarjetaCatalogo, on_delete=models.PROTECT, null=True, blank=True)
+    brand = models.CharField(max_length=50, null=True, blank=True)  # Visa, Mastercard, etc.
     last4 = models.CharField(max_length=4)   # Últimos 4 dígitos
     exp_month = models.IntegerField()
     exp_year = models.IntegerField()

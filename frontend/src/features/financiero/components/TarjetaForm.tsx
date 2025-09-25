@@ -1,13 +1,13 @@
 import React, { useState, useEffect } from "react";
-import { getTarjetasLocalesCatalogo } from "../services/metodoFinancieroService";
+import { getTarjetasCatalogo } from "../services/metodoFinancieroService";
 import type { Tarjeta } from "../types/MetodoFinanciero";
-import type { TarjetaLocalCatalogo } from "../types/MetodoFinanciero";
+import type { TarjetaCatalogo } from "../types/MetodoFinanciero";
 
 export interface TarjetaFormData {
   tipo: 'LOCAL' | 'STRIPE';
   payment_method_id: string;
   // Campos para STRIPE
-  brand?: string;
+  brand?: string | null;
   // Campos para LOCAL
   marca?: number; // ID de marca local cuando tipo es LOCAL
   // Campos comunes
@@ -62,13 +62,13 @@ const TarjetaForm: React.FC<TarjetaFormProps> = ({
   });
 
   const [errors, setErrors] = useState<TarjetaFormErrors>({});
-  const [marcasLocales, setMarcasLocales] = useState<TarjetaLocalCatalogo[]>([]);
+  const [marcasLocales, setMarcasLocales] = useState<TarjetaCatalogo[]>([]);
 
   // Cargar marcas locales disponibles
   useEffect(() => {
     const fetchMarcasLocales = async () => {
       try {
-        const response = await getTarjetasLocalesCatalogo({});
+        const response = await getTarjetasCatalogo({});
         setMarcasLocales(response.results.filter(marca => marca.is_active));
       } catch (error) {
         console.error("Error loading marcas locales:", error);
@@ -154,6 +154,23 @@ const TarjetaForm: React.FC<TarjetaFormProps> = ({
       delete (submitData as any).numero_completo;
       delete (submitData as any).cvv;
 
+      // Para tarjetas LOCAL, limpiar brand si está vacío, y obtener brand de la marca seleccionada
+      if (formData.tipo === 'LOCAL') {
+        if (formData.marca) {
+          const marcaSeleccionada = marcasLocales.find(m => m.id === formData.marca);
+          submitData.brand = marcaSeleccionada?.marca || null;
+        } else {
+          submitData.brand = null;
+        }
+      }
+      
+      // Para tarjetas STRIPE, mantener el brand como está
+      // Si brand está vacío para STRIPE, dejarlo como null
+      if (formData.tipo === 'STRIPE' && !formData.brand?.trim()) {
+        submitData.brand = null;
+      }
+
+      console.log("DEBUG: Datos que se van a enviar:", submitData);
       onSubmit(submitData);
     }
   };
@@ -232,7 +249,7 @@ const TarjetaForm: React.FC<TarjetaFormProps> = ({
           <p className="mt-1 text-sm text-red-600">{errors.tipo}</p>
         )}
       </div>
-      {/* Marca (solo para tarjetas locales) */}
+      {/* Marca (solo para tarjetas) */}
       {formData.tipo === 'LOCAL' && (
         <div>
           <label htmlFor="marca" className="block text-sm font-medium text-gray-700">

@@ -16,10 +16,9 @@ import { ItemDetailsView } from "../components/ItemDetailsView";
 
 import CuentaBancariaForm from "../components/CuentaBancariaForm";
 import BilleteraDigitalForm from "../components/BilleteraDigitalForm";
-import TarjetaForm from "../components/TarjetaForm";
 import BancoForm from "../components/BancoForm";
 import BilleteraDigitalCatalogoForm from "../components/BilleteraDigitalCatalogoForm";
-import TarjetaLocalCatalogoForm from "../components/TarjetaLocalCatalogoForm";
+import TarjetaCatalogoForm from "../components/TarjetaCatalogoForm";
 
 import {
   filterInstances,
@@ -226,7 +225,7 @@ const MetodosFinancierosPage = () => {
         );
       } else {
         return (
-          <TarjetaLocalCatalogoForm
+          <TarjetaCatalogoForm
             onSubmit={
               modalHook.editModalOpen
                 ? handleUpdateCatalog
@@ -271,18 +270,6 @@ const MetodosFinancierosPage = () => {
             isSubmitting={modalHook.isSubmitting}
           />
         );
-      } else if (instanceTab === "tarjetas") {
-        return (
-          <TarjetaForm
-            onSubmit={
-              modalHook.editModalOpen
-                ? handleUpdateInstancia
-                : handleCreateInstancia
-            }
-            initialData={initialData}
-            isSubmitting={modalHook.isSubmitting}
-          />
-        );
       }
       return null;
     }
@@ -314,7 +301,7 @@ const MetodosFinancierosPage = () => {
         <CatalogTable
           bancos={catalogosHook.bancos}
           billeterasCatalogo={catalogosHook.billeterasCatalogo}
-          tarjetasLocalesCatalogo={catalogosHook.tarjetasLocalesCatalogo}
+          tarjetasCatalogo={catalogosHook.tarjetasCatalogo}
           catalogTab={catalogTab}
           loading={loading}
           onEdit={modalHook.openEditModal}
@@ -327,7 +314,6 @@ const MetodosFinancierosPage = () => {
       const filteredItems = filterInstances(
         instanciasHook.cuentas,
         instanciasHook.billeteras,
-        instanciasHook.tarjetas,
         instanciasHook.detalles,
         instanceTab,
         search,
@@ -362,14 +348,13 @@ const MetodosFinancierosPage = () => {
       return `${action} ${
         catalogTab === "bancos" ? "Banco" : 
         catalogTab === "billeteras" ? "Billetera Digital" :
-        "Marca de Tarjeta Local"
+        "Tarjetas"
       }`;
     }
 
     if (mainTab === "instancias") {
       const tipo = instanceTab === "cuentas" ? "Cuenta" : 
                   instanceTab === "billeteras digitales" ? "Billetera Digital" :
-                  instanceTab === "tarjetas" ? "Tarjeta" :
                   "";
       return `${action} ${tipo} de la Casa`;
     }

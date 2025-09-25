@@ -3,21 +3,21 @@ import { toast } from "react-toastify";
 import {
   getBancos,
   getBilleterasDigitalesCatalogo,
-  getTarjetasLocalesCatalogo,
+  getTarjetasCatalogo,
   createBanco,
   createBilleteraDigitalCatalogo,
-  createTarjetaLocalCatalogo,
+  createTarjetaCatalogo,
   updateBanco,
   updateBilleteraDigitalCatalogo,
-  updateTarjetaLocalCatalogo,
+  updateTarjetaCatalogo,
   toggleActiveBanco,
   toggleActiveBilleteraDigitalCatalogo,
-  toggleActiveTarjetaLocalCatalogo,
+  toggleActiveTarjetaCatalogo,
 } from "../services/metodoFinancieroService";
 import type {
   Banco,
   BilleteraDigitalCatalogo,
-  TarjetaLocalCatalogo,
+  TarjetaCatalogo,
   CatalogTabType,
 } from "../types/MetodoFinanciero";
 
@@ -26,8 +26,8 @@ export const useCatalogos = () => {
   const [billeterasCatalogo, setBilleterasCatalogo] = useState<
     BilleteraDigitalCatalogo[]
   >([]);
-  const [tarjetasLocalesCatalogo, setTarjetasLocalesCatalogo] = useState<
-    TarjetaLocalCatalogo[]
+  const [tarjetasCatalogo, setTarjetasCatalogo] = useState<
+    TarjetaCatalogo[]
   >([]);
   const [loading, setLoading] = useState(false);
 
@@ -37,12 +37,12 @@ export const useCatalogos = () => {
       const [bancosRes, billeterasRes, tarjetasRes] = await Promise.all([
         getBancos({ search }),
         getBilleterasDigitalesCatalogo({ search }),
-        getTarjetasLocalesCatalogo({ search }),
+        getTarjetasCatalogo({ search }),
       ]);
 
       setBancos(bancosRes.results);
       setBilleterasCatalogo(billeterasRes.results);
-      setTarjetasLocalesCatalogo(tarjetasRes.results);
+      setTarjetasCatalogo(tarjetasRes.results);
     } catch (err) {
       console.error("Error fetching catálogos:", err);
       toast.error("Error al cargar catálogos");
@@ -60,15 +60,15 @@ export const useCatalogos = () => {
         } else if (tipo === "billeteras") {
           await createBilleteraDigitalCatalogo(formData);
           toast.success("Billetera digital creada exitosamente!");
-        } else if (tipo === "tarjetas locales") {
-          await createTarjetaLocalCatalogo(formData);
-          toast.success("Marca de tarjeta local creada exitosamente!");
+        } else if (tipo === "tarjetas") {
+          await createTarjetaCatalogo(formData);
+          toast.success("Marca de tarjeta creada exitosamente!");
         }
         return true;
       } catch (err) {
         const itemType = tipo === "bancos" ? "banco" : 
                         tipo === "billeteras" ? "billetera digital" : 
-                        "marca de tarjeta local";
+                        "marca de tarjeta";
         toast.error(`Error al crear ${itemType}`);
         console.error(err);
         return false;
@@ -86,15 +86,15 @@ export const useCatalogos = () => {
         } else if (tipo === "billeteras") {
           await updateBilleteraDigitalCatalogo(formData, id);
           toast.success("Billetera digital actualizada exitosamente!");
-        } else if (tipo === "tarjetas locales") {
-          await updateTarjetaLocalCatalogo(formData, id);
-          toast.success("Marca de tarjeta local actualizada exitosamente!");
+        } else if (tipo === "tarjetas") {
+          await updateTarjetaCatalogo(formData, id);
+          toast.success("Marca de tarjeta actualizada exitosamente!");
         }
         return true;
       } catch (err) {
         const itemType = tipo === "bancos" ? "banco" : 
                         tipo === "billeteras" ? "billetera digital" : 
-                        "marca de tarjeta local";
+                        "marca de tarjeta";
         toast.error(`Error al actualizar ${itemType}`);
         console.error(err);
         return false;
@@ -121,10 +121,10 @@ export const useCatalogos = () => {
               item.is_active ? "desactivada" : "activada"
             } exitosamente!`
           );
-        } else if (tipo === "tarjetas locales") {
-          response = await toggleActiveTarjetaLocalCatalogo(item.id);
+        } else if (tipo === "tarjetas") {
+          response = await toggleActiveTarjetaCatalogo(item.id);
           toast.success(
-            `Marca de tarjeta local ${
+            `Marca de tarjeta ${
               item.is_active ? "desactivada" : "activada"
             } exitosamente!`
           );
@@ -140,7 +140,7 @@ export const useCatalogos = () => {
       } catch (err) {
         const itemType = tipo === "bancos" ? "banco" : 
                         tipo === "billeteras" ? "billetera digital" : 
-                        "marca de tarjeta local";
+                        "marca de tarjeta";
         toast.error(
           `Error al ${item.is_active ? "desactivar" : "activar"} ${itemType}`
         );
@@ -154,7 +154,7 @@ export const useCatalogos = () => {
   return {
     bancos,
     billeterasCatalogo,
-    tarjetasLocalesCatalogo,
+    tarjetasCatalogo,
     loading,
     fetchCatalogos,
     createCatalogItem,

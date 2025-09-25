@@ -673,6 +673,18 @@ class TarjetaViewSet(viewsets.ModelViewSet):
                 metodo_financiero_detalle__cliente__in=self.request.user.clientes.all()
             )
 
+    def create(self, request, *args, **kwargs):
+        """Override para debug - temporal"""
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.error(f"DEBUG: Datos recibidos para crear tarjeta: {request.data}")
+        
+        serializer = self.get_serializer(data=request.data)
+        if not serializer.is_valid():
+            logger.error(f"DEBUG: Errores de validación: {serializer.errors}")
+            
+        return super().create(request, *args, **kwargs)
+
     def get_permissions(self):
         """
         Instancia y retorna la lista de permisos que requiere esta vista.

@@ -19,7 +19,7 @@ from .views import obtener_tipos_cheque, obtener_divisas_cheque
 router = DefaultRouter()
 router.register(r'bancos', BancoViewSet, basename='banco')
 router.register(r'billeteras-catalogo', BilleteraDigitalCatalogoViewSet, basename='billeteradigitalcatalogo')
-router.register(r'tarjetas-locales-catalogo', TarjetaCatalogoViewSet, basename='tarjetalocalcatalogo')
+router.register(r'tarjetas-catalogo', TarjetaCatalogoViewSet, basename='tarjetacatalogo')
 router.register(r'metodos', MetodoFinancieroViewSet, basename='metodofinanciero')
 router.register(r'detalles', MetodoFinancieroDetalleViewSet, basename='metodofinancierodetalle')
 router.register(r'cuentas-bancarias', CuentaBancariaViewSet, basename='cuentabancaria')

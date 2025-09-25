@@ -6,8 +6,9 @@ export type TipoMetodoFinanciero =
   | 'CHEQUE';
 
 export type MainTabType = "catalogo" | "instancias" | "catalogos";
-export type InstanceTabType = "cuentas" | "billeteras digitales" | "tarjetas";
-export type CatalogTabType = "bancos" | "billeteras" | "tarjetas locales";
+export type InstanceTabType = "cuentas" | "billeteras digitales";
+export type ClienteTabType = "cuentas" | "billeteras digitales" | "tarjetas";
+export type CatalogTabType = "bancos" | "billeteras" | "tarjetas";
 
 // Nuevos tipos para catálogos
 export type Banco = {
@@ -35,7 +36,7 @@ export type BilleteraDigitalCatalogo = {
   fecha_actualizacion?: string;
 };
 
-export type TarjetaLocalCatalogo = {
+export type TarjetaCatalogo = {
   id?: number;
   marca: string;
   comision_compra: number;
@@ -136,11 +137,11 @@ export type PaginatedBilleteraDigitalCatalogo = {
   results: BilleteraDigitalCatalogo[];
 };
 
-export type PaginatedTarjetaLocalCatalogo = {
+export type PaginatedTarjetaCatalogo = {
   count: number;
   next: string | null;
   previous: string | null;
-  results: TarjetaLocalCatalogo[];
+  results: TarjetaCatalogo[];
 };
 
 export type PaginatedMetodoFinanciero = {

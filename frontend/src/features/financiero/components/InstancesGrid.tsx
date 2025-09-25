@@ -28,8 +28,8 @@ const getInstanceTabLabel = (tab: InstanceTabType) => {
       return "Cuentas";
     case "billeteras digitales":
       return "Billeteras Digitales";
-    case "tarjetas":
-      return "Tarjetas";
+    default:
+      return "";
   }
 };
 
@@ -39,8 +39,8 @@ const getInstanceTabSingular = (tab: InstanceTabType) => {
       return "cuenta";
     case "billeteras digitales":
       return "billetera digital";
-    case "tarjetas":
-      return "tarjeta";
+    default:
+      return "";
   }
 };
 

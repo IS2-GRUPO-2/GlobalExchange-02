@@ -119,11 +119,11 @@ export const TARJETAS_LOCALES = {
   VIEW: "operaciones.view_tarjetalocal",
 } as const;
 
-export const TARJETAS_LOCALES_CATALOGO = {
-  ADD: "operaciones.add_tarjetalocalcatalogo",
-  CHANGE: "operaciones.change_tarjetalocalcatalogo",
-  DELETE: "operaciones.delete_tarjetalocalcatalogo",
-  VIEW: "operaciones.view_tarjetalocalcatalogo",
+export const TARJETAS_CATALOGO = {
+  ADD: "operaciones.add_tarjetacatalogo",
+  CHANGE: "operaciones.change_tarjetacatalogo",
+  DELETE: "operaciones.delete_tarjetacatalogo",
+  VIEW: "operaciones.view_tarjetacatalogo",
 } as const;
 
 export const SIMULACION = {
