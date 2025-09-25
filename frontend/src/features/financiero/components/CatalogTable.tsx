@@ -47,8 +47,10 @@ export const CatalogTable: React.FC<CatalogTableProps> = ({
         <thead>
           <tr>
             <th>{catalogTab === "bancos" ? "Nombre" : catalogTab === "billeteras" ? "Nombre" : "Marca"}</th>
-            <th>Comisiones (%)</th>
-            <th>Comisión Personalizada</th>
+            <th>Comisión Compra</th>
+            <th>Comisión Venta</th>
+            <th>Personalizada Compra</th>
+            <th>Personalizada Venta</th>
             <th>Estado</th>
             <Can anyOf={
               catalogTab === "bancos" ? [BANCOS.CHANGE, BANCOS.DELETE] : 
@@ -62,7 +64,7 @@ export const CatalogTable: React.FC<CatalogTableProps> = ({
         <tbody className="divide-y divide-gray-200">
           {items.length === 0 ? (
             <tr>
-              <td colSpan={5} className="text-center py-8">
+              <td colSpan={7} className="text-center py-8">
                 <p className="text-gray-600">
                   No hay{" "}
                   {catalogTab === "bancos" ? "bancos" : 
@@ -79,17 +81,31 @@ export const CatalogTable: React.FC<CatalogTableProps> = ({
                   {catalogTab === "tarjetas locales" ? item.marca : item.nombre}
                 </td>
                 <td className="text-sm text-gray-900">
-                  {item.comisiones}%
+                  {item.comision_compra}%
+                </td>
+                <td className="text-sm text-gray-900">
+                  {item.comision_venta}%
                 </td>
                 <td>
                   <span
                     className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                      item.comision_personalizada
+                      item.comision_personalizada_compra
                         ? "bg-blue-100 text-blue-800"
                         : "bg-gray-100 text-gray-800"
                     }`}
                   >
-                    {item.comision_personalizada ? "Sí" : "No"}
+                    {item.comision_personalizada_compra ? "Sí" : "No"}
+                  </span>
+                </td>
+                <td>
+                  <span
+                    className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                      item.comision_personalizada_venta
+                        ? "bg-green-100 text-green-800"
+                        : "bg-gray-100 text-gray-800"
+                    }`}
+                  >
+                    {item.comision_personalizada_venta ? "Sí" : "No"}
                   </span>
                 </td>
                 <td>

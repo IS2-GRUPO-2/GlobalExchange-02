@@ -17,8 +17,10 @@ const BancoForm: React.FC<BancoFormProps> = ({
   const [formData, setFormData] = useState<Banco>({
     nombre: '',
     cvu: '',
-    comisiones: 0,
-    comision_personalizada: false,
+    comision_compra: 0,
+    comision_venta: 0,
+    comision_personalizada_compra: false,
+    comision_personalizada_venta: false,
     is_active: true
   });
 
@@ -49,10 +51,16 @@ const BancoForm: React.FC<BancoFormProps> = ({
       newErrors.cvu = 'El CVU solo puede contener números';
     }
 
-    if (formData.comisiones < 0) {
-      newErrors.comisiones = 'Las comisiones no pueden ser negativas';
-    } else if (formData.comisiones > 100) {
-      newErrors.comisiones = 'Las comisiones no pueden exceder 100%';
+    if (formData.comision_compra < 0) {
+      newErrors.comision_compra = 'La comisión de compra no puede ser negativa';
+    } else if (formData.comision_compra > 100) {
+      newErrors.comision_compra = 'La comisión de compra no puede exceder 100%';
+    }
+
+    if (formData.comision_venta < 0) {
+      newErrors.comision_venta = 'La comisión de venta no puede ser negativa';
+    } else if (formData.comision_venta > 100) {
+      newErrors.comision_venta = 'La comisión de venta no puede exceder 100%';
     }
 
     setErrors(newErrors);
@@ -134,19 +142,19 @@ const BancoForm: React.FC<BancoFormProps> = ({
           )}
         </div>
 
-        {/* Comisiones */}
+        {/* Comisión de Compra */}
         <div>
-          <label htmlFor="comisiones" className="block text-sm font-medium text-gray-700 mb-1">
-            Comisiones (%)
+          <label htmlFor="comision_compra" className="block text-sm font-medium text-gray-700 mb-1">
+            Comisión de Compra (%)
           </label>
           <input
             type="number"
-            id="comisiones"
-            name="comisiones"
-            value={formData.comisiones}
+            id="comision_compra"
+            name="comision_compra"
+            value={formData.comision_compra}
             onChange={handleChange}
             className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
-              errors.comisiones ? 'border-red-500' : 'border-gray-300'
+              errors.comision_compra ? 'border-red-500' : 'border-gray-300'
             }`}
             placeholder="Ej: 2.5"
             disabled={isSubmitting}
@@ -154,24 +162,65 @@ const BancoForm: React.FC<BancoFormProps> = ({
             min="0"
             max="100"
           />
-          {errors.comisiones && (
-            <p className="mt-1 text-sm text-red-600">{errors.comisiones}</p>
+          {errors.comision_compra && (
+            <p className="mt-1 text-sm text-red-600">{errors.comision_compra}</p>
           )}
         </div>
 
-        {/* Comisión Personalizada */}
+        {/* Comisión de Venta */}
+        <div>
+          <label htmlFor="comision_venta" className="block text-sm font-medium text-gray-700 mb-1">
+            Comisión de Venta (%)
+          </label>
+          <input
+            type="number"
+            id="comision_venta"
+            name="comision_venta"
+            value={formData.comision_venta}
+            onChange={handleChange}
+            className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+              errors.comision_venta ? 'border-red-500' : 'border-gray-300'
+            }`}
+            placeholder="Ej: 3.0"
+            disabled={isSubmitting}
+            step="0.01"
+            min="0"
+            max="100"
+          />
+          {errors.comision_venta && (
+            <p className="mt-1 text-sm text-red-600">{errors.comision_venta}</p>
+          )}
+        </div>
+
+        {/* Comisión Personalizada Compra */}
         <div className="flex items-center">
           <input
             type="checkbox"
-            id="comision_personalizada"
-            name="comision_personalizada"
-            checked={formData.comision_personalizada}
+            id="comision_personalizada_compra"
+            name="comision_personalizada_compra"
+            checked={formData.comision_personalizada_compra}
             onChange={handleChange}
             className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
             disabled={isSubmitting}
           />
-          <label htmlFor="comision_personalizada" className="ml-2 block text-sm text-gray-700">
-            Permite comisión personalizada
+          <label htmlFor="comision_personalizada_compra" className="ml-2 block text-sm text-gray-700">
+            Permite comisión personalizada para compra
+          </label>
+        </div>
+
+        {/* Comisión Personalizada Venta */}
+        <div className="flex items-center">
+          <input
+            type="checkbox"
+            id="comision_personalizada_venta"
+            name="comision_personalizada_venta"
+            checked={formData.comision_personalizada_venta}
+            onChange={handleChange}
+            className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+            disabled={isSubmitting}
+          />
+          <label htmlFor="comision_personalizada_venta" className="ml-2 block text-sm text-gray-700">
+            Permite comisión personalizada para venta
           </label>
         </div>
 

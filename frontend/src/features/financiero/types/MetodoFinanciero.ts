@@ -20,8 +20,10 @@ export type ExtendedItem = (CuentaBancaria | BilleteraDigital | TarjetaLocal) & 
 export type Banco = {
   id?: number;
   nombre: string;
-  comisiones: number;
-  comision_personalizada: boolean;
+  comision_compra: number;
+  comision_venta: number;
+  comision_personalizada_compra: boolean;
+  comision_personalizada_venta: boolean;
   is_active: boolean;
   fecha_creacion?: string;
   fecha_actualizacion?: string;
@@ -30,8 +32,10 @@ export type Banco = {
 export type BilleteraDigitalCatalogo = {
   id?: number;
   nombre: string;
-  comisiones: number;
-  comision_personalizada: boolean;
+  comision_compra: number;
+  comision_venta: number;
+  comision_personalizada_compra: boolean;
+  comision_personalizada_venta: boolean;
   is_active: boolean;
   fecha_creacion?: string;
   fecha_actualizacion?: string;
@@ -40,8 +44,10 @@ export type BilleteraDigitalCatalogo = {
 export type TarjetaLocalCatalogo = {
   id?: number;
   marca: string;
-  comisiones: number;
-  comision_personalizada: boolean;
+  comision_compra: number;
+  comision_venta: number;
+  comision_personalizada_compra: boolean;
+  comision_personalizada_venta: boolean;
   is_active: boolean;
   fecha_creacion?: string;
   fecha_actualizacion?: string;
@@ -98,7 +104,7 @@ export type BilleteraDigital = {
 export type Tarjeta = {
   id?: number;
   metodo_financiero_detalle: number;
-  tipo: string;
+  tipo?: 'LOCAL' | 'STRIPE';
   payment_method_id: string;
   brand: string;
   last4: string;

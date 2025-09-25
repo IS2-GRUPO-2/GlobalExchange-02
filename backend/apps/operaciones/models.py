@@ -11,8 +11,10 @@ class Banco(models.Model):
     """Catálogo de bancos disponibles"""
     nombre = models.CharField(max_length=100, unique=True, help_text="Nombre del banco (ej: Santander, Itaú, BBVA)")
     cvu = models.CharField(max_length=22, unique=True, null=True, blank=True, help_text="CVU del banco para transferencias interbancarias")
-    comisiones = models.DecimalField(max_digits=5, decimal_places=2, default=0.00, help_text="Comisión por defecto del banco (%)")
-    comision_personalizada = models.BooleanField(default=False, help_text="Permite configurar comisión personalizada")
+    comision_compra = models.DecimalField(max_digits=5, decimal_places=2, default=0.00, help_text="Comisión por defecto para operaciones de compra (%)")
+    comision_venta = models.DecimalField(max_digits=5, decimal_places=2, default=0.00, help_text="Comisión por defecto para operaciones de venta (%)")
+    comision_personalizada_compra = models.BooleanField(default=False, help_text="Permite configurar comisión personalizada para compra")
+    comision_personalizada_venta = models.BooleanField(default=False, help_text="Permite configurar comisión personalizada para venta")
     is_active = models.BooleanField(default=True, help_text="Indica si el banco está disponible")
     fecha_creacion = models.DateTimeField(auto_now_add=True)
     fecha_actualizacion = models.DateTimeField(auto_now=True)
@@ -29,8 +31,10 @@ class Banco(models.Model):
 class BilleteraDigitalCatalogo(models.Model):
     """Catálogo de billeteras digitales disponibles"""
     nombre = models.CharField(max_length=100, unique=True, help_text="Nombre de la billetera (ej: PayPal, MercadoPago, Binance Pay, TigoMoney)")
-    comisiones = models.DecimalField(max_digits=5, decimal_places=2, default=0.00, help_text="Comisión por defecto de la billetera (%)")
-    comision_personalizada = models.BooleanField(default=False, help_text="Permite configurar comisión personalizada")
+    comision_compra = models.DecimalField(max_digits=5, decimal_places=2, default=0.00, help_text="Comisión por defecto para operaciones de compra (%)")
+    comision_venta = models.DecimalField(max_digits=5, decimal_places=2, default=0.00, help_text="Comisión por defecto para operaciones de venta (%)")
+    comision_personalizada_compra = models.BooleanField(default=False, help_text="Permite configurar comisión personalizada para compra")
+    comision_personalizada_venta = models.BooleanField(default=False, help_text="Permite configurar comisión personalizada para venta")
     is_active = models.BooleanField(default=True, help_text="Indica si la billetera está disponible")
     fecha_creacion = models.DateTimeField(auto_now_add=True)
     fecha_actualizacion = models.DateTimeField(auto_now=True)
@@ -47,8 +51,10 @@ class BilleteraDigitalCatalogo(models.Model):
 class TarjetaLocalCatalogo(models.Model):
     """Catálogo de marcas de tarjetas locales disponibles"""
     marca = models.CharField(max_length=50, unique=True, help_text="Marca de la tarjeta (ej: Visa, Mastercard, American Express, Cabal)")
-    comisiones = models.DecimalField(max_digits=5, decimal_places=2, default=0.00, help_text="Comisión por defecto de la tarjeta (%)")
-    comision_personalizada = models.BooleanField(default=False, help_text="Permite configurar comisión personalizada")
+    comision_compra = models.DecimalField(max_digits=5, decimal_places=2, default=0.00, help_text="Comisión por defecto para operaciones de compra (%)")
+    comision_venta = models.DecimalField(max_digits=5, decimal_places=2, default=0.00, help_text="Comisión por defecto para operaciones de venta (%)")
+    comision_personalizada_compra = models.BooleanField(default=False, help_text="Permite configurar comisión personalizada para compra")
+    comision_personalizada_venta = models.BooleanField(default=False, help_text="Permite configurar comisión personalizada para venta")
     is_active = models.BooleanField(default=True, help_text="Indica si la marca está disponible")
     fecha_creacion = models.DateTimeField(auto_now_add=True)
     fecha_actualizacion = models.DateTimeField(auto_now=True)
