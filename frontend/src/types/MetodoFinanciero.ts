@@ -10,6 +10,10 @@ export type Banco = {
   id?: number;
   nombre: string;
   cvu: string;
+  comision_compra: number;
+  comision_venta: number;
+  comision_personalizada_compra: boolean;
+  comision_personalizada_venta: boolean;
   is_active: boolean;
   fecha_creacion?: string;
   fecha_actualizacion?: string;
@@ -18,6 +22,22 @@ export type Banco = {
 export type BilleteraDigitalCatalogo = {
   id?: number;
   nombre: string;
+  comision_compra: number;
+  comision_venta: number;
+  comision_personalizada_compra: boolean;
+  comision_personalizada_venta: boolean;
+  is_active: boolean;
+  fecha_creacion?: string;
+  fecha_actualizacion?: string;
+};
+
+export type TarjetaLocalCatalogo = {
+  id?: number;
+  marca: string;
+  comision_compra: number;
+  comision_venta: number;
+  comision_personalizada_compra: boolean;
+  comision_personalizada_venta: boolean;
   is_active: boolean;
   fecha_creacion?: string;
   fecha_actualizacion?: string;
@@ -74,7 +94,8 @@ export type BilleteraDigital = {
 export type Tarjeta = {
   id?: number;
   metodo_financiero_detalle: number;
-  stripe_payment_method_id: string;
+  tipo?: 'LOCAL' | 'STRIPE';
+  payment_method_id: string;
   brand: string;
   last4: string;
   exp_month: number;
@@ -95,6 +116,13 @@ export type PaginatedBilleteraDigitalCatalogo = {
   next: string | null;
   previous: string | null;
   results: BilleteraDigitalCatalogo[];
+};
+
+export type PaginatedTarjetaLocalCatalogo = {
+  count: number;
+  next: string | null;
+  previous: string | null;
+  results: TarjetaLocalCatalogo[];
 };
 
 export type PaginatedMetodoFinanciero = {

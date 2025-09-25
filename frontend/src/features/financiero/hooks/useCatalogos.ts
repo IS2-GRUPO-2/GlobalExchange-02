@@ -3,16 +3,21 @@ import { toast } from "react-toastify";
 import {
   getBancos,
   getBilleterasDigitalesCatalogo,
+  getTarjetasLocalesCatalogo,
   createBanco,
   createBilleteraDigitalCatalogo,
+  createTarjetaLocalCatalogo,
   updateBanco,
   updateBilleteraDigitalCatalogo,
+  updateTarjetaLocalCatalogo,
   toggleActiveBanco,
   toggleActiveBilleteraDigitalCatalogo,
+  toggleActiveTarjetaLocalCatalogo,
 } from "../services/metodoFinancieroService";
 import type {
   Banco,
   BilleteraDigitalCatalogo,
+  TarjetaLocalCatalogo,
   CatalogTabType,
 } from "../types/MetodoFinanciero";
 
@@ -21,18 +26,23 @@ export const useCatalogos = () => {
   const [billeterasCatalogo, setBilleterasCatalogo] = useState<
     BilleteraDigitalCatalogo[]
   >([]);
+  const [tarjetasLocalesCatalogo, setTarjetasLocalesCatalogo] = useState<
+    TarjetaLocalCatalogo[]
+  >([]);
   const [loading, setLoading] = useState(false);
 
   const fetchCatalogos = useCallback(async (search: string = "") => {
     setLoading(true);
     try {
-      const [bancosRes, billeterasRes] = await Promise.all([
+      const [bancosRes, billeterasRes, tarjetasRes] = await Promise.all([
         getBancos({ search }),
         getBilleterasDigitalesCatalogo({ search }),
+        getTarjetasLocalesCatalogo({ search }),
       ]);
 
       setBancos(bancosRes.results);
       setBilleterasCatalogo(billeterasRes.results);
+      setTarjetasLocalesCatalogo(tarjetasRes.results);
     } catch (err) {
       console.error("Error fetching catálogos:", err);
       toast.error("Error al cargar catálogos");
@@ -47,15 +57,19 @@ export const useCatalogos = () => {
         if (tipo === "bancos") {
           await createBanco(formData);
           toast.success("Banco creado exitosamente!");
-        } else {
+        } else if (tipo === "billeteras") {
           await createBilleteraDigitalCatalogo(formData);
           toast.success("Billetera digital creada exitosamente!");
+        } else if (tipo === "tarjetas locales") {
+          await createTarjetaLocalCatalogo(formData);
+          toast.success("Marca de tarjeta local creada exitosamente!");
         }
         return true;
       } catch (err) {
-        toast.error(
-          `Error al crear ${tipo === "bancos" ? "banco" : "billetera digital"}`
-        );
+        const itemType = tipo === "bancos" ? "banco" : 
+                        tipo === "billeteras" ? "billetera digital" : 
+                        "marca de tarjeta local";
+        toast.error(`Error al crear ${itemType}`);
         console.error(err);
         return false;
       }
@@ -69,17 +83,19 @@ export const useCatalogos = () => {
         if (tipo === "bancos") {
           await updateBanco(formData, id);
           toast.success("Banco actualizado exitosamente!");
-        } else {
+        } else if (tipo === "billeteras") {
           await updateBilleteraDigitalCatalogo(formData, id);
           toast.success("Billetera digital actualizada exitosamente!");
+        } else if (tipo === "tarjetas locales") {
+          await updateTarjetaLocalCatalogo(formData, id);
+          toast.success("Marca de tarjeta local actualizada exitosamente!");
         }
         return true;
       } catch (err) {
-        toast.error(
-          `Error al actualizar ${
-            tipo === "bancos" ? "banco" : "billetera digital"
-          }`
-        );
+        const itemType = tipo === "bancos" ? "banco" : 
+                        tipo === "billeteras" ? "billetera digital" : 
+                        "marca de tarjeta local";
+        toast.error(`Error al actualizar ${itemType}`);
         console.error(err);
         return false;
       }
@@ -98,16 +114,23 @@ export const useCatalogos = () => {
           toast.success(
             `Banco ${item.is_active ? "desactivado" : "activado"} exitosamente!`
           );
-        } else {
+        } else if (tipo === "billeteras") {
           response = await toggleActiveBilleteraDigitalCatalogo(item.id);
           toast.success(
             `Billetera digital ${
               item.is_active ? "desactivada" : "activada"
             } exitosamente!`
           );
+        } else if (tipo === "tarjetas locales") {
+          response = await toggleActiveTarjetaLocalCatalogo(item.id);
+          toast.success(
+            `Marca de tarjeta local ${
+              item.is_active ? "desactivada" : "activada"
+            } exitosamente!`
+          );
         }
 
-        if (response.affected_instances?.length > 0) {
+        if (response?.affected_instances?.length > 0) {
           toast.info(
             `Se desactivaron ${response.affected_instances.length} instancia(s) asociada(s)`
           );
@@ -115,10 +138,11 @@ export const useCatalogos = () => {
 
         return true;
       } catch (err) {
+        const itemType = tipo === "bancos" ? "banco" : 
+                        tipo === "billeteras" ? "billetera digital" : 
+                        "marca de tarjeta local";
         toast.error(
-          `Error al ${item.is_active ? "desactivar" : "activar"} ${
-            tipo === "bancos" ? "banco" : "billetera digital"
-          }`
+          `Error al ${item.is_active ? "desactivar" : "activar"} ${itemType}`
         );
         console.error(err);
         return false;
@@ -130,6 +154,7 @@ export const useCatalogos = () => {
   return {
     bancos,
     billeterasCatalogo,
+    tarjetasLocalesCatalogo,
     loading,
     fetchCatalogos,
     createCatalogItem,

@@ -15,20 +15,26 @@ from rest_framework.exceptions import PermissionDenied
 from .models import (
     Banco,
     BilleteraDigitalCatalogo,
+    TarjetaLocalCatalogo,
     MetodoFinanciero,
     MetodoFinancieroDetalle,
     CuentaBancaria,
     BilleteraDigital,
     Tarjeta,
+    TarjetaLocal,
+    Cheque,
 )
 from .serializers import (
     BancoSerializer,
     BilleteraDigitalCatalogoSerializer,
+    TarjetaLocalCatalogoSerializer,
+    ChequeSerializer,
     MetodoFinancieroSerializer,
     MetodoFinancieroDetalleSerializer,
     CuentaBancariaSerializer,
     BilleteraDigitalSerializer,
     TarjetaSerializer,
+    TarjetaLocalSerializer,
     SimulacionPrivadaSerializer,
     SimulacionPrivadaConInstanciaSerializer,
     SimulacionPublicaSerializer,
@@ -245,6 +251,107 @@ class BilleteraDigitalCatalogoViewSet(viewsets.ModelViewSet):
         estado = "activado" if instance.is_active else "desactivado"
         response_data = {
             "message": f"Billetera digital {instance.nombre} {estado}.",
+            "is_active": instance.is_active,
+            "affected_instances": affected_instances
+        }
+        
+        return Response(response_data, status=status.HTTP_200_OK)
+
+
+class TarjetaLocalCatalogoViewSet(viewsets.ModelViewSet):
+    """
+    ViewSet para operaciones CRUD del catálogo de marcas de tarjetas locales.
+
+    Proporciona endpoints para gestionar las marcas de tarjetas locales disponibles en el sistema.
+    Solo los administradores pueden crear, actualizar o eliminar marcas.
+    """
+    queryset = TarjetaLocalCatalogo.objects.all()
+    serializer_class = TarjetaLocalCatalogoSerializer
+    permission_classes = [permissions.IsAuthenticated]
+    filter_backends = [filters.SearchFilter]
+    search_fields = ['marca']
+    pagination_class = OperacionesPagination
+
+    def get_permissions(self):
+        """
+        Instancia y retorna la lista de permisos que requiere esta vista.
+        """
+        if self.action in ['create', 'update', 'partial_update', 'destroy']:
+            permission_classes = [permissions.IsAuthenticated]
+        else:
+            permission_classes = [permissions.IsAuthenticated]
+        return [permission() for permission in permission_classes]
+
+    def destroy(self, request, *args, **kwargs):
+        """
+        Desactivación lógica de la marca de tarjeta local.
+
+        En lugar de eliminar físicamente el registro, marca `is_active=False`.
+        """
+        instance = self.get_object()
+        if not instance.is_active:
+            return Response(
+                {"detail": "La marca de tarjeta local ya está desactivada."},
+                status=status.HTTP_404_NOT_FOUND
+            )
+        instance.is_active = False
+        instance.save()
+        return Response(
+            {"message": f"Marca de tarjeta local {instance.marca} desactivada (eliminado lógico)."},
+            status=status.HTTP_200_OK
+        )
+
+    @action(detail=True, methods=['post'], permission_classes=[permissions.IsAuthenticated])
+    def toggle_active(self, request, pk=None):
+        """
+        Alterna el estado de activación de la marca de tarjeta local (activo/inactivo).
+        
+        Solo los administradores pueden usar esta funcionalidad.
+        """
+        instance = self.get_object()
+        instance.is_active = not instance.is_active
+        instance.save()
+        
+        # Si se desactiva, desactivar también todas las tarjetas locales relacionadas
+        affected_instances = []
+        if not instance.is_active:
+            from .models import TarjetaLocal
+            tarjetas_relacionadas = TarjetaLocal.objects.filter(
+                marca=instance,
+                metodo_financiero_detalle__is_active=True
+            )
+            
+            for tarjeta in tarjetas_relacionadas:
+                tarjeta.metodo_financiero_detalle.is_active = False
+                tarjeta.metodo_financiero_detalle.desactivado_por_catalogo = True
+                tarjeta.metodo_financiero_detalle.save()
+                affected_instances.append({
+                    'id': tarjeta.id,
+                    'tipo': 'tarjeta_local',
+                    'titular': tarjeta.titular
+                })
+        else:
+            # Si se reactiva la marca, permitir reactivar tarjetas que fueron desactivadas por catálogo
+            from .models import TarjetaLocal
+            tarjetas_relacionadas = TarjetaLocal.objects.filter(
+                marca=instance,
+                metodo_financiero_detalle__is_active=False,
+                metodo_financiero_detalle__desactivado_por_catalogo=True
+            )
+            
+            for tarjeta in tarjetas_relacionadas:
+                tarjeta.metodo_financiero_detalle.is_active = True
+                tarjeta.metodo_financiero_detalle.desactivado_por_catalogo = False
+                tarjeta.metodo_financiero_detalle.save()
+                affected_instances.append({
+                    'id': tarjeta.id,
+                    'tipo': 'tarjeta_local',
+                    'titular': tarjeta.titular
+                })
+        
+        estado = "activado" if instance.is_active else "desactivado"
+        response_data = {
+            "message": f"Marca de tarjeta local {instance.marca} {estado}.",
             "is_active": instance.is_active,
             "affected_instances": affected_instances
         }
@@ -599,8 +706,111 @@ class TarjetaViewSet(viewsets.ModelViewSet):
         detalle.is_active = False
         detalle.save()
         return Response({"message": f"Tarjeta {instance.brand} ****{instance.last4} desactivada (eliminado lógico)."}, status=status.HTTP_200_OK)
+
+
+class TarjetaLocalViewSet(viewsets.ModelViewSet):
+    """
+    ViewSet para operaciones CRUD de tarjetas locales.
+
+    Gestiona los detalles específicos de tarjetas locales asociadas
+    a métodos financieros.
+    """
+    queryset = TarjetaLocal.objects.all()
+    serializer_class = TarjetaLocalSerializer
+    permission_classes = [permissions.IsAuthenticated]
+    filter_backends = [filters.SearchFilter]
+    search_fields = ['marca__marca', 'last4', 'titular']
+    pagination_class = OperacionesPagination
+
+    def get_queryset(self):
+        """
+        Filtrar tarjetas locales según permisos del usuario.
+        
+        - Administradores: ven todas las tarjetas locales
+        - Usuarios regulares: solo ven sus propias tarjetas locales
+        
+        NOTA: No se filtra por is_active aquí, se incluye el estado en el serializer
+        """
+        queryset = TarjetaLocal.objects.select_related('metodo_financiero_detalle', 'marca').all()
+
+        if self.request.user.has_perm('operaciones.view_metodofinanciero'):
+            return queryset.filter(metodo_financiero_detalle__es_cuenta_casa=True)
+        else:
+            # Usuarios regulares ven las tarjetas locales de sus clientes asignados
+            return queryset.filter(
+                metodo_financiero_detalle__cliente__in=self.request.user.clientes.all()
+            )
+
+    def get_permissions(self):
+        """
+        Instancia y retorna la lista de permisos que requiere esta vista.
+        """
+        if self.action in ['update', 'partial_update', 'destroy']:
+            # Solo admins pueden editar/eliminar tarjetas locales
+            permission_classes = [permissions.IsAuthenticated]
+        else:
+            # Usuarios autenticados pueden ver y crear sus propias tarjetas locales
+            permission_classes = [permissions.IsAuthenticated]
+        return [permission() for permission in permission_classes]
+
+    def destroy(self, request, *args, **kwargs):
+        """Desactivación lógica de la tarjeta local a través de su detalle.
+
+        Marca el `MetodoFinancieroDetalle` asociado como inactivo.
+        """
+        instance = self.get_object()
+        detalle = instance.metodo_financiero_detalle
+        if not detalle.is_active:
+            return Response({"detail": "La tarjeta local ya está desactivada."}, status=status.HTTP_404_NOT_FOUND)
+
+        detalle.is_active = False
+        detalle.save()
+        return Response({"message": f"Tarjeta local {instance.marca.marca} ****{instance.last4} desactivada (eliminado lógico)."}, status=status.HTTP_200_OK)
+    
+class ChequeViewSet(viewsets.ModelViewSet):
+    queryset = Cheque.objects.all()
+    serializer_class = ChequeSerializer
+    permission_classes = [permissions.IsAuthenticated]
+    filter_backends = [filters.SearchFilter]
+    # Ajuste: los nombres de campo deben coincidir con el modelo
+    search_fields = ['banco_emisor__nombre', 'numero', 'titular']
+    pagination_class = OperacionesPagination
     
 
+@api_view(["GET"])
+@permission_classes([permissions.AllowAny])
+def obtener_tipos_cheque(request):
+    """
+    Retorna la lista de tipos de cheque admitidos por el sistema.
+
+    Devuelve una lista de objetos { value, label } usando las choices
+    definidas en el campo `tipo` del modelo `Cheque`.
+    """
+    try:
+        choices = [
+            {"value": c[0], "label": c[1]} for c in Cheque._meta.get_field('tipo').choices
+        ]
+        return Response(choices, status=status.HTTP_200_OK)
+    except Exception as e:
+        return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+@api_view(["GET"])
+@permission_classes([permissions.AllowAny])
+def obtener_divisas_cheque(request):
+    """
+    Retorna las divisas permitidas para cheques.
+
+    Devuelve una lista de objetos { value, label } usando la constante
+    `DIVISAS_PERMITIDAS` definida en el modelo `Cheque`.
+    """
+    try:
+        divisas = [{"value": d[0], "label": d[1]} for d in getattr(Cheque, 'DIVISAS_PERMITIDAS', [])]
+        return Response(divisas, status=status.HTTP_200_OK)
+    except Exception as e:
+        return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+   
 
 #=============================================================
 # Vistas para simulaciones de operaciones

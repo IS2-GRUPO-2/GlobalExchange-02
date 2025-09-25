@@ -15,41 +15,73 @@ def run():
         {
             'nombre': 'Banco de la Nación Argentina',
             'cvu': '0110000000000000000000',
+            'comision_compra': 1.5,
+            'comision_venta': 1.2,
+            'comision_personalizada_compra': True,
+            'comision_personalizada_venta': True,
             'is_active': True
         },
         {
             'nombre': 'Banco Galicia',
             'cvu': '0070000000000000000000',
+            'comision_compra': 1.8,
+            'comision_venta': 1.5,
+            'comision_personalizada_compra': True,
+            'comision_personalizada_venta': False,
             'is_active': True
         },
         {
             'nombre': 'Banco Santander Argentina',
             'cvu': '0072000000000000000000',
+            'comision_compra': 2.0,
+            'comision_venta': 1.7,
+            'comision_personalizada_compra': False,
+            'comision_personalizada_venta': True,
             'is_active': True
         },
         {
             'nombre': 'Banco BBVA Argentina',
             'cvu': '0017000000000000000000',
+            'comision_compra': 1.9,
+            'comision_venta': 1.6,
+            'comision_personalizada_compra': True,
+            'comision_personalizada_venta': True,
             'is_active': True
         },
         {
             'nombre': 'Banco Macro',
             'cvu': '0285000000000000000000',
+            'comision_compra': 1.4,
+            'comision_venta': 1.1,
+            'comision_personalizada_compra': False,
+            'comision_personalizada_venta': False,
             'is_active': True
         },
         {
             'nombre': 'Banco Ciudad de Buenos Aires',
             'cvu': '0043000000000000000000',
+            'comision_compra': 1.6,
+            'comision_venta': 1.3,
+            'comision_personalizada_compra': True,
+            'comision_personalizada_venta': False,
             'is_active': True
         },
         {
             'nombre': 'Banco Industrial (BIND)',
             'cvu': '0300000000000000000000',
+            'comision_compra': 2.1,
+            'comision_venta': 1.8,
+            'comision_personalizada_compra': False,
+            'comision_personalizada_venta': True,
             'is_active': True
         },
         {
             'nombre': 'Banco Provincia de Buenos Aires',
             'cvu': '0014000000000000000000',
+            'comision_compra': 1.3,
+            'comision_venta': 1.0,
+            'comision_personalizada_compra': True,
+            'comision_personalizada_venta': True,
             'is_active': True
         }
     ]
@@ -66,38 +98,74 @@ def run():
     billeteras_data = [
         {
             'nombre': 'Mercado Pago',
+            'comision_compra': 2.8,
+            'comision_venta': 2.5,
+            'comision_personalizada_compra': True,
+            'comision_personalizada_venta': True,
             'is_active': True
         },
         {
             'nombre': 'Ualá',
+            'comision_compra': 2.0,
+            'comision_venta': 1.8,
+            'comision_personalizada_compra': False,
+            'comision_personalizada_venta': True,
             'is_active': True
         },
         {
             'nombre': 'Brubank',
+            'comision_compra': 1.9,
+            'comision_venta': 1.7,
+            'comision_personalizada_compra': True,
+            'comision_personalizada_venta': False,
             'is_active': True
         },
         {
             'nombre': 'Naranja X',
+            'comision_compra': 2.5,
+            'comision_venta': 2.2,
+            'comision_personalizada_compra': True,
+            'comision_personalizada_venta': True,
             'is_active': True
         },
         {
             'nombre': 'Personal Pay',
+            'comision_compra': 2.3,
+            'comision_venta': 2.0,
+            'comision_personalizada_compra': False,
+            'comision_personalizada_venta': False,
             'is_active': True
         },
         {
             'nombre': 'PayPal',
+            'comision_compra': 4.2,
+            'comision_venta': 3.8,
+            'comision_personalizada_compra': False,
+            'comision_personalizada_venta': True,
             'is_active': True
         },
         {
             'nombre': 'Binance Pay',
+            'comision_compra': 1.0,
+            'comision_venta': 0.8,
+            'comision_personalizada_compra': True,
+            'comision_personalizada_venta': True,
             'is_active': True
         },
         {
             'nombre': 'Tigo Money',
+            'comision_compra': 3.0,
+            'comision_venta': 2.7,
+            'comision_personalizada_compra': True,
+            'comision_personalizada_venta': False,
             'is_active': True
         },
         {
             'nombre': 'Cuenta DNI',
+            'comision_compra': 0.5,
+            'comision_venta': 0.3,
+            'comision_personalizada_compra': False,
+            'comision_personalizada_venta': False,
             'is_active': True
         }
     ]
