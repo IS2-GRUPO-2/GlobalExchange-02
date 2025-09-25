@@ -10,6 +10,9 @@ import { Edit, Search, Plus, Check, X, Eye } from "lucide-react";
 import { toast } from "react-toastify";
 import Modal from "../components/Modal";
 import TauserForm from "../components/TauserForm";
+import { MapContainer, TileLayer, Marker } from "react-leaflet";
+import L from "leaflet";
+import "leaflet/dist/leaflet.css";
 
 interface FormTauser {
   idTauser?: string;
@@ -235,6 +238,33 @@ const ConfiguracionTauserPage = () => {
                     <p className="mt-1 text-sm text-gray-500">{selectedTauser.idTauser}</p>
                   </div>
                 </div>
+                {/* Ubicación en el mapa (desplegable) */}
+                <details className="mt-6">
+                  <summary className="cursor-pointer text-gray-700 font-semibold">Ver ubicación en el mapa</summary>
+                  <div className="h-64 w-full mt-4">
+                    <MapContainer
+                      center={[
+                        selectedTauser.latitud || -25.263739,
+                        selectedTauser.longitud || -57.575926,
+                      ]}
+                      zoom={13}
+                      className="h-full w-full rounded-md border"
+                    >
+                      <TileLayer
+                        attribution='&copy; <a href="https://osm.org/copyright">OpenStreetMap</a>'
+                        url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                      />
+                      <Marker
+                        position={[selectedTauser.latitud, selectedTauser.longitud]}
+                        icon={new L.Icon({
+                          iconUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png",
+                          iconSize: [25, 41],
+                          iconAnchor: [12, 41],
+                        })}
+                      />
+                    </MapContainer>
+                  </div>
+                </details>
               </div>
               <div className="mt-6 flex justify-end">
                 <button onClick={closeDetailsModal} className="px-4 py-2 bg-gray-800 text-white rounded-md hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2">
