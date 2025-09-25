@@ -45,7 +45,7 @@ export default function EtapaSeleccionDivisas({
 
   // Obtener información de la divisa origen para mostrar el código
   const divisaOrigenInfo = divisas.find(d => d.id?.toString() === divisaOrigen);
-  const codigoDivisaOrigen = divisaOrigenInfo?.código || "";
+  const codigoDivisaOrigen = divisaOrigenInfo?.codigo || "";
 
   return (
     <div className="space-y-6">
@@ -60,7 +60,7 @@ export default function EtapaSeleccionDivisas({
 
       {/* Selección de divisas */}
       <div className="flex items-center space-x-4">
-        <div className="flex-1">
+        <div className="w-80">
           <label className="block text-sm font-medium text-gray-700 mb-2 select-none">
             Divisa de origen (Entregas)
           </label>
@@ -111,7 +111,7 @@ export default function EtapaSeleccionDivisas({
           ⇆
         </button>
 
-        <div className="flex-1">
+        <div className="w-80">
           <label className="block text-sm font-medium text-gray-700 mb-2 select-none">
             Divisa de destino (Recibes)
           </label>
@@ -148,7 +148,7 @@ export default function EtapaSeleccionDivisas({
           htmlFor="monto"
           className="block text-sm font-medium text-gray-700 mb-3 select-none"
         >
-          Monto a operar{codigoDivisaOrigen && ` (${codigoDivisaOrigen})`}
+          Monto que vas a entregar{codigoDivisaOrigen && ` (${codigoDivisaOrigen})`}
         </label>
         <input
           id="monto"
@@ -169,10 +169,11 @@ export default function EtapaSeleccionDivisas({
           placeholder="Ingrese el monto"
           className="w-full text-3xl font-semibold text-gray-900 text-center bg-transparent focus:outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
         />
-        {codigoDivisaOrigen && (
-          <div className="mt-2">
-            <span className="text-lg font-medium text-gray-500 select-none">
-              {codigoDivisaOrigen}
+        {codigoDivisaOrigen && monto > 0 && (
+          <div className="mt-3 p-2 bg-blue-50 border border-blue-200 rounded-lg">
+            <div className="text-xs text-blue-600 mb-1 select-none">Monto formateado:</div>
+            <span className="text-lg font-bold text-blue-800 select-none">
+              {monto.toLocaleString('es-PY')} {codigoDivisaOrigen}
             </span>
           </div>
         )}

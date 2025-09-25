@@ -280,7 +280,10 @@ export default function EtapaSeleccionMetodo({
 
       {/* Mostrar todos los métodos en una vista expandida */}
       {metodosDisponibles.length > 0 ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div 
+          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-gray-400 scrollbar-track-gray-200"
+          style={{ height: '50vh', maxHeight: '400px', minHeight: '300px' }}
+        >
           {metodosDisponibles.map(([metodoTipo, metodoInfo]) => (
             <div key={metodoTipo} className="space-y-3">
               {/* Título del tipo de método */}
