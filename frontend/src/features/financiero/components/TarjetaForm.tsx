@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { toast } from "react-toastify";
-import { getTarjetasLocalesCatalogo } from "../features/financiero/services/metodoFinancieroService";
+import { getTarjetasLocalesCatalogo } from "../services/metodoFinancieroService";
 import type { Tarjeta } from "../types/MetodoFinanciero";
-import type { TarjetaLocalCatalogo } from "../features/financiero/types/MetodoFinanciero";
+import type { TarjetaLocalCatalogo } from "../types/MetodoFinanciero";
 
 export interface TarjetaFormData {
   tipo: 'LOCAL' | 'STRIPE';

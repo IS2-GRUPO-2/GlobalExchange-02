@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
 import { CreditCard, Building2, Smartphone, Plus, Search } from 'lucide-react';
 import { toast } from 'react-toastify';
-import { useAuth } from '../context/useAuth';
-import Modal from '../components/Modal';
+import { useAuth } from '../../../context/useAuth';
+import Modal from '../../../components/Modal';
 import MetodoFinancieroCard from '../components/MetodoFinancieroCard';
 import CuentaBancariaForm from '../components/CuentaBancariaForm';
 import BilleteraDigitalForm from '../components/BilleteraDigitalForm';
@@ -27,11 +27,13 @@ import type {
   BilleteraDigital, 
   Tarjeta, 
   MetodoFinancieroDetalle,
-  MetodoFinanciero
+  MetodoFinanciero,
+  InstanceTabType
 } from '../types/MetodoFinanciero';
 
-type TabType = 'cuentas' | 'billeteras digitales' | 'tarjetas';
+type TabType = InstanceTabType;
 
+// ExtendedItem específico para esta página que maneja Tarjetas Stripe (no TarjetaLocal)
 type ExtendedItem = (CuentaBancaria | BilleteraDigital | Tarjeta) & {
   tipo: TabType;
   is_active: boolean;

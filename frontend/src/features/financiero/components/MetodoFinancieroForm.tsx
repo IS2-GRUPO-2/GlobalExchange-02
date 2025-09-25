@@ -1,163 +1,196 @@
-import React from "react";
+import React, { useState } from "react";
+import type { MetodoFinanciero, TipoMetodoFinanciero } from "../types/MetodoFinanciero";
+
+export type MetodoFinancieroFormData = {
+  nombre: TipoMetodoFinanciero;
+  permite_cobro: boolean;
+  permite_pago: boolean;
+  comision_cobro_porcentaje: string;
+  comision_pago_porcentaje: string;
+};
 
 interface MetodoFinancieroFormProps {
-  selectedItem: any;
-  editModalOpen: boolean;
-  isSubmitting: boolean;
-  onSubmit: (data: any) => Promise<void>;
+  onSubmit: (data: MetodoFinancieroFormData) => void;
   onCancel: () => void;
+  isEditForm: boolean;
+  metodo: MetodoFinanciero | null;
 }
 
-export const MetodoFinancieroForm: React.FC<MetodoFinancieroFormProps> = ({
-  selectedItem,
-  editModalOpen,
-  isSubmitting,
+const TIPOS_METODO_OPCIONES = [
+  { value: 'TRANSFERENCIA_BANCARIA', label: 'Transferencia Bancaria' },
+  { value: 'BILLETERA_DIGITAL', label: 'Billetera Digital' },
+  { value: 'TARJETA', label: 'Tarjeta de Crédito/Débito' },
+  { value: 'EFECTIVO', label: 'Efectivo' },
+  { value: 'CHEQUE', label: 'Cheque' },
+];
+
+const MetodoFinancieroForm: React.FC<MetodoFinancieroFormProps> = ({
   onSubmit,
   onCancel,
+  isEditForm,
+  metodo,
 }) => {
-  const initialData = selectedItem || {
-    nombre: "TRANSFERENCIA_BANCARIA",
-    permite_cobro: true,
-    permite_pago: true,
-    comision_cobro_porcentaje: "0.00",
-    comision_pago_porcentaje: "0.00",
-    is_active: true,
+  const [formData, setFormData] = useState<MetodoFinancieroFormData>({
+    nombre: metodo?.nombre || 'TRANSFERENCIA_BANCARIA',
+    permite_cobro: metodo?.permite_cobro || true,
+    permite_pago: metodo?.permite_pago || true,
+    comision_cobro_porcentaje: metodo?.comision_cobro_porcentaje || '0.00',
+    comision_pago_porcentaje: metodo?.comision_pago_porcentaje || '0.00',
+  });
+
+  const [errors, setErrors] = useState<{ [key: string]: string }>({});
+
+  const validateForm = () => {
+    const newErrors: { [key: string]: string } = {};
+
+    // Validar comisiones (0-100)
+    const cobro = parseFloat(formData.comision_cobro_porcentaje);
+    const pago = parseFloat(formData.comision_pago_porcentaje);
+
+    if (isNaN(cobro) || cobro < 0 || cobro > 100) {
+      newErrors.comision_cobro_porcentaje = 'La comisión de cobro debe estar entre 0 y 100';
+    }
+
+    if (isNaN(pago) || pago < 0 || pago > 100) {
+      newErrors.comision_pago_porcentaje = 'La comisión de pago debe estar entre 0 y 100';
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    const formData = new FormData(e.target as HTMLFormElement);
-    const data = {
-      nombre: formData.get("nombre"),
-      permite_cobro: formData.get("permite_cobro") === "on",
-      permite_pago: formData.get("permite_pago") === "on",
-      comision_cobro_porcentaje: formData.get("comision_cobro_porcentaje"),
-      comision_pago_porcentaje: formData.get("comision_pago_porcentaje"),
-      is_active: true,
-    };
-    await onSubmit(data);
+    if (validateForm()) {
+      onSubmit(formData);
+    }
+  };
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+    const { name, value, type } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: type === 'checkbox' ? (e.target as HTMLInputElement).checked : value,
+    }));
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
-      <div>
-        <label
-          htmlFor="nombre"
-          className="block text-sm font-medium text-gray-700"
-        >
-          Tipo de Método *
-        </label>
-        <select
-          id="nombre"
-          name="nombre"
-          defaultValue={initialData.nombre}
-          className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 focus:border-gray-500 focus:outline-none focus:ring-1 focus:ring-gray-500"
-          required
-        >
-          <option value="TRANSFERENCIA_BANCARIA">Transferencia Bancaria</option>
-          <option value="BILLETERA_DIGITAL">Billetera Digital</option>
-          <option value="EFECTIVO">Efectivo</option>
-          <option value="CHEQUE">Cheque</option>
-        </select>
-      </div>
-
-      <div className="grid grid-cols-2 gap-4">
-        <div className="flex items-center">
-          <input
-            id="permite_cobro"
-            name="permite_cobro"
-            type="checkbox"
-            defaultChecked={initialData.permite_cobro}
-            className="h-4 w-4 text-gray-600 focus:ring-gray-500 border-gray-300 rounded"
-          />
-          <label
-            htmlFor="permite_cobro"
-            className="ml-2 block text-sm text-gray-900"
-          >
-            Permite Cobro
-          </label>
-        </div>
-
-        <div className="flex items-center">
-          <input
-            id="permite_pago"
-            name="permite_pago"
-            type="checkbox"
-            defaultChecked={initialData.permite_pago}
-            className="h-4 w-4 text-gray-600 focus:ring-gray-500 border-gray-300 rounded"
-          />
-          <label
-            htmlFor="permite_pago"
-            className="ml-2 block text-sm text-gray-900"
-          >
-            Permite Pago
-          </label>
-        </div>
-      </div>
-
-      <div className="grid grid-cols-2 gap-4">
+    <div className="bg-white p-6 rounded-lg shadow-lg max-w-md mx-auto">
+      <h2 className="text-xl font-semibold mb-4">
+        {isEditForm ? 'Editar Método Financiero' : 'Crear Método Financiero'}
+      </h2>
+      
+      <form onSubmit={handleSubmit} className="space-y-4">
         <div>
-          <label
-            htmlFor="comision_cobro_porcentaje"
-            className="block text-sm font-medium text-gray-700"
+          <label htmlFor="nombre" className="block text-sm font-medium text-gray-700 mb-1">
+            Tipo de Método
+          </label>
+          <select
+            id="nombre"
+            name="nombre"
+            value={formData.nombre}
+            onChange={handleInputChange}
+            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            required
           >
-            Comisión Cobro (%)
+            {TIPOS_METODO_OPCIONES.map(opcion => (
+              <option key={opcion.value} value={opcion.value}>
+                {opcion.label}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        <div className="grid grid-cols-2 gap-4">
+          <div className="flex items-center space-x-2">
+            <input
+              type="checkbox"
+              id="permite_cobro"
+              name="permite_cobro"
+              checked={formData.permite_cobro}
+              onChange={handleInputChange}
+              className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500"
+            />
+            <label htmlFor="permite_cobro" className="text-sm font-medium text-gray-700">
+              Permite Cobro
+            </label>
+          </div>
+
+          <div className="flex items-center space-x-2">
+            <input
+              type="checkbox"
+              id="permite_pago"
+              name="permite_pago"
+              checked={formData.permite_pago}
+              onChange={handleInputChange}
+              className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500"
+            />
+            <label htmlFor="permite_pago" className="text-sm font-medium text-gray-700">
+              Permite Pago
+            </label>
+          </div>
+        </div>
+
+        <div>
+          <label htmlFor="comision_cobro_porcentaje" className="block text-sm font-medium text-gray-700 mb-1">
+            Comisión de Cobro (%)
           </label>
           <input
             type="number"
             id="comision_cobro_porcentaje"
             name="comision_cobro_porcentaje"
+            value={formData.comision_cobro_porcentaje}
+            onChange={handleInputChange}
             step="0.01"
             min="0"
             max="100"
-            defaultValue={initialData.comision_cobro_porcentaje}
-            className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 focus:border-gray-500 focus:outline-none focus:ring-1 focus:ring-gray-500"
+            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             required
           />
+          {errors.comision_cobro_porcentaje && (
+            <p className="text-red-500 text-xs mt-1">{errors.comision_cobro_porcentaje}</p>
+          )}
         </div>
 
         <div>
-          <label
-            htmlFor="comision_pago_porcentaje"
-            className="block text-sm font-medium text-gray-700"
-          >
-            Comisión Pago (%)
+          <label htmlFor="comision_pago_porcentaje" className="block text-sm font-medium text-gray-700 mb-1">
+            Comisión de Pago (%)
           </label>
           <input
             type="number"
             id="comision_pago_porcentaje"
             name="comision_pago_porcentaje"
+            value={formData.comision_pago_porcentaje}
+            onChange={handleInputChange}
             step="0.01"
             min="0"
             max="100"
-            defaultValue={initialData.comision_pago_porcentaje}
-            className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 focus:border-gray-500 focus:outline-none focus:ring-1 focus:ring-gray-500"
+            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             required
           />
+          {errors.comision_pago_porcentaje && (
+            <p className="text-red-500 text-xs mt-1">{errors.comision_pago_porcentaje}</p>
+          )}
         </div>
-      </div>
 
-      <div className="flex justify-end space-x-3 pt-4">
-        <button
-          type="button"
-          onClick={onCancel}
-          disabled={isSubmitting}
-          className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-200 border border-gray-300 rounded-md hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-500 disabled:opacity-50"
-        >
-          Cancelar
-        </button>
-        <button
-          type="submit"
-          disabled={isSubmitting}
-          className="btn-primary disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          {isSubmitting
-            ? "Guardando..."
-            : editModalOpen
-            ? "Actualizar"
-            : "Crear"}
-        </button>
-      </div>
-    </form>
+        <div className="flex space-x-3 pt-4">
+          <button
+            type="submit"
+            className="flex-1 bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          >
+            {isEditForm ? 'Actualizar' : 'Crear'}
+          </button>
+          <button
+            type="button"
+            onClick={onCancel}
+            className="flex-1 bg-gray-300 text-gray-700 py-2 px-4 rounded-md hover:bg-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-500"
+          >
+            Cancelar
+          </button>
+        </div>
+      </form>
+    </div>
   );
 };
+
+export default MetodoFinancieroForm;

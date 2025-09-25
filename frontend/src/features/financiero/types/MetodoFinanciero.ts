@@ -1,25 +1,19 @@
-export type TipoMetodoFinanciero =
-  | "TRANSFERENCIA_BANCARIA"
-  | "BILLETERA_DIGITAL"
-  | "TARJETA"
-  | "EFECTIVO"
-  | "CHEQUE";
+export type TipoMetodoFinanciero = 
+  | 'TRANSFERENCIA_BANCARIA' 
+  | 'BILLETERA_DIGITAL' 
+  | 'TARJETA' 
+  | 'EFECTIVO' 
+  | 'CHEQUE';
 
 export type MainTabType = "catalogo" | "instancias" | "catalogos";
 export type InstanceTabType = "cuentas" | "billeteras digitales" | "tarjetas locales";
 export type CatalogTabType = "bancos" | "billeteras" | "tarjetas locales";
 
-export type ExtendedItem = (CuentaBancaria | BilleteraDigital | TarjetaLocal) & {
-  tipo: InstanceTabType;
-  is_active: boolean;
-  detalle_id?: number;
-  desactivado_por_catalogo?: boolean;
-};
-
 // Nuevos tipos para catálogos
 export type Banco = {
   id?: number;
   nombre: string;
+  cvu: string;
   comision_compra: number;
   comision_venta: number;
   comision_personalizada_compra: boolean;
@@ -123,6 +117,14 @@ export type TarjetaLocal = {
   titular: string;
   exp_month: number;
   exp_year: number;
+};
+
+// Tipo extendido que combina instancias con información adicional
+export type ExtendedItem = (CuentaBancaria | BilleteraDigital | TarjetaLocal) & {
+  tipo: InstanceTabType;
+  is_active: boolean;
+  detalle_id?: number;
+  desactivado_por_catalogo?: boolean;
 };
 
 // Tipos de paginación

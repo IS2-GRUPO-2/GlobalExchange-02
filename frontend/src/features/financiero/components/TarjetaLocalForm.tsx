@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { X } from "lucide-react";
 import { toast } from "react-toastify";
-import { getTarjetasLocalesCatalogo } from "../features/financiero/services/metodoFinancieroService";
-import type { TarjetaLocal, TarjetaLocalCatalogo } from "../features/financiero/types/MetodoFinanciero";
+import { getTarjetasLocalesCatalogo } from "../services/metodoFinancieroService";
+import type { TarjetaLocal, TarjetaLocalCatalogo } from "../types/MetodoFinanciero";
 
 interface TarjetaLocalFormProps {
   onSubmit: (data: any) => void;

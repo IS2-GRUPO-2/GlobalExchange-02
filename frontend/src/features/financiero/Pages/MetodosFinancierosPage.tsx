@@ -1,18 +1,18 @@
 import { useState, useEffect } from "react";
-import { useAuth } from "../context/useAuth";
-import Modal from "../components/Modal";
-import { useMetodosFinancieros } from "../features/financiero/hooks/useMetodosFinancieros";
-import { useInstancias } from "../features/financiero/hooks/useInstancias";
-import { useCatalogos } from "../features/financiero/hooks/useCatalogos";
-import { useModal } from "../hooks/useModal";
+import { useAuth } from "../../../context/useAuth";
+import Modal from "../../../components/Modal";
+import { useMetodosFinancieros } from "../hooks/useMetodosFinancieros";
+import { useInstancias } from "../hooks/useInstancias";
+import { useCatalogos } from "../hooks/useCatalogos";
+import { useModal } from "../../../hooks/useModal";
 
-import { TabNavigation } from "../features/financiero/components/TabNavigation";
-import { SearchAndCreate } from "../features/financiero/components/SearchAndCreate";
-import { MetodoFinancieroTable } from "../features/financiero/components/MetodoFinancieroTable";
-import { CatalogTable } from "../features/financiero/components/CatalogTable";
-import { InstancesGrid } from "../features/financiero/components/InstancesGrid";
-import { MetodoFinancieroForm } from "../features/financiero/components/MetodoFinancieroForm";
-import { ItemDetailsView } from "../features/financiero/components/ItemDetailsView";
+import { TabNavigation } from "../components/TabNavigation";
+import { SearchAndCreate } from "../components/SearchAndCreate";
+import { MetodoFinancieroTable } from "../components/MetodoFinancieroTable";
+import { CatalogTable } from "../components/CatalogTable";
+import { InstancesGrid } from "../components/InstancesGrid";
+import MetodoFinancieroForm from "../components/MetodoFinancieroForm";
+import { ItemDetailsView } from "../components/ItemDetailsView";
 
 import CuentaBancariaForm from "../components/CuentaBancariaForm";
 import BilleteraDigitalForm from "../components/BilleteraDigitalForm";
@@ -24,14 +24,14 @@ import TarjetaLocalCatalogoForm from "../components/TarjetaLocalCatalogoForm";
 import {
   filterInstances,
   getMetodoFinancieroId,
-} from "../features/financiero/utils/metodosFinancierosUtils";
+} from "../utils/metodosFinancierosUtils";
 
 import type {
   MainTabType,
   InstanceTabType,
   CatalogTabType,
   ExtendedItem,
-} from "../features/financiero/types/MetodoFinanciero";
+} from "../types/MetodoFinanciero";
 
 const MetodosFinancierosPage = () => {
   const [mainTab, setMainTab] = useState<MainTabType>("catalogo");
