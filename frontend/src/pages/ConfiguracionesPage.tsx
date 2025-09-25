@@ -9,9 +9,10 @@ import {
   CreditCard,
   Tag,
   Users,
-  User
+  User,
+  Monitor
 } from "lucide-react";
-import { CATEGORIAS_CLIENTE, CLIENTES, DIVISAS, METODOS_FINANCIEROS, ROLES, TASAS, USUARIOS } from "../types/perms";
+import { CATEGORIAS_CLIENTE, CLIENTES, DIVISAS, METODOS_FINANCIEROS, ROLES, TASAS, USUARIOS, TAUSER } from "../types/perms";
 import Can from "../components/Can";
 
 type ConfigItem = {
@@ -28,24 +29,24 @@ const ConfiguracionesPage = () => {
   const navigate = useNavigate();
 
   const [configItems] = useState<ConfigItem[]>([
-      {
-        id: "usuarios",
-        nombre: "Usuarios",
-        descripcion: "Administrar usuarios del sistema",
-        icon: <Users className="w-6 h-6 text-indigo-600" />,
-        path: "/usuarios",
-        habilitado: true,
-        permisos: [USUARIOS.VIEW],
-      },
-      {
-        id: "clientes",
-        nombre: "Clientes",
-        descripcion: "Gestionar clientes registrados",
-        icon: <User className="w-6 h-6 text-emerald-600" />,
-        path: "/clientes",
-        habilitado: true,
-        permisos: [CLIENTES.VIEW],
-      },
+    {
+      id: "usuarios",
+      nombre: "Usuarios",
+      descripcion: "Administrar usuarios del sistema",
+      icon: <Users className="w-6 h-6 text-indigo-600" />,
+      path: "/usuarios",
+      habilitado: true,
+      permisos: [USUARIOS.VIEW],
+    },
+    {
+      id: "clientes",
+      nombre: "Clientes",
+      descripcion: "Gestionar clientes registrados",
+      icon: <User className="w-6 h-6 text-emerald-600" />,
+      path: "/clientes",
+      habilitado: true,
+      permisos: [CLIENTES.VIEW],
+    },
     {
       id: "divisas",
       nombre: "Divisas",
@@ -99,6 +100,15 @@ const ConfiguracionesPage = () => {
       path: "/metodos-financieros-cliente",
       habilitado: true,
       permisos: [],
+    },
+    {
+      id: "tausers",
+      nombre: "Tausers",
+      descripcion: "Configurar tausers para operaciones financieras",
+      icon: <Monitor className="w-6 h-6 text-yellow-600" />,
+      path: "/configuracion-tausers",
+      habilitado: true,
+      permisos: [TAUSER.VIEW],
     },
     {
       id: "documentos",
