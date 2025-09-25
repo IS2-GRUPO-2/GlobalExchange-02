@@ -24,6 +24,7 @@ import {
 import CotizacionesPage from "../pages/CotizacionesPage";
 import RequireAuth from "./RequiereAuth";
 import SimulacionOperacionPage from "../pages/SimulacionOperacionPage";
+import ConfiguracionTauserPage from "../pages/ConfiguracionTauserPage";
 
 
 export const router = createBrowserRouter([
@@ -127,6 +128,14 @@ export const router = createBrowserRouter([
             ]}
             >
             <ConfiguracionesPage />
+          </RequireAuth>
+        ),
+      },
+      {
+        path: "configuracion-tausers",
+        element: (
+          <RequireAuth>
+            <ConfiguracionTauserPage />
           </RequireAuth>
         ),
       },
