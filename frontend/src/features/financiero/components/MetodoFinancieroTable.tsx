@@ -1,6 +1,8 @@
 import React from "react";
 import { Edit, X, Check } from "lucide-react";
 import { type MetodoFinanciero } from "../types/MetodoFinanciero";
+import Can from "../../../components/Can";
+import { METODOS_FINANCIEROS } from "../../../types/perms";
 
 interface MetodoFinancieroTableProps {
   metodos: MetodoFinanciero[];
@@ -111,20 +113,24 @@ export const MetodoFinancieroTable: React.FC<MetodoFinancieroTableProps> = ({
                 </td>
                 <td>
                   <div className="flex items-center space-x-2">
-                    <button
-                      onClick={() => onEdit(metodo)}
-                      className="p-1 text-gray-500 hover:text-blue-600 rounded-full hover:bg-gray-100"
-                      title="Editar"
-                    >
-                      <Edit size={16} />
-                    </button>
-                    <button
-                      onClick={() => onToggle(metodo)}
-                      className="p-1 text-gray-500 hover:text-red-600 rounded-full hover:bg-gray-100"
-                      title={metodo.is_active ? "Desactivar" : "Activar"}
-                    >
-                      {metodo.is_active ? <X size={16} /> : <Check size={16} />}
-                    </button>
+                    <Can anyOf={[METODOS_FINANCIEROS.CHANGE]}>
+                      <button
+                        onClick={() => onEdit(metodo)}
+                        className="p-1 text-gray-500 hover:text-blue-600 rounded-full hover:bg-gray-100"
+                        title="Editar"
+                      >
+                        <Edit size={16} />
+                      </button>
+                    </Can>
+                    <Can anyOf={metodo.is_active ? [METODOS_FINANCIEROS.DELETE] : [METODOS_FINANCIEROS.CHANGE]}>
+                      <button
+                        onClick={() => onToggle(metodo)}
+                        className="p-1 text-gray-500 hover:text-red-600 rounded-full hover:bg-gray-100"
+                        title={metodo.is_active ? "Desactivar" : "Activar"}
+                      >
+                        {metodo.is_active ? <X size={16} /> : <Check size={16} />}
+                      </button>
+                    </Can>
                   </div>
                 </td>
               </tr>

@@ -10,6 +10,8 @@ import * as yup from "yup";
 import { Check, Plus, X } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
+import Can from "./Can";
+import { DENOMINACIONES } from "../types/perms";
 
 export type DenominacionFormData = {
   denominacion: number;
@@ -174,15 +176,17 @@ const DenominacionesDivisa = ({ onSubmit, onCancel, divisa }: Props) => {
         Denominaciones asociadas
       </h2>
       <div className="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <button
-          onClick={() => {
-            setIsForm(true);
-          }}
-          className="btn-primary flex items-center justify-center"
-        >
-          <Plus size={18} className="mr-2" />
-          Crear denominación
-        </button>
+        <Can anyOf={[DENOMINACIONES.ADD]}>
+          <button
+            onClick={() => {
+              setIsForm(true);
+            }}
+            className="btn-primary flex items-center justify-center"
+          >
+            <Plus size={18} className="mr-2" />
+            Crear denominación
+          </button>
+        </Can>
       </div>
       <div className="card">
         <div className="table-container">
@@ -230,24 +234,26 @@ const DenominacionesDivisa = ({ onSubmit, onCancel, divisa }: Props) => {
                     </td>
                     <td>
                       <div className="flex items-center space-x-2">
-                        <button
-                          onClick={
-                            denominacion.is_active
-                              ? () =>
-                                  handleDeactivateDenominacion(denominacion.id!)
-                              : () => handleActivateDenominacion(denominacion)
-                          }
-                          className="p-1 text-gray-500 hover:text-red-600 rounded-full hover:bg-gray-100"
-                          title={
-                            denominacion.is_active ? "Desactivar" : "Activar"
-                          }
-                        >
-                          {denominacion.is_active ? (
-                            <X size={16} />
-                          ) : (
-                            <Check size={16} />
-                          )}
-                        </button>
+                        <Can anyOf={denominacion.is_active? [DENOMINACIONES.DELETE] : [DENOMINACIONES.CHANGE]}>
+                          <button
+                            onClick={
+                              denominacion.is_active
+                                ? () =>
+                                    handleDeactivateDenominacion(denominacion.id!)
+                                : () => handleActivateDenominacion(denominacion)
+                            }
+                            className="p-1 text-gray-500 hover:text-red-600 rounded-full hover:bg-gray-100"
+                            title={
+                              denominacion.is_active ? "Desactivar" : "Activar"
+                            }
+                          >
+                            {denominacion.is_active ? (
+                              <X size={16} />
+                            ) : (
+                              <Check size={16} />
+                            )}
+                          </button>
+                        </Can>
                       </div>
                     </td>
                   </tr>

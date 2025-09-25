@@ -5,6 +5,8 @@ import type {
   InstanceTabType,
   CatalogTabType,
 } from "../types/MetodoFinanciero";
+import Can from "../../../components/Can";
+import { BANCOS, BILLETERAS_DIGITALES, BILLETERAS_DIGITALES_CATALOGO, CUENTAS_BANCARIAS, METODOS_FINANCIEROS } from "../../../types/perms";
 
 interface TabNavigationProps {
   mainTab: MainTabType;
@@ -33,6 +35,15 @@ const getInstanceTabLabel = (tab: InstanceTabType) => {
   }
 };
 
+const getInstanceViewPerm = (tab: InstanceTabType) => {
+  switch (tab) {
+    case "cuentas":
+      return [CUENTAS_BANCARIAS.VIEW];
+    case "billeteras digitales":
+      return [BILLETERAS_DIGITALES.VIEW];
+  }
+};
+
 export const TabNavigation: React.FC<TabNavigationProps> = ({
   mainTab,
   setMainTab,
@@ -47,36 +58,42 @@ export const TabNavigation: React.FC<TabNavigationProps> = ({
       <div className="mb-6">
         <div className="border-b border-gray-200">
           <nav className="-mb-px flex space-x-8">
-            <button
-              onClick={() => setMainTab("catalogo")}
-              className={`py-2 px-1 border-b-2 font-medium text-sm ${
-                mainTab === "catalogo"
-                  ? "border-gray-900 text-gray-900"
-                  : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-              }`}
-            >
-              Catálogo de Métodos Financieros
-            </button>
-            <button
-              onClick={() => setMainTab("catalogos")}
-              className={`py-2 px-1 border-b-2 font-medium text-sm ${
-                mainTab === "catalogos"
-                  ? "border-gray-900 text-gray-900"
-                  : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-              }`}
-            >
-              Catálogos de Entidades
-            </button>
-            <button
-              onClick={() => setMainTab("instancias")}
-              className={`py-2 px-1 border-b-2 font-medium text-sm ${
-                mainTab === "instancias"
-                  ? "border-gray-900 text-gray-900"
-                  : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-              }`}
-            >
-              Instancias de la Casa
-            </button>
+            <Can anyOf={[METODOS_FINANCIEROS.VIEW]}>
+              <button
+                onClick={() => setMainTab("catalogo")}
+                className={`py-2 px-1 border-b-2 font-medium text-sm ${
+                  mainTab === "catalogo"
+                    ? "border-gray-900 text-gray-900"
+                    : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+                }`}
+              >
+                Catálogo de Métodos Financieros
+              </button>
+            </Can>
+            <Can anyOf={[BANCOS.VIEW, BILLETERAS_DIGITALES_CATALOGO.VIEW]}>
+              <button
+                onClick={() => setMainTab("catalogos")}
+                className={`py-2 px-1 border-b-2 font-medium text-sm ${
+                  mainTab === "catalogos"
+                    ? "border-gray-900 text-gray-900"
+                    : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+                }`}
+              >
+                Catálogos de Entidades
+              </button>
+            </Can>
+            <Can anyOf={[CUENTAS_BANCARIAS.VIEW, BILLETERAS_DIGITALES.VIEW]}>
+              <button
+                onClick={() => setMainTab("instancias")}
+                className={`py-2 px-1 border-b-2 font-medium text-sm ${
+                  mainTab === "instancias"
+                    ? "border-gray-900 text-gray-900"
+                    : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+                }`}
+              >
+                Instancias de la Casa
+              </button>
+            </Can>
           </nav>
         </div>
       </div>
@@ -88,18 +105,19 @@ export const TabNavigation: React.FC<TabNavigationProps> = ({
             <nav className="-mb-px flex space-x-8">
               {(["cuentas", "billeteras digitales"] as InstanceTabType[]).map(
                 (tab) => (
-                  <button
-                    key={tab}
-                    onClick={() => setInstanceTab(tab)}
-                    className={`py-2 px-1 border-b-2 font-medium text-sm flex items-center space-x-2 ${
-                      instanceTab === tab
-                        ? "border-gray-900 text-gray-900"
-                        : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-                    }`}
-                  >
-                    {getInstanceTabIcon(tab)}
-                    <span>{getInstanceTabLabel(tab)}</span>
-                  </button>
+                  <Can key={tab} anyOf={getInstanceViewPerm(tab)}>
+                    <button
+                      onClick={() => setInstanceTab(tab)}
+                      className={`py-2 px-1 border-b-2 font-medium text-sm flex items-center space-x-2 ${
+                        instanceTab === tab
+                          ? "border-gray-900 text-gray-900"
+                          : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+                      }`}
+                    >
+                      {getInstanceTabIcon(tab)}
+                      <span>{getInstanceTabLabel(tab)}</span>
+                    </button>
+                  </Can>
                 )
               )}
             </nav>
@@ -112,28 +130,32 @@ export const TabNavigation: React.FC<TabNavigationProps> = ({
         <div className="mb-6">
           <div className="border-b border-gray-200">
             <nav className="-mb-px flex space-x-8">
-              <button
-                onClick={() => setCatalogTab("bancos")}
-                className={`py-2 px-1 border-b-2 font-medium text-sm flex items-center space-x-2 ${
-                  catalogTab === "bancos"
-                    ? "border-gray-900 text-gray-900"
-                    : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-                }`}
-              >
-                <Building2 className="w-5 h-5" />
-                <span>Bancos</span>
-              </button>
-              <button
-                onClick={() => setCatalogTab("billeteras")}
-                className={`py-2 px-1 border-b-2 font-medium text-sm flex items-center space-x-2 ${
-                  catalogTab === "billeteras"
-                    ? "border-gray-900 text-gray-900"
-                    : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-                }`}
-              >
-                <Smartphone className="w-5 h-5" />
-                <span>Billeteras Digitales</span>
-              </button>
+              <Can anyOf={[BANCOS.VIEW]}>
+                <button
+                  onClick={() => setCatalogTab("bancos")}
+                  className={`py-2 px-1 border-b-2 font-medium text-sm flex items-center space-x-2 ${
+                    catalogTab === "bancos"
+                      ? "border-gray-900 text-gray-900"
+                      : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+                  }`}
+                >
+                  <Building2 className="w-5 h-5" />
+                  <span>Bancos</span>
+                </button>
+              </Can>
+              <Can anyOf={[BILLETERAS_DIGITALES_CATALOGO.VIEW]}>
+                <button
+                  onClick={() => setCatalogTab("billeteras")}
+                  className={`py-2 px-1 border-b-2 font-medium text-sm flex items-center space-x-2 ${
+                    catalogTab === "billeteras"
+                      ? "border-gray-900 text-gray-900"
+                      : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+                  }`}
+                >
+                  <Smartphone className="w-5 h-5" />
+                  <span>Billeteras Digitales</span>
+                </button>
+              </Can>
             </nav>
           </div>
         </div>

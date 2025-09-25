@@ -30,11 +30,7 @@ DEBUG = config.DJANGO_DEBUG
 
 ALLOWED_HOSTS = [config.HOST_ALLOW_ORIGINS]
 
-CORS_ALLOWED_ORIGINS = [
-    "http://localhost:5173",
-    "http://localhost",
-    "http://localhost:80"
-]
+CORS_ALLOWED_ORIGINS = []
 
 CORS_ALLOW_CREDENTIALS = True
 

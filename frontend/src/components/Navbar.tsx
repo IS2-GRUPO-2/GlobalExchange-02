@@ -19,6 +19,7 @@ import logoWhite from "../assets/logo-white.svg";
 import {
   SIMULACION,
 } from "../types/perms";
+import ClientPicker from "./ClientPicker";
 
 /** Configuración de elementos de navegación */
 const navigation = [
@@ -132,6 +133,8 @@ export default function Navbar() {
                 <Bell className="w-6 h-6" />
               </button>
 
+              <ClientPicker userId={user.id} className="w-56" />
+
               {/* Usuario + Nombre + Flechita */}
               <Menu as="div" className="relative">
                 {({ open }) => (
@@ -139,7 +142,7 @@ export default function Navbar() {
                     <MenuButton className="flex items-center space-x-2 rounded-full p-1.5 focus:outline-none transition-colors hover:bg-white/5 group">
                       <CircleUser className="w-6 h-6 text-gray-300 group-hover:text-white" />
                       <span className="hidden md:block text-sm font-medium text-gray-300 group-hover:text-white">
-                        {user?.first_name || user?.username || "Usuario"}
+                        {user?.username || "Usuario"}
                       </span>
                       <ChevronDown 
                         className={`w-4 h-4 text-gray-300 group-hover:text-white transition-transform duration-200 ${open ? 'rotate-180' : ''}`} 

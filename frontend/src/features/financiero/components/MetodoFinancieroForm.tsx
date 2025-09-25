@@ -56,7 +56,7 @@ export const MetodoFinancieroForm: React.FC<MetodoFinancieroFormProps> = ({
         >
           <option value="TRANSFERENCIA_BANCARIA">Transferencia Bancaria</option>
           <option value="BILLETERA_DIGITAL">Billetera Digital</option>
-          <option value="METALICO">Metálico</option>
+          <option value="EFECTIVO">Efectivo</option>
           <option value="CHEQUE">Cheque</option>
         </select>
       </div>
