@@ -68,7 +68,7 @@ export const useCatalogos = () => {
       } catch (err) {
         const itemType = tipo === "bancos" ? "banco" : 
                         tipo === "billeteras" ? "billetera digital" : 
-                        "marca de tarjeta";
+                        tipo === "tarjetas" ? "marca de tarjeta" : "item";
         toast.error(`Error al crear ${itemType}`);
         console.error(err);
         return false;
@@ -94,7 +94,7 @@ export const useCatalogos = () => {
       } catch (err) {
         const itemType = tipo === "bancos" ? "banco" : 
                         tipo === "billeteras" ? "billetera digital" : 
-                        "marca de tarjeta";
+                        tipo === "tarjetas" ? "marca de tarjeta" : "item";
         toast.error(`Error al actualizar ${itemType}`);
         console.error(err);
         return false;
@@ -131,8 +131,9 @@ export const useCatalogos = () => {
         }
 
         if (response?.affected_instances?.length > 0) {
+          const action = item.is_active ? "desactivaron" : "activaron";
           toast.info(
-            `Se desactivaron ${response.affected_instances.length} instancia(s) asociada(s)`
+            `Se ${action} ${response.affected_instances.length} instancia(s) asociada(s)`
           );
         }
 
@@ -140,7 +141,7 @@ export const useCatalogos = () => {
       } catch (err) {
         const itemType = tipo === "bancos" ? "banco" : 
                         tipo === "billeteras" ? "billetera digital" : 
-                        "marca de tarjeta";
+                        tipo === "tarjetas" ? "marca de tarjeta" : "item";
         toast.error(
           `Error al ${item.is_active ? "desactivar" : "activar"} ${itemType}`
         );

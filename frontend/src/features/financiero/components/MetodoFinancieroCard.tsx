@@ -13,7 +13,7 @@ import type {
   BilleteraDigital,
   Tarjeta,
 } from "../types/MetodoFinanciero";
-import { BILLETERAS_DIGITALES, CUENTAS_BANCARIAS } from "../../../types/perms";
+import { BILLETERAS_DIGITALES, CUENTAS_BANCARIAS, TARJETAS} from "../../../types/perms";
 import Can from "../../../components/Can";
 
 type MetodoFinancieroItem = CuentaBancaria | BilleteraDigital | Tarjeta;
@@ -97,7 +97,7 @@ const MetodoFinancieroCard: React.FC<MetodoFinancieroCardProps> = ({
           </div>
         );
       case "tarjetas":
-        const tarjeta = item as any;
+        const tarjeta = item as Tarjeta;
         return (
           <div className="space-y-2">
             <div>
@@ -123,6 +123,8 @@ const MetodoFinancieroCard: React.FC<MetodoFinancieroCardProps> = ({
         return [CUENTAS_BANCARIAS.CHANGE];
       case "billeteras digitales":
         return [BILLETERAS_DIGITALES.CHANGE];
+      case "tarjetas":
+        return [TARJETAS.CHANGE];
       default:
         return [];
     }
@@ -134,6 +136,8 @@ const MetodoFinancieroCard: React.FC<MetodoFinancieroCardProps> = ({
         return [CUENTAS_BANCARIAS.DELETE];
       case "billeteras digitales":
         return [BILLETERAS_DIGITALES.DELETE];
+      case "tarjetas":
+        return [TARJETAS.DELETE];
       default:
         return [];
     }

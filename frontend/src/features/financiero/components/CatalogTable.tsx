@@ -39,14 +39,14 @@ export const CatalogTable: React.FC<CatalogTableProps> = ({
 
   const items = catalogTab === "bancos" ? bancos : 
                 catalogTab === "billeteras" ? billeterasCatalogo :
-                tarjetasCatalogo;
+                catalogTab === "tarjetas" ? tarjetasCatalogo : [];
 
   return (
     <div className="table-container">
       <table className="table">
         <thead>
           <tr>
-            <th>{catalogTab === "bancos" ? "Nombre" : catalogTab === "billeteras" ? "Nombre" : "Marca"}</th>
+            <th>{catalogTab === "bancos" ? "Nombre" : catalogTab === "billeteras" ? "Nombre" : catalogTab === "tarjetas" ? "Marca" : ""}</th>
             <th>Comisión Compra</th>
             <th>Comisión Venta</th>
             <th>Personalizada Compra</th>
@@ -55,7 +55,7 @@ export const CatalogTable: React.FC<CatalogTableProps> = ({
             <Can anyOf={
               catalogTab === "bancos" ? [BANCOS.CHANGE, BANCOS.DELETE] : 
               catalogTab === "billeteras" ? [BILLETERAS_DIGITALES_CATALOGO.CHANGE, BILLETERAS_DIGITALES_CATALOGO.DELETE] :
-              [TARJETAS_CATALOGO.CHANGE, TARJETAS_CATALOGO.DELETE]
+              catalogTab === "tarjetas" ? [TARJETAS_CATALOGO.CHANGE, TARJETAS_CATALOGO.DELETE] : []
             }>
               <th>Acciones</th>
             </Can>
@@ -69,7 +69,7 @@ export const CatalogTable: React.FC<CatalogTableProps> = ({
                   No hay{" "}
                   {catalogTab === "bancos" ? "bancos" : 
                    catalogTab === "billeteras" ? "billeteras digitales" :
-                   "marcas de tarjetas"}{" "}
+                   catalogTab === "tarjetas" ? "marcas de tarjetas" : ""}{" "}
                   registrados
                 </p>
               </td>
@@ -124,7 +124,7 @@ export const CatalogTable: React.FC<CatalogTableProps> = ({
                     <Can anyOf={
                       catalogTab === "bancos" ? [BANCOS.CHANGE] : 
                       catalogTab === "billeteras" ? [BILLETERAS_DIGITALES_CATALOGO.CHANGE] :
-                      [TARJETAS_CATALOGO.CHANGE]
+                      catalogTab === "tarjetas" ? [TARJETAS_CATALOGO.CHANGE] : []
                     }>
                       <button
                         onClick={() => onEdit(item)}
