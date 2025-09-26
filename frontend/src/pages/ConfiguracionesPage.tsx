@@ -12,7 +12,7 @@ import {
   User,
   Monitor
 } from "lucide-react";
-import { CATEGORIAS_CLIENTE, CLIENTES, DIVISAS, METODOS_FINANCIEROS, ROLES, TASAS, USUARIOS, TAUSER } from "../types/perms";
+import { CATEGORIAS_CLIENTE, CLIENTES, DIVISAS, METODOS_FINANCIEROS, ROLES, TASAS, USUARIOS, TAUSER , METODOS_FINANCIEROS_DETALLE} from "../types/perms";
 import Can from "../components/Can";
 
 type ConfigItem = {
@@ -99,7 +99,7 @@ const ConfiguracionesPage = () => {
       icon: <CreditCard className="w-6 h-6 text-purple-600" />,
       path: "/metodos-financieros-cliente",
       habilitado: true,
-      permisos: [],
+      permisos: [METODOS_FINANCIEROS_DETALLE.VIEW],
     },
     {
       id: "tausers",

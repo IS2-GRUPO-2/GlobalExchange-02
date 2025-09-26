@@ -1,13 +1,7 @@
-import { Check, Coins, Edit, Plus, Search, X } from "lucide-react";
+import { Check, Coins, Edit, Plus, X } from "lucide-react";
 import { useState, useEffect } from "react";
 import { type Divisa } from "../types/Divisa";
-import {
-  createDenominacion,
-  createDivisa,
-  deactivateDivisa,
-  getDivisas,
-  updateDivisa,
-} from "../services/divisaService";
+import { createDenominacion } from "../services/divisaService";
 import Modal from "../components/Modal";
 import DivisaForm, { type DivisaFormData } from "../components/DivisaForm";
 import { toast } from "react-toastify";
@@ -15,40 +9,29 @@ import { useAuth } from "../context/useAuth";
 import DenominacionesDivisa, {
   type DenominacionFormData,
 } from "../components/DenominacionesDivisa";
+import { useModal } from "../hooks/useModal";
+import { useDivisa } from "../features/divisas/hooks/useDivisa";
+import SearchBar from "../components/SearchBar";
+import type { Tab } from "../types/Tab";
+import Sidebar from "../components/Sidebar";
+import LimiteConfigForm from "../features/divisas/components/LimiteConfigForm";
 import Can from "../components/Can";
-import { DENOMINACIONES, DIVISAS } from "../types/perms";
+import { DENOMINACIONES, DIVISAS, LIMITES_DIVISA_CONFIG } from "../types/perms";
 
 const DivisasPage = () => {
-  const [divisas, setDivisas] = useState<Divisa[]>([]);
+  const tabs: Tab[] = [
+    { key: "divisas", icon: "fal fa-coins", label: "Divisas" },
+    { key: "configs", icon: "fal fa-cog", label: "Configuración" },
+  ];
+
   const [search, setSearch] = useState("");
-  const [page, setPage] = useState(1);
-  const [createModalOpen, setCreateModalOpen] = useState(false);
-  const [editModalOpen, setEditModalOpen] = useState(false);
   const [selectedDivisa, setSelectedDivisa] = useState<Divisa | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [err, setErr] = useState<string | null>(null);
-  const [totalPages, setTotalPages] = useState(1);
-  const [pageSize, setPageSize] = useState<number | null>(null);
   const [denominacionesModalOpen, setDenominacionesModalOpen] = useState(false);
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+  const [selectedTab, setSelectedTab] = useState<Tab>(tabs[0]);
   const { isLoggedIn } = useAuth();
-
-  const openCreateModal = () => {
-    setCreateModalOpen(true);
-  };
-
-  const closeCreateModal = () => {
-    setCreateModalOpen(false);
-  };
-
-  const openEditModal = (divisa: Divisa) => {
-    setSelectedDivisa(divisa);
-    setEditModalOpen(true);
-  };
-
-  const closeEditModal = () => {
-    setSelectedDivisa(null);
-    setEditModalOpen(false);
-  };
+  const divisasHook = useDivisa();
+  const modalHook = useModal();
 
   const openDenominacionesModal = (divisa: Divisa) => {
     setSelectedDivisa(divisa);
@@ -60,97 +43,33 @@ const DivisasPage = () => {
     setDenominacionesModalOpen(false);
   };
 
-  const fetchDivisas = async () => {
-    setLoading(true);
-    setErr(null);
-    try {
-      const res = await getDivisas({ page, search });
-      setDivisas(res.results);
-      let currentPageSize = pageSize;
-      if (!pageSize && res.results.length > 0) {
-        currentPageSize = res.results.length;
-        setPageSize(currentPageSize);
-      }
-
-      if (res.count && currentPageSize) {
-        setTotalPages(Math.ceil(res.count / currentPageSize));
-        console.log(totalPages);
-      }
-    } catch (err) {
-      setErr("Error al cargar divisas");
-      console.log(err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
   const handleCreateDivisa = async (divisaData: DivisaFormData) => {
-    let divisa: Divisa = {
-      nombre: divisaData.nombre,
-      codigo: divisaData.codigo,
-      simbolo: divisaData.simbolo,
-      max_digitos: divisaData.max_digitos,
-      precision: divisaData.precision,
-      is_active: true,
-      es_base: divisaData.es_base ?? false,
-    };
-
-    try {
-      const res = await createDivisa(divisa);
-      if (res.status === 201) {
-        toast.success("Divisa creada con éxito!");
-        fetchDivisas();
-      }
-    } catch (err) {
-      toast.error("Ha ocurrido un error al crear la divisa.");
-    } finally {
-      closeCreateModal();
+    modalHook.setIsSubmitting(true);
+    const success = await divisasHook.createDivisaHook(divisaData);
+    if (success) {
+      divisasHook.fetchDivisas();
+      modalHook.closeCreateModal();
     }
+    modalHook.setIsSubmitting(false);
   };
 
   const handleUpdateDivisa = async (divisaData: DivisaFormData) => {
-    let divisa: Divisa = {
-      nombre: divisaData.nombre,
-      codigo: divisaData.codigo,
-      simbolo: divisaData.simbolo,
-      max_digitos: divisaData.max_digitos,
-      precision: divisaData.precision,
-      is_active: true,
-    };
-
-    try {
-      const res = await updateDivisa(divisa, selectedDivisa?.id!);
-      if (res.status === 200) {
-        toast.success("Divisa actualizada con éxito!");
-        fetchDivisas();
-      }
-    } catch (err) {
-      toast.error("Ha ocurrido un error al actualizar la divisa.");
-    } finally {
-      closeCreateModal();
+    modalHook.setIsSubmitting(true);
+    const success = await divisasHook.updateDivisaHook(
+      divisaData,
+      modalHook.selectedItem!
+    );
+    if (success) {
+      divisasHook.fetchDivisas();
+      modalHook.closeEditModal();
     }
+    modalHook.setIsSubmitting(false);
   };
 
-  const handleDeactivateDivisa = async (id: number) => {
-    try {
-      const res = await deactivateDivisa(id);
-      if (res.status === 200) toast.success("Divisa desactivada con éxito");
-      fetchDivisas();
-    } catch (e) {
-      toast.error("Ha ocurrido un error");
-    }
-  };
-
-  const handleActivateDivisa = async (divisa: Divisa) => {
-    divisa.is_active = true;
-    try {
-      const res = await updateDivisa(divisa, divisa.id!);
-      if (res.status === 200) {
-        toast.success("Divisa activada con éxito!");
-        fetchDivisas();
-      }
-    } catch (e) {
-      toast.error("Ha ocurrido un error");
+  const handleToggleDivisa = async (divisa: Divisa) => {
+    const success = await divisasHook.toggleDivisa(divisa);
+    if (success) {
+      divisasHook.fetchDivisas(search, divisasHook.page);
     }
   };
 
@@ -170,219 +89,242 @@ const DivisasPage = () => {
     }
   };
 
+  const onSearch = () => {
+    divisasHook.setPage(1);
+    divisasHook.fetchDivisas(search, divisasHook.page);
+  };
+
   useEffect(() => {
-    fetchDivisas();
-  }, [page, isLoggedIn]);
+    divisasHook.fetchDivisas(search, divisasHook.page);
+  }, [divisasHook.page, isLoggedIn]);
 
   return (
-    <div className="bg-gray-50 min-h-screen flex-1 overflow-y-auto p-6">
-      <div className="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div className="relative w-full sm:w-64 md:w-96 pl-4">
-          <div className="flex w-full sm:w-64 md:w-96 gap-2">
-            <div className="relative flex-1">
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <Search size={18} className="text-gray-400" />
+    <div className="bg-gray-50 min-h-screen flex">
+      <Sidebar
+        header="Divisas"
+        isLeftSidebarCollapsed={isSidebarCollapsed}
+        changeIsLeftSidebarCollapsed={setIsSidebarCollapsed}
+        selectedTab={selectedTab}
+        onSelectTab={setSelectedTab}
+        items={tabs}
+      ></Sidebar>
+      <div className={`flex-1 transition-all duration-500 p-6`}>
+        {selectedTab.key === "divisas" && (
+          <>
+            <div className="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+              <div className="flex w-full sm:w-64 md:w-96 gap-2">
+                <SearchBar
+                  search={search}
+                  setSearch={setSearch}
+                  onSearch={onSearch}
+                />
               </div>
-              <input
-                type="text"
-                placeholder="Buscar divisa..."
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") {
-                    setPage(1);
-                    fetchDivisas();
-                  }
-                }}
-                className="pl-10 pr-4 py-2 w-full border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-700 focus:border-transparent"
-              />
+              <Can anyOf={[DIVISAS.ADD]}>
+                <button
+                  onClick={modalHook.openCreateModal}
+                  className="btn-primary flex items-center justify-center"
+                >
+                  <Plus size={18} className="mr-2" />
+                  Crear Divisa
+                </button>
+              </Can>
             </div>
 
-            <button
-              onClick={() => {
-                setPage(1);
-                fetchDivisas();
-              }}
-              className="btn-primary flex items-center justify-center"
+            <div className="card">
+              <div className="table-container">
+                <table className="table">
+                  <thead>
+                    <tr>
+                      <th>Nombre</th>
+                      <th>Código</th>
+                      <th>Símbolo</th>
+                      <th>Máx. dígitos</th>
+                      <th>Precisión</th>
+                      <th>Base</th>
+                      <th>Estado</th>
+                      <th>Acciones</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-200">
+                    {divisasHook.loading ? (
+                      <tr>
+                        <td>
+                          <div>Cargando</div>
+                        </td>
+                      </tr>
+                    ) : divisasHook.err ? (
+                      <tr>
+                        <td>
+                          <div>Ha ocurrido un error</div>
+                        </td>
+                      </tr>
+                    ) : divisasHook.divisas === undefined ? (
+                      <tr>
+                        <td>
+                          <div>No hay datos</div>
+                        </td>
+                      </tr>
+                    ) : (
+                      divisasHook.divisas.map((divisa: Divisa) => (
+                        <tr key={divisa.id}>
+                          <td className="font-medium">{divisa.nombre}</td>
+                          <td>{divisa.codigo}</td>
+                          <td>{divisa.simbolo}</td>
+                          <td>{divisa.max_digitos}</td>
+                          <td>{divisa.precision}</td>
+                          <td>
+                            <span
+                              className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                                divisa.es_base
+                                  ? "bg-blue-100 text-blue-800"
+                                  : "bg-gray-100 text-gray-800"
+                              }`}
+                            >
+                              {divisa.es_base ? "Sí" : "No"}
+                            </span>
+                          </td>
+                          <td>
+                            <span
+                              className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                                divisa.is_active
+                                  ? "bg-green-100 text-green-800"
+                                  : "bg-red-100 text-red-900"
+                              }`}
+                            >
+                              {divisa.is_active ? "Activo" : "Inactivo"}
+                            </span>
+                          </td>
+                          <td>
+                            <div className="flex items-center space-x-2">
+                              <Can anyOf={[DIVISAS.CHANGE]}>
+                                <button
+                                  onClick={() =>
+                                    modalHook.openEditModal(divisa)
+                                  }
+                                  className="p-1 text-gray-500 hover:text-blue-600 rounded-full hover:bg-gray-100"
+                                  title="Editar"
+                                >
+                                  <Edit size={16} />
+                                </button>
+                              </Can>
+                              <Can anyOf={[DIVISAS.DELETE]}>
+                                <button
+                                  onClick={() => handleToggleDivisa(divisa)}
+                                  className="p-1 text-gray-500 hover:text-red-600 rounded-full hover:bg-gray-100"
+                                  title={
+                                    divisa.is_active ? "Desactivar" : "Activar"
+                                  }
+                                >
+                                  {divisa.is_active ? (
+                                    <X size={16} />
+                                  ) : (
+                                    <Check size={16} />
+                                  )}
+                                </button>
+                              </Can>
+                              <Can anyOf={[DENOMINACIONES.VIEW]}>
+                                <button
+                                  onClick={() =>
+                                    openDenominacionesModal(divisa)
+                                  }
+                                  className="p-1 text-gray-500 hover:text-blue-600 rounded-full hover:bg-gray-100"
+                                  title="Gestionar denominaciones"
+                                >
+                                  <Coins size={16} />
+                                </button>
+                              </Can>
+                            </div>
+                          </td>
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+                  <tfoot>
+                    <tr>
+                      <td colSpan={7}>
+                        <div className="flex justify-between items-center mt-4">
+                          <div className="text-sm text-gray-600">
+                            Página {divisasHook.page} de{" "}
+                            {divisasHook.totalPages}
+                          </div>
+                          <div className="flex space-x-4">
+                            <button
+                              onClick={() =>
+                                divisasHook.setPage((p) => Math.max(p - 1, 1))
+                              }
+                              disabled={divisasHook.page === 1}
+                              className="px-3 py-1 btn-primary disabled:opacity-50"
+                            >
+                              Anterior
+                            </button>
+                            <button
+                              onClick={() =>
+                                divisasHook.setPage((p) =>
+                                  Math.min(p + 1, divisasHook.totalPages)
+                                )
+                              }
+                              disabled={
+                                divisasHook.page === divisasHook.totalPages
+                              }
+                              className="px-3 py-1 btn-primary disabled:opacity-50"
+                            >
+                              Siguiente
+                            </button>
+                          </div>
+                        </div>
+                      </td>
+                    </tr>
+                  </tfoot>
+                </table>
+              </div>
+
+              <Modal
+                isOpen={modalHook.createModalOpen}
+                onClose={modalHook.closeCreateModal}
+              >
+                <DivisaForm
+                  onSubmit={handleCreateDivisa}
+                  onCancel={modalHook.closeCreateModal}
+                  isEditForm={false}
+                  divisa={null}
+                />
+              </Modal>
+              <Modal
+                isOpen={modalHook.editModalOpen}
+                onClose={modalHook.closeEditModal}
+              >
+                <DivisaForm
+                  onSubmit={handleUpdateDivisa}
+                  onCancel={modalHook.closeEditModal}
+                  isEditForm={true}
+                  divisa={modalHook.selectedItem}
+                />
+              </Modal>
+              <Modal
+                isOpen={denominacionesModalOpen}
+                onClose={closeDenominacionesModal}
+              >
+                <DenominacionesDivisa
+                  divisa={selectedDivisa!}
+                  onSubmit={handleCreateDenominacion}
+                  onCancel={() => {}}
+                />
+              </Modal>
+            </div>
+          </>
+        )}
+        {selectedTab.key === "configs" && (
+          <div className="card p-6">
+            <h2 className="text-xl font-bold mb-4">Configuraciones</h2>
+            <Can
+              anyOf={[LIMITES_DIVISA_CONFIG.CHANGE, LIMITES_DIVISA_CONFIG.VIEW]}
             >
-              Buscar
-            </button>
+              <div>
+                <LimiteConfigForm></LimiteConfigForm>
+              </div>
+            </Can>
           </div>
-        </div>
-        <Can anyOf={[DIVISAS.ADD]}>
-          <button
-            onClick={openCreateModal}
-            className="btn-primary flex items-center justify-center"
-          >
-            <Plus size={18} className="mr-2" />
-            Crear Divisa
-          </button>
-        </Can>
-      </div>
-
-      <div className="card">
-        <div className="table-container">
-          <table className="table">
-            <thead>
-              <tr>
-                <th>Nombre</th>
-                <th>Código</th>
-                <th>Símbolo</th>
-                <th>Máx. dígitos</th>
-                <th>Precisión</th>
-                <th>Base</th>
-                <th>Estado</th>
-                <th>Acciones</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-200">
-              {loading ? (
-                <tr>
-                  <td>
-                    <div>Cargando</div>
-                  </td>
-                </tr>
-              ) : err ? (
-                <tr>
-                  <td>
-                    <div>Ha ocurrido un error</div>
-                  </td>
-                </tr>
-              ) : divisas === undefined ? (
-                <tr>
-                  <td>
-                    <div>No hay datos</div>
-                  </td>
-                </tr>
-              ) : (
-                divisas.map((divisa: Divisa) => (
-                  <tr key={divisa.id}>
-                    <td className="font-medium">{divisa.nombre}</td>
-                    <td>{divisa.codigo}</td>
-                    <td>{divisa.simbolo}</td>
-                    <td>{divisa.max_digitos}</td>
-                    <td>{divisa.precision}</td>
-                    <td>
-                      <span
-                        className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                          divisa.es_base ? "bg-blue-100 text-blue-800" : "bg-gray-100 text-gray-800"
-                        }`}
-                      >
-                        {divisa.es_base ? "Sí" : "No"}
-                      </span>
-                    </td>
-                    <td>
-                      <span
-                        className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                          divisa.is_active
-                            ? "bg-green-100 text-green-800"
-                            : "bg-red-100 text-red-900"
-                        }`}
-                      >
-                        {divisa.is_active ? "Activo" : "Inactivo"}
-                      </span>
-                    </td>
-                    <td>
-                      <div className="flex items-center space-x-2">
-                        <Can anyOf={[DIVISAS.CHANGE]}>
-                          <button
-                            onClick={() => openEditModal(divisa)}
-                            className="p-1 text-gray-500 hover:text-blue-600 rounded-full hover:bg-gray-100"
-                            title="Editar"
-                          >
-                            <Edit size={16} />
-                          </button>
-                        </Can>
-                        <Can anyOf={[DIVISAS.DELETE]}>
-                          <button
-                            onClick={
-                              divisa.is_active
-                                ? () => handleDeactivateDivisa(divisa.id!)
-                                : () => handleActivateDivisa(divisa)
-                            }
-                            className="p-1 text-gray-500 hover:text-red-600 rounded-full hover:bg-gray-100"
-                            title={divisa.is_active ? "Desactivar" : "Activar"}
-                          >
-                            {divisa.is_active ? (
-                              <X size={16} />
-                            ) : (
-                              <Check size={16} />
-                            )}
-                          </button>
-                        </Can>
-                        <Can anyOf={[DENOMINACIONES.VIEW]}>
-                          <button
-                            onClick={() => openDenominacionesModal(divisa)}
-                            className="p-1 text-gray-500 hover:text-blue-600 rounded-full hover:bg-gray-100"
-                            title="Gestionar denominaciones"
-                          >
-                            <Coins size={16} />
-                          </button>
-                        </Can>
-                      </div>
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-            <tfoot>
-              <tr>
-                <td colSpan={7}>
-                  <div className="flex justify-between items-center mt-4">
-                    <div className="text-sm text-gray-600">
-                      Página {page} de {totalPages}
-                    </div>
-                    <div className="flex space-x-4">
-                      <button
-                        onClick={() => setPage((p) => Math.max(p - 1, 1))}
-                        disabled={page === 1}
-                        className="px-3 py-1 btn-primary disabled:opacity-50"
-                      >
-                        Anterior
-                      </button>
-                      <button
-                        onClick={() =>
-                          setPage((p) => Math.min(p + 1, totalPages))
-                        }
-                        disabled={page === totalPages}
-                        className="px-3 py-1 btn-primary disabled:opacity-50"
-                      >
-                        Siguiente
-                      </button>
-                    </div>
-                  </div>
-                </td>
-              </tr>
-            </tfoot>
-          </table>
-        </div>
-
-        <Modal isOpen={createModalOpen} onClose={closeCreateModal}>
-          <DivisaForm
-            onSubmit={handleCreateDivisa}
-            onCancel={closeCreateModal}
-            isEditForm={false}
-            divisa={null}
-          />
-        </Modal>
-        <Modal isOpen={editModalOpen} onClose={closeEditModal}>
-          <DivisaForm
-            onSubmit={handleUpdateDivisa}
-            onCancel={closeEditModal}
-            isEditForm={true}
-            divisa={selectedDivisa!}
-          />
-        </Modal>
-        <Modal
-          isOpen={denominacionesModalOpen}
-          onClose={closeDenominacionesModal}
-        >
-          <DenominacionesDivisa
-            divisa={selectedDivisa!}
-            onSubmit={handleCreateDenominacion}
-            onCancel={() => {}}
-          />
-        </Modal>
+        )}
       </div>
     </div>
   );

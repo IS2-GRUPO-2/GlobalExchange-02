@@ -1,6 +1,7 @@
 from django.db import models
 from django.db.models import Q, UniqueConstraint
-
+from apps.clientes.models import CategoriaCliente
+from solo.models import SingletonModel
 # Create your models here.
 class Divisa(models.Model):
     codigo = models.CharField(verbose_name="Código de divisa", max_length=5, unique=True)
@@ -10,7 +11,6 @@ class Divisa(models.Model):
     max_digitos = models.IntegerField(default=30)
     precision = models.IntegerField(default=6)
     es_base = models.BooleanField(default=False)
-
     class Meta:
         constraints = [
             UniqueConstraint(
@@ -28,3 +28,6 @@ class Denominacion(models.Model):
     denominacion = models.IntegerField()
     is_active = models.BooleanField(default=True)
 
+class LimiteConfig(SingletonModel):
+    limite_diario = models.DecimalField(max_digits=30, decimal_places=10, null=True)
+    limite_mensual = models.DecimalField(max_digits=30, decimal_places=10, null=True)

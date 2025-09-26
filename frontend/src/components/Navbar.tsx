@@ -18,6 +18,7 @@ import { useAuth } from "../context/useAuth";
 import logoWhite from "../assets/logo-white.svg";
 import {
   SIMULACION,
+  OPERACION,
 } from "../types/perms";
 import ClientPicker from "./ClientPicker";
 
@@ -25,6 +26,7 @@ import ClientPicker from "./ClientPicker";
 const navigation = [
   { name: "Inicio", href: "/", current: true, permisos: [] },
   { name: "Simulación de Operaciones", href: "/simulacion-operacion", current: false, permisos: [SIMULACION.USE] },
+  { name: "Operaciones", href: "/operacion-compra-venta", current: false, permisos: [OPERACION.USE] },
   { name: "Iniciar sesión", href: "/login", current: false, permisos: [] },
   { name: "Registrarse", href: "/register", current: false, permisos: [] },
 ];
@@ -132,9 +134,9 @@ export default function Navbar() {
               >
                 <Bell className="w-6 h-6" />
               </button>
-
-              {user && <ClientPicker userId={user.id} className="w-56" />}
-
+              
+              {user?.id && <ClientPicker userId={user.id} className="w-56" />}
+              
               {/* Usuario + Nombre + Flechita */}
               <Menu as="div" className="relative">
                 {({ open }) => (

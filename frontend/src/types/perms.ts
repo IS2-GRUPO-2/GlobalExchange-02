@@ -56,6 +56,11 @@ export const DIVISAS = {
   VIEW: "divisas.view_divisa",
 } as const;
 
+export const LIMITES_DIVISA_CONFIG = {
+  CHANGE: "divisas.change_limiteconfig",
+  VIEW: "divisas.view_limiteconfig",
+};
+
 export const BANCOS = {
   ADD: "operaciones.add_banco",
   CHANGE: "operaciones.change_banco",
@@ -112,6 +117,20 @@ export const TARJETAS = {
   VIEW: "operaciones.view_tarjeta",
 } as const;
 
+export const TARJETAS_LOCALES = {
+  ADD: "operaciones.add_tarjetalocal",
+  CHANGE: "operaciones.change_tarjetalocal",
+  DELETE: "operaciones.delete_tarjetalocal",
+  VIEW: "operaciones.view_tarjetalocal",
+} as const;
+
+export const TARJETAS_CATALOGO = {
+  ADD: "operaciones.add_tarjetacatalogo",
+  CHANGE: "operaciones.change_tarjetacatalogo",
+  DELETE: "operaciones.delete_tarjetacatalogo",
+  VIEW: "operaciones.view_tarjetacatalogo",
+} as const;
+
 export const SIMULACION = {
   USE: "operaciones.can_use_simulacion",
 } as const;
@@ -121,4 +140,15 @@ export const TAUSER = {
   CHANGE: "tauser.change_tauser",
   DELETE: "tauser.delete_tauser",
   VIEW: "tauser.view_tauser",
+} as const;
+
+export const TRANSACCIONES = {
+  ADD: "operaciones.add_transaccion",
+  CHANGE: "operaciones.change_transaccion",
+  DELETE: "operaciones.delete_transaccion",
+  VIEW: "operaciones.view_transaccion",
+} as const;
+
+export const OPERACION = {
+  USE: "operaciones.can_use_operacion",
 } as const;

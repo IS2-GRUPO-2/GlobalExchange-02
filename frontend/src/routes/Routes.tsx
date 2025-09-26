@@ -7,8 +7,8 @@ import RegisterPage from "../pages/RegisterPage";
 import RolesPage from "../pages/RolesPage";
 import MainMenuPage from "../pages/MenuPage";
 import DivisasPage from "../pages/DivisasPage";
-import MetodosFinancierosPage from "../pages/MetodosFinancierosPage";
-import MetodosFinancierosClientePage from "../pages/MetodosFinancierosClientePage";
+import MetodosFinancierosPage from "../features/financiero/Pages/MetodosFinancierosPage";
+import MetodosFinancierosClientePage from "../features/financiero/Pages/MetodosFinancierosClientePage";
 import ConfiguracionesPage from "../pages/ConfiguracionesPage";
 import CategoriaClientePage from "../pages/CategoriaClientePage";
 import {
@@ -20,12 +20,14 @@ import {
   USUARIOS,
   SIMULACION,
   METODOS_FINANCIEROS_DETALLE,
-  TAUSER
+  TAUSER,
+  OPERACION
 } from "../types/perms";
 import CotizacionesPage from "../pages/CotizacionesPage";
 import RequireAuth from "./RequiereAuth";
 import SimulacionOperacionPage from "../pages/SimulacionOperacionPage";
 import ConfiguracionTauserPage from "../pages/ConfiguracionTauserPage";
+import OperacionPage from "../pages/OperacionPage";
 
 
 export const router = createBrowserRouter([
@@ -71,6 +73,14 @@ export const router = createBrowserRouter([
         element: (
           <RequireAuth anyOf={[SIMULACION.USE]}>
             <SimulacionOperacionPage />
+          </RequireAuth>
+        ),
+      },
+      {
+        path: "operacion-compra-venta",
+        element: (
+          <RequireAuth anyOf={[OPERACION.USE]}>
+            <OperacionPage />
           </RequireAuth>
         ),
       },
