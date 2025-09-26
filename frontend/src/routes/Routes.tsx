@@ -19,11 +19,13 @@ import {
   TASAS,
   USUARIOS,
   SIMULACION,
-  METODOS_FINANCIEROS_DETALLE
+  METODOS_FINANCIEROS_DETALLE,
+  TAUSER
 } from "../types/perms";
 import CotizacionesPage from "../pages/CotizacionesPage";
 import RequireAuth from "./RequiereAuth";
 import SimulacionOperacionPage from "../pages/SimulacionOperacionPage";
+import ConfiguracionTauserPage from "../pages/ConfiguracionTauserPage";
 
 
 export const router = createBrowserRouter([
@@ -124,9 +126,18 @@ export const router = createBrowserRouter([
               USUARIOS.VIEW,
               CLIENTES.VIEW,
               METODOS_FINANCIEROS_DETALLE.VIEW,
+              TAUSER.VIEW
             ]}
             >
             <ConfiguracionesPage />
+          </RequireAuth>
+        ),
+      },
+      {
+        path: "configuracion-tausers",
+        element: (
+          <RequireAuth anyOf={[TAUSER.VIEW]}>
+            <ConfiguracionTauserPage />
           </RequireAuth>
         ),
       },

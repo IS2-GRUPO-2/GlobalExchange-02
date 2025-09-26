@@ -129,3 +129,10 @@ export const TARJETAS_LOCALES_CATALOGO = {
 export const SIMULACION = {
   USE: "operaciones.can_use_simulacion",
 } as const;
+
+export const TAUSER = {
+  ADD: "tauser.add_tauser",
+  CHANGE: "tauser.change_tauser",
+  DELETE: "tauser.delete_tauser",
+  VIEW: "tauser.view_tauser",
+} as const;
