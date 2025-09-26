@@ -3,9 +3,6 @@ import { simularOperacionPrivadaConInstancia } from "../services/simulacionServi
 import { type SimulacionResponse } from "../types/Simulacion";
 import { getClienteActual } from "../services/usuarioService";
 import { type Cliente } from "../types/Cliente";
-import { type MetodoFinanciero } from "../features/financiero/types/MetodoFinanciero";
-import { getDivisasConTasa } from "../services/divisaService";
-import { type Divisa } from "../types/Divisa";
 import type { DecodedToken } from "../types/User";
 import { jwtDecode } from "jwt-decode";
 import { toast } from "react-toastify";
@@ -118,7 +115,7 @@ export default function SimulacionOperacionPrivada() {
         divisa_origen: Number(divisaOrigen),
         divisa_destino: Number(divisaDestino),
         monto,
-        detalle_metodo_id: detalleMetodoSeleccionado,
+        detalle_metodo_id: detalleMetodoSeleccionado || undefined,
         metodo_id: metodoGenericoSeleccionado ? Number(metodoGenericoSeleccionado) : undefined,
       });
       setResultado(res);

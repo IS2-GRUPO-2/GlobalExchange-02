@@ -117,13 +117,6 @@ export const TARJETAS = {
   VIEW: "operaciones.view_tarjeta",
 } as const;
 
-export const TARJETAS_LOCALES = {
-  ADD: "operaciones.add_tarjetalocal",
-  CHANGE: "operaciones.change_tarjetalocal",
-  DELETE: "operaciones.delete_tarjetalocal",
-  VIEW: "operaciones.view_tarjetalocal",
-} as const;
-
 export const TARJETAS_CATALOGO = {
   ADD: "operaciones.add_tarjetacatalogo",
   CHANGE: "operaciones.change_tarjetacatalogo",

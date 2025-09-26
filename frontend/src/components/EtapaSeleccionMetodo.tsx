@@ -3,8 +3,6 @@ import { CreditCard, Building2, Smartphone } from 'lucide-react';
 import { type MetodosClienteResponse, type InstanciaMetodo, type MetodoClienteOrganizado } from "../types/Simulacion";
 import { getMetodosCliente } from "../services/simulacionService";
 
-type TabType = 'TRANSFERENCIA_BANCARIA' | 'BILLETERA_DIGITAL' | 'TARJETA';
-
 interface EtapaSeleccionMetodoProps {
   clienteId: string;
   divisaOrigen: string;

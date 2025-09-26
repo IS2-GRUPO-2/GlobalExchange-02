@@ -11,7 +11,7 @@ interface EtapaTerminosCondicionesProps {
 
 export default function EtapaTerminosCondiciones({
   resultado,
-  transaccionId,              // opcionalmente podés mostrarlo en la UI
+  transaccionId: _transaccionId, // opcionalmente podés mostrarlo en la UI
   onRetroceder,
   onPagar
 }: EtapaTerminosCondicionesProps) {

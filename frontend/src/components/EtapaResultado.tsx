@@ -18,7 +18,6 @@ export default function EtapaResultado({
   esOperacionReal = false
 }: EtapaResultadoProps) {
   // Determinar si es OperacionCompleta (tiene tauser_seleccionado) o SimulacionResponse
-  const tieneTerminal = 'tauser_seleccionado' in resultado;
   
   const getTitulo = () => {
     if (esOperacionReal) return "Resumen de tu Operación";

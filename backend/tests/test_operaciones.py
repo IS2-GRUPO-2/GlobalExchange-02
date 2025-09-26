@@ -195,7 +195,7 @@ def tarjeta_local_data(tarjeta_catalogo_instance):
 @pytest.fixture
 def tarjeta_local_data_orm(tarjeta_catalogo_instance):
     return {
-        response = api_client.post('/api/operaciones/tarjetas-catalogo/', tarjeta_data, format='json')        'tipo': 'LOCAL',
+        'tipo': 'LOCAL',
         'payment_method_id': 'pm_local_123_orm',
         'marca': tarjeta_catalogo_instance,  # Para ORM - usar instancia
         'brand': 'visa',
@@ -446,10 +446,10 @@ class TestCatalogosAPI:
             'comision_personalizada_compra': True,
             'comision_personalizada_venta': False
         }
-        response = api_client.post('/api/operaciones/tarjetas-locales-catalogo/', tarjeta_data, format='json')
+        response = api_client.post('/api/operaciones/tarjetas-catalogo/', tarjeta_data, format='json')
         assert response.status_code == status.HTTP_201_CREATED
         
-        tarjeta = TarjetaLocalCatalogo.objects.first()
+        tarjeta = TarjetaCatalogo.objects.first()
         assert tarjeta.comision_compra == Decimal('3.1')
         assert tarjeta.comision_personalizada_compra is True
 

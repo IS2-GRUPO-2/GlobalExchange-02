@@ -1,7 +1,6 @@
 import { useState, useEffect } from "react";
 import { type Divisa } from "../types/Divisa";
 import { getDivisasConTasa } from "../services/divisaService";
-import { toast } from "react-toastify";
 
 interface EtapaSeleccionDivisasProps {
   divisaOrigen: string;

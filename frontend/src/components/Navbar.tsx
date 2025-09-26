@@ -12,7 +12,7 @@ import {
   MenuItems,
 } from "@headlessui/react";
 import { Bars3Icon, XMarkIcon } from "@heroicons/react/24/outline";
-import { Bell, CircleUser, ChevronDown } from "lucide-react";
+import { CircleUser, ChevronDown } from "lucide-react";
 import Can from "./Can";
 import { useAuth } from "../context/useAuth";
 import logoWhite from "../assets/logo-white.svg";

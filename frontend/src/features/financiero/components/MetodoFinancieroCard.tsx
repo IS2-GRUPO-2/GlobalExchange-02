@@ -97,7 +97,7 @@ const MetodoFinancieroCard: React.FC<MetodoFinancieroCardProps> = ({
           </div>
         );
       case "tarjetas":
-        const tarjeta = item as Tarjeta;
+        const tarjeta = item as unknown as Tarjeta;
         return (
           <div className="space-y-2">
             <div>

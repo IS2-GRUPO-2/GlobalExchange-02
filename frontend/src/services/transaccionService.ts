@@ -1,6 +1,6 @@
 // services/transaccionService.ts
 import axios from "axios";
-import type { TransaccionRequest, Transaccion } from "../types/Transaccion";
+import type { TransaccionRequest, Transaccion, OperacionCompleta } from "../types/Transaccion";
 
 const API_URL = "/api/operaciones/";
 
