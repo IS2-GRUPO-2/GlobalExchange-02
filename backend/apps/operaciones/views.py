@@ -7,6 +7,8 @@ financieros (`MetodoFinanciero`) y sus implementaciones específicas
 
 """
 # imports (arriba, junto a los demás)
+# NUEVO: simulador de pagos
+from .pyments import APROBADO, componenteSimuladorPagosCobros   
 from .services import _get_tasa_activa  # ADD: usamos el helper que ya tenés en service.py
 from decimal import Decimal, ROUND_HALF_UP  # ya lo tenías, asegúrate de tener Decimal importado aquí
 from decimal import ROUND_HALF_UP, Decimal
@@ -1135,13 +1137,35 @@ class TransaccionViewSet(viewsets.ModelViewSet):
                 'monto_destino_actual': str(monto_destino_actual)
             }, status=status.HTTP_409_CONFLICT)
 
-        # Si no cambió, o cambió y el cliente acepta, aplicamos y pasamos a EN PROCESO
+                # Si no cambió, o cambió y el cliente acepta, aplicamos posible nueva tasa
         if cambio and acepta_cambio:
             t.tasa_aplicada = tc_actual              # Decimal con 6 decimales
             t.monto_destino = monto_destino_actual   # Decimal con 2 decimales
 
+        # 2) Simular pago/cobro en el procesador (dummy)
+        pago = componenteSimuladorPagosCobros(t)
+
+        if pago.codigo != APROBADO:
+            # Simular rechazo → marcamos como fallida
+            t.estado = 'fallida'
+            t.fecha_fin = timezone.now()
+            t.save()
+
+            serializer = self.get_serializer(t)
+            data = dict(serializer.data)
+            data['pago_codigo'] = pago.codigo
+            data['pago_mensaje'] = pago.mensaje
+            data['pago_referencia'] = pago.referencia
+            # 402 = Payment Required
+            return Response(data, status=status.HTTP_402_PAYMENT_REQUIRED)
+
+        # Aprobado → pasar a EN PROCESO
         t.estado = 'en_proceso'
         t.save()
 
         serializer = self.get_serializer(t)
-        return Response(serializer.data, status=status.HTTP_200_OK)
+        data = dict(serializer.data)
+        data['pago_codigo'] = pago.codigo
+        data['pago_mensaje'] = pago.mensaje
+        data['pago_referencia'] = pago.referencia
+        return Response(data, status=status.HTTP_200_OK)
