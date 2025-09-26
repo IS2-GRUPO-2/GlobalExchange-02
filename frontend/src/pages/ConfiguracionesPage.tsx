@@ -11,7 +11,7 @@ import {
   Users,
   User
 } from "lucide-react";
-import { CATEGORIAS_CLIENTE, CLIENTES, DIVISAS, METODOS_FINANCIEROS, ROLES, TASAS, USUARIOS } from "../types/perms";
+import { CATEGORIAS_CLIENTE, CLIENTES, DIVISAS, METODOS_FINANCIEROS, METODOS_FINANCIEROS_DETALLE, ROLES, TASAS, USUARIOS } from "../types/perms";
 import Can from "../components/Can";
 
 type ConfigItem = {
@@ -98,7 +98,7 @@ const ConfiguracionesPage = () => {
       icon: <CreditCard className="w-6 h-6 text-purple-600" />,
       path: "/metodos-financieros-cliente",
       habilitado: true,
-      permisos: [],
+      permisos: [METODOS_FINANCIEROS_DETALLE.VIEW],
     },
     {
       id: "documentos",

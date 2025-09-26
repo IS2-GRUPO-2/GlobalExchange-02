@@ -546,11 +546,13 @@ class CuentaBancariaViewSet(viewsets.ModelViewSet):
         queryset = CuentaBancaria.objects.select_related('metodo_financiero_detalle', 'banco').all()
         
         if self.request.user.has_perm('operaciones.view_metodofinanciero'):
-            return queryset.filter(metodo_financiero_detalle__es_cuenta_casa=True)
+            # Admins ven todas las cuentas (casa y clientes)
+            return queryset
         else:
-            # Usuarios regulares ven las cuentas de sus clientes asignados
+            # Usuarios regulares ven solo las de sus clientes (no las de la casa)
             return queryset.filter(
-                metodo_financiero_detalle__cliente__in=self.request.user.clientes.all()
+                metodo_financiero_detalle__cliente=self.request.user.clienteActual,
+                metodo_financiero_detalle__es_cuenta_casa=False
             )
 
     def get_permissions(self):
@@ -607,11 +609,13 @@ class BilleteraDigitalViewSet(viewsets.ModelViewSet):
         queryset = BilleteraDigital.objects.select_related('metodo_financiero_detalle', 'plataforma').all()
         
         if self.request.user.has_perm('operaciones.view_metodofinanciero'):
-            return queryset.filter(metodo_financiero_detalle__es_cuenta_casa=True)
+            # Admins ven todas las billeteras (casa y clientes)
+            return queryset
         else:
-            # Usuarios regulares ven las billeteras de sus clientes asignados
+            # Usuarios regulares ven solo las de sus clientes (no las de la casa)
             return queryset.filter(
-                metodo_financiero_detalle__cliente__in=self.request.user.clientes.all()
+                metodo_financiero_detalle__cliente=self.request.user.clienteActual,
+                metodo_financiero_detalle__es_cuenta_casa=False
             )
 
     def get_permissions(self):
@@ -666,11 +670,13 @@ class TarjetaViewSet(viewsets.ModelViewSet):
         queryset = Tarjeta.objects.select_related('metodo_financiero_detalle').all()
 
         if self.request.user.has_perm('operaciones.view_metodofinanciero'):
-            return queryset.filter(metodo_financiero_detalle__es_cuenta_casa=True)
+            # Admins ven todas las tarjetas (casa y clientes)
+            return queryset
         else:
-            # Usuarios regulares ven las tarjetas de sus clientes asignados
+            # Usuarios regulares ven solo las de sus clientes (no las de la casa)
             return queryset.filter(
-                metodo_financiero_detalle__cliente__in=self.request.user.clientes.all()
+                metodo_financiero_detalle__cliente=self.request.user.clienteActual,
+                metodo_financiero_detalle__es_cuenta_casa=False
             )
 
     def create(self, request, *args, **kwargs):
