@@ -15,20 +15,21 @@ import {
   CATEGORIAS_CLIENTE,
   CLIENTES,
   DIVISAS,
-  METODOS_FINANCIEROS, ROLES,
+  METODOS_FINANCIEROS,
+  ROLES,
   TASAS,
   USUARIOS,
   SIMULACION,
   METODOS_FINANCIEROS_DETALLE,
   TAUSER,
-  OPERACION
+  OPERACION,
 } from "../types/perms";
 import CotizacionesPage from "../pages/CotizacionesPage";
 import RequireAuth from "./RequiereAuth";
 import SimulacionOperacionPage from "../pages/SimulacionOperacionPage";
 import ConfiguracionTauserPage from "../pages/ConfiguracionTauserPage";
 import OperacionPage from "../pages/OperacionPage";
-
+import HistorialPage from "../pages/HistorialPage";
 
 export const router = createBrowserRouter([
   {
@@ -49,7 +50,15 @@ export const router = createBrowserRouter([
           </RequireAuth>
         ),
       },
-      
+
+      {
+        path: "historial-transacciones",
+        element: (
+          <RequireAuth>
+            <HistorialPage />
+          </RequireAuth>
+        ),
+      },
 
       // RUTAS QUE REQUIEREN LOGIN Y PERMISOS
       {
@@ -136,9 +145,9 @@ export const router = createBrowserRouter([
               USUARIOS.VIEW,
               CLIENTES.VIEW,
               METODOS_FINANCIEROS_DETALLE.VIEW,
-              TAUSER.VIEW
+              TAUSER.VIEW,
             ]}
-            >
+          >
             <ConfiguracionesPage />
           </RequireAuth>
         ),
