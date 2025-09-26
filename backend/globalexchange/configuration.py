@@ -11,8 +11,9 @@ class Configs:
     POSTGRES_PORT = os.getenv('POSTGRES_PORT')
     EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER')
     EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD')
-    DJANGO_DEBUG = os.getenv('DJANGO_DEBUG')
+    DJANGO_DEBUG = os.getenv('DJANGO_DEBUG').lower() == 'true'
     HOST_ALLOW_ORIGINS = os.getenv('HOST_ALLOW_ORIGINS')
+    SECRET_KEY = os.getenv('SECRET_KEY')
 
 
 config = Configs()
