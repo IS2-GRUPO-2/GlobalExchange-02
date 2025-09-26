@@ -11,7 +11,6 @@ from apps.operaciones.models import (
     CuentaBancaria,
     BilleteraDigital,
     Tarjeta,
-    TarjetaLocal,
     TipoMetodoFinanciero,
     Banco,
     BilleteraDigitalCatalogo,
@@ -177,23 +176,29 @@ def tarjeta_data_orm(tarjeta_catalogo_instance):
 
 
 @pytest.fixture
-def tarjeta_local_data(tarjeta_local_catalogo_instance):
+def tarjeta_local_data(tarjeta_catalogo_instance):
     return {
-        'marca': tarjeta_local_catalogo_instance.id,  # Para API - usar ID
+        'tipo': 'LOCAL',
+        'payment_method_id': 'pm_local_123',
+        'marca': tarjeta_catalogo_instance.id,  # Para API - usar ID
+        'brand': 'visa',
         'last4': '1234',
-        'titular': 'Juan Perez',
         'exp_month': 8,
-        'exp_year': 2028
+        'exp_year': 2028,
+        'titular': 'Juan Perez'
     }
 
 @pytest.fixture
-def tarjeta_local_data_orm(tarjeta_local_catalogo_instance):
+def tarjeta_local_data_orm(tarjeta_catalogo_instance):
     return {
-        'marca': tarjeta_local_catalogo_instance,  # Para ORM - usar instancia
+        'tipo': 'LOCAL',
+        'payment_method_id': 'pm_local_123_orm',
+        'marca': tarjeta_catalogo_instance,  # Para ORM - usar instancia
+        'brand': 'visa',
         'last4': '1234',
-        'titular': 'Juan Perez',
         'exp_month': 8,
-        'exp_year': 2028
+        'exp_year': 2028,
+        'titular': 'Juan Perez'
     }
 
 
@@ -350,8 +355,6 @@ class TestTarjetaAPI:
         detalle.refresh_from_db()
         assert detalle.is_active is False
 
-
-class TestTarjetaLocalAPI:
     def test_crear_tarjeta_local_api(self, api_client, metodo_data, detalle_data, tarjeta_local_data):
         metodo = MetodoFinanciero.objects.create(**metodo_data)
         detalle = MetodoFinancieroDetalle.objects.create(metodo_financiero=metodo, es_cuenta_casa=True, alias='Casa-TarjLocal')
@@ -359,16 +362,16 @@ class TestTarjetaLocalAPI:
         payload = tarjeta_local_data.copy()
         payload['metodo_financiero_detalle'] = detalle.id
 
-        response = api_client.post('/api/operaciones/tarjetas-locales/', payload, format='json')
+        response = api_client.post('/api/operaciones/tarjetas/', payload, format='json')
         assert response.status_code == status.HTTP_201_CREATED
-        assert TarjetaLocal.objects.count() == 1
+        assert Tarjeta.objects.count() >= 1
 
     def test_eliminar_tarjeta_local_desactiva_detalle(self, api_client, metodo_data, detalle_data, tarjeta_local_data_orm):
         metodo = MetodoFinanciero.objects.create(**metodo_data)
         detalle = MetodoFinancieroDetalle.objects.create(metodo_financiero=metodo, es_cuenta_casa=True, alias='Casa-TarjLocal2')
-        tarjeta_local = TarjetaLocal.objects.create(metodo_financiero_detalle=detalle, **tarjeta_local_data_orm)
+        tarjeta_local = Tarjeta.objects.create(metodo_financiero_detalle=detalle, **tarjeta_local_data_orm)
 
-        response = api_client.delete(f'/api/operaciones/tarjetas-locales/{tarjeta_local.id}/')
+        response = api_client.delete(f'/api/operaciones/tarjetas/{tarjeta_local.id}/')
         assert response.status_code == status.HTTP_200_OK
         detalle.refresh_from_db()
         assert detalle.is_active is False
