@@ -3,16 +3,16 @@ import { Edit, X, Check } from "lucide-react";
 import type {
   Banco,
   BilleteraDigitalCatalogo,
-  TarjetaLocalCatalogo,
+  TarjetaCatalogo,
   CatalogTabType,
 } from "../types/MetodoFinanciero";
 import Can from "../../../components/Can";
-import { BANCOS, BILLETERAS_DIGITALES, BILLETERAS_DIGITALES_CATALOGO, TARJETAS_LOCALES_CATALOGO } from "../../../types/perms";
+import { BANCOS, BILLETERAS_DIGITALES_CATALOGO, TARJETAS_CATALOGO } from "../../../types/perms";
 
 interface CatalogTableProps {
   bancos: Banco[];
   billeterasCatalogo: BilleteraDigitalCatalogo[];
-  tarjetasLocalesCatalogo: TarjetaLocalCatalogo[];
+  tarjetasCatalogo: TarjetaCatalogo[];
   catalogTab: CatalogTabType;
   loading: boolean;
   onEdit: (item: any) => void;
@@ -22,7 +22,7 @@ interface CatalogTableProps {
 export const CatalogTable: React.FC<CatalogTableProps> = ({
   bancos,
   billeterasCatalogo,
-  tarjetasLocalesCatalogo,
+  tarjetasCatalogo,
   catalogTab,
   loading,
   onEdit,
@@ -39,14 +39,14 @@ export const CatalogTable: React.FC<CatalogTableProps> = ({
 
   const items = catalogTab === "bancos" ? bancos : 
                 catalogTab === "billeteras" ? billeterasCatalogo :
-                tarjetasLocalesCatalogo;
+                catalogTab === "tarjetas" ? tarjetasCatalogo : [];
 
   return (
     <div className="table-container">
       <table className="table">
         <thead>
           <tr>
-            <th>{catalogTab === "bancos" ? "Nombre" : catalogTab === "billeteras" ? "Nombre" : "Marca"}</th>
+            <th>{catalogTab === "bancos" ? "Nombre" : catalogTab === "billeteras" ? "Nombre" : catalogTab === "tarjetas" ? "Marca" : ""}</th>
             <th>Comisión Compra</th>
             <th>Comisión Venta</th>
             <th>Personalizada Compra</th>
@@ -55,7 +55,7 @@ export const CatalogTable: React.FC<CatalogTableProps> = ({
             <Can anyOf={
               catalogTab === "bancos" ? [BANCOS.CHANGE, BANCOS.DELETE] : 
               catalogTab === "billeteras" ? [BILLETERAS_DIGITALES_CATALOGO.CHANGE, BILLETERAS_DIGITALES_CATALOGO.DELETE] :
-              [TARJETAS_LOCALES_CATALOGO.CHANGE, TARJETAS_LOCALES_CATALOGO.DELETE]
+              catalogTab === "tarjetas" ? [TARJETAS_CATALOGO.CHANGE, TARJETAS_CATALOGO.DELETE] : []
             }>
               <th>Acciones</th>
             </Can>
@@ -69,7 +69,7 @@ export const CatalogTable: React.FC<CatalogTableProps> = ({
                   No hay{" "}
                   {catalogTab === "bancos" ? "bancos" : 
                    catalogTab === "billeteras" ? "billeteras digitales" :
-                   "marcas de tarjetas locales"}{" "}
+                   catalogTab === "tarjetas" ? "marcas de tarjetas" : ""}{" "}
                   registrados
                 </p>
               </td>
@@ -78,7 +78,7 @@ export const CatalogTable: React.FC<CatalogTableProps> = ({
             items.map((item: any) => (
               <tr key={item.id}>
                 <td className="font-medium">
-                  {catalogTab === "tarjetas locales" ? item.marca : item.nombre}
+                  {catalogTab === "tarjetas" ? item.marca : item.nombre}
                 </td>
                 <td className="text-sm text-gray-900">
                   {item.comision_compra}%
@@ -90,7 +90,7 @@ export const CatalogTable: React.FC<CatalogTableProps> = ({
                   <span
                     className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
                       item.comision_personalizada_compra
-                        ? "bg-blue-100 text-blue-800"
+                        ? "bg-green-100 text-green-800"
                         : "bg-gray-100 text-gray-800"
                     }`}
                   >
@@ -121,7 +121,11 @@ export const CatalogTable: React.FC<CatalogTableProps> = ({
                 </td>
                 <td>
                   <div className="flex items-center space-x-2">
-                    <Can anyOf={catalogTab === "bancos" ? [BANCOS.CHANGE] : [BILLETERAS_DIGITALES_CATALOGO.CHANGE]}>
+                    <Can anyOf={
+                      catalogTab === "bancos" ? [BANCOS.CHANGE] : 
+                      catalogTab === "billeteras" ? [BILLETERAS_DIGITALES_CATALOGO.CHANGE] :
+                      catalogTab === "tarjetas" ? [TARJETAS_CATALOGO.CHANGE] : []
+                    }>
                       <button
                         onClick={() => onEdit(item)}
                         className="p-1 text-gray-500 hover:text-blue-600 rounded-full hover:bg-gray-100"
@@ -130,7 +134,11 @@ export const CatalogTable: React.FC<CatalogTableProps> = ({
                         <Edit size={16} />
                       </button>
                     </Can>
-                    <Can anyOf={catalogTab === "bancos" ? (item.is_active? [BANCOS.DELETE] : [BANCOS.CHANGE]) : (item.is_active? [BILLETERAS_DIGITALES_CATALOGO.DELETE] : [BILLETERAS_DIGITALES_CATALOGO.CHANGE])}>
+                    <Can anyOf={
+                      catalogTab === "bancos" ? (item.is_active ? [BANCOS.DELETE] : [BANCOS.CHANGE]) : 
+                      catalogTab === "billeteras" ? (item.is_active ? [BILLETERAS_DIGITALES_CATALOGO.DELETE] : [BILLETERAS_DIGITALES_CATALOGO.CHANGE]) :
+                      (item.is_active ? [TARJETAS_CATALOGO.DELETE] : [TARJETAS_CATALOGO.CHANGE])
+                    }>
                       <button
                         onClick={() => onToggle(item, catalogTab)}
                         className="p-1 text-gray-500 hover:text-red-600 rounded-full hover:bg-gray-100"

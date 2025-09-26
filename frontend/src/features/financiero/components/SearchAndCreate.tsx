@@ -5,7 +5,7 @@ import type {
   InstanceTabType,
   CatalogTabType,
 } from "../types/MetodoFinanciero";
-import { BANCOS, BILLETERAS_DIGITALES, BILLETERAS_DIGITALES_CATALOGO, CUENTAS_BANCARIAS, METODOS_FINANCIEROS, TARJETAS_LOCALES_CATALOGO } from "../../../types/perms";
+import { BANCOS, BILLETERAS_DIGITALES, BILLETERAS_DIGITALES_CATALOGO, CUENTAS_BANCARIAS, METODOS_FINANCIEROS, TARJETAS_CATALOGO } from "../../../types/perms";
 import Can from "../../../components/Can";
 
 interface SearchAndCreateProps {
@@ -21,9 +21,11 @@ interface SearchAndCreateProps {
 const getInstanceTabLabel = (tab: InstanceTabType) => {
   switch (tab) {
     case "cuentas":
-      return "Cuentas";
+      return "Cuentas Bancarias";
     case "billeteras digitales":
       return "Billeteras Digitales";
+    default:
+      return "";
   }
 };
 
@@ -33,6 +35,8 @@ const getInstanceTabSingularTitle = (tab: InstanceTabType) => {
       return "Cuenta";
     case "billeteras digitales":
       return "Billetera Digital";
+    default:
+      return "";
   }
 };
 
@@ -58,7 +62,7 @@ export const SearchAndCreate: React.FC<SearchAndCreateProps> = ({
     if (mainTab === "catalogos") {
       if (catalogTab === "bancos") return "Crear Banco";
       if (catalogTab === "billeteras") return "Crear Billetera Digital";
-      if (catalogTab === "tarjetas locales") return "Crear Tarjeta Local";
+      if (catalogTab === "tarjetas") return "Crear Tarjeta";
     }
     if (mainTab === "instancias" && instanceTab)
       return `Crear ${getInstanceTabSingularTitle(instanceTab)}`;
@@ -71,10 +75,12 @@ export const SearchAndCreate: React.FC<SearchAndCreateProps> = ({
     if (mainTab === "catalogos") {
       if (catalogTab === "bancos") return [BANCOS.ADD];
       if (catalogTab === "billeteras") return [BILLETERAS_DIGITALES_CATALOGO.ADD];
-      if (catalogTab === "tarjetas locales") return [TARJETAS_LOCALES_CATALOGO.ADD];
+      if (catalogTab === "tarjetas") return [TARJETAS_CATALOGO.ADD];
     }
-    if (mainTab === "instancias")
-      return instanceTab === "cuentas" ? [CUENTAS_BANCARIAS.ADD] : [BILLETERAS_DIGITALES.ADD];
+    if (mainTab === "instancias") {
+      if (instanceTab === "cuentas") return [CUENTAS_BANCARIAS.ADD];
+      if (instanceTab === "billeteras digitales") return [BILLETERAS_DIGITALES.ADD];
+    }
     return [];
   };
 

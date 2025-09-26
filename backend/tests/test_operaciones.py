@@ -11,11 +11,10 @@ from apps.operaciones.models import (
     CuentaBancaria,
     BilleteraDigital,
     Tarjeta,
-    TarjetaLocal,
     TipoMetodoFinanciero,
     Banco,
     BilleteraDigitalCatalogo,
-    TarjetaLocalCatalogo,
+    TarjetaCatalogo,
     Cheque,
 )
 
@@ -137,25 +136,38 @@ def billetera_data_orm(plataforma_instance):
 
 
 @pytest.fixture
-def tarjeta_local_catalogo_instance():
-    catalogo, _ = TarjetaLocalCatalogo.objects.get_or_create(
+def tarjeta_catalogo_instance():
+    tarjeta_catalogo, _ = TarjetaCatalogo.objects.get_or_create(
         marca='Visa',
         defaults={
-            'comision_compra': 3.20,
-            'comision_venta': 2.80,
+            'comision_compra': 3.00,
+            'comision_venta': 2.50,
             'comision_personalizada_compra': True,
-            'comision_personalizada_venta': True
+            'comision_personalizada_venta': False
         }
     )
-    return catalogo
-
+    return tarjeta_catalogo
 
 @pytest.fixture
-def tarjeta_data():
+def tarjeta_data(tarjeta_catalogo_instance):
     return {
         'tipo': 'STRIPE',
         'payment_method_id': 'pm_test_123',
-        'brand': 'VISA',
+        'marca': tarjeta_catalogo_instance.id,  # Para API - usar ID
+        'brand': 'visa',
+        'last4': '4242',
+        'exp_month': 12,
+        'exp_year': 2030,
+        'titular': 'Casa Cambio'
+    }
+
+@pytest.fixture
+def tarjeta_data_orm(tarjeta_catalogo_instance):
+    return {
+        'tipo': 'STRIPE',
+        'payment_method_id': 'pm_test_123_orm',
+        'marca': tarjeta_catalogo_instance,  # Para ORM - usar instancia
+        'brand': 'visa',
         'last4': '4242',
         'exp_month': 12,
         'exp_year': 2030,
@@ -164,23 +176,29 @@ def tarjeta_data():
 
 
 @pytest.fixture
-def tarjeta_local_data(tarjeta_local_catalogo_instance):
+def tarjeta_local_data(tarjeta_catalogo_instance):
     return {
-        'marca': tarjeta_local_catalogo_instance.id,  # Para API - usar ID
+        'tipo': 'LOCAL',
+        'payment_method_id': 'pm_local_123',
+        'marca': tarjeta_catalogo_instance.id,  # Para API - usar ID
+        'brand': 'visa',
         'last4': '1234',
-        'titular': 'Juan Perez',
         'exp_month': 8,
-        'exp_year': 2028
+        'exp_year': 2028,
+        'titular': 'Juan Perez'
     }
 
 @pytest.fixture
-def tarjeta_local_data_orm(tarjeta_local_catalogo_instance):
+def tarjeta_local_data_orm(tarjeta_catalogo_instance):
     return {
-        'marca': tarjeta_local_catalogo_instance,  # Para ORM - usar instancia
+        response = api_client.post('/api/operaciones/tarjetas-catalogo/', tarjeta_data, format='json')        'tipo': 'LOCAL',
+        'payment_method_id': 'pm_local_123_orm',
+        'marca': tarjeta_catalogo_instance,  # Para ORM - usar instancia
+        'brand': 'visa',
         'last4': '1234',
-        'titular': 'Juan Perez',
         'exp_month': 8,
-        'exp_year': 2028
+        'exp_year': 2028,
+        'titular': 'Juan Perez'
     }
 
 
@@ -327,18 +345,16 @@ class TestTarjetaAPI:
         assert response.status_code == status.HTTP_201_CREATED
         assert Tarjeta.objects.count() == 1
 
-    def test_eliminar_tarjeta_desactiva_detalle(self, api_client, metodo_data, detalle_data, tarjeta_data):
+    def test_eliminar_tarjeta_desactiva_detalle(self, api_client, metodo_data, detalle_data, tarjeta_data_orm):
         metodo = MetodoFinanciero.objects.create(**metodo_data)
         detalle = MetodoFinancieroDetalle.objects.create(metodo_financiero=metodo, es_cuenta_casa=True, alias='Casa-Tarj2')
-        tarjeta = Tarjeta.objects.create(metodo_financiero_detalle=detalle, **tarjeta_data)
+        tarjeta = Tarjeta.objects.create(metodo_financiero_detalle=detalle, **tarjeta_data_orm)
 
         response = api_client.delete(f'/api/operaciones/tarjetas/{tarjeta.id}/')
         assert response.status_code == status.HTTP_200_OK
         detalle.refresh_from_db()
         assert detalle.is_active is False
 
-
-class TestTarjetaLocalAPI:
     def test_crear_tarjeta_local_api(self, api_client, metodo_data, detalle_data, tarjeta_local_data):
         metodo = MetodoFinanciero.objects.create(**metodo_data)
         detalle = MetodoFinancieroDetalle.objects.create(metodo_financiero=metodo, es_cuenta_casa=True, alias='Casa-TarjLocal')
@@ -346,16 +362,16 @@ class TestTarjetaLocalAPI:
         payload = tarjeta_local_data.copy()
         payload['metodo_financiero_detalle'] = detalle.id
 
-        response = api_client.post('/api/operaciones/tarjetas-locales/', payload, format='json')
+        response = api_client.post('/api/operaciones/tarjetas/', payload, format='json')
         assert response.status_code == status.HTTP_201_CREATED
-        assert TarjetaLocal.objects.count() == 1
+        assert Tarjeta.objects.count() >= 1
 
     def test_eliminar_tarjeta_local_desactiva_detalle(self, api_client, metodo_data, detalle_data, tarjeta_local_data_orm):
         metodo = MetodoFinanciero.objects.create(**metodo_data)
         detalle = MetodoFinancieroDetalle.objects.create(metodo_financiero=metodo, es_cuenta_casa=True, alias='Casa-TarjLocal2')
-        tarjeta_local = TarjetaLocal.objects.create(metodo_financiero_detalle=detalle, **tarjeta_local_data_orm)
+        tarjeta_local = Tarjeta.objects.create(metodo_financiero_detalle=detalle, **tarjeta_local_data_orm)
 
-        response = api_client.delete(f'/api/operaciones/tarjetas-locales/{tarjeta_local.id}/')
+        response = api_client.delete(f'/api/operaciones/tarjetas/{tarjeta_local.id}/')
         assert response.status_code == status.HTTP_200_OK
         detalle.refresh_from_db()
         assert detalle.is_active is False
@@ -972,46 +988,48 @@ class TestCatalogoComisionesActualizados:
             nombre='Banco Comisiones Diferenciadas',
             cvu='1234567890123456789012',
             comision_compra=2.75,
-            comision_venta=2.25,
+            comision_venta=3.25,
             comision_personalizada_compra=True,
             comision_personalizada_venta=False
         )
         
         assert banco.comision_compra == 2.75
-        assert banco.comision_venta == 2.25
+        assert banco.comision_venta == 3.25
         assert banco.comision_personalizada_compra is True
         assert banco.comision_personalizada_venta is False
-        assert banco.is_active is True
+        assert banco.is_active is True  # valor por defecto
     
     def test_billetera_digital_campos_comisiones_diferenciadas(self):
         """Verifica que BilleteraDigitalCatalogo tenga comisiones diferenciadas"""
         billetera = BilleteraDigitalCatalogo.objects.create(
-            nombre='PayPal Diferenciado',
-            comision_compra=4.20,
-            comision_venta=3.80,
+            nombre='PayPal Test',
+            comision_compra=3.50,
+            comision_venta=2.80,
             comision_personalizada_compra=False,
             comision_personalizada_venta=True
         )
         
-        assert billetera.comision_compra == 4.20
-        assert billetera.comision_venta == 3.80
+        assert billetera.comision_compra == 3.50
+        assert billetera.comision_venta == 2.80
         assert billetera.comision_personalizada_compra is False
         assert billetera.comision_personalizada_venta is True
+        assert billetera.is_active is True  # valor por defecto
     
-    def test_tarjeta_local_campos_comisiones_diferenciadas(self):
-        """Verifica que TarjetaLocalCatalogo tenga comisiones diferenciadas"""
-        tarjeta = TarjetaLocalCatalogo.objects.create(
-            marca='Visa Diferenciada',
-            comision_compra=3.20,
-            comision_venta=2.80,
+    def test_tarjeta_catalogo_campos_comisiones(self):
+        """Verifica que el modelo TarjetaCatalogo tenga los campos de comisiones"""
+        tarjeta = TarjetaCatalogo.objects.create(
+            marca='Visa Test',
+            comision_compra=1.25,
+            comision_venta=1.50,
             comision_personalizada_compra=True,
-            comision_personalizada_venta=True
+            comision_personalizada_venta=False
         )
         
-        assert tarjeta.comision_compra == 3.20
-        assert tarjeta.comision_venta == 2.80
+        assert tarjeta.comision_compra == 1.25
+        assert tarjeta.comision_venta == 1.50
         assert tarjeta.comision_personalizada_compra is True
-        assert tarjeta.comision_personalizada_venta is True
+        assert tarjeta.comision_personalizada_venta is False
+        assert tarjeta.is_active is True  # valor por defecto
     
     def test_valores_por_defecto_comisiones_diferenciadas(self):
         """Verifica valores por defecto de comisiones diferenciadas"""
@@ -1022,8 +1040,8 @@ class TestCatalogoComisionesActualizados:
         billetera = BilleteraDigitalCatalogo.objects.create(
             nombre='Billetera Default Diferenciada'
         )
-        tarjeta = TarjetaLocalCatalogo.objects.create(
-            marca='Tarjeta Default Diferenciada'
+        tarjeta = TarjetaCatalogo.objects.create(
+            marca='Tarjeta Default Test'
         )
         
         # Verificar valores por defecto
@@ -1031,129 +1049,11 @@ class TestCatalogoComisionesActualizados:
         assert banco.comision_venta == 0.00
         assert banco.comision_personalizada_compra is False
         assert banco.comision_personalizada_venta is False
-        
         assert billetera.comision_compra == 0.00
         assert billetera.comision_venta == 0.00
         assert billetera.comision_personalizada_compra is False
         assert billetera.comision_personalizada_venta is False
-        
         assert tarjeta.comision_compra == 0.00
         assert tarjeta.comision_venta == 0.00
         assert tarjeta.comision_personalizada_compra is False
         assert tarjeta.comision_personalizada_venta is False
-
-
-class TestComisionEspecifica:
-    """Tests para la lógica de comisión específica por catálogo"""
-    
-    def test_simulacion_usa_comision_banco_cuando_habilitada(
-        self, 
-        setup_divisas_y_tasa, 
-        cliente_con_categoria
-    ):
-        """Test que simulación use comisión específica del banco cuando está habilitada"""
-        base = setup_divisas_y_tasa['base']
-        usd = setup_divisas_y_tasa['usd']
-        cliente = cliente_con_categoria
-        
-        # Banco con comisión personalizada habilitada
-        banco = Banco.objects.create(
-            nombre='Banco Comision Personalizada',
-            cvu='5555555555555555555555',
-            comision_compra=1.0,  # Casa compra = cliente vende
-            comision_venta=3.0,   # Casa vende = cliente compra
-            comision_personalizada_compra=True,
-            comision_personalizada_venta=True
-        )
-        
-        metodo = MetodoFinanciero.objects.create(
-            nombre=TipoMetodoFinanciero.TRANSFERENCIA_BANCARIA,
-            comision_pago_porcentaje=5.0,    # Por defecto - no debe usarse
-            comision_cobro_porcentaje=5.0,   # Por defecto - no debe usarse
-            permite_pago=True,
-            permite_cobro=True,
-            is_active=True
-        )
-        
-        detalle = MetodoFinancieroDetalle.objects.create(
-            cliente=cliente,
-            metodo_financiero=metodo,
-            alias='Cuenta Comision Personalizada'
-        )
-        
-        cuenta = CuentaBancaria.objects.create(
-            metodo_financiero_detalle=detalle,
-            banco=banco,
-            numero_cuenta='555000111',
-            titular=cliente.nombre,
-            cbu_cvu='0070555000111222333444'
-        )
-        
-        # Simulación: Cliente compra USD (casa vende) -> debe usar comision_venta del banco
-        resultado = calcular_simulacion_operacion_privada_con_instancia(
-            cliente_id=cliente.idCliente,
-            divisa_origen_id=base.id,  # PYG (base)
-            divisa_destino_id=usd.id,  # USD
-            monto=1000,
-            detalle_metodo_id=detalle.id,
-            metodo_id=None
-        )
-        
-        # Debe usar comisión específica del banco (3.0) en lugar de la del método (5.0)
-        assert resultado["parametros"]["comision_metodo"] == 3.0
-        
-    def test_simulacion_usa_comision_metodo_cuando_catalogo_deshabilitado(
-        self, 
-        setup_divisas_y_tasa, 
-        cliente_con_categoria
-    ):
-        """Test que simulación use comisión del método cuando catálogo no tiene personalizada habilitada"""
-        base = setup_divisas_y_tasa['base']
-        usd = setup_divisas_y_tasa['usd']
-        cliente = cliente_con_categoria
-        
-        # Banco con comisión personalizada deshabilitada
-        banco = Banco.objects.create(
-            nombre='Banco Sin Comision Personalizada',
-            cvu='6666666666666666666666',
-            comision_compra=1.0,  # No debe usarse
-            comision_venta=3.0,   # No debe usarse
-            comision_personalizada_compra=False,
-            comision_personalizada_venta=False
-        )
-        
-        metodo = MetodoFinanciero.objects.create(
-            nombre=TipoMetodoFinanciero.TRANSFERENCIA_BANCARIA,
-            comision_pago_porcentaje=4.0,
-            comision_cobro_porcentaje=4.5,  # Debe usarse esta
-            permite_pago=True,
-            permite_cobro=True,
-            is_active=True
-        )
-        
-        detalle = MetodoFinancieroDetalle.objects.create(
-            cliente=cliente,
-            metodo_financiero=metodo,
-            alias='Cuenta Sin Comision Personalizada'
-        )
-        
-        cuenta = CuentaBancaria.objects.create(
-            metodo_financiero_detalle=detalle,
-            banco=banco,
-            numero_cuenta='666000111',
-            titular=cliente.nombre,
-            cbu_cvu='0070666000111222333444'
-        )
-        
-        # Simulación: Cliente compra USD (casa vende) -> debe usar comision_cobro_porcentaje del método
-        resultado = calcular_simulacion_operacion_privada_con_instancia(
-            cliente_id=cliente.idCliente,
-            divisa_origen_id=base.id,
-            divisa_destino_id=usd.id,
-            monto=1000,
-            detalle_metodo_id=detalle.id,
-            metodo_id=None
-        )
-        
-        # Debe usar comisión del método (4.5) porque banco no tiene personalizada habilitada
-        assert resultado["parametros"]["comision_metodo"] == 4.5

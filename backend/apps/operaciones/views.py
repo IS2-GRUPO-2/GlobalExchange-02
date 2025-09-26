@@ -15,26 +15,24 @@ from rest_framework.exceptions import PermissionDenied
 from .models import (
     Banco,
     BilleteraDigitalCatalogo,
-    TarjetaLocalCatalogo,
+    TarjetaCatalogo,
     MetodoFinanciero,
     MetodoFinancieroDetalle,
     CuentaBancaria,
     BilleteraDigital,
     Tarjeta,
-    TarjetaLocal,
     Cheque,
 )
 from .serializers import (
     BancoSerializer,
     BilleteraDigitalCatalogoSerializer,
-    TarjetaLocalCatalogoSerializer,
+    TarjetaCatalogoSerializer,
     ChequeSerializer,
     MetodoFinancieroSerializer,
     MetodoFinancieroDetalleSerializer,
     CuentaBancariaSerializer,
     BilleteraDigitalSerializer,
     TarjetaSerializer,
-    TarjetaLocalSerializer,
     SimulacionPrivadaSerializer,
     SimulacionPrivadaConInstanciaSerializer,
     SimulacionPublicaSerializer,
@@ -258,15 +256,15 @@ class BilleteraDigitalCatalogoViewSet(viewsets.ModelViewSet):
         return Response(response_data, status=status.HTTP_200_OK)
 
 
-class TarjetaLocalCatalogoViewSet(viewsets.ModelViewSet):
+class TarjetaCatalogoViewSet(viewsets.ModelViewSet):
     """
     ViewSet para operaciones CRUD del catálogo de marcas de tarjetas locales.
 
     Proporciona endpoints para gestionar las marcas de tarjetas locales disponibles en el sistema.
     Solo los administradores pueden crear, actualizar o eliminar marcas.
     """
-    queryset = TarjetaLocalCatalogo.objects.all()
-    serializer_class = TarjetaLocalCatalogoSerializer
+    queryset = TarjetaCatalogo.objects.all()
+    serializer_class = TarjetaCatalogoSerializer
     permission_classes = [permissions.IsAuthenticated]
     filter_backends = [filters.SearchFilter]
     search_fields = ['marca']
@@ -315,8 +313,8 @@ class TarjetaLocalCatalogoViewSet(viewsets.ModelViewSet):
         # Si se desactiva, desactivar también todas las tarjetas locales relacionadas
         affected_instances = []
         if not instance.is_active:
-            from .models import TarjetaLocal
-            tarjetas_relacionadas = TarjetaLocal.objects.filter(
+            from .models import Tarjeta
+            tarjetas_relacionadas = Tarjeta.objects.filter(
                 marca=instance,
                 metodo_financiero_detalle__is_active=True
             )
@@ -327,13 +325,13 @@ class TarjetaLocalCatalogoViewSet(viewsets.ModelViewSet):
                 tarjeta.metodo_financiero_detalle.save()
                 affected_instances.append({
                     'id': tarjeta.id,
-                    'tipo': 'tarjeta_local',
+                    'tipo': tarjeta.tipo,
                     'titular': tarjeta.titular
                 })
         else:
             # Si se reactiva la marca, permitir reactivar tarjetas que fueron desactivadas por catálogo
-            from .models import TarjetaLocal
-            tarjetas_relacionadas = TarjetaLocal.objects.filter(
+            from .models import Tarjeta
+            tarjetas_relacionadas = Tarjeta.objects.filter(
                 marca=instance,
                 metodo_financiero_detalle__is_active=False,
                 metodo_financiero_detalle__desactivado_por_catalogo=True
@@ -345,7 +343,7 @@ class TarjetaLocalCatalogoViewSet(viewsets.ModelViewSet):
                 tarjeta.metodo_financiero_detalle.save()
                 affected_instances.append({
                     'id': tarjeta.id,
-                    'tipo': 'tarjeta_local',
+                    'tipo': tarjeta.tipo,
                     'titular': tarjeta.titular
                 })
         
@@ -461,9 +459,9 @@ class MetodoFinancieroDetalleViewSet(viewsets.ModelViewSet):
         """
         if not (self.request.user.has_perm('operaciones.add_metodofinanciero')):
             # Para usuarios no-admin, asignar automáticamente el primer cliente asignado
-            clientes = self.request.user.clientes.all()
-            if clientes.exists():
-                serializer.save(cliente=clientes.first())
+            cliente = self.request.user.clienteActual
+            if cliente is not None:
+                serializer.save(cliente=cliente)
             else:
                 # Si no tiene clientes asignados, devolver error
                 raise PermissionDenied("No tienes clientes asignados para crear métodos financieros.")
@@ -552,11 +550,13 @@ class CuentaBancariaViewSet(viewsets.ModelViewSet):
         queryset = CuentaBancaria.objects.select_related('metodo_financiero_detalle', 'banco').all()
         
         if self.request.user.has_perm('operaciones.view_metodofinanciero'):
-            return queryset.filter(metodo_financiero_detalle__es_cuenta_casa=True)
+            # Admins ven todas las cuentas (casa y clientes)
+            return queryset
         else:
-            # Usuarios regulares ven las cuentas de sus clientes asignados
+            # Usuarios regulares ven solo las de sus clientes (no las de la casa)
             return queryset.filter(
-                metodo_financiero_detalle__cliente__in=self.request.user.clientes.all()
+                metodo_financiero_detalle__cliente=self.request.user.clienteActual,
+                metodo_financiero_detalle__es_cuenta_casa=False
             )
 
     def get_permissions(self):
@@ -606,7 +606,6 @@ class BilleteraDigitalViewSet(viewsets.ModelViewSet):
         """
         Filtrar billeteras según permisos del usuario.
         
-        - Administradores: ven todas las billeteras
         - Usuarios regulares: solo ven sus propias billeteras
         
         NOTA: No se filtra por is_active aquí, se incluye el estado en el serializer
@@ -614,11 +613,13 @@ class BilleteraDigitalViewSet(viewsets.ModelViewSet):
         queryset = BilleteraDigital.objects.select_related('metodo_financiero_detalle', 'plataforma').all()
         
         if self.request.user.has_perm('operaciones.view_metodofinanciero'):
-            return queryset.filter(metodo_financiero_detalle__es_cuenta_casa=True)
+            # Admins ven todas las billeteras (casa y clientes)
+            return queryset
         else:
-            # Usuarios regulares ven las billeteras de sus clientes asignados
+            # Usuarios regulares ven solo las de sus clientes (no las de la casa)
             return queryset.filter(
-                metodo_financiero_detalle__cliente__in=self.request.user.clientes.all()
+                metodo_financiero_detalle__cliente=self.request.user.clienteActual,
+                metodo_financiero_detalle__es_cuenta_casa=False
             )
 
     def get_permissions(self):
@@ -666,7 +667,6 @@ class TarjetaViewSet(viewsets.ModelViewSet):
         """
         Filtrar tarjetas según permisos del usuario.
         
-        - Administradores: ven todas las tarjetas
         - Usuarios regulares: solo ven sus propias tarjetas
         
         NOTA: No se filtra por is_active aquí, se incluye el estado en el serializer
@@ -674,12 +674,26 @@ class TarjetaViewSet(viewsets.ModelViewSet):
         queryset = Tarjeta.objects.select_related('metodo_financiero_detalle').all()
 
         if self.request.user.has_perm('operaciones.view_metodofinanciero'):
-            return queryset.filter(metodo_financiero_detalle__es_cuenta_casa=True)
+            # Admins ven todas las tarjetas (casa y clientes)
+            return queryset
         else:
-            # Usuarios regulares ven las tarjetas de sus clientes asignados
+            # Usuarios regulares ven solo las de sus clientes (no las de la casa)
             return queryset.filter(
-                metodo_financiero_detalle__cliente__in=self.request.user.clientes.all()
+                metodo_financiero_detalle__cliente=self.request.user.clienteActual,
+                metodo_financiero_detalle__es_cuenta_casa=False
             )
+
+    def create(self, request, *args, **kwargs):
+        """Override para debug - temporal"""
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.error(f"DEBUG: Datos recibidos para crear tarjeta: {request.data}")
+        
+        serializer = self.get_serializer(data=request.data)
+        if not serializer.is_valid():
+            logger.error(f"DEBUG: Errores de validación: {serializer.errors}")
+            
+        return super().create(request, *args, **kwargs)
 
     def get_permissions(self):
         """
@@ -708,65 +722,6 @@ class TarjetaViewSet(viewsets.ModelViewSet):
         return Response({"message": f"Tarjeta {instance.brand} ****{instance.last4} desactivada (eliminado lógico)."}, status=status.HTTP_200_OK)
 
 
-class TarjetaLocalViewSet(viewsets.ModelViewSet):
-    """
-    ViewSet para operaciones CRUD de tarjetas locales.
-
-    Gestiona los detalles específicos de tarjetas locales asociadas
-    a métodos financieros.
-    """
-    queryset = TarjetaLocal.objects.all()
-    serializer_class = TarjetaLocalSerializer
-    permission_classes = [permissions.IsAuthenticated]
-    filter_backends = [filters.SearchFilter]
-    search_fields = ['marca__marca', 'last4', 'titular']
-    pagination_class = OperacionesPagination
-
-    def get_queryset(self):
-        """
-        Filtrar tarjetas locales según permisos del usuario.
-        
-        - Administradores: ven todas las tarjetas locales
-        - Usuarios regulares: solo ven sus propias tarjetas locales
-        
-        NOTA: No se filtra por is_active aquí, se incluye el estado en el serializer
-        """
-        queryset = TarjetaLocal.objects.select_related('metodo_financiero_detalle', 'marca').all()
-
-        if self.request.user.has_perm('operaciones.view_metodofinanciero'):
-            return queryset.filter(metodo_financiero_detalle__es_cuenta_casa=True)
-        else:
-            # Usuarios regulares ven las tarjetas locales de sus clientes asignados
-            return queryset.filter(
-                metodo_financiero_detalle__cliente__in=self.request.user.clientes.all()
-            )
-
-    def get_permissions(self):
-        """
-        Instancia y retorna la lista de permisos que requiere esta vista.
-        """
-        if self.action in ['update', 'partial_update', 'destroy']:
-            # Solo admins pueden editar/eliminar tarjetas locales
-            permission_classes = [permissions.IsAuthenticated]
-        else:
-            # Usuarios autenticados pueden ver y crear sus propias tarjetas locales
-            permission_classes = [permissions.IsAuthenticated]
-        return [permission() for permission in permission_classes]
-
-    def destroy(self, request, *args, **kwargs):
-        """Desactivación lógica de la tarjeta local a través de su detalle.
-
-        Marca el `MetodoFinancieroDetalle` asociado como inactivo.
-        """
-        instance = self.get_object()
-        detalle = instance.metodo_financiero_detalle
-        if not detalle.is_active:
-            return Response({"detail": "La tarjeta local ya está desactivada."}, status=status.HTTP_404_NOT_FOUND)
-
-        detalle.is_active = False
-        detalle.save()
-        return Response({"message": f"Tarjeta local {instance.marca.marca} ****{instance.last4} desactivada (eliminado lógico)."}, status=status.HTTP_200_OK)
-    
 class ChequeViewSet(viewsets.ModelViewSet):
     queryset = Cheque.objects.all()
     serializer_class = ChequeSerializer

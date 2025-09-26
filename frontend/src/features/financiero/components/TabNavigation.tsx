@@ -6,7 +6,7 @@ import type {
   CatalogTabType,
 } from "../types/MetodoFinanciero";
 import Can from "../../../components/Can";
-import { BANCOS, BILLETERAS_DIGITALES, BILLETERAS_DIGITALES_CATALOGO, CUENTAS_BANCARIAS, METODOS_FINANCIEROS, TARJETAS_LOCALES, TARJETAS_LOCALES_CATALOGO } from "../../../types/perms";
+import { BANCOS, BILLETERAS_DIGITALES, BILLETERAS_DIGITALES_CATALOGO, CUENTAS_BANCARIAS, METODOS_FINANCIEROS, TARJETAS_CATALOGO } from "../../../types/perms";
 
 interface TabNavigationProps {
   mainTab: MainTabType;
@@ -23,8 +23,6 @@ const getInstanceTabIcon = (tab: InstanceTabType) => {
       return <Building2 className="w-5 h-5" />;
     case "billeteras digitales":
       return <Smartphone className="w-5 h-5" />;
-    case "tarjetas locales":
-      return <CreditCard className="w-5 h-5" />;
   }
 };
 
@@ -34,8 +32,6 @@ const getInstanceTabLabel = (tab: InstanceTabType) => {
       return "Cuentas";
     case "billeteras digitales":
       return "Billeteras Digitales";
-    case "tarjetas locales":
-      return "Tarjetas Locales";
   }
 };
 
@@ -45,8 +41,6 @@ const getInstanceViewPerm = (tab: InstanceTabType) => {
       return [CUENTAS_BANCARIAS.VIEW];
     case "billeteras digitales":
       return [BILLETERAS_DIGITALES.VIEW];
-    case "tarjetas locales":
-      return [TARJETAS_LOCALES.VIEW];
   }
 };
 
@@ -76,7 +70,7 @@ export const TabNavigation: React.FC<TabNavigationProps> = ({
                 Catálogo de Métodos Financieros
               </button>
             </Can>
-            <Can anyOf={[BANCOS.VIEW, BILLETERAS_DIGITALES_CATALOGO.VIEW, TARJETAS_LOCALES_CATALOGO.VIEW]}>
+            <Can anyOf={[BANCOS.VIEW, BILLETERAS_DIGITALES_CATALOGO.VIEW, TARJETAS_CATALOGO.VIEW]}>
               <button
                 onClick={() => setMainTab("catalogos")}
                 className={`py-2 px-1 border-b-2 font-medium text-sm ${
@@ -88,7 +82,7 @@ export const TabNavigation: React.FC<TabNavigationProps> = ({
                 Catálogos de Entidades
               </button>
             </Can>
-            <Can anyOf={[CUENTAS_BANCARIAS.VIEW, BILLETERAS_DIGITALES.VIEW, TARJETAS_LOCALES.VIEW]}>
+            <Can anyOf={[CUENTAS_BANCARIAS.VIEW, BILLETERAS_DIGITALES.VIEW]}>
               <button
                 onClick={() => setMainTab("instancias")}
                 className={`py-2 px-1 border-b-2 font-medium text-sm ${
@@ -109,7 +103,7 @@ export const TabNavigation: React.FC<TabNavigationProps> = ({
         <div className="mb-6">
           <div className="border-b border-gray-200">
             <nav className="-mb-px flex space-x-8">
-              {(["cuentas", "billeteras digitales", "tarjetas locales"] as InstanceTabType[]).map(
+              {(["cuentas", "billeteras digitales"] as InstanceTabType[]).map(
                 (tab) => (
                   <Can key={tab} anyOf={getInstanceViewPerm(tab)}>
                     <button
@@ -162,17 +156,17 @@ export const TabNavigation: React.FC<TabNavigationProps> = ({
                   <span>Billeteras Digitales</span>
                 </button>
               </Can>
-              <Can anyOf={[TARJETAS_LOCALES_CATALOGO.VIEW]}>
+              <Can anyOf={[TARJETAS_CATALOGO.VIEW]}>
                 <button
-                  onClick={() => setCatalogTab("tarjetas locales")}
+                  onClick={() => setCatalogTab("tarjetas")}
                   className={`py-2 px-1 border-b-2 font-medium text-sm flex items-center space-x-2 ${
-                    catalogTab === "tarjetas locales"
+                    catalogTab === "tarjetas"
                       ? "border-gray-900 text-gray-900"
                       : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
                   }`}
                 >
                   <CreditCard className="w-5 h-5" />
-                  <span>Tarjetas Locales</span>
+                  <span>Tarjetas</span>
                 </button>
               </Can>
             </nav>

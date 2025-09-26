@@ -1,28 +1,31 @@
 import React, { useState, useEffect } from "react";
-import { toast } from "react-toastify";
-import { getTarjetasLocalesCatalogo } from "../features/financiero/services/metodoFinancieroService";
+import { getTarjetasCatalogo } from "../services/metodoFinancieroService";
 import type { Tarjeta } from "../types/MetodoFinanciero";
-import type { TarjetaLocalCatalogo } from "../features/financiero/types/MetodoFinanciero";
+import type { TarjetaCatalogo } from "../types/MetodoFinanciero";
 
 export interface TarjetaFormData {
   tipo: 'LOCAL' | 'STRIPE';
   payment_method_id: string;
-  brand: string;
+  // Campos para STRIPE
+  brand?: string | null;
+  // Campos para LOCAL
+  marca?: number; // ID de marca local cuando tipo es LOCAL
+  // Campos comunes
   last4: string;
   exp_month: number;
   exp_year: number;
   titular: string;
   metodo_financiero_detalle: number;
-  // Campos adicionales para simulación (no se guardan)
+  // Campos adicionales para captura (no se guardan)
   numero_completo: string;
   cvv: string;
-  marca_local?: number; // ID de marca local cuando tipo es LOCAL
 }
 
 interface TarjetaFormErrors {
   tipo?: string;
   payment_method_id?: string;
   brand?: string;
+  marca?: string;
   last4?: string;
   exp_month?: string;
   exp_year?: string;
@@ -30,7 +33,6 @@ interface TarjetaFormErrors {
   metodo_financiero_detalle?: string;
   numero_completo?: string;
   cvv?: string;
-  marca_local?: string;
 }
 
 interface TarjetaFormProps {
@@ -46,27 +48,27 @@ const TarjetaForm: React.FC<TarjetaFormProps> = ({
 }) => {
   const [formData, setFormData] = useState<TarjetaFormData>({
     tipo: initialData?.tipo || 'STRIPE',
-    payment_method_id: initialData?.payment_method_id || "",
+    payment_method_id: "", // Se genera automáticamente
     brand: initialData?.brand || "",
+    marca: initialData?.marca || undefined,
     last4: initialData?.last4 || "",
     exp_month: initialData?.exp_month || new Date().getMonth() + 1,
     exp_year: initialData?.exp_year || new Date().getFullYear(),
     titular: initialData?.titular || "",
     metodo_financiero_detalle: initialData?.metodo_financiero_detalle || 0,
-    // Campos adicionales para simulación
+    // Campos adicionales para captura
     numero_completo: "",
     cvv: "",
-    marca_local: undefined,
   });
 
   const [errors, setErrors] = useState<TarjetaFormErrors>({});
-  const [marcasLocales, setMarcasLocales] = useState<TarjetaLocalCatalogo[]>([]);
+  const [marcasLocales, setMarcasLocales] = useState<TarjetaCatalogo[]>([]);
 
   // Cargar marcas locales disponibles
   useEffect(() => {
     const fetchMarcasLocales = async () => {
       try {
-        const response = await getTarjetasLocalesCatalogo({});
+        const response = await getTarjetasCatalogo({});
         setMarcasLocales(response.results.filter(marca => marca.is_active));
       } catch (error) {
         console.error("Error loading marcas locales:", error);
@@ -78,6 +80,16 @@ const TarjetaForm: React.FC<TarjetaFormProps> = ({
 
   const validateForm = (): boolean => {
     const newErrors: TarjetaFormErrors = {};
+
+    // Tipo es requerido
+    if (!formData.tipo) {
+      newErrors.tipo = "Debe seleccionar un tipo de tarjeta";
+    }
+
+    // Titular es requerido
+    if (!formData.titular.trim()) {
+      newErrors.titular = "El titular es requerido";
+    }
 
     // Validaciones para número completo de tarjeta
     if (!formData.numero_completo.trim()) {
@@ -95,16 +107,13 @@ const TarjetaForm: React.FC<TarjetaFormProps> = ({
 
     // Validaciones específicas según el tipo
     if (formData.tipo === 'LOCAL') {
-      if (!formData.marca_local) {
-        newErrors.marca_local = "Debe seleccionar una marca";
+      if (!formData.marca) {
+        newErrors.marca = "Debe seleccionar una marca";
       }
     }
     // Nota: Para Stripe, el payment_method_id se genera automáticamente
 
-    if (!formData.titular.trim()) {
-      newErrors.titular = "El titular es requerido";
-    }
-
+    // Validaciones de fechas
     const currentYear = new Date().getFullYear();
     const currentMonth = new Date().getMonth() + 1;
 
@@ -132,31 +141,36 @@ const TarjetaForm: React.FC<TarjetaFormProps> = ({
       const cleanedNumber = formData.numero_completo.replace(/\s/g, '');
       const last4 = cleanedNumber.slice(-4);
       
-      // Determinar la marca automáticamente basada en el número
-      let brand = formData.brand;
-      if (formData.tipo === 'LOCAL' && formData.marca_local) {
-        const selectedMarca = marcasLocales.find(m => m.id === formData.marca_local);
-        brand = selectedMarca?.marca || formData.brand;
-      } else if (!brand) {
-        // Auto-detectar marca según el número
-        if (cleanedNumber.startsWith('4')) brand = 'Visa';
-        else if (cleanedNumber.match(/^5[1-5]/)) brand = 'Mastercard';
-        else if (cleanedNumber.match(/^3[47]/)) brand = 'American Express';
-        else brand = 'Otra';
-      }
-
+      // Generar payment_method_id automáticamente
+      const paymentMethodId = `pm_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+      
       const submitData: TarjetaFormData = {
         ...formData,
-        brand,
         last4,
-        payment_method_id: formData.tipo === 'STRIPE' 
-          ? formData.payment_method_id 
-          : `local_${Date.now()}`, // ID simulado para tarjetas locales
+        payment_method_id: paymentMethodId,
       };
 
-      // Mostrar mensaje de verificación simulada
-      toast.info("Verificando la existencia de la tarjeta...");
+      // Limpiar campos que no se deben enviar
+      delete (submitData as any).numero_completo;
+      delete (submitData as any).cvv;
+
+      // Para tarjetas LOCAL, limpiar brand si está vacío, y obtener brand de la marca seleccionada
+      if (formData.tipo === 'LOCAL') {
+        if (formData.marca) {
+          const marcaSeleccionada = marcasLocales.find(m => m.id === formData.marca);
+          submitData.brand = marcaSeleccionada?.marca || null;
+        } else {
+          submitData.brand = null;
+        }
+      }
       
+      // Para tarjetas STRIPE, mantener el brand como está
+      // Si brand está vacío para STRIPE, dejarlo como null
+      if (formData.tipo === 'STRIPE' && !formData.brand?.trim()) {
+        submitData.brand = null;
+      }
+
+      console.log("DEBUG: Datos que se van a enviar:", submitData);
       onSubmit(submitData);
     }
   };
@@ -168,7 +182,7 @@ const TarjetaForm: React.FC<TarjetaFormProps> = ({
     
     if (field === 'exp_month' || field === 'exp_year') {
       value = parseInt(e.target.value);
-    } else if (field === 'marca_local') {
+    } else if (field === 'marca') {
       value = e.target.value ? parseInt(e.target.value) : undefined;
     } else if (field === 'numero_completo') {
       // Formatear número de tarjeta con espacios para mejor UX
@@ -194,12 +208,20 @@ const TarjetaForm: React.FC<TarjetaFormProps> = ({
       }));
     }
 
-    // Auto-limpiar marca local cuando se cambia el tipo
-    if (field === 'tipo' && value === 'STRIPE') {
-      setFormData(prev => ({
-        ...prev,
-        marca_local: undefined
-      }));
+    // Auto-limpiar marca cuando se cambia el tipo
+    if (field === 'tipo') {
+      if (value === 'STRIPE') {
+        setFormData(prev => ({
+          ...prev,
+          marca: undefined,
+          brand: ''
+        }));
+      } else if (value === 'LOCAL') {
+        setFormData(prev => ({
+          ...prev,
+          brand: ''
+        }));
+      }
     }
   };
 
@@ -227,19 +249,18 @@ const TarjetaForm: React.FC<TarjetaFormProps> = ({
           <p className="mt-1 text-sm text-red-600">{errors.tipo}</p>
         )}
       </div>
-
-      {/* Marca (solo para tarjetas locales) */}
+      {/* Marca (solo para tarjetas) */}
       {formData.tipo === 'LOCAL' && (
         <div>
-          <label htmlFor="marca_local" className="block text-sm font-medium text-gray-700">
+          <label htmlFor="marca" className="block text-sm font-medium text-gray-700">
             Marca de Tarjeta
           </label>
           <select
-            id="marca_local"
-            value={formData.marca_local || ''}
-            onChange={handleInputChange('marca_local')}
+            id="marca"
+            value={formData.marca || ''}
+            onChange={handleInputChange('marca')}
             className={`mt-1 block w-full rounded-md border ${
-              errors.marca_local ? 'border-red-300' : 'border-gray-300'
+              errors.marca ? 'border-red-300' : 'border-gray-300'
             } px-3 py-2 focus:border-gray-500 focus:outline-none focus:ring-1 focus:ring-gray-500`}
           >
             <option value="">Seleccionar marca...</option>
@@ -247,8 +268,8 @@ const TarjetaForm: React.FC<TarjetaFormProps> = ({
               <option key={marca.id} value={marca.id}>{marca.marca}</option>
             ))}
           </select>
-          {errors.marca_local && (
-            <p className="mt-1 text-sm text-red-600">{errors.marca_local}</p>
+          {errors.marca && (
+            <p className="mt-1 text-sm text-red-600">{errors.marca}</p>
           )}
         </div>
       )}
