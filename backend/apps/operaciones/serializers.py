@@ -12,11 +12,14 @@ from rest_framework import serializers
 from .models import (
     Banco,
     BilleteraDigitalCatalogo,
+    TarjetaLocalCatalogo,
     MetodoFinanciero,
     MetodoFinancieroDetalle,
     CuentaBancaria,
     BilleteraDigital,
     Tarjeta,
+    TarjetaLocal,
+    Cheque,
 )
 
 
@@ -40,6 +43,18 @@ class BilleteraDigitalCatalogoSerializer(serializers.ModelSerializer):
     """
     class Meta:
         model = BilleteraDigitalCatalogo
+        fields = '__all__'
+        read_only_fields = ('fecha_creacion', 'fecha_actualizacion')
+
+
+class TarjetaLocalCatalogoSerializer(serializers.ModelSerializer):
+    """
+    Serializer para el catálogo de marcas de tarjetas locales.
+    
+    Permite gestionar la lista de marcas de tarjetas locales disponibles en el sistema.
+    """
+    class Meta:
+        model = TarjetaLocalCatalogo
         fields = '__all__'
         read_only_fields = ('fecha_creacion', 'fecha_actualizacion')
 
@@ -109,6 +124,31 @@ class TarjetaSerializer(serializers.ModelSerializer):
         model = Tarjeta
         fields = '__all__'  
 
+
+class TarjetaLocalSerializer(serializers.ModelSerializer):
+    """
+    Serializer para tarjetas locales.
+
+    Incluye información de la marca desde el catálogo.
+    """
+    marca_nombre = serializers.CharField(source='marca.marca', read_only=True)
+    marca_activa = serializers.BooleanField(source='marca.is_active', read_only=True)
+
+    class Meta:
+        model = TarjetaLocal
+        fields = '__all__'  
+
+class ChequeSerializer(serializers.ModelSerializer):
+    """
+    Serializer para cheques.
+
+    Incluye validaciones específicas en el modelo.
+    """
+    class Meta:
+        model = Cheque
+        fields = '__all__'
+        read_only_fields = ('fecha_emision', 'estado', 'fecha_validacion_analista', 'analista')
+
 # ======================== Serializers para vistas de simulación de operación ========================
 """
 Serializadores para validar los datos de entrada en las simulaciones de operaciones.
@@ -125,6 +165,40 @@ class SimulacionPrivadaSerializer(serializers.Serializer):
     monto = serializers.DecimalField(max_digits=30, decimal_places=2)
     metodo_id = serializers.IntegerField()
 
+
+
+class SimulacionPrivadaConInstanciaSerializer(serializers.Serializer):
+    """
+    Serializer para usuarios autenticados con instancia específica.
+    Puede usar detalle_metodo_id (instancia específica) o metodo_id (método genérico).
+    """
+    cliente_id = serializers.UUIDField()
+    divisa_origen = serializers.IntegerField()
+    divisa_destino = serializers.IntegerField()
+    monto = serializers.DecimalField(max_digits=30, decimal_places=2)
+    detalle_metodo_id = serializers.IntegerField(required=False, allow_null=True)
+    metodo_id = serializers.IntegerField(required=False, allow_null=True)
+
+    def validate(self, data):
+        """Validar que se proporcione detalle_metodo_id o metodo_id, pero no ambos."""
+        detalle_metodo_id = data.get('detalle_metodo_id')
+        metodo_id = data.get('metodo_id')
+        
+        if not detalle_metodo_id and not metodo_id:
+            raise serializers.ValidationError("Debe proporcionar detalle_metodo_id o metodo_id")
+        
+        if detalle_metodo_id and metodo_id:
+            raise serializers.ValidationError("No puede proporcionar ambos detalle_metodo_id y metodo_id")
+        
+        return data
+
+class MetodosClienteSerializer(serializers.Serializer):
+    """
+    Serializer para validar parámetros de métodos del cliente.
+    """
+    cliente_id = serializers.UUIDField()
+    divisa_origen = serializers.IntegerField()
+    divisa_destino = serializers.IntegerField()
 
 class SimulacionPublicaSerializer(serializers.Serializer):
     """

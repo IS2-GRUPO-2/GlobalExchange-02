@@ -1,6 +1,7 @@
 import type {
   CuentaBancaria,
   BilleteraDigital,
+  TarjetaLocal,
   MetodoFinancieroDetalle,
   InstanceTabType,
   ExtendedItem,
@@ -10,6 +11,7 @@ import type {
 export const filterInstances = (
   cuentas: CuentaBancaria[],
   billeteras: BilleteraDigital[],
+  tarjetasLocales: TarjetaLocal[],
   detalles: MetodoFinancieroDetalle[],
   instanceTab: InstanceTabType,
   search: string,
@@ -23,6 +25,9 @@ export const filterInstances = (
       break;
     case "billeteras digitales":
       items = getExtendedItems(billeteras, "billeteras digitales");
+      break;
+    case "tarjetas locales":
+      items = getExtendedItems(tarjetasLocales, "tarjetas locales");
       break;
   }
 
@@ -54,6 +59,14 @@ export const filterInstances = (
           (billetera.email &&
             billetera.email.toLowerCase().includes(searchLower))
         );
+      case "tarjetas locales":
+        const tarjeta = item as TarjetaLocal & ExtendedItem;
+        return (
+          (tarjeta.marca_nombre &&
+            tarjeta.marca_nombre.toLowerCase().includes(searchLower)) ||
+          tarjeta.titular.toLowerCase().includes(searchLower) ||
+          tarjeta.last4.includes(searchLower)
+        );
       default:
         return false;
     }
@@ -70,6 +83,8 @@ export const getMetodoFinancieroId = (
         return m.nombre === "TRANSFERENCIA_BANCARIA";
       case "billeteras digitales":
         return m.nombre === "BILLETERA_DIGITAL";
+      case "tarjetas locales":
+        return m.nombre === "TARJETA";
       default:
         return false;
     }

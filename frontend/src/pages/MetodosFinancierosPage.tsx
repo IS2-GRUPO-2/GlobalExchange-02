@@ -16,8 +16,10 @@ import { ItemDetailsView } from "../features/financiero/components/ItemDetailsVi
 
 import CuentaBancariaForm from "../components/CuentaBancariaForm";
 import BilleteraDigitalForm from "../components/BilleteraDigitalForm";
+import TarjetaLocalForm from "../components/TarjetaLocalForm";
 import BancoForm from "../components/BancoForm";
 import BilleteraDigitalCatalogoForm from "../components/BilleteraDigitalCatalogoForm";
+import TarjetaLocalCatalogoForm from "../components/TarjetaLocalCatalogoForm";
 
 import {
   filterInstances,
@@ -204,7 +206,7 @@ const MetodosFinancierosPage = () => {
             }
           />
         );
-      } else {
+      } else if (catalogTab === "billeteras") {
         return (
           <BilleteraDigitalCatalogoForm
             onSubmit={
@@ -213,6 +215,23 @@ const MetodosFinancierosPage = () => {
                 : handleCreateCatalog
             }
             billetera={initialData}
+            isSubmitting={modalHook.isSubmitting}
+            onCancel={
+              modalHook.editModalOpen
+                ? modalHook.closeEditModal
+                : modalHook.closeCreateModal
+            }
+          />
+        );
+      } else {
+        return (
+          <TarjetaLocalCatalogoForm
+            onSubmit={
+              modalHook.editModalOpen
+                ? handleUpdateCatalog
+                : handleCreateCatalog
+            }
+            marca={initialData}
             isSubmitting={modalHook.isSubmitting}
             onCancel={
               modalHook.editModalOpen
@@ -239,9 +258,21 @@ const MetodosFinancierosPage = () => {
             isSubmitting={modalHook.isSubmitting}
           />
         );
-      } else {
+      } else if (instanceTab === "billeteras digitales") {
         return (
           <BilleteraDigitalForm
+            onSubmit={
+              modalHook.editModalOpen
+                ? handleUpdateInstancia
+                : handleCreateInstancia
+            }
+            initialData={initialData}
+            isSubmitting={modalHook.isSubmitting}
+          />
+        );
+      } else {
+        return (
+          <TarjetaLocalForm
             onSubmit={
               modalHook.editModalOpen
                 ? handleUpdateInstancia
@@ -281,6 +312,7 @@ const MetodosFinancierosPage = () => {
         <CatalogTable
           bancos={catalogosHook.bancos}
           billeterasCatalogo={catalogosHook.billeterasCatalogo}
+          tarjetasLocalesCatalogo={catalogosHook.tarjetasLocalesCatalogo}
           catalogTab={catalogTab}
           loading={loading}
           onEdit={modalHook.openEditModal}
@@ -293,6 +325,7 @@ const MetodosFinancierosPage = () => {
       const filteredItems = filterInstances(
         instanciasHook.cuentas,
         instanciasHook.billeteras,
+        instanciasHook.tarjetasLocales,
         instanciasHook.detalles,
         instanceTab,
         search,
@@ -325,12 +358,16 @@ const MetodosFinancierosPage = () => {
 
     if (mainTab === "catalogos") {
       return `${action} ${
-        catalogTab === "bancos" ? "Banco" : "Billetera Digital"
+        catalogTab === "bancos" ? "Banco" : 
+        catalogTab === "billeteras" ? "Billetera Digital" :
+        "Marca de Tarjeta Local"
       }`;
     }
 
     if (mainTab === "instancias") {
-      const tipo = instanceTab === "cuentas" ? "Cuenta" : "Billetera Digital";
+      const tipo = instanceTab === "cuentas" ? "Cuenta" : 
+                  instanceTab === "billeteras digitales" ? "Billetera Digital" :
+                  "Tarjeta Local";
       return `${action} ${tipo} de la Casa`;
     }
 
