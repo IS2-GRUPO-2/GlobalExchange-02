@@ -74,10 +74,13 @@ def _get_comision_especifica(detalle_metodo, operacion_casa):
     return None
 
 
-def listar_metodos_cliente_por_divisas(cliente_id, divisa_origen_id, divisa_destino_id):
+def listar_metodos_cliente_por_divisas(cliente_id, divisa_origen_id, divisa_destino_id, es_operacion_real=False):
     """
     Dada una combinación de divisas y un cliente, devuelve los métodos financieros
     disponibles organizados por tipo con las instancias específicas del cliente.
+    
+    Args:
+        es_operacion_real: Si es True, excluye métodos genéricos que requieren instancia específica
     """
     cliente = Cliente.objects.get(idCliente=cliente_id)
     divisa_origen = Divisa.objects.get(id=divisa_origen_id)
@@ -161,6 +164,17 @@ def listar_metodos_cliente_por_divisas(cliente_id, divisa_origen_id, divisa_dest
 
             instancias_data.append(instancia_data)
 
+        # Para operaciones reales, filtrar métodos que requieren instancia específica
+        # Solo incluir el método si:
+        # 1. NO es operación real, O
+        # 2. Es operación real Y (tiene instancias específicas O es método que permite uso genérico)
+        metodos_que_permiten_uso_generico = ['EFECTIVO', 'CHEQUE']
+        
+        if es_operacion_real:
+            # Si es operación real y no tiene instancias, solo incluir si permite uso genérico
+            if not instancias_data and metodo.nombre not in metodos_que_permiten_uso_generico:
+                continue
+        
         metodos_organizados[metodo.nombre] = {
             'metodo_financiero': {
                 'id': metodo.id,
@@ -325,6 +339,66 @@ def calcular_simulacion_operacion_publica(divisa_origen_id, divisa_destino_id, m
         "monto_origen": float(monto),
         "monto_destino": round(monto_destino, 2)
     }
+
+
+def crear_transaccion_desde_simulacion(operador_id, cliente_id, divisa_origen_id, divisa_destino_id, monto, detalle_metodo_id=None, metodo_id=None, tauser_id=None):
+    """
+    Crea una transacción basada en una simulación de operación.
+    
+    Args:
+        operador_id: ID del usuario que opera (request.user)
+        cliente_id: ID del cliente
+        divisa_origen_id: ID de divisa origen
+        divisa_destino_id: ID de divisa destino
+        monto: Monto a convertir
+        detalle_metodo_id: ID del método específico (opcional)
+        metodo_id: ID del método genérico (opcional)
+        tauser_id: ID del terminal de autoservicio
+    
+    Returns:
+        Transaccion: Instancia de la transacción creada
+    """
+    from apps.usuarios.models import User
+    from apps.tauser.models import Tauser
+    
+    # Obtener datos de la simulación
+    simulacion_data = calcular_simulacion_operacion_privada_con_instancia(
+        cliente_id, divisa_origen_id, divisa_destino_id, monto, 
+        detalle_metodo_id, metodo_id
+    )
+    
+    # Obtener instancias necesarias
+    operador = User.objects.get(id=operador_id)
+    cliente = Cliente.objects.get(idCliente=cliente_id)
+    divisa_origen = _get_divisa(divisa_origen_id)
+    divisa_destino = _get_divisa(divisa_destino_id)
+    tauser = Tauser.objects.get(idTauser=tauser_id)
+    
+    # Determinar el método financiero a usar
+    if detalle_metodo_id:
+        detalle_metodo = MetodoFinancieroDetalle.objects.get(id=detalle_metodo_id)
+        metodo_financiero = detalle_metodo.metodo_financiero
+    else:
+        metodo_financiero = _get_metodo(metodo_id)
+    
+    # Crear la transacción
+    from .models import Transaccion
+    transaccion = Transaccion.objects.create(
+        operador=operador,
+        cliente=cliente,
+        operacion=simulacion_data['operacion_cliente'],
+        tasa_aplicada=simulacion_data['tc_final'],
+        tasa_inicial=simulacion_data['tc_final'],
+        divisa_origen=divisa_origen,
+        divisa_destino=divisa_destino,
+        monto_origen=simulacion_data['monto_origen'],
+        monto_destino=simulacion_data['monto_destino'],
+        metodo_financiero=metodo_financiero,
+        tauser=tauser,
+        estado='pendiente'
+    )
+    
+    return transaccion
 
 
 def listar_metodos_por_divisas(divisa_origen_id, divisa_destino_id):

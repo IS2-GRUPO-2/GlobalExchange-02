@@ -12,6 +12,7 @@ from rest_framework.response import Response
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.decorators import action, api_view, permission_classes
 from rest_framework.exceptions import PermissionDenied
+from django.utils import timezone
 from .models import (
     Banco,
     BilleteraDigitalCatalogo,
@@ -22,6 +23,7 @@ from .models import (
     BilleteraDigital,
     Tarjeta,
     Cheque,
+    Transaccion
 )
 from .serializers import (
     BancoSerializer,
@@ -36,14 +38,18 @@ from .serializers import (
     SimulacionPrivadaSerializer,
     SimulacionPrivadaConInstanciaSerializer,
     SimulacionPublicaSerializer,
-    MetodosClienteSerializer
+    MetodosClienteSerializer,
+    TransaccionSerializer,
+    TransaccionCreateSerializer,
+    TransaccionOperacionSerializer
 )
 from .services import (
     calcular_simulacion_operacion_publica,
     calcular_simulacion_operacion_privada,
     calcular_simulacion_operacion_privada_con_instancia,
     listar_metodos_por_divisas,
-    listar_metodos_cliente_por_divisas
+    listar_metodos_cliente_por_divisas,
+    crear_transaccion_desde_simulacion
 )
 
 
@@ -898,7 +904,8 @@ def listar_metodos_cliente(request):
             operacion_casa, metodos_organizados = listar_metodos_cliente_por_divisas(
                 data["cliente_id"],
                 data["divisa_origen"],
-                data["divisa_destino"]
+                data["divisa_destino"],
+                data.get("es_operacion_real", False)
             )
 
             return Response(
@@ -913,3 +920,122 @@ def listar_metodos_cliente(request):
             return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+
+@api_view(["POST"])
+@permission_classes([permissions.IsAuthenticated])
+def crear_transaccion_operacion(request):
+    """
+    Endpoint para crear una transacción desde una simulación de operación.
+    - Requiere datos de simulación + tauser_id.
+    - Crea la transacción en estado pendiente.
+    """
+    serializer = TransaccionOperacionSerializer(data=request.data)
+    if serializer.is_valid():
+        try:
+            data = serializer.validated_data
+            
+            # Crear la transacción
+            transaccion = crear_transaccion_desde_simulacion(
+                operador_id=request.user.id,
+                cliente_id=data["cliente_id"],
+                divisa_origen_id=data["divisa_origen"],
+                divisa_destino_id=data["divisa_destino"],
+                monto=data["monto"],
+                detalle_metodo_id=data.get("detalle_metodo_id"),
+                metodo_id=data.get("metodo_id"),
+                tauser_id=data["tauser_id"]
+            )
+            
+            # Serializar la respuesta
+            transaccion_serializer = TransaccionSerializer(transaccion)
+            return Response(transaccion_serializer.data, status=status.HTTP_201_CREATED)
+            
+        except Exception as e:
+            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+    
+    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class TransaccionViewSet(viewsets.ModelViewSet):
+    queryset = Transaccion.objects.select_related(
+        'operador', 'cliente', 'divisa_origen', 'divisa_destino', 
+        'metodo_financiero', 'tauser'
+    ).all()
+    filter_backends = [filters.SearchFilter, filters.OrderingFilter]
+    search_fields = ['cliente__nombre', 'operador__username']
+    filterset_fields = ['operacion', 'estado', 'divisa_origen', 'divisa_destino', 'operador', 'cliente']
+    ordering_fields = ['fecha_inicio', 'fecha_fin', 'monto_origen', 'monto_destino', 'created_at']
+    ordering = ['-created_at']
+    
+    def get_serializer_class(self):
+        if self.action == 'create':
+            return TransaccionCreateSerializer
+        return TransaccionSerializer
+    
+    def destroy(self, request, *args, **kwargs):
+        return Response(
+            {'error': 'No se permite eliminar transacciones'}, 
+            status=status.HTTP_405_METHOD_NOT_ALLOWED
+        )
+    
+    
+    @action(detail=True, methods=['patch'])
+    def completar(self, request, pk=None):
+        """Marcar transacción como completada"""
+        transaccion = self.get_object()
+        if transaccion.estado != 'pendiente' and transaccion.estado != 'en_proceso':
+            return Response(
+                {'error': 'Solo se pueden completar transacciones pendientes o en proceso'}, 
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        transaccion.estado = 'completada'
+        transaccion.fecha_fin = timezone.now()
+        transaccion.save()
+        
+        serializer = self.get_serializer(transaccion)
+        return Response(serializer.data)
+    
+    @action(detail=True, methods=['patch'])
+    def cancelar(self, request, pk=None):
+        """Cancelar transacción"""
+        transaccion = self.get_object()
+        if transaccion.estado == 'completada':
+            return Response(
+                {'error': 'No se puede cancelar una transacción completada'}, 
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        transaccion.estado = 'cancelada'
+        transaccion.fecha_fin = timezone.now()
+        transaccion.save()
+        
+        serializer = self.get_serializer(transaccion)
+        return Response(serializer.data)
+    
+    @action(detail=False, methods=['get'])
+    def estadisticas(self, request):
+        """Obtener estadísticas de transacciones"""
+        queryset = self.get_queryset()
+        
+        total = queryset.count()
+        pendientes = queryset.filter(estado='pendiente').count()
+        completadas = queryset.filter(estado='completada').count()
+        canceladas = queryset.filter(estado='cancelada').count()
+        
+        # Montos por divisa
+        from django.db.models import Sum
+        montos_por_divisa = {}
+        for transaccion in queryset.filter(estado='completada'):
+            divisa = transaccion.divisa_origen.codigo
+            if divisa not in montos_por_divisa:
+                montos_por_divisa[divisa] = 0.0
+            montos_por_divisa[divisa] += float(transaccion.monto_origen)
+        
+        return Response({
+            'total': total,
+            'pendientes': pendientes,
+            'completadas': completadas,
+            'canceladas': canceladas,
+            'montos_por_divisa': montos_por_divisa
+        })

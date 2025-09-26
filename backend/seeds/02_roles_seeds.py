@@ -35,6 +35,7 @@ def run():
                 'operaciones.view_billeteradigitalcatalogo',
                 # 'operaciones.view_metodofinanciero',  # QUITADO
                 'operaciones.can_use_simulacion',
+                'operaciones.can_use_operacion',
                 
                 # Cotizaciones
                 'cotizaciones.view_tasa',
@@ -87,6 +88,7 @@ def run():
                 'cotizaciones.view_tasa',
                 'cotizaciones.view_historialtasa',
                 'operaciones.can_use_simulacion',
+                'operaciones.can_use_operacion'
             ]
         },
         {
@@ -95,6 +97,7 @@ def run():
                 # Permisos básicos para clientes
                 'operaciones.view_metodofinancierodetalle',
                 'operaciones.can_use_simulacion',
+                'operaciones.can_use_operacion',
             ]
         },
         {
