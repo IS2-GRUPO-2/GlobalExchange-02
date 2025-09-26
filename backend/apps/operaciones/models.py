@@ -1,6 +1,8 @@
 from django.db import models
 from django.core.exceptions import ValidationError
 from apps.clientes.models import Cliente
+from apps.divisas.models import Divisa
+from apps.usuarios.models import User 
 
 
 # ======================== CATÁLOGOS INDEPENDIENTES ========================
@@ -8,7 +10,11 @@ from apps.clientes.models import Cliente
 class Banco(models.Model):
     """Catálogo de bancos disponibles"""
     nombre = models.CharField(max_length=100, unique=True, help_text="Nombre del banco (ej: Santander, Itaú, BBVA)")
-    cvu = models.CharField(max_length=22, unique=True, help_text="CVU del banco para transferencias interbancarias")
+    cvu = models.CharField(max_length=22, unique=True, null=True, blank=True, help_text="CVU del banco para transferencias interbancarias")
+    comision_compra = models.DecimalField(max_digits=5, decimal_places=2, default=0.00, help_text="Comisión por defecto para operaciones de compra (%)")
+    comision_venta = models.DecimalField(max_digits=5, decimal_places=2, default=0.00, help_text="Comisión por defecto para operaciones de venta (%)")
+    comision_personalizada_compra = models.BooleanField(default=False, help_text="Permite configurar comisión personalizada para compra")
+    comision_personalizada_venta = models.BooleanField(default=False, help_text="Permite configurar comisión personalizada para venta")
     is_active = models.BooleanField(default=True, help_text="Indica si el banco está disponible")
     fecha_creacion = models.DateTimeField(auto_now_add=True)
     fecha_actualizacion = models.DateTimeField(auto_now=True)
@@ -25,6 +31,10 @@ class Banco(models.Model):
 class BilleteraDigitalCatalogo(models.Model):
     """Catálogo de billeteras digitales disponibles"""
     nombre = models.CharField(max_length=100, unique=True, help_text="Nombre de la billetera (ej: PayPal, MercadoPago, Binance Pay, TigoMoney)")
+    comision_compra = models.DecimalField(max_digits=5, decimal_places=2, default=0.00, help_text="Comisión por defecto para operaciones de compra (%)")
+    comision_venta = models.DecimalField(max_digits=5, decimal_places=2, default=0.00, help_text="Comisión por defecto para operaciones de venta (%)")
+    comision_personalizada_compra = models.BooleanField(default=False, help_text="Permite configurar comisión personalizada para compra")
+    comision_personalizada_venta = models.BooleanField(default=False, help_text="Permite configurar comisión personalizada para venta")
     is_active = models.BooleanField(default=True, help_text="Indica si la billetera está disponible")
     fecha_creacion = models.DateTimeField(auto_now_add=True)
     fecha_actualizacion = models.DateTimeField(auto_now=True)
@@ -36,6 +46,26 @@ class BilleteraDigitalCatalogo(models.Model):
     
     def __str__(self):
         return self.nombre
+
+
+class TarjetaCatalogo(models.Model):
+    """Catálogo de marcas de tarjetas locales disponibles"""
+    marca = models.CharField(max_length=50, unique=True, help_text="Marca de la tarjeta (ej: Visa, Mastercard, American Express, Cabal)")
+    comision_compra = models.DecimalField(max_digits=5, decimal_places=2, default=0.00, help_text="Comisión por defecto para operaciones de compra (%)")
+    comision_venta = models.DecimalField(max_digits=5, decimal_places=2, default=0.00, help_text="Comisión por defecto para operaciones de venta (%)")
+    comision_personalizada_compra = models.BooleanField(default=False, help_text="Permite configurar comisión personalizada para compra")
+    comision_personalizada_venta = models.BooleanField(default=False, help_text="Permite configurar comisión personalizada para venta")
+    is_active = models.BooleanField(default=True, help_text="Indica si la marca está disponible")
+    fecha_creacion = models.DateTimeField(auto_now_add=True)
+    fecha_actualizacion = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        verbose_name = "Catálogo de Tarjeta Local"
+        verbose_name_plural = "Catálogo de Tarjetas Locales"
+        ordering = ['marca']
+    
+    def __str__(self):
+        return self.marca
 
 
 class TipoMetodoFinanciero(models.TextChoices):
@@ -178,8 +208,13 @@ class Tarjeta(models.Model):
         on_delete=models.CASCADE,
         related_name='tarjeta'
     )
-    stripe_payment_method_id = models.CharField(max_length=100, unique=True)  # ID de Stripe
-    brand = models.CharField(max_length=50)  # Visa, Mastercard, etc.
+    tipo = models.CharField(max_length=10, choices=[
+        ('LOCAL', 'Local'),
+        ('STRIPE', 'Stripe'),
+    ], default='STRIPE')
+    payment_method_id = models.CharField(max_length=100, unique=True)  # ID de Stripe u otro proveedor
+    marca = models.ForeignKey(TarjetaCatalogo, on_delete=models.PROTECT, null=True, blank=True)
+    brand = models.CharField(max_length=50, null=True, blank=True)  # Visa, Mastercard, etc.
     last4 = models.CharField(max_length=4)   # Últimos 4 dígitos
     exp_month = models.IntegerField()
     exp_year = models.IntegerField()
@@ -191,8 +226,6 @@ class Tarjeta(models.Model):
     
     def __str__(self):
         return f"{self.brand} ****{self.last4} ({self.titular})"
-
-
 
 
 class Cheque(models.Model):
@@ -207,13 +240,25 @@ class Cheque(models.Model):
         ('ADELANTADO', 'Cheque Adelantado')
     ])
     monto = models.DecimalField(max_digits=18, decimal_places=2)
+   
+    # Divisa del cheque (solo PYG, USD, EUR permitidas)
+    DIVISAS_PERMITIDAS = [
+        ("PYG", "Guaraní"),
+        ("USD", "Dólar"),
+        ("EUR", "Euro"),
+    ]
+  
+    divisa = models.CharField(max_length=3, choices=DIVISAS_PERMITIDAS, default="PYG")
+    
+    # Campos para validación por analista
+    analista = models.ForeignKey(User, on_delete=models.PROTECT, null=True, blank=True)
+    fecha_validacion_analista = models.DateTimeField(null=True, blank=True)
     
     # Estados y fechas
     estado = models.CharField(max_length=15, choices=[
         ('PENDIENTE', 'Pendiente'),
         ('ACEPTADO', 'Aceptado'),
         ('RECHAZADO', 'Rechazado'),
-        ('COBRADO', 'Cobrado')
     ], default='PENDIENTE')
     fecha_emision = models.DateTimeField(auto_now_add=True)
     fecha_vencimiento = models.DateTimeField(null=True, blank=True)

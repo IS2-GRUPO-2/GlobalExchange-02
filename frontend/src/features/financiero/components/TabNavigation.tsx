@@ -1,12 +1,12 @@
 import React from "react";
-import { Building2, Smartphone } from "lucide-react";
+import { Building2, Smartphone, CreditCard } from "lucide-react";
 import type {
   MainTabType,
   InstanceTabType,
   CatalogTabType,
 } from "../types/MetodoFinanciero";
 import Can from "../../../components/Can";
-import { BANCOS, BILLETERAS_DIGITALES, BILLETERAS_DIGITALES_CATALOGO, CUENTAS_BANCARIAS, METODOS_FINANCIEROS } from "../../../types/perms";
+import { BANCOS, BILLETERAS_DIGITALES, BILLETERAS_DIGITALES_CATALOGO, CUENTAS_BANCARIAS, METODOS_FINANCIEROS, TARJETAS_CATALOGO } from "../../../types/perms";
 
 interface TabNavigationProps {
   mainTab: MainTabType;
@@ -70,7 +70,7 @@ export const TabNavigation: React.FC<TabNavigationProps> = ({
                 Catálogo de Métodos Financieros
               </button>
             </Can>
-            <Can anyOf={[BANCOS.VIEW, BILLETERAS_DIGITALES_CATALOGO.VIEW]}>
+            <Can anyOf={[BANCOS.VIEW, BILLETERAS_DIGITALES_CATALOGO.VIEW, TARJETAS_CATALOGO.VIEW]}>
               <button
                 onClick={() => setMainTab("catalogos")}
                 className={`py-2 px-1 border-b-2 font-medium text-sm ${
@@ -154,6 +154,19 @@ export const TabNavigation: React.FC<TabNavigationProps> = ({
                 >
                   <Smartphone className="w-5 h-5" />
                   <span>Billeteras Digitales</span>
+                </button>
+              </Can>
+              <Can anyOf={[TARJETAS_CATALOGO.VIEW]}>
+                <button
+                  onClick={() => setCatalogTab("tarjetas")}
+                  className={`py-2 px-1 border-b-2 font-medium text-sm flex items-center space-x-2 ${
+                    catalogTab === "tarjetas"
+                      ? "border-gray-900 text-gray-900"
+                      : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+                  }`}
+                >
+                  <CreditCard className="w-5 h-5" />
+                  <span>Tarjetas</span>
                 </button>
               </Can>
             </nav>

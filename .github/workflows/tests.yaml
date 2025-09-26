@@ -1,9 +1,7 @@
 name: Backend Tests
 
 on:
-  push:
-    branches:
-      - '**'   # se ejecuta en push a cualquier rama
+  
   pull_request:
     branches:
       - '**'   # se ejecuta en cualquier PR

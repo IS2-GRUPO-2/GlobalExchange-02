@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
 import { CreditCard, Building2, Smartphone, Plus, Search } from 'lucide-react';
 import { toast } from 'react-toastify';
-import { useAuth } from '../context/useAuth';
-import Modal from '../components/Modal';
+import { useAuth } from '../../../context/useAuth';
+import Modal from '../../../components/Modal';
 import MetodoFinancieroCard from '../components/MetodoFinancieroCard';
 import CuentaBancariaForm from '../components/CuentaBancariaForm';
 import BilleteraDigitalForm from '../components/BilleteraDigitalForm';
@@ -27,11 +27,13 @@ import type {
   BilleteraDigital, 
   Tarjeta, 
   MetodoFinancieroDetalle,
-  MetodoFinanciero
+  MetodoFinanciero,
+  ClienteTabType
 } from '../types/MetodoFinanciero';
 
-type TabType = 'cuentas' | 'billeteras digitales' | 'tarjetas';
+type TabType = ClienteTabType;
 
+// ExtendedItem específico para esta página que maneja Tarjetas unificadas (LOCAL y STRIPE)
 type ExtendedItem = (CuentaBancaria | BilleteraDigital | Tarjeta) & {
   tipo: TabType;
   is_active: boolean;
@@ -166,10 +168,11 @@ const MetodosFinancierosClientePage = () => {
                  billetera.usuario_id.toLowerCase().includes(searchLower) ||
                  (billetera.email?.toLowerCase().includes(searchLower) ?? false);
         case 'tarjetas':
-          const tarjeta = item as Tarjeta & ExtendedItem;
-          return tarjeta.brand.toLowerCase().includes(searchLower) ||
-                 tarjeta.titular.toLowerCase().includes(searchLower) ||
-                 tarjeta.last4.includes(searchLower);
+          const tarjeta = item as any;
+          return (tarjeta.brand?.toLowerCase().includes(searchLower) ?? false) ||
+                 (tarjeta.marca_nombre?.toLowerCase().includes(searchLower) ?? false) ||
+                 (tarjeta.titular?.toLowerCase().includes(searchLower) ?? false) ||
+                 (tarjeta.last4?.includes(searchLower) ?? false);
         default:
           return false;
       }
@@ -370,7 +373,7 @@ const MetodosFinancierosClientePage = () => {
         return (
           <TarjetaForm
             onSubmit={editModalOpen ? handleUpdateItem : handleCreateItem}
-            initialData={initialData as Tarjeta}
+            initialData={initialData && activeTab === 'tarjetas' ? (initialData as unknown as Tarjeta) : undefined}
             isSubmitting={isSubmitting}
           />
         );
@@ -458,29 +461,33 @@ const MetodosFinancierosClientePage = () => {
             <h2 className="text-2xl font-bold mb-4 text-gray-800">Detalles de Tarjeta</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
+                <label className="block text-sm font-medium text-gray-700">Tipo</label>
+                <p className="text-gray-900">{(tarjeta as any).tipo || 'LOCAL'}</p>
+              </div>
+              <div>
                 <label className="block text-sm font-medium text-gray-700">Marca</label>
-                <p className="text-gray-900">{tarjeta.brand}</p>
+                <p className="text-gray-900">{(tarjeta as any).brand || (tarjeta as any).marca_nombre}</p>
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700">Titular</label>
-                <p className="text-gray-900">{tarjeta.titular}</p>
+                <p className="text-gray-900">{(tarjeta as any).titular}</p>
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700">Últimos 4 dígitos</label>
-                <p className="text-gray-900">**** {tarjeta.last4}</p>
+                <p className="text-gray-900">**** {(tarjeta as any).last4}</p>
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700">Vencimiento</label>
                 <p className="text-gray-900">
-                  {tarjeta.exp_month.toString().padStart(2, '0')}/{tarjeta.exp_year}
+                  {(tarjeta as any).exp_month?.toString().padStart(2, '0')}/{(tarjeta as any).exp_year}
                 </p>
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700">Estado</label>
                 <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                  tarjeta.is_active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                  (tarjeta as any).is_active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
                 }`}>
-                  {tarjeta.is_active ? 'Activo' : 'Inactivo'}
+                  {(tarjeta as any).is_active ? 'Activo' : 'Inactivo'}
                 </span>
               </div>
             </div>
@@ -505,17 +512,6 @@ const MetodosFinancierosClientePage = () => {
 
     window.addEventListener('focus', handleFocus);
     return () => window.removeEventListener('focus', handleFocus);
-  }, [isLoggedIn]);
-
-  // Actualizar datos cada 30 segundos para reflejar cambios en tiempo real
-  useEffect(() => {
-    if (!isLoggedIn) return;
-
-    const interval = setInterval(() => {
-      fetchAllData();
-    }, 30000); // 30 segundos
-
-    return () => clearInterval(interval);
   }, [isLoggedIn]);
 
   const filteredItems = getFilteredItems();

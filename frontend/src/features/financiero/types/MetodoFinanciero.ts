@@ -1,26 +1,24 @@
-export type TipoMetodoFinanciero =
-  | "TRANSFERENCIA_BANCARIA"
-  | "BILLETERA_DIGITAL"
-  | "TARJETA"
-  | "EFECTIVO"
-  | "CHEQUE";
+export type TipoMetodoFinanciero = 
+  | 'TRANSFERENCIA_BANCARIA' 
+  | 'BILLETERA_DIGITAL' 
+  | 'TARJETA' 
+  | 'EFECTIVO' 
+  | 'CHEQUE';
 
 export type MainTabType = "catalogo" | "instancias" | "catalogos";
 export type InstanceTabType = "cuentas" | "billeteras digitales";
-export type CatalogTabType = "bancos" | "billeteras";
-
-export type ExtendedItem = (CuentaBancaria | BilleteraDigital) & {
-  tipo: InstanceTabType;
-  is_active: boolean;
-  detalle_id?: number;
-  desactivado_por_catalogo?: boolean;
-};
+export type ClienteTabType = "cuentas" | "billeteras digitales" | "tarjetas";
+export type CatalogTabType = "bancos" | "billeteras" | "tarjetas";
 
 // Nuevos tipos para catálogos
 export type Banco = {
   id?: number;
   nombre: string;
   cvu: string;
+  comision_compra: number;
+  comision_venta: number;
+  comision_personalizada_compra: boolean;
+  comision_personalizada_venta: boolean;
   is_active: boolean;
   fecha_creacion?: string;
   fecha_actualizacion?: string;
@@ -29,6 +27,22 @@ export type Banco = {
 export type BilleteraDigitalCatalogo = {
   id?: number;
   nombre: string;
+  comision_compra: number;
+  comision_venta: number;
+  comision_personalizada_compra: boolean;
+  comision_personalizada_venta: boolean;
+  is_active: boolean;
+  fecha_creacion?: string;
+  fecha_actualizacion?: string;
+};
+
+export type TarjetaCatalogo = {
+  id?: number;
+  marca: string;
+  comision_compra: number;
+  comision_venta: number;
+  comision_personalizada_compra: boolean;
+  comision_personalizada_venta: boolean;
   is_active: boolean;
   fecha_creacion?: string;
   fecha_actualizacion?: string;
@@ -85,12 +99,27 @@ export type BilleteraDigital = {
 export type Tarjeta = {
   id?: number;
   metodo_financiero_detalle: number;
-  stripe_payment_method_id: string;
-  brand: string;
+  tipo: 'LOCAL' | 'STRIPE';
+  payment_method_id: string;
+  // Campos para tarjetas STRIPE
+  brand?: string; // Visa, Mastercard, etc. (para Stripe)
+  // Campos para tarjetas LOCAL
+  marca?: number; // ID de la marca del catálogo (para Local)
+  marca_nombre?: string; // Nombre de la marca (solo lectura, para Local)
+  marca_activa?: boolean; // Estado de la marca (solo lectura, para Local)
+  // Campos comunes
   last4: string;
   exp_month: number;
   exp_year: number;
   titular: string;
+};
+
+// Tipo extendido que combina instancias con información adicional
+export type ExtendedItem = (CuentaBancaria | BilleteraDigital | Tarjeta) & {
+  tipo: InstanceTabType;
+  is_active: boolean;
+  detalle_id?: number;
+  desactivado_por_catalogo?: boolean;
 };
 
 // Tipos de paginación
@@ -106,6 +135,13 @@ export type PaginatedBilleteraDigitalCatalogo = {
   next: string | null;
   previous: string | null;
   results: BilleteraDigitalCatalogo[];
+};
+
+export type PaginatedTarjetaCatalogo = {
+  count: number;
+  next: string | null;
+  previous: string | null;
+  results: TarjetaCatalogo[];
 };
 
 export type PaginatedMetodoFinanciero = {

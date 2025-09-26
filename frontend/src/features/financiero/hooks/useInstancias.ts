@@ -57,8 +57,10 @@ export const useInstancias = () => {
           cliente: null,
           es_cuenta_casa: true,
           metodo_financiero: metodoFinancieroId,
-          alias: `Casa - ${
-            tipo === "cuentas" ? "cuenta" : "billetera digital"
+          alias: formData.alias || `Casa - ${
+            tipo === "cuentas" ? "cuenta" : 
+            tipo === "billeteras digitales" ? "billetera digital" :
+            ""
           }`,
           is_active: true,
         };
@@ -70,22 +72,20 @@ export const useInstancias = () => {
         // Crear instancia específica
         if (tipo === "cuentas") {
           await createCuentaBancaria(itemData);
-        } else {
+        } else if (tipo === "billeteras digitales") {
           await createBilleteraDigital(itemData);
         }
 
-        toast.success(
-          `${
-            tipo === "cuentas" ? "Cuenta" : "Billetera digital"
-          } de la casa creada exitosamente!`
-        );
+        const tipoLabel = tipo === "cuentas" ? "Cuenta" : 
+                         tipo === "billeteras digitales" ? "Billetera digital" :
+                         "";
+        toast.success(`${tipoLabel} de la casa creada exitosamente!`);
         return true;
       } catch (err) {
-        toast.error(
-          `Error al crear ${
-            tipo === "cuentas" ? "cuenta" : "billetera digital"
-          } de la casa`
-        );
+        const tipoLabel = tipo === "cuentas" ? "cuenta" : 
+                         tipo === "billeteras digitales" ? "billetera digital" :
+                         "";
+        toast.error(`Error al crear ${tipoLabel} de la casa`);
         console.error(err);
         return false;
       }
@@ -100,22 +100,20 @@ export const useInstancias = () => {
       try {
         if (item.tipo === "cuentas") {
           await updateCuentaBancaria(formData, item.id);
-        } else {
+        } else if (item.tipo === "billeteras digitales") {
           await updateBilleteraDigital(formData, item.id);
         }
 
-        toast.success(
-          `${
-            item.tipo === "cuentas" ? "Cuenta" : "Billetera digital"
-          } actualizada exitosamente!`
-        );
+        const tipoLabel = item.tipo === "cuentas" ? "Cuenta" : 
+                         item.tipo === "billeteras digitales" ? "Billetera digital" :
+                         "";
+        toast.success(`${tipoLabel} actualizada exitosamente!`);
         return true;
       } catch (err) {
-        toast.error(
-          `Error al actualizar ${
-            item.tipo === "cuentas" ? "cuenta" : "billetera digital"
-          }`
-        );
+        const tipoLabel = item.tipo === "cuentas" ? "cuenta" : 
+                         item.tipo === "billeteras digitales" ? "billetera digital" :
+                         "";
+        toast.error(`Error al actualizar ${tipoLabel}`);
         console.error(err);
         return false;
       }
@@ -128,17 +126,21 @@ export const useInstancias = () => {
 
     try {
       await toggleActiveMetodoFinanciero(item.detalle_id);
+      const tipoLabel = item.tipo === "cuentas" ? "Cuenta" : 
+                       item.tipo === "billeteras digitales" ? "Billetera digital" :
+                       "Tarjeta";
       toast.success(
-        `${item.tipo === "cuentas" ? "Cuenta" : "Billetera digital"} ${
+        `${tipoLabel} ${
           item.is_active ? "desactivada" : "activada"
         } exitosamente!`
       );
       return true;
     } catch (err) {
+      const tipoLabel = item.tipo === "cuentas" ? "cuenta" : 
+                       item.tipo === "billeteras digitales" ? "billetera digital" :
+                       "tarjeta";
       toast.error(
-        `Error al ${item.is_active ? "desactivar" : "activar"} ${
-          item.tipo === "cuentas" ? "cuenta" : "billetera digital"
-        }`
+        `Error al ${item.is_active ? "desactivar" : "activar"} ${tipoLabel}`
       );
       console.error(err);
       return false;
