@@ -92,7 +92,6 @@ export default function OperacionCompraVenta() {
 
   // Nuevos estados para las etapas 4 y 5
   const [transaccionCreada, setTransaccionCreada] = useState<TransaccionResponse | null>(null);
-    const [simulacionExito] = useState<boolean>(false);
   const [nombreMetodo, setNombreMetodo] = useState<string>("");
 
   // Handlers de navegación
@@ -310,7 +309,6 @@ export default function OperacionCompraVenta() {
             onFinalizarExitoso={finalizarOperacionExitosa}
             onFinalizarFallido={finalizarOperacionFallida}
             onCancelar={retrocederEtapa6}
-            simulacionFallo={!simulacionExito}
           />
         ) : null;
     }

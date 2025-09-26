@@ -1,6 +1,6 @@
 import { Building2, MapPin } from "lucide-react";
 import { type SimulacionResponse } from "../types/Simulacion";
-import type { OperacionCompleta } from "../types/Transaccion";
+import type { OperacionCompleta, TransaccionRequest } from "../types/Transaccion";
 
 interface EtapaResultadoProps {
   resultado: SimulacionResponse | OperacionCompleta;
@@ -8,6 +8,7 @@ interface EtapaResultadoProps {
   onNuevaSimulacion?: () => void;
   onContinuar?: () => void;
   esOperacionReal?: boolean;
+  datosTransaccion?: TransaccionRequest; // Datos necesarios para verificar cambio de tasa
 }
 
 export default function EtapaResultado({
@@ -15,10 +16,10 @@ export default function EtapaResultado({
   onRetroceder,
   onNuevaSimulacion,
   onContinuar,
-  esOperacionReal = false
+  esOperacionReal = false,
+  datosTransaccion
 }: EtapaResultadoProps) {
-  // Determinar si es OperacionCompleta (tiene tauser_seleccionado) o SimulacionResponse
-  const tieneTerminal = 'tauser_seleccionado' in resultado;
+  // Ya no se realiza verificación de cambio de tasa aquí, se mueve a la etapa de términos
   
   const getTitulo = () => {
     if (esOperacionReal) return "Resumen de tu Operación";
@@ -112,11 +113,11 @@ export default function EtapaResultado({
           <div className="space-y-2">
             <div className="flex justify-between">
               <span className="font-medium text-blue-700">Nombre:</span>
-              <span className="text-blue-900">{resultado.tauser_seleccionado.nombre}</span>
+              <span className="text-blue-900">{(resultado as OperacionCompleta).tauser_seleccionado.nombre}</span>
             </div>
             <div className="flex justify-between">
               <span className="font-medium text-blue-700">Código:</span>
-              <span className="text-blue-900">{resultado.tauser_seleccionado.codigo}</span>
+              <span className="text-blue-900">{(resultado as OperacionCompleta).tauser_seleccionado.codigo}</span>
             </div>
             <div className="flex items-start justify-between">
               <span className="font-medium text-blue-700 flex items-center gap-1">
@@ -124,8 +125,8 @@ export default function EtapaResultado({
                 Ubicación:
               </span>
               <div className="text-right text-blue-900 text-sm">
-                <p>{resultado.tauser_seleccionado.direccion}</p>
-                <p>{resultado.tauser_seleccionado.ciudad}, {resultado.tauser_seleccionado.departamento}</p>
+                <p>{(resultado as OperacionCompleta).tauser_seleccionado.direccion}</p>
+                <p>{(resultado as OperacionCompleta).tauser_seleccionado.ciudad}, {(resultado as OperacionCompleta).tauser_seleccionado.departamento}</p>
               </div>
             </div>
           </div>
@@ -147,6 +148,8 @@ export default function EtapaResultado({
           {getBotonPrimario()}
         </button>
       </div>
+
+      {/* Se eliminó el diálogo de cambio de tasa, ahora está en EtapaTerminos */}
     </div>
   );
 }

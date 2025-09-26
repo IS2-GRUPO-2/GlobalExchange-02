@@ -21,7 +21,7 @@ const getAuthHeaders = () => {
 
 export const crearTransaccion = async (
   data: TransaccionRequest
-): Promise<Transaccion> => {
+): Promise<TransaccionResponse> => {
   const response = await axios.post(`${API_URL}crear-transaccion/`, data, getAuthHeaders());
   return response.data;
 };
