@@ -3,7 +3,6 @@ import {
   getTausers,
   createTauser,
   updateTauser,
-  getTauserById,
 } from "../services/tauserService";
 import type { Tauser } from "../types/Tauser";
 import { Edit, Search, Plus, Check, X, Eye } from "lucide-react";
@@ -15,18 +14,6 @@ import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import Can from "../components/Can";
 import { TAUSER } from "../types/perms";
-
-interface FormTauser {
-  idTauser?: string;
-  codigo: string;
-  nombre: string;
-  direccion: string;
-  ciudad: string;
-  departamento: string;
-  latitud: number;
-  longitud: number;
-  isActive?: boolean;
-}
 
 const ConfiguracionTauserPage = () => {
   const [tausers, setTausers] = useState<Tauser[]>([]);
@@ -254,7 +241,7 @@ const ConfiguracionTauserPage = () => {
                       center={[
                         selectedTauser.latitud || -25.263739,
                         selectedTauser.longitud || -57.575926,
-                      ]}
+                      ] as [number, number]}
                       zoom={13}
                       className="h-full w-full rounded-md border"
                     >
@@ -263,12 +250,12 @@ const ConfiguracionTauserPage = () => {
                         url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
                       />
                       <Marker
-                        position={[selectedTauser.latitud, selectedTauser.longitud]}
+                        position={[selectedTauser.latitud, selectedTauser.longitud] as [number, number]}
                         icon={new L.Icon({
                           iconUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png",
                           iconSize: [25, 41],
                           iconAnchor: [12, 41],
-                        })}
+                        }) as any}
                       />
                     </MapContainer>
                   </div>

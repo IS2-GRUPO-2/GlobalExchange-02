@@ -1,14 +1,14 @@
-name: Backend Tests
+name: Frontend Tests
 
 on:
-  
+
   pull_request:
     branches:
       - '**'   # se ejecuta en cualquier PR
 
 jobs:
   test:
-    name: Ejecutar Tests
+    name: Ejecutar Tests Frontend
     runs-on: ubuntu-latest
     
     steps:
@@ -19,23 +19,14 @@ jobs:
         run: |
           # Variables de entorno para el backend
           echo "${{ secrets.DEV_ENV}}" > .env
-
-      - name: Modificar comando del backend para pruebas
-        run: |
-          cat > docker-compose.override.yml <<'EOF'
-          services:
-            backend:
-              command: >
-                bash -c "python manage.py migrate --noinput &&
-                         python -m pytest --verbose --tb=short"
-          EOF
           
-      - name: Ejecutar pruebas con Docker Compose
+      - name: Levantar contenedor frontend
         run: |
-          docker compose up backend db \
-            --build \
-            --exit-code-from backend \
-            --abort-on-container-exit
+          docker compose up -d frontend
+          
+      - name: Ejecutar build dentro del contenedor
+        run: |
+          docker compose exec -T frontend npm run build
             
       - name: Limpiar contenedores de prueba
         if: always()

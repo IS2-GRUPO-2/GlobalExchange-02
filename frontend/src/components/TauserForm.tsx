@@ -5,6 +5,7 @@ import { toast } from "react-toastify";
 import { MapContainer, TileLayer, Marker, useMapEvents } from "react-leaflet";
 import { useState } from "react";
 import L from "leaflet";
+import type { LeafletMouseEvent } from "leaflet";
 import "leaflet/dist/leaflet.css";
 import type { Tauser } from "../types/Tauser";
 
@@ -67,14 +68,14 @@ const MapSelector = ({
   const [position, setPosition] = useState<[number, number]>([lat, lng]);
 
   useMapEvents({
-    click(e) {
+    click(e: LeafletMouseEvent) {
       const { lat, lng } = e.latlng;
       setPosition([lat, lng]);
       onChange(lat, lng);
     },
   });
 
-  return <Marker position={position} icon={markerIcon} />;
+  return <Marker position={position} icon={markerIcon as any} />;
 };
 
 const TauserForm = ({ tauser, isEditForm, onSubmit, onCancel }: Props) => {
@@ -284,7 +285,7 @@ const TauserForm = ({ tauser, isEditForm, onSubmit, onCancel }: Props) => {
                   center={[
                     tauser?.latitud || -25.263739,
                     tauser?.longitud || -57.575926,
-                  ]}
+                  ] as [number, number]}
                   zoom={13}
                   className="h-full w-full"
                   scrollWheelZoom={true}
