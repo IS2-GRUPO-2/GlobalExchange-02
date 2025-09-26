@@ -191,7 +191,7 @@ def tarjeta_local_data(tarjeta_catalogo_instance):
 @pytest.fixture
 def tarjeta_local_data_orm(tarjeta_catalogo_instance):
     return {
-        'tipo': 'LOCAL',
+        response = api_client.post('/api/operaciones/tarjetas-catalogo/', tarjeta_data, format='json')        'tipo': 'LOCAL',
         'payment_method_id': 'pm_local_123_orm',
         'marca': tarjeta_catalogo_instance,  # Para ORM - usar instancia
         'brand': 'visa',
