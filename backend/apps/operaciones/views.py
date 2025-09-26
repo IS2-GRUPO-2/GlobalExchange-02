@@ -6,7 +6,15 @@ financieros (`MetodoFinanciero`) y sus implementaciones específicas
 (`MetodoFinancieroDetalle`, `CuentaBancaria`, `BilleteraDigital`, `Tarjeta`).
 
 """
-
+# imports (arriba, junto a los demás)
+# NUEVO: simulador de pagos
+from .pyments import APROBADO, componenteSimuladorPagosCobros   
+from .services import _get_tasa_activa  # ADD: usamos el helper que ya tenés en service.py
+from decimal import Decimal, ROUND_HALF_UP  # ya lo tenías, asegúrate de tener Decimal importado aquí
+from decimal import ROUND_HALF_UP, Decimal
+from apps.cotizaciones.service import TasaService
+from apps.cotizaciones.models import Tasa
+from apps.divisas.models import Divisa
 from rest_framework import viewsets, status, filters, permissions
 from rest_framework.response import Response
 from rest_framework.pagination import PageNumberPagination
@@ -1039,3 +1047,125 @@ class TransaccionViewSet(viewsets.ModelViewSet):
             'canceladas': canceladas,
             'montos_por_divisa': montos_por_divisa
         })
+    
+    def _recalcular_tc_y_monto(self, t: Transaccion):
+        """
+        Recalcula la tasa vigente y el monto_destino actual usando la misma lógica que la simulación:
+        - Cliente 'venta'  => Casa COMPRA => monto_destino = monto * tc
+        - Cliente 'compra' => Casa VENDE  => monto_destino = monto / tc
+        """
+        # Tomamos la divisa "extranjera" (la que NO es base) para obtener la tasa vigente
+        divisa_extranjera = t.divisa_destino if t.divisa_origen.es_base else t.divisa_origen
+
+        # Tasa activa del par en base a esa divisa extranjera
+        tasa = _get_tasa_activa(divisa_extranjera)
+
+        metodo = t.metodo_financiero
+        cliente = t.cliente
+        monto = Decimal(t.monto_origen)
+
+        if t.operacion == 'venta':
+            # Casa COMPRA → Cliente VENDE → multiplicación
+            tc_val = TasaService.calcular_tasa_compra_metodoPago_cliente(tasa, metodo, cliente)
+            tc = Decimal(str(tc_val))
+            monto_destino = (monto * tc).quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
+        else:
+            # t.operacion == 'compra' → Casa VENDE → división
+            tc_val = TasaService.calcular_tasa_venta_metodoPago_cliente(tasa, metodo, cliente)
+            tc = Decimal(str(tc_val))
+            if tc == 0:
+                raise ValueError("La tasa calculada es 0, no se puede dividir.")
+            monto_destino = (monto / tc).quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
+
+        tc_normalizada = tc.quantize(Decimal('0.000001'), rounding=ROUND_HALF_UP)
+        return tc_normalizada, monto_destino
+
+    @action(detail=True, methods=['get'], url_path='reconfirmar-tasa')
+    def reconfirmar_tasa(self, request, pk=None):
+        t = self.get_object()
+
+        tc_actual, monto_destino_actual = self._recalcular_tc_y_monto(t)
+
+        # Diferencias
+        delta_tc = (tc_actual - Decimal(t.tasa_aplicada))
+        # Evitar div/0
+        delta_pct = (delta_tc / Decimal(t.tasa_aplicada) * Decimal('100')) if Decimal(t.tasa_aplicada) != 0 else Decimal('0')
+
+        payload = {
+            'cambio': bool(delta_tc != 0),
+            'tasa_anterior': str(t.tasa_aplicada),
+            'tasa_actual': str(tc_actual),
+            'delta_tc': str(delta_tc),              # absoluto
+            'delta_pct': str(delta_pct),           # %
+            'monto_destino_anterior': str(t.monto_destino),
+            'monto_destino_actual': str(monto_destino_actual),
+        }
+        return Response(payload, status=status.HTTP_200_OK)
+
+    @action(detail=True, methods=['patch'], url_path='confirmar-pago')
+    def confirmar_pago(self, request, pk=None):
+        """
+        Body esperado:
+        {
+        "terminos_aceptados": true,
+        "acepta_cambio": false|true
+        }
+        """
+        t = self.get_object()  # <-- IMPORTANTE: definir t en el scope
+
+        if t.estado not in ('pendiente', 'en_proceso'):
+            return Response({'error': 'La transacción no está en un estado confirmable.'},
+                            status=status.HTTP_400_BAD_REQUEST)
+
+        terminos_aceptados = bool(request.data.get('terminos_aceptados', False))
+        if not terminos_aceptados:
+            return Response({'error': 'Debe aceptar los términos y condiciones.'},
+                            status=status.HTTP_400_BAD_REQUEST)
+
+        acepta_cambio = bool(request.data.get('acepta_cambio', False))
+
+        tc_actual, monto_destino_actual = self._recalcular_tc_y_monto(t)
+        cambio = (tc_actual != Decimal(t.tasa_aplicada))
+
+        # Si la tasa cambió y NO acepta el cambio → devolvemos conflicto (409)
+        if cambio and not acepta_cambio:
+            return Response({
+                'error': 'rate_changed',
+                'mensaje': 'La cotización cambió',
+                'tasa_anterior': str(t.tasa_aplicada),
+                'tasa_actual': str(tc_actual),
+                'monto_destino_actual': str(monto_destino_actual)
+            }, status=status.HTTP_409_CONFLICT)
+
+                # Si no cambió, o cambió y el cliente acepta, aplicamos posible nueva tasa
+        if cambio and acepta_cambio:
+            t.tasa_aplicada = tc_actual              # Decimal con 6 decimales
+            t.monto_destino = monto_destino_actual   # Decimal con 2 decimales
+
+        # 2) Simular pago/cobro en el procesador (dummy)
+        pago = componenteSimuladorPagosCobros(t)
+
+        if pago.codigo != APROBADO:
+            # Simular rechazo → marcamos como fallida
+            t.estado = 'fallida'
+            t.fecha_fin = timezone.now()
+            t.save()
+
+            serializer = self.get_serializer(t)
+            data = dict(serializer.data)
+            data['pago_codigo'] = pago.codigo
+            data['pago_mensaje'] = pago.mensaje
+            data['pago_referencia'] = pago.referencia
+            # 402 = Payment Required
+            return Response(data, status=status.HTTP_402_PAYMENT_REQUIRED)
+
+        # Aprobado → pasar a EN PROCESO
+        t.estado = 'en_proceso'
+        t.save()
+
+        serializer = self.get_serializer(t)
+        data = dict(serializer.data)
+        data['pago_codigo'] = pago.codigo
+        data['pago_mensaje'] = pago.mensaje
+        data['pago_referencia'] = pago.referencia
+        return Response(data, status=status.HTTP_200_OK)

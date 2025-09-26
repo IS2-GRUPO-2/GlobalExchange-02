@@ -248,9 +248,6 @@ class TransaccionCreateSerializer(serializers.ModelSerializer):
 
 
 class TransaccionOperacionSerializer(serializers.Serializer):
-    """
-    Serializer para crear transacciones desde simulación de operación.
-    """
     cliente_id = serializers.UUIDField()
     divisa_origen = serializers.IntegerField()
     divisa_destino = serializers.IntegerField()
@@ -258,19 +255,18 @@ class TransaccionOperacionSerializer(serializers.Serializer):
     detalle_metodo_id = serializers.IntegerField(required=False, allow_null=True)
     metodo_id = serializers.IntegerField(required=False, allow_null=True)
     tauser_id = serializers.UUIDField()
-    terminos_aceptados = serializers.BooleanField()
+    # Ahora opcional: se aceptará en 'confirmar-pago', no al crear
+    terminos_aceptados = serializers.BooleanField(required=False, default=False)
 
     def validate(self, data):
-        if not data.get('terminos_aceptados'):
-            raise serializers.ValidationError("Debe aceptar los términos y condiciones")
-        
         detalle_metodo_id = data.get('detalle_metodo_id')
         metodo_id = data.get('metodo_id')
-        
+
         if not detalle_metodo_id and not metodo_id:
             raise serializers.ValidationError("Debe proporcionar detalle_metodo_id o metodo_id")
-        
+
         if detalle_metodo_id and metodo_id:
             raise serializers.ValidationError("No puede proporcionar ambos detalle_metodo_id y metodo_id")
-        
+
+        # No obligamos terminos_aceptados aquí
         return data
