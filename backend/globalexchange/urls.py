@@ -15,7 +15,9 @@ Including another URLconf
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
 from django.contrib import admin
+from backend.globalexchange.views import api_root_404 
 from django.urls import path, include
+from backend.globalexchange import settings
 from drf_yasg.views import get_schema_view
 from drf_yasg import openapi
 
@@ -40,7 +42,6 @@ schema_view = get_schema_view(
 )
 
 urlpatterns = [
-    path('admin/', admin.site.urls),
     path('api/token/', TokenObtainPairView.as_view(), name="token_obtain_pair"),
     path('api/token/refresh/', TokenRefreshView.as_view(), name="token_refresh"),
     path('api/', include("apps.roles.urls")),
@@ -51,8 +52,20 @@ urlpatterns = [
     path("api/", include("apps.cotizaciones.urls")),
     path('api/operaciones/', include("apps.operaciones.urls")),
     path("api/", include("apps.cotizaciones.urls")),
-    path("api/auth/", include("apps.autenticacion.urls")),
+    path("api/auth/", include("apps.autenticacion.urls")),  
     path('api/', include("apps.tauser.urls")),
-    path('docs/', schema_view.with_ui('swagger', cache_timeout=0), name='schema-swagger-ui'),
-    path('redocs/', schema_view.with_ui('redoc', cache_timeout=0), name='schema-redoc'),
 ]
+
+if settings.DEBUG:
+    urlpatterns += [
+        path('admin/', admin.site.urls),
+        path('docs/', schema_view.with_ui('swagger', cache_timeout=0), name='schema-swagger-ui'),
+        path('redocs/', schema_view.with_ui('redoc', cache_timeout=0), name='schema-redoc'),
+    ]
+
+
+
+if not settings.DEBUG:
+    urlpatterns += [ path('api/', api_root_404,  name='api-root-block'), ]
+
+handler404 = 'globalexchange.views.custom_404_handler'

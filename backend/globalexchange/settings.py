@@ -23,7 +23,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-%i2-dz*x7)ad^+k961gy5eoz2)ur+xbomw8#+096-(8+&r769*'
+SECRET_KEY = config.SECRET_KEY
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = config.DJANGO_DEBUG
@@ -112,7 +112,14 @@ REST_FRAMEWORK = {
     "DEFAULT_FILTER_BACKENDS": [
         "rest_framework.filters.SearchFilter",
     ],
+    "DEFAULT_RENDERER_CLASSES": (
+        ("rest_framework.renderers.JSONRenderer",)
+        if not config.DJANGO_DEBUG
+        else ("rest_framework.renderers.JSONRenderer", "rest_framework.renderers.BrowsableAPIRenderer",)
+    ),
 }
+
+
 
 SIMPLE_JWT = {
     "TOKEN_OBTAINER_SERIALIZER" : "globalexchange.serializers.CustomTokenObtainPairSerializer",
