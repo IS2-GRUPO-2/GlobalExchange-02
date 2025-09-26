@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Divisa, Denominacion
+from .models import Divisa, Denominacion, LimiteConfig
 
 class DivisaSerializer(serializers.ModelSerializer):
     class Meta:
@@ -16,4 +16,9 @@ class DivisaPaginatedResponseSerializer(serializers.Serializer):
 class DenominacionSerializer(serializers.ModelSerializer):
     class Meta:
         model = Denominacion
+        fields = '__all__'
+
+class LimiteConfigSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = LimiteConfig        
         fields = '__all__'
