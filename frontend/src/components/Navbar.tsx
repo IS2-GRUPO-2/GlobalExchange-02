@@ -127,14 +127,8 @@ export default function Navbar() {
           {/* Dropdown usuario */}
           {isLoggedIn() && (
             <div className="absolute inset-y-0 right-0 flex items-center space-x-3 pr-2 sm:static sm:inset-auto sm:ml-6 sm:pr-0">
-              {/* 🔔 Notificaciones */}
-              <button
-                type="button"
-                className="relative rounded-full p-1 text-gray-300 hover:text-white"
-              >
-                <Bell className="w-6 h-6" />
-              </button>
               
+              {/* Selector de cliente */}
               {user?.id && <ClientPicker userId={user.id} className="w-56" />}
               
               {/* Usuario + Nombre + Flechita */}

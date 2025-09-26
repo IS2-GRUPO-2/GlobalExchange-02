@@ -87,9 +87,6 @@ const ClientPicker: React.FC<Props> = ({
   if (loading) {
     return (
       <div className={`client-selector ${className}`}>
-        <label className="block text-xs text-gray-300 mb-1">
-          Cliente actual:
-        </label>
         <select
           disabled
           className="block w-full rounded-md bg-gray-800 border border-gray-600 text-gray-400 text-sm px-3 py-1.5"
@@ -103,9 +100,6 @@ const ClientPicker: React.FC<Props> = ({
   if (options.length === 0) {
     return (
       <div className={`client-selector ${className}`}>
-        <label className="block text-xs text-gray-300 mb-1">
-          Cliente actual:
-        </label>
         <select
           disabled
           className="block w-full rounded-md bg-gray-800 border border-gray-600 text-gray-400 text-sm px-3 py-1.5"
@@ -118,18 +112,13 @@ const ClientPicker: React.FC<Props> = ({
 
   const currentClient = options.find((c) => c.idCliente === value) || null;
   const otherOptions = options.filter((c) => c.idCliente !== value);
-
+  
   return (
     <div className={`client-selector ${className}`}>
-      <label
-        htmlFor="client-select"
-        className="block text-xs text-gray-300 mb-1"
-      >
-        Cliente actual:
-      </label>
+
       <select
         id="client-select"
-        className="block w-full rounded-md bg-gray-800 border border-gray-600 text-white text-sm px-3 py-1.5
+        className="block w-full  min-w-[150px] truncate rounded-md bg-gray-800 border border-gray-600 text-white text-sm px-3 py-1.5
                    focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500
                    hover:bg-gray-700 transition-colors"
         value={value}
@@ -148,6 +137,7 @@ const ClientPicker: React.FC<Props> = ({
             key={c.idCliente}
             value={c.idCliente}
             className="bg-gray-800 text-white"
+            title={c.nombre}
           >
             {c.nombre}
           </option>
