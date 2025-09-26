@@ -11,8 +11,10 @@ from .views import (
     TarjetaViewSet,
     ChequeViewSet,
     simular_operacion_privada,
+    simular_operacion_privada_con_instancia,
     simular_operacion_publica,
-    listar_metodos_disponibles
+    listar_metodos_disponibles,
+    listar_metodos_cliente
 )
 from .views import obtener_tipos_cheque, obtener_divisas_cheque
 
@@ -31,8 +33,10 @@ router.register(r'cheques', ChequeViewSet, basename='cheque')
 urlpatterns = [
     path('', include(router.urls)),
     path("simular_privada/", simular_operacion_privada, name="simular-operacion-privada"),
+    path("simular_privada_con_instancia/", simular_operacion_privada_con_instancia, name="simular-operacion-privada-con-instancia"),
     path("simular_publica/", simular_operacion_publica, name="simular-operacion-publica"),
-    path("metodos-disponibles/", listar_metodos_disponibles, name="metodos-disponibles"),
+    path("metodos-disponibles/", listar_metodos_disponibles, name="listar-metodos-disponibles"), 
+    path("metodos-cliente/", listar_metodos_cliente, name="listar-metodos-cliente"),  
     path("cheque/tipos/", obtener_tipos_cheque, name="cheque-tipos"),
     path("cheque/divisas/", obtener_divisas_cheque, name="cheque-divisas"),
 ]

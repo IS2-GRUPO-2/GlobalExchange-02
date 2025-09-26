@@ -60,3 +60,39 @@ export type MetodosDisponiblesResponse = {
   operacion_casa: "compra" | "venta";
   metodos: MetodoFinanciero[];
 };
+
+export interface SimulacionRequestConInstancia {
+  cliente_id: string;
+  divisa_origen: number;
+  divisa_destino: number;
+  monto: number;
+  detalle_metodo_id?: number;
+  metodo_id?: number;
+}
+
+export interface InstanciaMetodo {
+  id: number;
+  alias: string;
+  tipo_especifico: 'cuenta_bancaria' | 'billetera_digital' | 'tarjeta' | 'tarjeta_local' | null;
+  detalles: {
+    [key: string]: any;
+  };
+}
+
+export interface MetodoClienteOrganizado {
+  metodo_financiero: {
+    id: number;
+    nombre: string;
+    nombre_display: string;
+    comision_cobro_porcentaje: number;
+    comision_pago_porcentaje: number;
+  };
+  instancias: InstanciaMetodo[];
+}
+
+export interface MetodosClienteResponse {
+  operacion_casa: 'compra' | 'venta';
+  metodos: {
+    [nombre_metodo: string]: MetodoClienteOrganizado;
+  };
+}

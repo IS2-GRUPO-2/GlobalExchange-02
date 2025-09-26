@@ -34,12 +34,16 @@ from .serializers import (
     BilleteraDigitalSerializer,
     TarjetaSerializer,
     SimulacionPrivadaSerializer,
-    SimulacionPublicaSerializer
+    SimulacionPrivadaConInstanciaSerializer,
+    SimulacionPublicaSerializer,
+    MetodosClienteSerializer
 )
 from .services import (
     calcular_simulacion_operacion_publica,
     calcular_simulacion_operacion_privada,
+    calcular_simulacion_operacion_privada_con_instancia,
     listar_metodos_por_divisas,
+    listar_metodos_cliente_por_divisas
 )
 
 
@@ -850,4 +854,62 @@ def listar_metodos_disponibles(request):
 
     except Exception as e:
         return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+    
+
+
+@api_view(["POST"])
+@permission_classes([permissions.IsAuthenticated])
+def simular_operacion_privada_con_instancia(request):
+    """
+    Endpoint de simulación privada con instancia específica.
+    - Puede recibir detalle_metodo_id (instancia específica) o metodo_id (método genérico).
+    - Devuelve resultado detallado con descuentos de categoría y comisiones.
+    """
+    serializer = SimulacionPrivadaConInstanciaSerializer(data=request.data)
+    if serializer.is_valid():
+        try:
+            data = serializer.validated_data
+            resultado = calcular_simulacion_operacion_privada_con_instancia(
+                cliente_id=data["cliente_id"],
+                divisa_origen_id=data["divisa_origen"],
+                divisa_destino_id=data["divisa_destino"],
+                monto=data["monto"],
+                detalle_metodo_id=data.get("detalle_metodo_id"),
+                metodo_id=data.get("metodo_id"),
+            )
+            return Response(resultado, status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+@api_view(["GET"])
+@permission_classes([permissions.IsAuthenticated])
+def listar_metodos_cliente(request):
+    """
+    Endpoint que lista los métodos disponibles del cliente organizados por tipo.
+    - Requiere cliente_id, divisa_origen y divisa_destino.
+    - Devuelve { operacion_casa, metodos_organizados }.
+    """
+    serializer = MetodosClienteSerializer(data=request.query_params)
+    if serializer.is_valid():
+        try:
+            data = serializer.validated_data
+            operacion_casa, metodos_organizados = listar_metodos_cliente_por_divisas(
+                data["cliente_id"],
+                data["divisa_origen"],
+                data["divisa_destino"]
+            )
+
+            return Response(
+                {
+                    "operacion_casa": operacion_casa,
+                    "metodos": metodos_organizados,
+                },
+                status=status.HTTP_200_OK,
+            )
+
+        except Exception as e:
+            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 

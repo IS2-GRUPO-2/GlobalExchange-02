@@ -151,6 +151,40 @@ class SimulacionPrivadaSerializer(serializers.Serializer):
     metodo_id = serializers.IntegerField()
 
 
+
+class SimulacionPrivadaConInstanciaSerializer(serializers.Serializer):
+    """
+    Serializer para usuarios autenticados con instancia específica.
+    Puede usar detalle_metodo_id (instancia específica) o metodo_id (método genérico).
+    """
+    cliente_id = serializers.UUIDField()
+    divisa_origen = serializers.IntegerField()
+    divisa_destino = serializers.IntegerField()
+    monto = serializers.DecimalField(max_digits=30, decimal_places=2)
+    detalle_metodo_id = serializers.IntegerField(required=False, allow_null=True)
+    metodo_id = serializers.IntegerField(required=False, allow_null=True)
+
+    def validate(self, data):
+        """Validar que se proporcione detalle_metodo_id o metodo_id, pero no ambos."""
+        detalle_metodo_id = data.get('detalle_metodo_id')
+        metodo_id = data.get('metodo_id')
+        
+        if not detalle_metodo_id and not metodo_id:
+            raise serializers.ValidationError("Debe proporcionar detalle_metodo_id o metodo_id")
+        
+        if detalle_metodo_id and metodo_id:
+            raise serializers.ValidationError("No puede proporcionar ambos detalle_metodo_id y metodo_id")
+        
+        return data
+
+class MetodosClienteSerializer(serializers.Serializer):
+    """
+    Serializer para validar parámetros de métodos del cliente.
+    """
+    cliente_id = serializers.UUIDField()
+    divisa_origen = serializers.IntegerField()
+    divisa_destino = serializers.IntegerField()
+
 class SimulacionPublicaSerializer(serializers.Serializer):
     """
     Serializer para usuarios invitados.
