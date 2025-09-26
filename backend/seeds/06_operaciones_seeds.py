@@ -1,6 +1,6 @@
 from apps.operaciones.models import (
-    Banco, BilleteraDigitalCatalogo, MetodoFinanciero, 
-    MetodoFinancieroDetalle, CuentaBancaria, BilleteraDigital,
+    Banco, BilleteraDigitalCatalogo, TarjetaCatalogo, MetodoFinanciero, 
+    MetodoFinancieroDetalle, CuentaBancaria, BilleteraDigital, Tarjeta,
     TipoMetodoFinanciero
 )
 from apps.clientes.models import Cliente
@@ -177,6 +177,66 @@ def run():
         )
         if created:
             print(f"  → Billetera creada: {billetera.nombre}")
+
+    # Crear marcas de tarjetas del catálogo
+    tarjetas_catalogo_data = [
+        {
+            'marca': 'Visa',
+            'comision_compra': 3.2,
+            'comision_venta': 2.8,
+            'comision_personalizada_compra': True,
+            'comision_personalizada_venta': True,
+            'is_active': True
+        },
+        {
+            'marca': 'Mastercard',
+            'comision_compra': 3.1,
+            'comision_venta': 2.7,
+            'comision_personalizada_compra': True,
+            'comision_personalizada_venta': False,
+            'is_active': True
+        },
+        {
+            'marca': 'American Express',
+            'comision_compra': 4.5,
+            'comision_venta': 4.0,
+            'comision_personalizada_compra': False,
+            'comision_personalizada_venta': True,
+            'is_active': True
+        },
+        {
+            'marca': 'Cabal',
+            'comision_compra': 2.8,
+            'comision_venta': 2.5,
+            'comision_personalizada_compra': True,
+            'comision_personalizada_venta': True,
+            'is_active': True
+        },
+        {
+            'marca': 'Naranja',
+            'comision_compra': 3.5,
+            'comision_venta': 3.2,
+            'comision_personalizada_compra': False,
+            'comision_personalizada_venta': False,
+            'is_active': True
+        },
+        {
+            'marca': 'Nativa',
+            'comision_compra': 2.9,
+            'comision_venta': 2.6,
+            'comision_personalizada_compra': True,
+            'comision_personalizada_venta': False,
+            'is_active': True
+        }
+    ]
+    
+    for tarjeta_data in tarjetas_catalogo_data:
+        tarjeta, created = TarjetaCatalogo.objects.get_or_create(
+            marca=tarjeta_data['marca'],
+            defaults=tarjeta_data
+        )
+        if created:
+            print(f"  → Marca de tarjeta creada: {tarjeta.marca}")
     
     # Crear métodos financieros base
     metodos_financieros_data = [
@@ -233,16 +293,22 @@ def run():
     # Crear algunos métodos financieros detallados para clientes
     try:
         # Obtener objetos necesarios
-        clientes = Cliente.objects.all()[:3]  # Primeros 3 clientes
+        clientes = Cliente.objects.all()[:5]  # Primeros 5 clientes
         banco_galicia = Banco.objects.get(nombre='Banco Galicia')
         banco_nacion = Banco.objects.get(nombre='Banco de la Nación Argentina')
         mp = BilleteraDigitalCatalogo.objects.get(nombre='Mercado Pago')
         uala = BilleteraDigitalCatalogo.objects.get(nombre='Ualá')
         
+        # Marcas de tarjetas del catálogo
+        visa = TarjetaCatalogo.objects.get(marca='Visa')
+        mastercard = TarjetaCatalogo.objects.get(marca='Mastercard')
+        cabal = TarjetaCatalogo.objects.get(marca='Cabal')
+        
         metodo_transferencia = MetodoFinanciero.objects.get(nombre=TipoMetodoFinanciero.TRANSFERENCIA_BANCARIA)
         metodo_billetera = MetodoFinanciero.objects.get(nombre=TipoMetodoFinanciero.BILLETERA_DIGITAL)
+        metodo_tarjeta = MetodoFinanciero.objects.get(nombre=TipoMetodoFinanciero.TARJETA)
         
-        if len(clientes) >= 3:
+        if len(clientes) >= 5:
             # Cliente 1: Cuenta en Galicia
             detalle1, created = MetodoFinancieroDetalle.objects.get_or_create(
                 cliente=clientes[0],
@@ -282,6 +348,29 @@ def run():
                 )
                 print(f"  → Billetera digital creada para {clientes[0].nombre}")
             
+            # Cliente 1: Tarjeta Visa Local
+            detalle_tarjeta1, created = MetodoFinancieroDetalle.objects.get_or_create(
+                cliente=clientes[0],
+                alias='Mi Visa Débito',
+                defaults={
+                    'metodo_financiero': metodo_tarjeta,
+                    'is_active': True
+                }
+            )
+            if created:
+                Tarjeta.objects.create(
+                    metodo_financiero_detalle=detalle_tarjeta1,
+                    tipo='LOCAL',
+                    payment_method_id=f'local_visa_{clientes[0].cedula}',
+                    marca=visa,
+                    brand='visa',
+                    last4='4532',
+                    exp_month=12,
+                    exp_year=2028,
+                    titular=clientes[0].nombre
+                )
+                print(f"  → Tarjeta local creada para {clientes[0].nombre}")
+            
             # Cliente 2: Cuenta en Nación
             detalle3, created = MetodoFinancieroDetalle.objects.get_or_create(
                 cliente=clientes[1],
@@ -300,6 +389,29 @@ def run():
                     cbu_cvu='0110987654321098765432'
                 )
                 print(f"  → Cuenta bancaria creada para {clientes[1].nombre}")
+            
+                # Cliente 2: Tarjeta Mastercard Stripe
+            detalle_tarjeta2, created = MetodoFinancieroDetalle.objects.get_or_create(
+                cliente=clientes[1],
+                alias='Mi Mastercard',
+                defaults={
+                    'metodo_financiero': metodo_tarjeta,
+                    'is_active': True
+                }
+            )
+            if created:
+                Tarjeta.objects.create(
+                    metodo_financiero_detalle=detalle_tarjeta2,
+                    tipo='STRIPE',
+                    payment_method_id=f'pm_test_card_{clientes[1].cedula}_mc',
+                    marca=mastercard,
+                    brand='mastercard',
+                    last4='5555',
+                    exp_month=10,
+                    exp_year=2027,
+                    titular=clientes[1].nombre
+                )
+                print(f"  → Tarjeta Stripe creada para {clientes[1].nombre}")
             
             # Cliente 3: Ualá
             detalle4, created = MetodoFinancieroDetalle.objects.get_or_create(
@@ -320,6 +432,78 @@ def run():
                     alias_billetera='CLIENTE.UALA.ARS'
                 )
                 print(f"  → Billetera digital creada para {clientes[2].nombre}")
+            
+            # Cliente 3: Tarjeta Cabal Local
+            detalle_tarjeta3, created = MetodoFinancieroDetalle.objects.get_or_create(
+                cliente=clientes[2],
+                alias='Mi Cabal',
+                defaults={
+                    'metodo_financiero': metodo_tarjeta,
+                    'is_active': True
+                }
+            )
+            if created:
+                Tarjeta.objects.create(
+                    metodo_financiero_detalle=detalle_tarjeta3,
+                    tipo='LOCAL',
+                    payment_method_id=f'local_cabal_{clientes[2].cedula}',
+                    marca=cabal,
+                    brand='cabal',
+                    last4='6271',
+                    exp_month=8,
+                    exp_year=2029,
+                    titular=clientes[2].nombre
+                )
+                print(f"  → Tarjeta local Cabal creada para {clientes[2].nombre}")
+
+            # Cliente 4: Múltiples tarjetas
+            if len(clientes) >= 4:
+                # Cliente 4: Visa Stripe
+                detalle_tarjeta4, created = MetodoFinancieroDetalle.objects.get_or_create(
+                    cliente=clientes[3],
+                    alias='Mi Visa Crédito',
+                    defaults={
+                        'metodo_financiero': metodo_tarjeta,
+                        'is_active': True
+                    }
+                )
+                if created:
+                    Tarjeta.objects.create(
+                        metodo_financiero_detalle=detalle_tarjeta4,
+                        tipo='STRIPE',
+                        payment_method_id=f'pm_test_card_{clientes[3].cedula}_visa',
+                        marca=visa,
+                        brand='visa',
+                        last4='4242',
+                        exp_month=6,
+                        exp_year=2030,
+                        titular=clientes[3].nombre
+                    )
+                    print(f"  → Tarjeta Visa Stripe creada para {clientes[3].nombre}")
+
+            # Cliente 5: Mastercard Local
+            if len(clientes) >= 5:
+                detalle_tarjeta5, created = MetodoFinancieroDetalle.objects.get_or_create(
+                    cliente=clientes[4],
+                    alias='Mi Mastercard Débito',
+                    defaults={
+                        'metodo_financiero': metodo_tarjeta,
+                        'is_active': True
+                    }
+                )
+                if created:
+                    Tarjeta.objects.create(
+                        metodo_financiero_detalle=detalle_tarjeta5,
+                        tipo='LOCAL',
+                        payment_method_id=f'local_mastercard_{clientes[4].cedula}',
+                        marca=mastercard,
+                        brand='mastercard',
+                        last4='2720',
+                        exp_month=4,
+                        exp_year=2026,
+                        titular=clientes[4].nombre
+                    )
+                    print(f"  → Tarjeta local Mastercard creada para {clientes[4].nombre}")
         
         # Crear cuentas de la casa de cambio
         casa_detalle1, created = MetodoFinancieroDetalle.objects.get_or_create(
@@ -364,5 +548,6 @@ def run():
     
     print(f"✅ Bancos: {Banco.objects.count()} total")
     print(f"✅ Billeteras digitales: {BilleteraDigitalCatalogo.objects.count()} total")
+    print(f"✅ Marcas de tarjetas: {TarjetaCatalogo.objects.count()} total")
     print(f"✅ Métodos financieros: {MetodoFinanciero.objects.count()} total")
     print(f"✅ Métodos financieros detallados: {MetodoFinancieroDetalle.objects.count()} total")

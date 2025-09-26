@@ -2,7 +2,7 @@ from decimal import Decimal
 from apps.clientes.models import Cliente
 from apps.divisas.models import Divisa
 from apps.cotizaciones.models import Tasa
-from .models import MetodoFinanciero, MetodoFinancieroDetalle, CuentaBancaria, BilleteraDigital, Tarjeta, TarjetaLocal
+from .models import MetodoFinanciero, MetodoFinancieroDetalle, CuentaBancaria, BilleteraDigital, TarjetaCatalogo, Tarjeta, Cheque
 from apps.cotizaciones.service import TasaService
 
 def _get_divisa(id_divisa: int) -> Divisa:
@@ -38,56 +38,39 @@ def _get_tasa_activa(divisa: Divisa) -> Tasa:
 
 
 def _get_comision_especifica(detalle_metodo, operacion_casa):
-    """
-    Obtiene la comisión específica del catálogo si está habilitada,
-    sino devuelve None para usar la comisión por defecto del MetodoFinanciero.
-    
-    Args:
-        detalle_metodo: MetodoFinancieroDetalle instance
-        operacion_casa: "compra" o "venta"
-    
-    Returns:
-        Decimal|None: Comisión específica del catálogo o None
-    """
     try:
         # Verificar si tiene cuenta bancaria específica
         if hasattr(detalle_metodo, 'cuenta_bancaria'):
             banco = detalle_metodo.cuenta_bancaria.banco
             if operacion_casa == "compra":
-                # Casa compra = cliente vende = pago para casa
                 if banco.comision_personalizada_compra:
                     return banco.comision_compra
-            else:  # operacion_casa == "venta"
-                # Casa vende = cliente compra = cobro para casa
+            else:
                 if banco.comision_personalizada_venta:
                     return banco.comision_venta
-        
         # Verificar si tiene billetera digital específica
         elif hasattr(detalle_metodo, 'billetera_digital'):
             billetera_catalogo = detalle_metodo.billetera_digital.plataforma
             if operacion_casa == "compra":
                 if billetera_catalogo.comision_personalizada_compra:
                     return billetera_catalogo.comision_compra
-            else:  # operacion_casa == "venta"
+            else:
                 if billetera_catalogo.comision_personalizada_venta:
                     return billetera_catalogo.comision_venta
-        
-        # Verificar si tiene tarjeta local específica
-        elif hasattr(detalle_metodo, 'tarjeta_local'):
-            tarjeta_catalogo = detalle_metodo.tarjeta_local.marca
-            if operacion_casa == "compra":
-                if tarjeta_catalogo.comision_personalizada_compra:
-                    return tarjeta_catalogo.comision_compra
-            else:  # operacion_casa == "venta"
-                if tarjeta_catalogo.comision_personalizada_venta:
-                    return tarjeta_catalogo.comision_venta
-        
-        # Para tarjetas de Stripe no hay catálogo específico, usar MetodoFinanciero
-        
+        # Verificar si tiene tarjeta específica
+        elif hasattr(detalle_metodo, 'tarjeta'):
+            tarjeta = detalle_metodo.tarjeta
+            if tarjeta.tipo == 'LOCAL' and tarjeta.marca:
+                tarjeta_catalogo = tarjeta.marca
+                if operacion_casa == "compra":
+                    if tarjeta_catalogo.comision_personalizada_compra:
+                        return tarjeta_catalogo.comision_compra
+                else:
+                    if tarjeta_catalogo.comision_personalizada_venta:
+                        return tarjeta_catalogo.comision_venta
+            # Para Stripe no hay catálogo específico, usar MetodoFinanciero
     except AttributeError:
-        # Si no tiene instancia específica asociada, usar comisión por defecto
         pass
-    
     return None
 
 
@@ -227,7 +210,7 @@ def calcular_simulacion_operacion_privada_con_instancia(cliente_id, divisa_orige
         ).prefetch_related(
             'cuenta_bancaria__banco',
             'billetera_digital__plataforma',
-            'tarjeta_local__marca'
+            'tarjeta__marca'
         ).get(id=detalle_metodo_id, cliente=cliente)
         
         metodo = detalle.metodo_financiero
@@ -243,27 +226,17 @@ def calcular_simulacion_operacion_privada_con_instancia(cliente_id, divisa_orige
 
     # Determinar la comisión a usar
     if operacion_casa == "compra":
-        # Casa COMPRA → Cliente vende
-        # Buscar comisión específica del catálogo si existe instancia
         comision_especifica = None
         if detalle:
             comision_especifica = _get_comision_especifica(detalle, operacion_casa)
-        
-        # Usar comisión específica o por defecto
         com_metodo = comision_especifica if comision_especifica is not None else metodo.comision_pago_porcentaje
-        
         tc = TasaService.calcular_tasa_compra_metodoPago_cliente(tasa, metodo, cliente)
         monto_destino = monto * tc
     else:
-        # Casa VENDE → Cliente compra
-        # Buscar comisión específica del catálogo si existe instancia
         comision_especifica = None
         if detalle:
             comision_especifica = _get_comision_especifica(detalle, operacion_casa)
-        
-        # Usar comisión específica o por defecto
         com_metodo = comision_especifica if comision_especifica is not None else metodo.comision_cobro_porcentaje
-        
         tc = TasaService.calcular_tasa_venta_metodoPago_cliente(tasa, metodo, cliente)
         monto_destino = monto / tc
 

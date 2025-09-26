@@ -1,37 +1,36 @@
 import { useState, useEffect } from "react";
-import { useAuth } from "../context/useAuth";
-import Modal from "../components/Modal";
-import { useMetodosFinancieros } from "../features/financiero/hooks/useMetodosFinancieros";
-import { useInstancias } from "../features/financiero/hooks/useInstancias";
-import { useCatalogos } from "../features/financiero/hooks/useCatalogos";
-import { useModal } from "../hooks/useModal";
+import { useAuth } from "../../../context/useAuth";
+import Modal from "../../../components/Modal";
+import { useMetodosFinancieros } from "../hooks/useMetodosFinancieros";
+import { useInstancias } from "../hooks/useInstancias";
+import { useCatalogos } from "../hooks/useCatalogos";
+import { useModal } from "../../../hooks/useModal";
 
-import { TabNavigation } from "../features/financiero/components/TabNavigation";
-import { SearchAndCreate } from "../features/financiero/components/SearchAndCreate";
-import { MetodoFinancieroTable } from "../features/financiero/components/MetodoFinancieroTable";
-import { CatalogTable } from "../features/financiero/components/CatalogTable";
-import { InstancesGrid } from "../features/financiero/components/InstancesGrid";
-import { MetodoFinancieroForm } from "../features/financiero/components/MetodoFinancieroForm";
-import { ItemDetailsView } from "../features/financiero/components/ItemDetailsView";
+import { TabNavigation } from "../components/TabNavigation";
+import { SearchAndCreate } from "../components/SearchAndCreate";
+import { MetodoFinancieroTable } from "../components/MetodoFinancieroTable";
+import { CatalogTable } from "../components/CatalogTable";
+import { InstancesGrid } from "../components/InstancesGrid";
+import MetodoFinancieroForm from "../components/MetodoFinancieroForm";
+import { ItemDetailsView } from "../components/ItemDetailsView";
 
 import CuentaBancariaForm from "../components/CuentaBancariaForm";
 import BilleteraDigitalForm from "../components/BilleteraDigitalForm";
-import TarjetaLocalForm from "../components/TarjetaLocalForm";
 import BancoForm from "../components/BancoForm";
 import BilleteraDigitalCatalogoForm from "../components/BilleteraDigitalCatalogoForm";
-import TarjetaLocalCatalogoForm from "../components/TarjetaLocalCatalogoForm";
+import TarjetaCatalogoForm from "../components/TarjetaCatalogoForm";
 
 import {
   filterInstances,
   getMetodoFinancieroId,
-} from "../features/financiero/utils/metodosFinancierosUtils";
+} from "../utils/metodosFinancierosUtils";
 
 import type {
   MainTabType,
   InstanceTabType,
   CatalogTabType,
   ExtendedItem,
-} from "../features/financiero/types/MetodoFinanciero";
+} from "../types/MetodoFinanciero";
 
 const MetodosFinancierosPage = () => {
   const [mainTab, setMainTab] = useState<MainTabType>("catalogo");
@@ -148,6 +147,8 @@ const MetodosFinancierosPage = () => {
     const success = await catalogosHook.toggleCatalogItem(item, tipo);
     if (success) {
       catalogosHook.fetchCatalogos(search);
+      // También actualizar las instancias para reflejar cambios en cascada
+      instanciasHook.fetchInstancias(search);
     }
   };
 
@@ -171,9 +172,8 @@ const MetodosFinancierosPage = () => {
     if (mainTab === "catalogo") {
       return (
         <MetodoFinancieroForm
-          selectedItem={modalHook.selectedItem}
-          editModalOpen={modalHook.editModalOpen}
-          isSubmitting={modalHook.isSubmitting}
+          metodo={modalHook.selectedItem}
+          isEditForm={modalHook.editModalOpen}
           onSubmit={
             modalHook.editModalOpen ? handleUpdateMetodo : handleCreateMetodo
           }
@@ -225,7 +225,7 @@ const MetodosFinancierosPage = () => {
         );
       } else {
         return (
-          <TarjetaLocalCatalogoForm
+          <TarjetaCatalogoForm
             onSubmit={
               modalHook.editModalOpen
                 ? handleUpdateCatalog
@@ -270,19 +270,8 @@ const MetodosFinancierosPage = () => {
             isSubmitting={modalHook.isSubmitting}
           />
         );
-      } else {
-        return (
-          <TarjetaLocalForm
-            onSubmit={
-              modalHook.editModalOpen
-                ? handleUpdateInstancia
-                : handleCreateInstancia
-            }
-            initialData={initialData}
-            isSubmitting={modalHook.isSubmitting}
-          />
-        );
       }
+      return null;
     }
 
     return null;
@@ -312,7 +301,7 @@ const MetodosFinancierosPage = () => {
         <CatalogTable
           bancos={catalogosHook.bancos}
           billeterasCatalogo={catalogosHook.billeterasCatalogo}
-          tarjetasLocalesCatalogo={catalogosHook.tarjetasLocalesCatalogo}
+          tarjetasCatalogo={catalogosHook.tarjetasCatalogo}
           catalogTab={catalogTab}
           loading={loading}
           onEdit={modalHook.openEditModal}
@@ -325,7 +314,6 @@ const MetodosFinancierosPage = () => {
       const filteredItems = filterInstances(
         instanciasHook.cuentas,
         instanciasHook.billeteras,
-        instanciasHook.tarjetasLocales,
         instanciasHook.detalles,
         instanceTab,
         search,
@@ -360,14 +348,14 @@ const MetodosFinancierosPage = () => {
       return `${action} ${
         catalogTab === "bancos" ? "Banco" : 
         catalogTab === "billeteras" ? "Billetera Digital" :
-        "Marca de Tarjeta Local"
+        "Tarjetas"
       }`;
     }
 
     if (mainTab === "instancias") {
       const tipo = instanceTab === "cuentas" ? "Cuenta" : 
                   instanceTab === "billeteras digitales" ? "Billetera Digital" :
-                  "Tarjeta Local";
+                  "";
       return `${action} ${tipo} de la Casa`;
     }
 
