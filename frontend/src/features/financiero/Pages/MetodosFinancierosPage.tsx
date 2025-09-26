@@ -1,35 +1,36 @@
 import { useState, useEffect } from "react";
-import { useAuth } from "../context/useAuth";
-import Modal from "../components/Modal";
-import { useMetodosFinancieros } from "../features/financiero/hooks/useMetodosFinancieros";
-import { useInstancias } from "../features/financiero/hooks/useInstancias";
-import { useCatalogos } from "../features/financiero/hooks/useCatalogos";
-import { useModal } from "../hooks/useModal";
+import { useAuth } from "../../../context/useAuth";
+import Modal from "../../../components/Modal";
+import { useMetodosFinancieros } from "../hooks/useMetodosFinancieros";
+import { useInstancias } from "../hooks/useInstancias";
+import { useCatalogos } from "../hooks/useCatalogos";
+import { useModal } from "../../../hooks/useModal";
 
-import { TabNavigation } from "../features/financiero/components/TabNavigation";
-import { SearchAndCreate } from "../features/financiero/components/SearchAndCreate";
-import { MetodoFinancieroTable } from "../features/financiero/components/MetodoFinancieroTable";
-import { CatalogTable } from "../features/financiero/components/CatalogTable";
-import { InstancesGrid } from "../features/financiero/components/InstancesGrid";
-import { MetodoFinancieroForm } from "../features/financiero/components/MetodoFinancieroForm";
-import { ItemDetailsView } from "../features/financiero/components/ItemDetailsView";
+import { TabNavigation } from "../components/TabNavigation";
+import { SearchAndCreate } from "../components/SearchAndCreate";
+import { MetodoFinancieroTable } from "../components/MetodoFinancieroTable";
+import { CatalogTable } from "../components/CatalogTable";
+import { InstancesGrid } from "../components/InstancesGrid";
+import MetodoFinancieroForm from "../components/MetodoFinancieroForm";
+import { ItemDetailsView } from "../components/ItemDetailsView";
 
 import CuentaBancariaForm from "../components/CuentaBancariaForm";
 import BilleteraDigitalForm from "../components/BilleteraDigitalForm";
 import BancoForm from "../components/BancoForm";
 import BilleteraDigitalCatalogoForm from "../components/BilleteraDigitalCatalogoForm";
+import TarjetaCatalogoForm from "../components/TarjetaCatalogoForm";
 
 import {
   filterInstances,
   getMetodoFinancieroId,
-} from "../features/financiero/utils/metodosFinancierosUtils";
+} from "../utils/metodosFinancierosUtils";
 
 import type {
   MainTabType,
   InstanceTabType,
   CatalogTabType,
   ExtendedItem,
-} from "../features/financiero/types/MetodoFinanciero";
+} from "../types/MetodoFinanciero";
 
 const MetodosFinancierosPage = () => {
   const [mainTab, setMainTab] = useState<MainTabType>("catalogo");
@@ -146,6 +147,8 @@ const MetodosFinancierosPage = () => {
     const success = await catalogosHook.toggleCatalogItem(item, tipo);
     if (success) {
       catalogosHook.fetchCatalogos(search);
+      // También actualizar las instancias para reflejar cambios en cascada
+      instanciasHook.fetchInstancias(search);
     }
   };
 
@@ -169,9 +172,8 @@ const MetodosFinancierosPage = () => {
     if (mainTab === "catalogo") {
       return (
         <MetodoFinancieroForm
-          selectedItem={modalHook.selectedItem}
-          editModalOpen={modalHook.editModalOpen}
-          isSubmitting={modalHook.isSubmitting}
+          metodo={modalHook.selectedItem}
+          isEditForm={modalHook.editModalOpen}
           onSubmit={
             modalHook.editModalOpen ? handleUpdateMetodo : handleCreateMetodo
           }
@@ -204,7 +206,7 @@ const MetodosFinancierosPage = () => {
             }
           />
         );
-      } else {
+      } else if (catalogTab === "billeteras") {
         return (
           <BilleteraDigitalCatalogoForm
             onSubmit={
@@ -213,6 +215,23 @@ const MetodosFinancierosPage = () => {
                 : handleCreateCatalog
             }
             billetera={initialData}
+            isSubmitting={modalHook.isSubmitting}
+            onCancel={
+              modalHook.editModalOpen
+                ? modalHook.closeEditModal
+                : modalHook.closeCreateModal
+            }
+          />
+        );
+      } else {
+        return (
+          <TarjetaCatalogoForm
+            onSubmit={
+              modalHook.editModalOpen
+                ? handleUpdateCatalog
+                : handleCreateCatalog
+            }
+            marca={initialData}
             isSubmitting={modalHook.isSubmitting}
             onCancel={
               modalHook.editModalOpen
@@ -239,7 +258,7 @@ const MetodosFinancierosPage = () => {
             isSubmitting={modalHook.isSubmitting}
           />
         );
-      } else {
+      } else if (instanceTab === "billeteras digitales") {
         return (
           <BilleteraDigitalForm
             onSubmit={
@@ -252,6 +271,7 @@ const MetodosFinancierosPage = () => {
           />
         );
       }
+      return null;
     }
 
     return null;
@@ -281,6 +301,7 @@ const MetodosFinancierosPage = () => {
         <CatalogTable
           bancos={catalogosHook.bancos}
           billeterasCatalogo={catalogosHook.billeterasCatalogo}
+          tarjetasCatalogo={catalogosHook.tarjetasCatalogo}
           catalogTab={catalogTab}
           loading={loading}
           onEdit={modalHook.openEditModal}
@@ -325,12 +346,16 @@ const MetodosFinancierosPage = () => {
 
     if (mainTab === "catalogos") {
       return `${action} ${
-        catalogTab === "bancos" ? "Banco" : "Billetera Digital"
+        catalogTab === "bancos" ? "Banco" : 
+        catalogTab === "billeteras" ? "Billetera Digital" :
+        "Tarjetas"
       }`;
     }
 
     if (mainTab === "instancias") {
-      const tipo = instanceTab === "cuentas" ? "Cuenta" : "Billetera Digital";
+      const tipo = instanceTab === "cuentas" ? "Cuenta" : 
+                  instanceTab === "billeteras digitales" ? "Billetera Digital" :
+                  "";
       return `${action} ${tipo} de la Casa`;
     }
 

@@ -1,51 +1,49 @@
 import { useState, useEffect } from "react";
-import {
-  simularOperacionPrivada,
-  getMetodosDisponibles,
-} from "../services/simulacionService";
+import { simularOperacionPrivadaConInstancia } from "../services/simulacionService";
 import { type SimulacionResponse } from "../types/Simulacion";
 import { getClienteActual } from "../services/usuarioService";
 import { type Cliente } from "../types/Cliente";
-import { type MetodoFinanciero } from "../types/MetodoFinanciero";
+import { type MetodoFinanciero } from "../features/financiero/types/MetodoFinanciero";
 import { getDivisasConTasa } from "../services/divisaService";
 import { type Divisa } from "../types/Divisa";
 import type { DecodedToken } from "../types/User";
 import { jwtDecode } from "jwt-decode";
 import { toast } from "react-toastify";
 
-export default function SimulacionOperacionPrivada() {
-  const [monto, setMonto] = useState<number>(0);
-  const [resultado, setResultado] = useState<SimulacionResponse | null>(null);
+// Importar las etapas
+import EtapaSeleccionDivisas from "./EtapaSeleccionDivisas";
+import EtapaSeleccionMetodo from "./EtapaSeleccionMetodo";
+import EtapaResultado from "./EtapaResultado";
 
+type EtapaActual = 1 | 2 | 3;
+
+export default function SimulacionOperacionPrivada() {
+  // Estado de navegación
+  const [etapaActual, setEtapaActual] = useState<EtapaActual>(1);
+  
+  // Estados de datos
+  const [divisaOrigen, setDivisaOrigen] = useState<string>("");
+  const [divisaDestino, setDivisaDestino] = useState<string>("");
+  const [monto, setMonto] = useState<number>(0);
+  const [detalleMetodoSeleccionado, setDetalleMetodoSeleccionado] = useState<number | null>(null);
+  const [metodoGenericoSeleccionado, setMetodoGenericoSeleccionado] = useState<string>("");
+  const [resultado, setResultado] = useState<SimulacionResponse | null>(null);
+  
   // Cliente actual
   const [clienteActual, setClienteActual] = useState<Cliente | null>(null);
 
-  // Divisas
-  const [divisas, setDivisas] = useState<Divisa[]>([]);
-  const [divisaBase, setDivisaBase] = useState<Divisa | null>(null);
-  const [divisaOrigen, setDivisaOrigen] = useState<string>("");
-  const [divisaDestino, setDivisaDestino] = useState<string>("");
-
-  // Métodos
-  const [metodos, setMetodos] = useState<MetodoFinanciero[]>([]);
-  const [metodoSeleccionado, setMetodoSeleccionado] = useState<string>("");
-
-  // Operación inferida desde backend
-  const [operacionCasa, setOperacionCasa] = useState<"compra" | "venta" | null>(
-    null
-  );
-
-  // Función para resetear la simulación
+  // Función para resetear la simulación completa
   const resetSimulacion = () => {
-    setResultado(null);
-    setMonto(0);
+    setEtapaActual(1);
     setDivisaOrigen("");
     setDivisaDestino("");
-    setMetodoSeleccionado("");
-    setMetodos([]);
+    setMonto(0);
+    setDetalleMetodoSeleccionado(null);
+    setMetodoGenericoSeleccionado("");
+    setResultado(null);
   };
 
-    // Función para manejar cambio de cliente
+  // Función para manejar cambio de cliente
   const handleClienteChange = (nuevoCliente: Cliente | null) => {
     resetSimulacion();
     setClienteActual(nuevoCliente);
@@ -73,7 +71,7 @@ export default function SimulacionOperacionPrivada() {
     fetchClienteActual();
   }, []);
 
-   // Escuchar cambios del cliente desde ClientPicker
+  // Escuchar cambios del cliente desde ClientPicker
   useEffect(() => {
     const handleClienteChangeEvent = (event: CustomEvent) => {
       const { cliente } = event.detail;
@@ -87,307 +85,150 @@ export default function SimulacionOperacionPrivada() {
     };
   }, []);
 
-  useEffect(() => {
-    const fetchDivisas = async () => {
-      try {
-        const data = await getDivisasConTasa({});
-        setDivisas(data.results);
+  // Handlers de navegación
+  const avanzarEtapa1 = () => {
+    setEtapaActual(2);
+  };
 
-        const base = data.results.find((d: Divisa) => d.es_base);
-        if (base) setDivisaBase(base);
-      } catch (err) {
-        console.error("Error cargando divisas con tasa", err);
-      }
-    };
-    fetchDivisas();
-  }, []);
+  const retrocederEtapa2 = () => {
+    setEtapaActual(1);
+    setDetalleMetodoSeleccionado(null);
+    setMetodoGenericoSeleccionado("");
+  };
 
+  const retrocederEtapa3 = () => {
+    setEtapaActual(2);
+    setResultado(null);
+  };
 
-  useEffect(() => {
-    const fetchMetodos = async () => {
-      if (!divisaOrigen || !divisaDestino) return;
-      try {
-        const data = await getMetodosDisponibles(
-          Number(divisaOrigen),
-          Number(divisaDestino)
-        );
-        setMetodos(data.metodos);
-        setOperacionCasa(data.operacion_casa);
-        if (data.metodos.length > 0) {
-          setMetodoSeleccionado(data.metodos[0].id?.toString() ?? "");
-        }
-      } catch (err) {
-        console.error("Error cargando métodos disponibles", err);
-      }
-    };
-    fetchMetodos();
-  }, [divisaOrigen, divisaDestino]);
+  const nuevaSimulacion = () => {
+    resetSimulacion();
+  };
 
+  // Handler para simular
   const handleSimular = async () => {
-    if (
-      !divisaOrigen ||
-      !divisaDestino ||
-      !metodoSeleccionado
-    ) {
-      toast.error("Debes seleccionar divisas y método");
-      return;
-    }
     if (!clienteActual) {
       toast.error("Debes tener un cliente seleccionado para simular");
       return;
     }
+
     try {
-      const res = await simularOperacionPrivada({
+      const res = await simularOperacionPrivadaConInstancia({
         cliente_id: clienteActual.idCliente,
         divisa_origen: Number(divisaOrigen),
         divisa_destino: Number(divisaDestino),
         monto,
-        metodo_id: Number(metodoSeleccionado),
+        detalle_metodo_id: detalleMetodoSeleccionado,
+        metodo_id: metodoGenericoSeleccionado ? Number(metodoGenericoSeleccionado) : undefined,
       });
       setResultado(res);
+      setEtapaActual(3);
     } catch (err) {
       console.error("Error en simulación", err);
+      toast.error("Error al realizar la simulación");
+    }
+  };
+
+  const getEtapaTitulo = (etapa: EtapaActual) => {
+    switch (etapa) {
+      case 1: return "Divisas y Monto";
+      case 2: return "Método";
+      case 3: return "Resultado";
+    }
+  };
+
+  const renderEtapaActual = () => {
+    switch (etapaActual) {
+      case 1:
+        return (
+          <EtapaSeleccionDivisas
+            divisaOrigen={divisaOrigen}
+            divisaDestino={divisaDestino}
+            monto={monto}
+            clienteActual={clienteActual} // Pasar el cliente actual
+            onDivisaOrigenChange={setDivisaOrigen}
+            onDivisaDestinoChange={setDivisaDestino}
+            onMontoChange={setMonto}
+            onAvanzar={avanzarEtapa1}
+          />
+        );
+      case 2:
+        return clienteActual ? (
+          <EtapaSeleccionMetodo
+            clienteId={clienteActual.idCliente}
+            divisaOrigen={divisaOrigen}
+            divisaDestino={divisaDestino}
+            detalleMetodoSeleccionado={detalleMetodoSeleccionado}
+            metodoGenericoSeleccionado={metodoGenericoSeleccionado}
+            onDetalleMetodoChange={setDetalleMetodoSeleccionado}
+            onMetodoGenericoChange={setMetodoGenericoSeleccionado}
+            onRetroceder={retrocederEtapa2}
+            onSimular={handleSimular}
+          />
+        ) : null;
+      case 3:
+        return resultado ? (
+          <EtapaResultado
+            resultado={resultado}
+            onRetroceder={retrocederEtapa3}
+            onNuevaSimulacion={nuevaSimulacion}
+          />
+        ) : null;
+    }
+  };
+
+  // Determinar el ancho según la etapa
+  const getContainerWidth = () => {
+    switch (etapaActual) {
+      case 1: return "max-w-2xl"; // Etapa 1: más pequeña
+      case 2: return "max-w-6xl"; // Etapa 2: más ancha para ver todos los métodos
+      case 3: return "max-w-3xl"; // Etapa 3: intermedia
+      default: return "max-w-2xl";
     }
   };
 
   return (
-    <section id="convert" className="flex flex-col items-center p-6">
-      <div className="w-full max-w-md bg-white rounded-xl shadow overflow-hidden border border-gray-200">
-        {/* Encabezado */}
-        <div className="bg-zinc-900 text-white text-center py-3 rounded-t-xl">
-          <h2 className="text-lg font-semibold">Simulación de Operación</h2>
+    <section id="convert" className="flex flex-col items-center p-6 select-none">
+      <div className={`w-full ${getContainerWidth()} bg-white rounded-xl shadow overflow-hidden border border-gray-200 transition-all duration-300`}>
+        {/* Encabezado con pestañas de etapas */}
+        <div className="bg-zinc-900 text-white">
+          <div className="text-center py-3 border-b border-zinc-700">
+            <h2 className="text-lg font-semibold">Simulación de Operación</h2>
+          </div>
+          
+          {/* Navegación de etapas */}
+          <div className="flex">
+            {([1, 2, 3] as EtapaActual[]).map((etapa) => (
+              <div
+                key={etapa}
+                className={`flex-1 py-4 px-3 text-center text-sm font-medium border-r border-zinc-700 last:border-r-0 ${
+                  etapaActual === etapa 
+                    ? 'bg-zinc-700 text-white' 
+                    : etapaActual > etapa 
+                      ? 'bg-zinc-800 text-zinc-300' 
+                      : 'bg-zinc-900 text-zinc-500'
+                }`}
+              >
+                <div className="flex items-center justify-center space-x-2">
+                  <span className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold border-2 ${
+                    etapaActual === etapa 
+                      ? 'bg-white text-zinc-900 border-white' 
+                      : etapaActual > etapa 
+                        ? 'bg-green-500 text-white border-green-500' 
+                        : 'bg-transparent text-zinc-400 border-zinc-600'
+                  }`}>
+                    {etapaActual > etapa ? '✓' : etapa}
+                  </span>
+                  <span className="leading-tight">{getEtapaTitulo(etapa)}</span>
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
 
-        <div className="p-6 space-y-5">
-          {/* Select Cliente */}
-          {/* <div className="flex flex-col">
-            <label
-              htmlFor="cliente"
-              className="mb-1 text-sm font-medium text-gray-700"
-            >
-              Cliente
-            </label>
-            <select
-              id="cliente"
-              value={clienteSeleccionado}
-              onChange={(e) => {
-                setClienteSeleccionado(e.target.value);
-                setResultado(null);
-              }}
-              className="w-full border border-gray-300 rounded-lg p-2 focus:ring-2 focus:ring-zinc-700 focus:outline-none text-sm"
-            >
-              {clientes.map((cliente) => (
-                <option key={cliente.idCliente} value={cliente.idCliente}>
-                  {cliente.nombre}
-                </option>
-              ))}
-            </select>
-          </div> */}
-
-          {/* Divisas Origen/Destino */}
-          <div className="flex items-center space-x-2">
-            <div className="flex-1">
-              <label className="text-xs font-medium text-gray-600">De</label>
-              <select
-                value={divisaOrigen}
-                onChange={(e) => {
-                  setDivisaOrigen(e.target.value);
-                  setResultado(null);
-
-                  const origen = divisas.find((d) => d.id?.toString() === e.target.value);
-                  const destino = divisas.find((d) => d.id?.toString() === divisaDestino); // buscar destino
-                  if (origen && origen.es_base && divisaBase && destino?.es_base) {
-                    setDivisaDestino("");
-                  }
-                }}
-                className="w-full border border-gray-300 rounded-lg p-2 focus:ring-2 focus:ring-zinc-700 focus:outline-none text-sm"
-              >
-                <option value="">Seleccionar...</option>
-                {(() => {
-                  const destino = divisas.find((d) => d.id?.toString() === divisaDestino);
-                  if (destino && !destino.es_base && divisaBase) {
-                    return (
-                      <option key={divisaBase.id} value={divisaBase.id}>
-                        {divisaBase.codigo} - {divisaBase.nombre}
-                      </option>
-                    );
-                  }
-                  return divisas
-                    .filter((divisa) => divisa.id?.toString() !== divisaDestino)
-                    .map((divisa) => (
-                      <option key={divisa.id} value={divisa.id}>
-                        {divisa.codigo} - {divisa.nombre}
-                      </option>
-                    ));
-                })()}
-              </select>
-            </div>
-
-            {/* Botón swap */}
-            <button
-              type="button"
-              onClick={() => {
-                const temp = divisaOrigen;
-                setDivisaOrigen(divisaDestino);
-                setDivisaDestino(temp);
-                setResultado(null);
-              }}
-              className="bg-gray-700 text-white rounded-full p-2 hover:bg-gray-900 self-end"
-            >
-              ⇆
-            </button>
-
-            <div className="flex-1">
-              <label className="text-xs font-medium text-gray-600">A</label>
-              <select
-                value={divisaDestino}
-                onChange={(e) => {
-                  setDivisaDestino(e.target.value);
-                  setResultado(null);
-                }}
-                className="w-full border border-gray-300 rounded-lg p-2 focus:ring-2 focus:ring-zinc-700 focus:outline-none text-sm"
-              >
-                <option value="">Seleccionar...</option>
-                {(() => {
-                  const origen = divisas.find((d) => d.id?.toString() === divisaOrigen);
-                  if (origen && !origen.es_base && divisaBase) {
-                    return (
-                      <option key={divisaBase.id} value={divisaBase.id}>
-                        {divisaBase.codigo} - {divisaBase.nombre}
-                      </option>
-                    );
-                  }
-                  return divisas
-                    .filter((divisa) => divisa.id?.toString() !== divisaOrigen)
-                    .map((divisa) => (
-                      <option key={divisa.id} value={divisa.id}>
-                        {divisa.codigo} - {divisa.nombre}
-                      </option>
-                    ));
-                })()}
-              </select>
-            </div>
-          </div>
-
-          {/* Select Método */}
-          <div className="flex flex-col">
-            <label
-              htmlFor="metodo"
-              className="mb-1 text-sm font-medium text-gray-700"
-            >
-              {operacionCasa === "venta"
-                ? "Método de Pago"
-                : operacionCasa === "compra"
-                ? "Método de Cobro"
-                : "Método Financiero"}
-            </label>
-            <select
-              id="metodo"
-              value={metodoSeleccionado}
-              onChange={(e) => {
-                setMetodoSeleccionado(e.target.value);
-                setResultado(null);
-              }}
-              className="w-full border border-gray-300 rounded-lg p-2 focus:ring-2 focus:ring-zinc-700 focus:outline-none text-sm"
-            >
-              {metodos.map((m) => (
-                <option key={m.id} value={m.id}>
-                  {m.nombre_display ?? m.nombre}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          {/* Input monto vistoso */}
-          <div className="bg-gray-50 border border-gray-300 rounded-lg p-4 text-center">
-            <label
-              htmlFor="monto"
-              className="block text-sm font-medium text-gray-700 mb-2"
-            >
-              Cantidad en{" "}
-              {divisas.find((d) => d.id?.toString() === divisaOrigen)?.nombre ||
-                "Divisa origen"}
-            </label>
-            <input
-              id="monto"
-              type="number"
-              min={0}
-              value={monto === 0 ? "" : monto}
-              onChange={(e) => {
-                const value = Number(e.target.value);
-                if (value >= 0 || e.target.value === "") {
-                  setMonto(value);
-                }
-              }}
-              onKeyDown={(e) => {
-                if (e.key === '-' || e.key === 'e' || e.key === 'E') {
-                  e.preventDefault();
-                }
-              }}
-              placeholder="Ingrese el monto"
-              className="w-full text-2xl font-semibold text-gray-900 text-center bg-transparent focus:outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-            />
-            <span className="text-sm text-gray-500">
-              {divisas.find((d) => d.id?.toString() === divisaOrigen)?.codigo ||
-                ""}
-            </span>
-          </div>
-
-          {/* Botón calcular */}
-          <button
-            onClick={handleSimular}
-            className="w-full bg-zinc-900 text-white py-2 rounded-lg text-sm font-medium hover:bg-zinc-700"
-          >
-            Simular
-          </button>
-
-          {/* Resultado */}
-          {resultado && (
-            <div className="mt-6 space-y-4 text-gray-700 border-t pt-4">
-              <div className="bg-gray-100 border border-gray-300 text-gray-800 rounded-lg p-3 text-center font-semibold text-base">
-                Operación: {resultado.operacion_cliente.toUpperCase()}
-              </div>
-
-              <div className="text-center text-lg font-bold text-gray-900">
-                {resultado.monto_origen.toLocaleString()}{" "}
-                {resultado.divisa_origen} →{" "}
-                {resultado.monto_destino.toLocaleString()}{" "}
-                {resultado.divisa_destino}
-              </div>
-
-              <div className="space-y-1 text-sm">
-                <p>
-                  <strong>Categoría:</strong>{" "}
-                  {resultado.parametros.nombre_categoria ||
-                    "Sin categoría"}
-                </p>
-               
-                <p>
-                  <strong>Descuento categoría:</strong>{" "}
-                  {resultado.parametros.descuento_categoria}%
-                </p>
-
-                {operacionCasa == "venta" && (
-                    <p>
-                      <strong>Método de Pago:</strong> {resultado.parametros.nombre_metodo}
-                    </p>
-                  )}
-                {operacionCasa == "compra" && (
-                  <p>
-                    <strong>Método de Cobro:</strong> {resultado.parametros.nombre_metodo}
-                  </p>
-                )}
-
-                <p>
-                  <strong>Comisión método:</strong>{" "}
-                  {resultado.parametros.comision_metodo}%
-                </p>
-                <p>
-                  <strong>Tasa final aplicada:</strong> {resultado.tc_final}
-                </p>
-              </div>
-            </div>
-          )}
+        {/* Contenido de la etapa actual */}
+        <div className="p-6">
+          {renderEtapaActual()}
         </div>
       </div>
     </section>

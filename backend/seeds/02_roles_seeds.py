@@ -33,7 +33,7 @@ def run():
                 'operaciones.view_metodofinancierodetalle',
                 'operaciones.view_banco',
                 'operaciones.view_billeteradigitalcatalogo',
-                'operaciones.view_metodofinanciero',
+                # 'operaciones.view_metodofinanciero',  # QUITADO
                 'operaciones.can_use_simulacion',
                 
                 # Cotizaciones
@@ -63,7 +63,7 @@ def run():
                 'operaciones.change_metodofinancierodetalle',
                 'operaciones.view_banco',
                 'operaciones.view_billeteradigitalcatalogo',
-                'operaciones.view_metodofinanciero',
+                # 'operaciones.view_metodofinanciero',  # QUITADO
                 'operaciones.can_use_simulacion',
                 
                 # Cotizaciones
@@ -107,7 +107,7 @@ def run():
                 'operaciones.view_metodofinancierodetalle',
                 'operaciones.view_banco',
                 'operaciones.view_billeteradigitalcatalogo',
-                'operaciones.view_metodofinanciero',
+                # 'operaciones.view_metodofinanciero',  # QUITADO
                 'cotizaciones.view_tasa',
                 'cotizaciones.view_historialtasa',
                 'divisas.view_divisa',
