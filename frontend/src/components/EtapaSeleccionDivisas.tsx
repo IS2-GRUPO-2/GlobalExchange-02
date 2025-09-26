@@ -59,7 +59,7 @@ export default function EtapaSeleccionDivisas({
         const res = await getLimiteConfig();
         // Normalizo a number|null por si viene string
         setLimites({
-          id: res.id as any,
+          id: res.id! as any,
           limite_diario: res.limite_diario !== null ? Number(res.limite_diario) : null,
           limite_mensual: res.limite_mensual !== null ? Number(res.limite_mensual) : null,
         });

@@ -6,7 +6,7 @@ export type LimiteDivisa = {
 };
 
 export type LimiteDivisaFormData = {
-  id: number;
+  id?: number;
   limite_diario: string;
   limite_mensual: string;
 };
