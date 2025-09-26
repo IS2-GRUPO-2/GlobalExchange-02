@@ -2,7 +2,7 @@ from decimal import Decimal
 from apps.clientes.models import Cliente
 from apps.divisas.models import Divisa
 from apps.cotizaciones.models import Tasa
-from .models import MetodoFinanciero, MetodoFinancieroDetalle, CuentaBancaria, BilleteraDigital, Tarjeta, TarjetaLocal
+from .models import MetodoFinanciero, MetodoFinancieroDetalle, CuentaBancaria, BilleteraDigital, TarjetaCatalogo, Tarjeta, Cheque
 from apps.cotizaciones.service import TasaService
 
 def _get_divisa(id_divisa: int) -> Divisa:
