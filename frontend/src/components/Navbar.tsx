@@ -12,21 +12,28 @@ import {
   MenuItems,
 } from "@headlessui/react";
 import { Bars3Icon, XMarkIcon } from "@heroicons/react/24/outline";
-import { Bell, CircleUser, ChevronDown} from "lucide-react";
+import { Bell, CircleUser, ChevronDown } from "lucide-react";
 import Can from "./Can";
 import { useAuth } from "../context/useAuth";
 import logoWhite from "../assets/logo-white.svg";
-import {
-  SIMULACION,
-  OPERACION,
-} from "../types/perms";
+import { SIMULACION, OPERACION } from "../types/perms";
 import ClientPicker from "./ClientPicker";
 
 /** Configuración de elementos de navegación */
 const navigation = [
   { name: "Inicio", href: "/", current: true, permisos: [] },
-  { name: "Simulación de Operaciones", href: "/simulacion-operacion", current: false, permisos: [SIMULACION.USE] },
-  { name: "Operaciones", href: "/operacion-compra-venta", current: false, permisos: [OPERACION.USE] },
+  {
+    name: "Simulación de Operaciones",
+    href: "/simulacion-operacion",
+    current: false,
+    permisos: [SIMULACION.USE],
+  },
+  {
+    name: "Operaciones",
+    href: "/operacion-compra-venta",
+    current: false,
+    permisos: [OPERACION.USE],
+  },
   { name: "Iniciar sesión", href: "/login", current: false, permisos: [] },
   { name: "Registrarse", href: "/register", current: false, permisos: [] },
 ];
@@ -45,7 +52,7 @@ function classNames(...classes: (string | undefined | false | null)[]): string {
  * Componente de barra de navegación principal
  * @component Navbar
  * @returns {JSX.Element} Barra de navegación responsiva
- * 
+ *
  * @description
  * - Barra de navegación responsiva con menú desplegable en móviles
  * - Maneja navegación entre páginas según permisos del usuario
@@ -53,14 +60,14 @@ function classNames(...classes: (string | undefined | false | null)[]): string {
  * - Incluye notificaciones y opción de cerrar sesión
  * - Filtra elementos de navegación según estado de autenticación
  * - Responsive: menú hamburguesa en móviles, horizontal en desktop
- * 
+ *
  * @features
  * - Logo de la aplicación
  * - Enlaces de navegación con control de permisos
  * - Menú desplegable de usuario (cuenta, configuraciones, logout)
  * - Botón de notificaciones
  * - Menú móvil responsivo
- * 
+ *
  * @example
  * // Se usa automáticamente en App.tsx cuando no se debe ocultar
  * {!hideNavbar && <Navbar />}
@@ -88,8 +95,14 @@ export default function Navbar() {
           {/* Botón menú mobile */}
           <div className="absolute inset-y-0 left-0 flex items-center sm:hidden">
             <DisclosureButton className="group relative inline-flex items-center justify-center rounded-md p-2 text-gray-400 hover:bg-white/5 hover:text-white">
-              <Bars3Icon aria-hidden="true" className="block size-6 group-data-open:hidden" />
-              <XMarkIcon aria-hidden="true" className="hidden size-6 group-data-open:block" />
+              <Bars3Icon
+                aria-hidden="true"
+                className="block size-6 group-data-open:hidden"
+              />
+              <XMarkIcon
+                aria-hidden="true"
+                className="hidden size-6 group-data-open:block"
+              />
             </DisclosureButton>
           </div>
 
@@ -97,9 +110,9 @@ export default function Navbar() {
           <div className="flex flex-1 items-center justify-center sm:items-stretch sm:justify-start">
             <a href="/" className="flex shrink-0 items-center">
               <img
-              alt="Logo"
-              src={logoWhite}
-              className="h-20 w-auto sm:h-12 md:h-14"
+                alt="Logo"
+                src={logoWhite}
+                className="h-20 w-auto sm:h-12 md:h-14"
               />
             </a>
             <div className="hidden sm:ml-6 sm:block self-center">
@@ -130,7 +143,7 @@ export default function Navbar() {
               
               {/* Selector de cliente */}
               {user?.id && <ClientPicker userId={user.id} className="w-56" />}
-              
+
               {/* Usuario + Nombre + Flechita */}
               <Menu as="div" className="relative">
                 {({ open }) => (
@@ -140,19 +153,27 @@ export default function Navbar() {
                       <span className="hidden md:block text-sm font-medium text-gray-300 group-hover:text-white">
                         {user?.username || "Usuario"}
                       </span>
-                      <ChevronDown 
-                        className={`w-4 h-4 text-gray-300 group-hover:text-white transition-transform duration-200 ${open ? 'rotate-180' : ''}`} 
+                      <ChevronDown
+                        className={`w-4 h-4 text-gray-300 group-hover:text-white transition-transform duration-200 ${
+                          open ? "rotate-180" : ""
+                        }`}
                       />
                     </MenuButton>
-                    
+
                     <MenuItems className="absolute right-0 z-10 mt-2 w-48 origin-top-right rounded-md bg-zinc-900 py-1 shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
                       <MenuItem>
-                        <a href="#" className="block px-4 py-2 text-sm text-gray-300 hover:bg-white/5">
-                          Cuenta
+                        <a
+                          href="/historial-transacciones"
+                          className="block px-4 py-2 text-sm text-gray-300 hover:bg-white/5"
+                        >
+                          Historial
                         </a>
                       </MenuItem>
                       <MenuItem>
-                        <a href="/configuraciones" className="block px-4 py-2 text-sm text-gray-300 hover:bg-white/5">
+                        <a
+                          href="/configuraciones"
+                          className="block px-4 py-2 text-sm text-gray-300 hover:bg-white/5"
+                        >
                           Configuraciones
                         </a>
                       </MenuItem>
