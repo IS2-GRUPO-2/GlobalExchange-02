@@ -61,3 +61,16 @@ export interface Transaccion {
 export interface OperacionCompleta extends SimulacionResponse {
   tauser_seleccionado: Tauser;
 }
+
+export interface SimulacionOperacionResultado {
+  tasa_cambio: boolean;
+  resultado_anterior?: SimulacionResponse;
+  resultado_actual: SimulacionResponse;
+}
+
+export interface TransaccionResponse {
+  id: string;
+  codigo: string;
+  estado: 'pendiente' | 'en_proceso' | 'completada' | 'cancelada' | 'fallida';
+  mensaje?: string;
+}

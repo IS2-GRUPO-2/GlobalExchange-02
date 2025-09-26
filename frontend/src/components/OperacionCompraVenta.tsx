@@ -1,7 +1,7 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { toast } from "react-toastify";
 import type { Cliente } from "../types/Cliente";
-import type { OperacionCompleta, TransaccionRequest } from "../types/Transaccion";
+import type { OperacionCompleta, TransaccionRequest, TransaccionResponse } from "../types/Transaccion";
 import type { DecodedToken } from "../types/User";
 import { jwtDecode } from "jwt-decode";
 import { getClienteActual } from "../services/usuarioService";
@@ -12,9 +12,10 @@ import EtapaSeleccionDivisas from "./EtapaSeleccionDivisas";
 import EtapaSeleccionMetodo from "./EtapaSeleccionMetodo";
 import EtapaSeleccionTauser from "./EtapaSeleccionTauser";
 import EtapaResultado from "./EtapaResultado";
-import EtapaTerminosCondiciones from "./EtapaTerminosCondiciones";
+import EtapaTerminos from "./EtapaTerminos";
+import EtapaProcesoPago from "./EtapaProcesoPago";
 
-type EtapaActual = 1 | 2 | 3 | 4 | 5;
+type EtapaActual = 1 | 2 | 3 | 4 | 5 | 6;
 
 export default function OperacionCompraVenta() {
   // Estado de navegación
@@ -36,7 +37,7 @@ export default function OperacionCompraVenta() {
   const [clienteActual, setClienteActual] = useState<Cliente | null>(null);
 
   // Función para resetear la operación completa
-  const resetOperacion = () => {
+  const resetOperacion = useCallback(() => {
     setEtapaActual(1);
     setDivisaOrigen("");
     setDivisaDestino("");
@@ -46,17 +47,17 @@ export default function OperacionCompraVenta() {
     setTauserSeleccionado("");
     setResultado(null);
     setProcesandoTransaccion(false);
-  };
+  }, []);
 
   // Función para manejar cambio de cliente
-  const handleClienteChange = (nuevoCliente: Cliente | null) => {
+  const handleClienteChange = useCallback((nuevoCliente: Cliente | null) => {
     resetOperacion();
     setClienteActual(nuevoCliente);
     
     if (!nuevoCliente) {
       toast.error("No tienes un cliente asignado. Contacta a soporte.");
     }
-  };
+  }, [resetOperacion]);
 
   useEffect(() => {
     const fetchClienteActual = async () => {
@@ -73,7 +74,7 @@ export default function OperacionCompraVenta() {
       }
     };
     fetchClienteActual();
-  }, []);
+  }, [handleClienteChange]);
 
   // Escuchar cambios del cliente desde ClientPicker
   useEffect(() => {
@@ -87,7 +88,12 @@ export default function OperacionCompraVenta() {
     return () => {
       window.removeEventListener('clienteActualChanged', handleClienteChangeEvent as EventListener);
     };
-  }, []);
+  }, [handleClienteChange]);
+
+  // Nuevos estados para las etapas 4 y 5
+  const [transaccionCreada, setTransaccionCreada] = useState<TransaccionResponse | null>(null);
+    const [simulacionExito] = useState<boolean>(false);
+  const [nombreMetodo, setNombreMetodo] = useState<string>("");
 
   // Handlers de navegación
   const avanzarEtapa1 = () => {
@@ -107,17 +113,7 @@ export default function OperacionCompraVenta() {
     }
 
     try {
-      // Simular la operación para obtener los datos básicos
-      const simulacionData = {
-        cliente_id: clienteActual.idCliente,
-        divisa_origen: Number(divisaOrigen),
-        divisa_destino: Number(divisaDestino),
-        monto,
-        detalle_metodo_id: detalleMetodoSeleccionado,
-        metodo_id: metodoGenericoSeleccionado ? Number(metodoGenericoSeleccionado) : undefined,
-      };
-
-      // Por ahora avanzamos a la siguiente etapa sin simular
+      // Avanzamos a la siguiente etapa sin simular
       // La simulación se hará cuando tengamos el tauser
       setEtapaActual(3);
     } catch (err) {
@@ -139,17 +135,25 @@ export default function OperacionCompraVenta() {
 
     try {
       // Ahora sí hacemos la simulación completa con el tauser
-      const simulacionData = {
+      const simulacionData: TransaccionRequest = {
         cliente_id: clienteActual.idCliente,
         divisa_origen: Number(divisaOrigen),
         divisa_destino: Number(divisaDestino),
         monto,
         detalle_metodo_id: detalleMetodoSeleccionado || undefined,
         metodo_id: metodoGenericoSeleccionado ? Number(metodoGenericoSeleccionado) : undefined,
+        tauser_id: tauserSeleccionado,
+        terminos_aceptados: false // Aún no se han aceptado los términos
       };
 
       const operacionCompleta = await simularOperacionCompleta(simulacionData, tauserSeleccionado);
       setResultado(operacionCompleta);
+      
+      // Guardar el nombre del método para mostrarlo en la etapa de procesamiento
+      if (operacionCompleta && operacionCompleta.parametros && operacionCompleta.parametros.nombre_metodo) {
+        setNombreMetodo(operacionCompleta.parametros.nombre_metodo);
+      }
+      
       setEtapaActual(4);
     } catch (err) {
       console.error("Error en operación completa", err);
@@ -159,7 +163,6 @@ export default function OperacionCompraVenta() {
 
   const retrocederEtapa4 = () => {
     setEtapaActual(3);
-    setResultado(null);
   };
 
   const avanzarEtapa4 = () => {
@@ -169,14 +172,12 @@ export default function OperacionCompraVenta() {
   const retrocederEtapa5 = () => {
     setEtapaActual(4);
   };
-
-  const crearTransaccionFinal = async () => {
+  
+  const aceptarTerminos = async () => {
     if (!clienteActual || !resultado) {
       toast.error("Faltan datos para crear la transacción");
       return;
     }
-
-    setProcesandoTransaccion(true);
 
     try {
       const transaccionData: TransaccionRequest = {
@@ -184,27 +185,34 @@ export default function OperacionCompraVenta() {
         divisa_origen: Number(divisaOrigen),
         divisa_destino: Number(divisaDestino),
         monto,
-        detalle_metodo_id: detalleMetodoSeleccionado,
+        detalle_metodo_id: detalleMetodoSeleccionado || undefined,
         metodo_id: metodoGenericoSeleccionado ? Number(metodoGenericoSeleccionado) : undefined,
         tauser_id: tauserSeleccionado,
         terminos_aceptados: true,
       };
 
       const transaccion = await crearTransaccion(transaccionData);
-      
-      toast.success("¡Transacción creada exitosamente!");
-      toast.info(`Código de transacción: ${transaccion.id}`);
-      
-      // Resetear después de 3 segundos
-      setTimeout(() => {
-        resetOperacion();
-      }, 3000);
-
+      setTransaccionCreada(transaccion);
+      setEtapaActual(6); // Avanzar a la etapa de procesamiento de pago
     } catch (err) {
       console.error("Error creando transacción", err);
       toast.error("Error al crear la transacción");
-      setProcesandoTransaccion(false);
     }
+  };
+  
+  const finalizarOperacionExitosa = () => {
+    toast.success("¡Operación completada con éxito!");
+    resetOperacion();
+  };
+  
+  const finalizarOperacionFallida = () => {
+    toast.info("Operación cancelada. Puedes intentarlo de nuevo.");
+    resetOperacion();
+  };
+  
+  const retrocederEtapa6 = () => {
+    setEtapaActual(5);
+    setTransaccionCreada(null);
   };
 
   const getEtapaTitulo = (etapa: EtapaActual) => {
@@ -214,6 +222,7 @@ export default function OperacionCompraVenta() {
       case 3: return "Paso 3: Terminal de Autoservicio";
       case 4: return "Paso 4: Resumen de Operación";
       case 5: return "Paso 5: Términos y Condiciones";
+      case 6: return "Paso 6: Procesando Pago";
     }
   };
 
@@ -263,14 +272,45 @@ export default function OperacionCompraVenta() {
             onRetroceder={retrocederEtapa4}
             onContinuar={avanzarEtapa4}
             esOperacionReal={true}
+            datosTransaccion={{
+              cliente_id: clienteActual?.idCliente || "",
+              divisa_origen: Number(divisaOrigen),
+              divisa_destino: Number(divisaDestino),
+              monto,
+              detalle_metodo_id: detalleMetodoSeleccionado || undefined,
+              metodo_id: metodoGenericoSeleccionado ? Number(metodoGenericoSeleccionado) : undefined,
+              tauser_id: tauserSeleccionado,
+              terminos_aceptados: false
+            }}
           />
         ) : null;
       case 5:
         return resultado ? (
-          <EtapaTerminosCondiciones
-            resultado={resultado}
+          <EtapaTerminos
             onRetroceder={retrocederEtapa5}
-            onAceptarYCrear={crearTransaccionFinal}
+            onAceptar={aceptarTerminos}
+            resultado={resultado}
+            datosTransaccion={{
+              cliente_id: clienteActual?.idCliente || "",
+              divisa_origen: Number(divisaOrigen),
+              divisa_destino: Number(divisaDestino),
+              monto,
+              detalle_metodo_id: detalleMetodoSeleccionado || undefined,
+              metodo_id: metodoGenericoSeleccionado ? Number(metodoGenericoSeleccionado) : undefined,
+              tauser_id: tauserSeleccionado,
+              terminos_aceptados: true
+            }}
+          />
+        ) : null;
+      case 6:
+        return transaccionCreada ? (
+          <EtapaProcesoPago
+            transaccion={transaccionCreada}
+            metodoNombre={nombreMetodo}
+            onFinalizarExitoso={finalizarOperacionExitosa}
+            onFinalizarFallido={finalizarOperacionFallida}
+            onCancelar={retrocederEtapa6}
+            simulacionFallo={!simulacionExito}
           />
         ) : null;
     }
@@ -315,11 +355,11 @@ export default function OperacionCompraVenta() {
           
           {/* Indicador de progreso */}
           <div className="flex justify-between mb-2">
-            {[1, 2, 3, 4, 5].map((step) => (
+            {[1, 2, 3, 4, 5, 6].map((step) => (
               <div
                 key={step}
                 className={`flex items-center ${
-                  step < 5 ? 'flex-1' : ''
+                  step < 6 ? 'flex-1' : ''
                 }`}
               >
                 <div
@@ -331,7 +371,7 @@ export default function OperacionCompraVenta() {
                 >
                   {step}
                 </div>
-                {step < 5 && (
+                {step < 6 && (
                   <div
                     className={`flex-1 h-0.5 mx-2 ${
                       step < etapaActual ? 'bg-zinc-900' : 'bg-gray-200'

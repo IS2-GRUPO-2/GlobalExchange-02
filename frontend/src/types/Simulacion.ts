@@ -68,6 +68,7 @@ export interface SimulacionRequestConInstancia {
   monto: number;
   detalle_metodo_id?: number;
   metodo_id?: number;
+  tauser_id?: string;
 }
 
 export interface InstanciaMetodo {
