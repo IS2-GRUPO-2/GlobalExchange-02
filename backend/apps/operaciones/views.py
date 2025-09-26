@@ -459,9 +459,9 @@ class MetodoFinancieroDetalleViewSet(viewsets.ModelViewSet):
         """
         if not (self.request.user.has_perm('operaciones.add_metodofinanciero')):
             # Para usuarios no-admin, asignar automáticamente el primer cliente asignado
-            clientes = self.request.user.clientes.all()
-            if clientes.exists():
-                serializer.save(cliente=clientes.first())
+            cliente = self.request.user.clienteActual
+            if cliente is not None:
+                serializer.save(cliente=cliente)
             else:
                 # Si no tiene clientes asignados, devolver error
                 raise PermissionDenied("No tienes clientes asignados para crear métodos financieros.")
