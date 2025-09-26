@@ -1,4 +1,4 @@
-from apps.divisas.models import Divisa, Denominacion
+from apps.divisas.models import Divisa, Denominacion, LimiteConfig
 
 def run():
     """Crear divisas base para el sistema"""
@@ -117,3 +117,17 @@ def run():
     
     print(f"✅ Divisas: {Divisa.objects.count()} total")
     print(f"✅ Denominaciones: {Denominacion.objects.count()} total")
+
+    print("🔧 Configurando límites singleton...")
+
+    limite_config, created = LimiteConfig.objects.get_or_create(
+        defaults={
+            'limite_diario': 10000.00,  # Valor predeterminado para el límite diario
+            'limite_mensual': 300000.00,  # Valor predeterminado para el límite mensual
+        }
+    )
+
+    if created:
+        print("✔ Límites singleton creados con valores predeterminados.")
+    else:
+        print("✔ Límites singleton ya existentes. No se realizaron cambios.")

@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { type Divisa } from "../types/Divisa";
-import { getDivisasConTasa } from "../services/divisaService";
+import { getDivisasConTasa, getLimiteConfig } from "../services/divisaService";
 
 interface EtapaSeleccionDivisasProps {
   divisaOrigen: string;
@@ -13,6 +13,12 @@ interface EtapaSeleccionDivisasProps {
   onAvanzar: () => void;
 }
 
+type LimiteCfg = {
+  id: number;
+  limite_diario: number | null;
+  limite_mensual: number | null;
+};
+
 export default function EtapaSeleccionDivisas({
   divisaOrigen,
   divisaDestino,
@@ -21,11 +27,17 @@ export default function EtapaSeleccionDivisas({
   onDivisaOrigenChange,
   onDivisaDestinoChange,
   onMontoChange,
-  onAvanzar
+  onAvanzar,
 }: EtapaSeleccionDivisasProps) {
   const [divisas, setDivisas] = useState<Divisa[]>([]);
   const [divisaBase, setDivisaBase] = useState<Divisa | null>(null);
 
+  // --- límites (simple) ---
+  const [limites, setLimites] = useState<LimiteCfg | null>(null);
+  const [loadingLimites, setLoadingLimites] = useState(true);
+  const [limiteMsg, setLimiteMsg] = useState<string>("");
+
+  // Cargar divisas
   useEffect(() => {
     const fetchDivisas = async () => {
       try {
@@ -40,10 +52,62 @@ export default function EtapaSeleccionDivisas({
     fetchDivisas();
   }, []);
 
-  const puedeAvanzar = divisaOrigen && divisaDestino && divisaOrigen !== divisaDestino && monto > 0 && clienteActual;
+  // Cargar límites una vez
+  useEffect(() => {
+    const fetchLimites = async () => {
+      try {
+        const res = await getLimiteConfig();
+        // Normalizo a number|null por si viene string
+        setLimites({
+          id: res.id! as any,
+          limite_diario: res.limite_diario !== null ? Number(res.limite_diario) : null,
+          limite_mensual: res.limite_mensual !== null ? Number(res.limite_mensual) : null,
+        });
+      } catch (e) {
+        console.error("Error obteniendo limite-config", e);
+        setLimites(null); // sin límites ante error
+      } finally {
+        setLoadingLimites(false);
+      }
+    };
+    fetchLimites();
+  }, []);
+
+  // Validación simple: monto < límites (con prioridad mensual > diario)
+  useEffect(() => {
+    if (!clienteActual || !monto || monto <= 0 || loadingLimites) {
+      setLimiteMsg("");
+      return;
+    }
+    if (!limites) {
+      // sin configuración => sin límites
+      setLimiteMsg("");
+      return;
+    }
+    const { limite_mensual, limite_diario } = limites;
+
+    // Prioridad mensual primero
+    if (limite_mensual !== null && monto >= limite_mensual) {
+      setLimiteMsg("Límite mensual alcanzado");
+    } else if (limite_diario !== null && monto >= limite_diario) {
+      setLimiteMsg("Límite diario alcanzado");
+    } else {
+      setLimiteMsg("");
+    }
+  }, [monto, clienteActual, limites, loadingLimites]);
+
+  // Habilita avanzar solo si no hay mensaje de límite ni carga pendiente
+  const puedeAvanzar =
+    divisaOrigen &&
+    divisaDestino &&
+    divisaOrigen !== divisaDestino &&
+    monto > 0 &&
+    clienteActual &&
+    !limiteMsg &&
+    !loadingLimites;
 
   // Obtener información de la divisa origen para mostrar el código
-  const divisaOrigenInfo = divisas.find(d => d.id?.toString() === divisaOrigen);
+  const divisaOrigenInfo = divisas.find((d) => d.id?.toString() === divisaOrigen);
   const codigoDivisaOrigen = divisaOrigenInfo?.codigo || "";
 
   return (
@@ -66,6 +130,7 @@ export default function EtapaSeleccionDivisas({
           <select
             value={divisaOrigen}
             onChange={(e) => {
+              setLimiteMsg(""); // limpiar feedback viejo
               onDivisaOrigenChange(e.target.value);
               const origen = divisas.find((d) => d.id?.toString() === e.target.value);
               const destino = divisas.find((d) => d.id?.toString() === divisaDestino);
@@ -100,12 +165,14 @@ export default function EtapaSeleccionDivisas({
         <button
           type="button"
           onClick={() => {
+            setLimiteMsg(""); // limpiar feedback viejo
             const temp = divisaOrigen;
             onDivisaOrigenChange(divisaDestino);
             onDivisaDestinoChange(temp);
           }}
           className="bg-gray-700 text-white rounded-full p-3 hover:bg-gray-900 self-end mb-0 select-none"
           disabled={!divisaOrigen || !divisaDestino}
+          aria-label="Intercambiar divisas"
         >
           ⇆
         </button>
@@ -116,7 +183,10 @@ export default function EtapaSeleccionDivisas({
           </label>
           <select
             value={divisaDestino}
-            onChange={(e) => onDivisaDestinoChange(e.target.value)}
+            onChange={(e) => {
+              setLimiteMsg(""); // limpiar feedback viejo
+              onDivisaDestinoChange(e.target.value);
+            }}
             className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-zinc-700 focus:outline-none"
           >
             <option value="">Seleccionar divisa...</option>
@@ -157,26 +227,35 @@ export default function EtapaSeleccionDivisas({
           onChange={(e) => {
             const value = Number(e.target.value);
             if (value >= 0 || e.target.value === "") {
+              setLimiteMsg(""); // hasta revalidar
               onMontoChange(value);
             }
           }}
           onKeyDown={(e) => {
-            if (e.key === '-' || e.key === 'e' || e.key === 'E') {
+            if (e.key === "-" || e.key === "e" || e.key === "E") {
               e.preventDefault();
             }
           }}
           placeholder="Ingrese el monto"
           className="w-full text-3xl font-semibold text-gray-900 text-center bg-transparent focus:outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
         />
+
         {codigoDivisaOrigen && monto > 0 && (
           <div className="mt-3 p-2 bg-blue-50 border border-blue-200 rounded-lg">
             <div className="text-xs text-blue-600 mb-1 select-none">Monto formateado:</div>
             <span className="text-lg font-bold text-blue-800 select-none">
-              {monto.toLocaleString('es-PY')} {codigoDivisaOrigen}
+              {monto.toLocaleString("es-PY")} {codigoDivisaOrigen}
             </span>
           </div>
         )}
       </div>
+
+      {/* Mensaje de límite (simple) */}
+      {!!limiteMsg && (
+        <div className="bg-red-50 border border-red-200 rounded-lg p-3 text-sm text-red-700" aria-live="polite">
+          {limiteMsg}
+        </div>
+      )}
 
       {/* Alerta si no hay cliente asignado */}
       {!clienteActual && (
@@ -184,13 +263,15 @@ export default function EtapaSeleccionDivisas({
           <div className="flex">
             <div className="flex-shrink-0">
               <svg className="h-5 w-5 text-yellow-400" viewBox="0 0 20 20" fill="currentColor">
-                <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                <path
+                  fillRule="evenodd"
+                  d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z"
+                  clipRule="evenodd"
+                />
               </svg>
             </div>
             <div className="ml-3">
-              <h3 className="text-sm font-medium text-yellow-800">
-                Cliente requerido
-              </h3>
+              <h3 className="text-sm font-medium text-yellow-800">Cliente requerido</h3>
               <div className="mt-2 text-sm text-yellow-700">
                 <p>
                   Para continuar con la simulación necesitas tener un cliente asignado. 
@@ -209,11 +290,11 @@ export default function EtapaSeleccionDivisas({
           disabled={!puedeAvanzar}
           className={`px-8 py-3 rounded-lg font-medium select-none ${
             puedeAvanzar
-              ? 'bg-zinc-900 text-white hover:bg-zinc-700'
-              : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+              ? "bg-zinc-900 text-white hover:bg-zinc-700"
+              : "bg-gray-300 text-gray-500 cursor-not-allowed"
           }`}
         >
-          Continuar
+          {loadingLimites ? "Cargando límites..." : "Continuar"}
         </button>
       </div>
     </div>
