@@ -8,3 +8,6 @@ https://chatgpt.com/share/68d4839c-4bd4-8007-9787-4fb8429bb824
 
 https://chatgpt.com/share/68d483bc-e3a0-8007-8690-9cce1ca10750
 https://chatgpt.com/share/68d49b6a-d548-8007-92d8-07df21b8921b
+
+feature/IS2-154-rama-jose (Cancelacion a cambio de tasa)
+https://chatgpt.com/share/68d6bf9e-eca4-800a-9946-d9b24a8c2783
