@@ -7,8 +7,8 @@ import DivisaForm, { type DivisaFormData } from "../components/DivisaForm";
 import { toast } from "react-toastify";
 import { useAuth } from "../context/useAuth";
 import DenominacionesDivisa, {
-  type DenominacionFormData,
-} from "../components/DenominacionesDivisa";
+  type DenominacionFormData
+} from "../features/divisas/components/DenominacionesDivisa"
 import { useModal } from "../hooks/useModal";
 import { useDivisa } from "../features/divisas/hooks/useDivisa";
 import SearchBar from "../components/SearchBar";

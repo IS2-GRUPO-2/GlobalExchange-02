@@ -1,17 +1,17 @@
 import { useEffect, useState } from "react";
-import { type Denominacion, type Divisa } from "../types/Divisa";
+import { type Denominacion, type Divisa } from "../../../types/Divisa";
 import {
   deactivateDenominacion,
   getDenominacionesOfDivisa,
   updateDenominacion,
-} from "../services/divisaService";
+} from "../../../services/divisaService";
 import { toast } from "react-toastify";
 import * as yup from "yup";
 import { Check, Plus, X } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
-import Can from "./Can";
-import { DENOMINACIONES } from "../types/perms";
+import Can from "../../../components/Can";
+import { DENOMINACIONES } from "../../../types/perms";
 
 export type DenominacionFormData = {
   denominacion: number;
