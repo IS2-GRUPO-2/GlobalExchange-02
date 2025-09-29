@@ -31,48 +31,48 @@ class ClienteViewSet(viewsets.ModelViewSet):
     operation_summary="Listar clientes",
     operation_description="""Obtiene un listado paginado de todos los clientes registrados en el sistema.
     
-La respuesta está paginada con las siguientes características:
-- Tamaño de página predeterminado: 10 items
-- Tamaño máximo de página: 100 items
-- Se puede navegar usando los parámetros page y page_size
-""",
-    manual_parameters=[
-        openapi.Parameter(
-            "page",
-            openapi.IN_QUERY,
-            description="Número de página a retornar (1 para primera página).",
-            type=openapi.TYPE_INTEGER,
-            required=False
-        ),
-        openapi.Parameter(
-            "page_size",
-            openapi.IN_QUERY,
-            description="Cantidad de resultados por página (entre 1 y 100).",
-            type=openapi.TYPE_INTEGER,
-            required=False
-        ),
-        openapi.Parameter(
-            "search",
-            openapi.IN_QUERY,
-            description="Filtrar por nombre, cédula o RUC del cliente.",
-            type=openapi.TYPE_STRING,
-            required=False
-        ),
-        openapi.Parameter(
-            "all",
-            openapi.IN_QUERY,
-            description="Retornar todos los clientes sin paginar.",
-            type=openapi.TYPE_STRING,
-            required=False
-        ),
-    ],
-    responses={
-        200: openapi.Response(
-            description="Lista de clientes",
-            schema=ClientePaginatedResponseSerializer
-        )
-    },
-)
+    La respuesta está paginada con las siguientes características:
+    - Tamaño de página predeterminado: 10 items
+    - Tamaño máximo de página: 100 items
+    - Se puede navegar usando los parámetros page y page_size
+    """,
+        manual_parameters=[
+            openapi.Parameter(
+                "page",
+                openapi.IN_QUERY,
+                description="Número de página a retornar (1 para primera página).",
+                type=openapi.TYPE_INTEGER,
+                required=False
+            ),
+            openapi.Parameter(
+                "page_size",
+                openapi.IN_QUERY,
+                description="Cantidad de resultados por página (entre 1 y 100).",
+                type=openapi.TYPE_INTEGER,
+                required=False
+            ),
+            openapi.Parameter(
+                "search",
+                openapi.IN_QUERY,
+                description="Filtrar por nombre, cédula o RUC del cliente.",
+                type=openapi.TYPE_STRING,
+                required=False
+            ),
+            openapi.Parameter(
+                "all",
+                openapi.IN_QUERY,
+                description="Retornar todos los clientes sin paginar.",
+                type=openapi.TYPE_STRING,
+                required=False
+            ),
+        ],
+        responses={
+            200: openapi.Response(
+                description="Lista de clientes",
+                schema=ClientePaginatedResponseSerializer
+            )
+        },
+    )
     def list(self, request, *args, **kwargs):
     # Check for 'all' parameter
         if request.query_params.get('all', '').lower() == 'true':

@@ -1,10 +1,10 @@
-import type { CategoriaCliente, Cliente } from "../../../types/Cliente";
+import type { CategoriaCliente, Cliente } from "../types/Cliente";
 import { yupResolver } from "@hookform/resolvers/yup";
 import * as yup from "yup";
 import { useForm } from "react-hook-form";
 import { toast } from "react-toastify";
 import { useEffect, useState } from "react";
-import { getActiveCategoriaClientes } from "../../../services/categoriaClienteService";
+import { getActiveCategoriaClientes } from "../../categoria_clientes/services/categoriaClienteService";
 
 export type ClientFormData = {
   id?: number;

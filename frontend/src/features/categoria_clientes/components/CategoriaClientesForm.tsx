@@ -2,7 +2,7 @@ import { useForm } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
 import * as yup from "yup";
 import { toast } from "react-toastify";
-import type { CategoriaCliente } from "../types/Cliente";
+import type { CategoriaCliente } from "../../clientes/types/Cliente";
 
 interface FormCategoriaCliente {
   idCategoria?: string;
@@ -86,7 +86,6 @@ const CategoriaClienteForm = ({
             type="text"
             id="nombre"
             {...register("nombre")}
-            disabled={isEditForm} // si editás, no cambiás el nombre
             className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
               errors.nombre ? "border-red-500" : "border-gray-300"
             }`}

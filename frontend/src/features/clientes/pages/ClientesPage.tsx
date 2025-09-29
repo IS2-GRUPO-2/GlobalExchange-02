@@ -8,15 +8,15 @@ import {
   Search,
   BookUser,
 } from "lucide-react";
-import type { ClientFormData } from "../features/clientes/components/ClientForm";
-import Modal from "../components/Modal";
-import ClientForm from "../features/clientes/components/ClientForm";
-import AssignedUsers from "../features/clientes/components/AssignedUsers";
-import { useClientes } from "../features/clientes/hooks/useCliente";
-import { useModal } from "../hooks/useModal";
-import SearchBar from "../components/SearchBar";
-import { CLIENTES } from "../types/perms";
-import Can from "../components/Can";
+import type { ClientFormData } from "../components/ClientForm";
+import Modal from "../../../components/Modal";
+import ClientForm from "../components/ClientForm";
+import AssignedUsers from "../components/AssignedUsers";
+import { useClientes } from "../hooks/useCliente";
+import { useModal } from "../../../hooks/useModal";
+import SearchBar from "../../../components/SearchBar";
+import { CLIENTES } from "../../../types/perms";
+import Can from "../../../components/Can";
 
 const ClientesPage = () => {
   const [searchQuery, setSearchQuery] = useState<string>("");
@@ -42,11 +42,11 @@ const ClientesPage = () => {
     modalHook.setIsSubmitting(true);
     const success = await clientesHook.updateClient(
       clientData,
-      clientesHook.selectedClient?.idCliente!
+      modalHook.selectedItem.idCliente
     );
     if (success) {
       clientesHook.fetchClientes(searchQuery, clientesHook.page);
-      modalHook.closeCreateModal();
+      modalHook.closeEditModal();
     }
     modalHook.setIsSubmitting(false);
   };

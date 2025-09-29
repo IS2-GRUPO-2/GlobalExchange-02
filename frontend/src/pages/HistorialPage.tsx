@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { toast } from "react-toastify";
-import type { Cliente } from "../types/Cliente";
+import type { Cliente } from "../features/clientes/types/Cliente";
 import { useAuth } from "../context/useAuth";
 import { getClienteActual } from "../services/usuarioService";
 import { getHistorialTransacciones } from "../services/clienteService";

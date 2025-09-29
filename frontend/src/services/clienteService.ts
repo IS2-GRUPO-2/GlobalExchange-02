@@ -1,5 +1,5 @@
 import axios from "axios";
-import type { PaginatedCliente, Cliente } from "../types/Cliente";
+import type { PaginatedCliente, Cliente } from "../features/clientes/types/Cliente";
 import { type User } from "../types/User";
 import type { TransaccionDetalle } from "../types/Transaccion";
 
@@ -11,15 +11,6 @@ interface GetParams {
   page: number;
 }
 
-// 👇 función auxiliar para obtener headers con token
-const getAuthHeaders = () => {
-  const token = localStorage.getItem("token"); // el mismo que guardas en login
-  return {
-    headers: {
-      Authorization: token ? `Bearer ${token}` : "",
-    },
-  };
-};
 
 export const getClientes = async (params: GetParams) => {
   try {
@@ -42,16 +33,16 @@ export const getAllClientes = async () => {
 };
 
 export const getCliente = (id: string) =>
-  axios.get<Cliente>(`${API_URL}${id}/`, getAuthHeaders());
+  axios.get<Cliente>(`${API_URL}${id}/`);
 
 export const createCliente = (data: Partial<Cliente>) =>
-  axios.post<Cliente>(API_URL, data, getAuthHeaders());
+  axios.post<Cliente>(API_URL, data);
 
 export const updateCliente = (id: string, data: Partial<Cliente>) =>
-  axios.put<Cliente>(`${API_URL}${id}/`, data, getAuthHeaders());
+  axios.put<Cliente>(`${API_URL}${id}/`, data);
 
 export const deleteCliente = (id: string) =>
-  axios.delete(`${API_URL}${id}/`, getAuthHeaders());
+  axios.delete(`${API_URL}${id}/`);
 
 export const getUsuariosAsignados = async (id_cliente: string) => {
   const res = await axios.get<User[]>(

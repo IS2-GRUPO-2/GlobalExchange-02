@@ -1,7 +1,7 @@
 import { createBrowserRouter } from "react-router";
 import App from "../App";
 import UsuariosPage from "../pages/UsuariosPage";
-import ClientesPage from "../pages/ClientesPage";
+import ClientesPage from "../features/clientes/pages/ClientesPage";
 import LoginPage from "../pages/LoginPage";
 import RegisterPage from "../pages/RegisterPage";
 import RolesPage from "../pages/RolesPage";
@@ -10,7 +10,7 @@ import DivisasPage from "../pages/DivisasPage";
 import MetodosFinancierosPage from "../features/financiero/Pages/MetodosFinancierosPage";
 import MetodosFinancierosClientePage from "../features/financiero/Pages/MetodosFinancierosClientePage";
 import ConfiguracionesPage from "../pages/ConfiguracionesPage";
-import CategoriaClientePage from "../pages/CategoriaClientePage";
+import CategoriaClientePage from "../features/categoria_clientes/pages/CategoriaClientesPage";
 import {
   CATEGORIAS_CLIENTE,
   CLIENTES,

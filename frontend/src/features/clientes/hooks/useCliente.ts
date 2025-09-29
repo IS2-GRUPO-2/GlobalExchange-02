@@ -6,7 +6,7 @@ import {
   getClientes,
   updateCliente,
 } from "../services/clienteService";
-import { type Cliente } from "../../../types/Cliente";
+import { type Cliente } from "../types/Cliente";
 import type { ClientFormData } from "../components/ClientForm";
 
 export const useClientes = () => {

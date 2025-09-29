@@ -4,13 +4,13 @@ import {
   createCategoriaCliente,
   updateCategoriaCliente,
 } from "../services/categoriaClienteService";
-import { type CategoriaCliente } from "../types/Cliente";
+import { type CategoriaCliente } from "../../clientes/types/Cliente";
 import { Edit, Search, Plus, Check, X, Eye } from "lucide-react";
 import { toast } from "react-toastify";
-import Modal from "../components/Modal";
+import Modal from "../../../components/Modal";
 import CategoriaClienteForm from "../components/CategoriaClientesForm";
-import Can from "../components/Can";
-import { CATEGORIAS_CLIENTE } from "../types/perms";
+import Can from "../../../components/Can";
+import { CATEGORIAS_CLIENTE } from "../../../types/perms";
 
 // Type for the form submission data
 interface FormCategoriaCliente {
@@ -93,6 +93,7 @@ const CategoriasPage = () => {
       }
       
       await updateCategoriaCliente(data.idCategoria, {
+        nombre: data.nombre,
         descripcion: data.descripcion,
         descuento: data.descuento,
         isActive: data.isActive,
