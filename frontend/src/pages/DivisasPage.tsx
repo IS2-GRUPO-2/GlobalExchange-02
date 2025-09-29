@@ -241,7 +241,7 @@ const DivisasPage = () => {
                   </tbody>
                   <tfoot>
                     <tr>
-                      <td colSpan={7}>
+                      <td colSpan={8}>
                         <div className="flex justify-between items-center mt-4">
                           <div className="text-sm text-gray-600">
                             Página {divisasHook.page} de{" "}
