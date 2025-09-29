@@ -26,28 +26,12 @@ interface GetParams {
   search?: string;
 }
 
-// Crear instancia de axios con configuración base
-const apiClient = axios.create();
-
-apiClient.interceptors.request.use(
-  (config) => {
-    const token = localStorage.getItem("token");
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
-    }
-    return config;
-  },
-  (error) => {
-    return Promise.reject(error);
-  }
-);
-
 // ======================== CATÁLOGOS ========================
 
 // Bancos
 export const getBancos = async (params: GetParams = {}): Promise<PaginatedBanco> => {
   try {
-    const res = await apiClient.get<PaginatedBanco>(
+    const res = await axios.get<PaginatedBanco>(
       `${API_URL}bancos/`,
       { params }
     );
@@ -60,7 +44,7 @@ export const getBancos = async (params: GetParams = {}): Promise<PaginatedBanco>
 
 export const createBanco = async (bancoData: Banco) => {
   try {
-    const res = await apiClient.post<Banco>(`${API_URL}bancos/`, bancoData);
+    const res = await axios.post<Banco>(`${API_URL}bancos/`, bancoData);
     return res;
   } catch (err) {
     console.error("Error creating banco: ", err);
@@ -70,7 +54,7 @@ export const createBanco = async (bancoData: Banco) => {
 
 export const updateBanco = async (bancoData: Banco, id: number) => {
   try {
-    const res = await apiClient.put<Banco>(`${API_URL}bancos/${id}/`, bancoData);
+    const res = await axios.put<Banco>(`${API_URL}bancos/${id}/`, bancoData);
     return res;
   } catch (err) {
     console.error("Error updating banco: ", err);
@@ -80,7 +64,7 @@ export const updateBanco = async (bancoData: Banco, id: number) => {
 
 export const deactivateBanco = async (id: number) => {
   try {
-    const res = await apiClient.delete(`${API_URL}bancos/${id}/`);
+    const res = await axios.delete(`${API_URL}bancos/${id}/`);
     return res;
   } catch (err) {
     console.error("Error deactivating banco: ", err);
@@ -90,7 +74,7 @@ export const deactivateBanco = async (id: number) => {
 
 export const toggleActiveBanco = async (id: number) => {
   try {
-    const res = await apiClient.post(`${API_URL}bancos/${id}/toggle_active/`);
+    const res = await axios.post(`${API_URL}bancos/${id}/toggle_active/`);
     return res.data;
   } catch (err) {
     console.error("Error toggling banco status: ", err);
@@ -103,7 +87,7 @@ export const getBilleterasDigitalesCatalogo = async (
   params: GetParams = {}
 ): Promise<PaginatedBilleteraDigitalCatalogo> => {
   try {
-    const res = await apiClient.get<PaginatedBilleteraDigitalCatalogo>(
+    const res = await axios.get<PaginatedBilleteraDigitalCatalogo>(
       `${API_URL}billeteras-catalogo/`,
       { params }
     );
@@ -118,7 +102,7 @@ export const createBilleteraDigitalCatalogo = async (
   billeteraData: BilleteraDigitalCatalogo
 ) => {
   try {
-    const res = await apiClient.post<BilleteraDigitalCatalogo>(
+    const res = await axios.post<BilleteraDigitalCatalogo>(
       `${API_URL}billeteras-catalogo/`,
       billeteraData
     );
@@ -134,7 +118,7 @@ export const updateBilleteraDigitalCatalogo = async (
   id: number
 ) => {
   try {
-    const res = await apiClient.put<BilleteraDigitalCatalogo>(
+    const res = await axios.put<BilleteraDigitalCatalogo>(
       `${API_URL}billeteras-catalogo/${id}/`,
       billeteraData
     );
@@ -147,7 +131,7 @@ export const updateBilleteraDigitalCatalogo = async (
 
 export const deactivateBilleteraDigitalCatalogo = async (id: number) => {
   try {
-    const res = await apiClient.delete(`${API_URL}billeteras-catalogo/${id}/`);
+    const res = await axios.delete(`${API_URL}billeteras-catalogo/${id}/`);
     return res;
   } catch (err) {
     console.error("Error deactivating billetera digital catálogo: ", err);
@@ -157,7 +141,7 @@ export const deactivateBilleteraDigitalCatalogo = async (id: number) => {
 
 export const toggleActiveBilleteraDigitalCatalogo = async (id: number) => {
   try {
-    const res = await apiClient.post(
+    const res = await axios.post(
       `${API_URL}billeteras-catalogo/${id}/toggle_active/`
     );
     return res.data;
@@ -172,7 +156,7 @@ export const getTarjetasCatalogo = async (
   params: GetParams = {}
 ): Promise<PaginatedTarjetaCatalogo> => {
   try {
-    const res = await apiClient.get<PaginatedTarjetaCatalogo>(
+    const res = await axios.get<PaginatedTarjetaCatalogo>(
       `${API_URL}tarjetas-catalogo/`,
       { params }
     );
@@ -185,7 +169,7 @@ export const getTarjetasCatalogo = async (
 
 export const createTarjetaCatalogo = async (tarjetaData: TarjetaCatalogo) => {
   try {
-    const res = await apiClient.post<TarjetaCatalogo>(
+    const res = await axios.post<TarjetaCatalogo>(
       `${API_URL}tarjetas-catalogo/`,
       tarjetaData
     );
@@ -201,7 +185,7 @@ export const updateTarjetaCatalogo = async (
   id: number
 ) => {
   try {
-    const res = await apiClient.put<TarjetaCatalogo>(
+    const res = await axios.put<TarjetaCatalogo>(
       `${API_URL}tarjetas-catalogo/${id}/`,
       tarjetaData
     );
@@ -214,7 +198,7 @@ export const updateTarjetaCatalogo = async (
 
 export const deactivateTarjetaCatalogo = async (id: number) => {
   try {
-    const res = await apiClient.delete(`${API_URL}tarjetas-catalogo/${id}/`);
+    const res = await axios.delete(`${API_URL}tarjetas-catalogo/${id}/`);
     return res;
   } catch (err) {
     console.error("Error deactivating tarjeta catálogo: ", err);
@@ -224,7 +208,7 @@ export const deactivateTarjetaCatalogo = async (id: number) => {
 
 export const toggleActiveTarjetaCatalogo = async (id: number) => {
   try {
-    const res = await apiClient.post(
+    const res = await axios.post(
       `${API_URL}tarjetas-catalogo/${id}/toggle_active/`
     );
     return res.data;
@@ -240,7 +224,7 @@ export const getMetodosFinancieros = async (
   params: GetParams = {}
 ): Promise<PaginatedMetodoFinanciero> => {
   try {
-    const res = await apiClient.get<PaginatedMetodoFinanciero>(
+    const res = await axios.get<PaginatedMetodoFinanciero>(
       `${API_URL}metodos/`,
       { params }
     );
@@ -253,7 +237,7 @@ export const getMetodosFinancieros = async (
 
 export const createMetodoFinanciero = async (metodoData: MetodoFinanciero) => {
   try {
-    const res = await apiClient.post<MetodoFinanciero>(
+    const res = await axios.post<MetodoFinanciero>(
       `${API_URL}metodos/`,
       metodoData
     );
@@ -269,7 +253,7 @@ export const updateMetodoFinanciero = async (
   id: number
 ) => {
   try {
-    const res = await apiClient.put<MetodoFinanciero>(
+    const res = await axios.put<MetodoFinanciero>(
       `${API_URL}metodos/${id}/`,
       metodoData
     );
@@ -282,7 +266,7 @@ export const updateMetodoFinanciero = async (
 
 export const toggleActiveMetodoFinanciero = async (id: number) => {
   try {
-    const res = await apiClient.post(`${API_URL}metodos/${id}/toggle_active/`);
+    const res = await axios.post(`${API_URL}metodos/${id}/toggle_active/`);
     return res.data;
   } catch (err) {
     console.error("Error toggling método financiero status: ", err);
@@ -296,7 +280,7 @@ export const getMetodosFinancierosDetalles = async (
   params: GetParams = {}
 ): Promise<PaginatedMetodoFinancieroDetalle> => {
   try {
-    const res = await apiClient.get<PaginatedMetodoFinancieroDetalle>(
+    const res = await axios.get<PaginatedMetodoFinancieroDetalle>(
       `${API_URL}detalles/`,
       { params }
     );
@@ -312,7 +296,7 @@ export const getDetallesMetodosFinancieros = getMetodosFinancierosDetalles;
 
 export const createDetalleMetodoFinanciero = async (detalleData: MetodoFinancieroDetalle) => {
   try {
-    const res = await apiClient.post<MetodoFinancieroDetalle>(
+    const res = await axios.post<MetodoFinancieroDetalle>(
       `${API_URL}detalles/`,
       detalleData
     );
@@ -325,13 +309,46 @@ export const createDetalleMetodoFinanciero = async (detalleData: MetodoFinancier
 
 export const deactivateMetodoFinanciero = async (id: number) => {
   try {
-    const res = await apiClient.delete(`${API_URL}metodos/${id}/`);
+    const res = await axios.delete(`${API_URL}metodos/${id}/`);
     return res;
   } catch (err) {
     console.error("Error deactivating método financiero: ", err);
     throw err;
   }
 };
+
+// Detalles: nueva función para listar instancias de la casa
+export const getMetodosFinancierosDetallesCasa = async (
+  params: GetParams = {}
+): Promise<PaginatedMetodoFinancieroDetalle> => {
+  try {
+    const res = await axios.get<PaginatedMetodoFinancieroDetalle>(
+      `${API_URL}detalles/casa/`,
+      { params }
+    );
+    return res.data;
+  } catch (err: any) {
+    console.error("Error fetching detalles (casa): ", err.response?.data || err.message);
+    throw err;
+  }
+};
+
+export const getMetodosFinancierosDetallesCliente = async (
+  params: GetParams = {}
+): Promise<PaginatedMetodoFinancieroDetalle> => {
+  try {
+    const res = await axios.get<PaginatedMetodoFinancieroDetalle>(
+      `${API_URL}detalles/cliente/`,
+      { params }
+    );
+    return res.data;
+  } catch (err: any) {
+    console.error("Error fetching detalles (cliente): ", err.response?.data || err.message);
+    throw err;
+  }
+};
+
+
 
 // ======================== INSTANCIAS ========================
 
@@ -340,7 +357,7 @@ export const getCuentasBancarias = async (
   params: GetParams = {}
 ): Promise<PaginatedCuentaBancaria> => {
   try {
-    const res = await apiClient.get<PaginatedCuentaBancaria>(
+    const res = await axios.get<PaginatedCuentaBancaria>(
       `${API_URL}cuentas-bancarias/`,
       { params }
     );
@@ -353,7 +370,7 @@ export const getCuentasBancarias = async (
 
 export const createCuentaBancaria = async (cuentaData: CuentaBancaria) => {
   try {
-    const res = await apiClient.post<CuentaBancaria>(
+    const res = await axios.post<CuentaBancaria>(
       `${API_URL}cuentas-bancarias/`,
       cuentaData
     );
@@ -369,7 +386,7 @@ export const updateCuentaBancaria = async (
   id: number
 ) => {
   try {
-    const res = await apiClient.put<CuentaBancaria>(
+    const res = await axios.put<CuentaBancaria>(
       `${API_URL}cuentas-bancarias/${id}/`,
       cuentaData
     );
@@ -382,7 +399,7 @@ export const updateCuentaBancaria = async (
 
 export const toggleActiveCuentaBancaria = async (id: number) => {
   try {
-    const res = await apiClient.post(
+    const res = await axios.post(
       `${API_URL}cuentas-bancarias/${id}/toggle_active/`
     );
     return res.data;
@@ -397,7 +414,7 @@ export const getBilleterasDigitales = async (
   params: GetParams = {}
 ): Promise<PaginatedBilleteraDigital> => {
   try {
-    const res = await apiClient.get<PaginatedBilleteraDigital>(
+    const res = await axios.get<PaginatedBilleteraDigital>(
       `${API_URL}billeteras-digitales/`,
       { params }
     );
@@ -410,7 +427,7 @@ export const getBilleterasDigitales = async (
 
 export const createBilleteraDigital = async (billeteraData: BilleteraDigital) => {
   try {
-    const res = await apiClient.post<BilleteraDigital>(
+    const res = await axios.post<BilleteraDigital>(
       `${API_URL}billeteras-digitales/`,
       billeteraData
     );
@@ -426,7 +443,7 @@ export const updateBilleteraDigital = async (
   id: number
 ) => {
   try {
-    const res = await apiClient.put<BilleteraDigital>(
+    const res = await axios.put<BilleteraDigital>(
       `${API_URL}billeteras-digitales/${id}/`,
       billeteraData
     );
@@ -439,7 +456,7 @@ export const updateBilleteraDigital = async (
 
 export const toggleActiveBilleteraDigital = async (id: number) => {
   try {
-    const res = await apiClient.post(
+    const res = await axios.post(
       `${API_URL}billeteras-digitales/${id}/toggle_active/`
     );
     return res.data;
@@ -454,7 +471,7 @@ export const getTarjetas = async (
   params: GetParams = {}
 ): Promise<PaginatedTarjeta> => {
   try {
-    const res = await apiClient.get<PaginatedTarjeta>(
+    const res = await axios.get<PaginatedTarjeta>(
       `${API_URL}tarjetas/`,
       { params }
     );
@@ -467,7 +484,7 @@ export const getTarjetas = async (
 
 export const createTarjeta = async (tarjetaData: Tarjeta) => {
   try {
-    const res = await apiClient.post<Tarjeta>(
+    const res = await axios.post<Tarjeta>(
       `${API_URL}tarjetas/`,
       tarjetaData
     );
@@ -480,7 +497,7 @@ export const createTarjeta = async (tarjetaData: Tarjeta) => {
 
 export const updateTarjeta = async (tarjetaData: Tarjeta, id: number) => {
   try {
-    const res = await apiClient.put<Tarjeta>(
+    const res = await axios.put<Tarjeta>(
       `${API_URL}tarjetas/${id}/`,
       tarjetaData
     );
@@ -493,7 +510,7 @@ export const updateTarjeta = async (tarjetaData: Tarjeta, id: number) => {
 
 export const toggleActiveTarjeta = async (id: number) => {
   try {
-    const res = await apiClient.post(`${API_URL}tarjetas/${id}/toggle_active/`);
+    const res = await axios.post(`${API_URL}tarjetas/${id}/toggle_active/`);
     return res.data;
   } catch (err) {
     console.error("Error toggling tarjeta status: ", err);

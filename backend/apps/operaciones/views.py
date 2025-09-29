@@ -444,7 +444,7 @@ class MetodoFinancieroDetalleViewSet(viewsets.ModelViewSet):
         """
         Filtrar detalles según permisos del usuario.
         
-        - Administradores: ven todos los registros (activos e inactivos)
+        - Administradores: ven solo los registros de la casa.
         - Usuarios regulares: ven sus propios registros (activos e inactivos)
         """
         queryset = MetodoFinancieroDetalle.objects.all()
@@ -497,6 +497,20 @@ class MetodoFinancieroDetalleViewSet(viewsets.ModelViewSet):
         instance.save()
         return Response({"message": f"Detalle de método financiero {instance.alias} desactivado (eliminado lógico)."}, status=status.HTTP_200_OK)
 
+    @action(detail=False, methods=['get'], url_path='casa', permission_classes=[permissions.IsAuthenticated])
+    def lista_casa(self, request):
+        qs = MetodoFinancieroDetalle.objects.filter(es_cuenta_casa=True)
+        page = self.paginate_queryset(qs)
+        serializer = self.get_serializer(page or qs, many=True)
+        return self.get_paginated_response(serializer.data) if page else Response(serializer.data)
+
+    @action(detail=False, methods=['get'], url_path='cliente', permission_classes=[permissions.IsAuthenticated])
+    def lista_cliente(self, request):
+        qs = MetodoFinancieroDetalle.objects.filter(cliente__in=request.user.clienteActual, es_cuenta_casa=False)
+        page = self.paginate_queryset(qs)
+        serializer = self.get_serializer(page or qs, many=True)
+        return self.get_paginated_response(serializer.data) if page else Response(serializer.data)
+        
     @action(detail=True, methods=['post'], permission_classes=[permissions.IsAuthenticated])
     def toggle_active(self, request, pk=None):
         """
