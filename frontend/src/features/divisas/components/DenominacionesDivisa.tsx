@@ -7,7 +7,7 @@ import {
 } from "../../../services/divisaService";
 import { toast } from "react-toastify";
 import * as yup from "yup";
-import { Check, Plus, X } from "lucide-react";
+import { Check, Plus, X, Pencil } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
 import Can from "../../../components/Can";
@@ -37,6 +37,9 @@ const DenominacionesDivisa = ({ onSubmit, onCancel, divisa }: Props) => {
   const [denominaciones, setDenominaciones] = useState<Denominacion[]>([]);
   const [pending, setPending] = useState(false);
   const [isForm, setIsForm] = useState(false);
+  const [editingId, setEditingId] = useState<number | null>(null);
+  const [editValue, setEditValue] = useState<string>("");
+
   const {
     register,
     handleSubmit,
@@ -91,6 +94,35 @@ const DenominacionesDivisa = ({ onSubmit, onCancel, divisa }: Props) => {
       }
     } catch (e) {
       toast.error("Ha ocurrido un error");
+    }
+  };
+
+  const handleEditStart = (denominacion: Denominacion) => {
+    setEditingId(denominacion.id!);
+    setEditValue(denominacion.denominacion.toString());
+  };
+
+  const handleEditCancel = () => {
+    setEditingId(null);
+    setEditValue("");
+  };
+
+  const handleEditSave = async (denominacion: Denominacion) => {
+    try {
+      const updated: Denominacion = {
+        ...denominacion,
+        denominacion: parseInt(editValue),
+      };
+      const res = await updateDenominacion(updated, denominacion.id!);
+      if (res.status === 200) {
+        toast.success("Denominación actualizada con éxito!");
+        fetchDenominaciones();
+      }
+    } catch (e) {
+      toast.error("Ha ocurrido un error al actualizar");
+    } finally {
+      setEditingId(null);
+      setEditValue("");
     }
   };
 
@@ -220,7 +252,23 @@ const DenominacionesDivisa = ({ onSubmit, onCancel, divisa }: Props) => {
                 {denominaciones.map((denominacion: Denominacion) => (
                   <tr key={denominacion.id}>
                     <td className="font-medium">{divisa.codigo}</td>
-                    <td>{denominacion.denominacion.toLocaleString("es-ES")}</td>
+                    <td>
+                      {editingId === denominacion.id ? (
+                        <input
+                          type="number"
+                          className="w-24 px-2 py-1 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          value={editValue}
+                          onChange={(e) => setEditValue(e.target.value)}
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter") handleEditSave(denominacion);
+                            if (e.key === "Escape") handleEditCancel();
+                          }}
+                          autoFocus
+                        />
+                      ) : (
+                        denominacion.denominacion.toLocaleString("es-ES")
+                      )}
+                    </td>
                     <td>
                       <span
                         className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
@@ -234,26 +282,68 @@ const DenominacionesDivisa = ({ onSubmit, onCancel, divisa }: Props) => {
                     </td>
                     <td>
                       <div className="flex items-center space-x-2">
-                        <Can anyOf={denominacion.is_active? [DENOMINACIONES.DELETE] : [DENOMINACIONES.CHANGE]}>
-                          <button
-                            onClick={
-                              denominacion.is_active
-                                ? () =>
-                                    handleDeactivateDenominacion(denominacion.id!)
-                                : () => handleActivateDenominacion(denominacion)
-                            }
-                            className="p-1 text-gray-500 hover:text-red-600 rounded-full hover:bg-gray-100"
-                            title={
-                              denominacion.is_active ? "Desactivar" : "Activar"
-                            }
-                          >
-                            {denominacion.is_active ? (
-                              <X size={16} />
-                            ) : (
+                        {editingId === denominacion.id ? (
+                          <>
+                            <button
+                              onClick={() => handleEditSave(denominacion)}
+                              className="p-1 text-green-600 hover:bg-green-100 rounded-full"
+                              title="Guardar"
+                            >
                               <Check size={16} />
-                            )}
-                          </button>
-                        </Can>
+                            </button>
+                            <button
+                              onClick={handleEditCancel}
+                              className="p-1 text-red-600 hover:bg-red-100 rounded-full"
+                              title="Cancelar"
+                            >
+                              <X size={16} />
+                            </button>
+                          </>
+                        ) : (
+                          <>
+                            <Can
+                              anyOf={
+                                denominacion.is_active
+                                  ? [DENOMINACIONES.DELETE]
+                                  : [DENOMINACIONES.CHANGE]
+                              }
+                            >
+                              <button
+                                onClick={
+                                  denominacion.is_active
+                                    ? () =>
+                                        handleDeactivateDenominacion(
+                                          denominacion.id!
+                                        )
+                                    : () =>
+                                        handleActivateDenominacion(denominacion)
+                                }
+                                className="p-1 text-gray-500 hover:text-red-600 rounded-full hover:bg-gray-100"
+                                title={
+                                  denominacion.is_active
+                                    ? "Desactivar"
+                                    : "Activar"
+                                }
+                              >
+                                {denominacion.is_active ? (
+                                  <X size={16} />
+                                ) : (
+                                  <Check size={16} />
+                                )}
+                              </button>
+                            </Can>
+
+                            <Can anyOf={[DENOMINACIONES.CHANGE]}>
+                              <button
+                                onClick={() => handleEditStart(denominacion)}
+                                className="p-1 text-gray-500 hover:text-blue-600 rounded-full hover:bg-gray-100"
+                                title="Actualizar"
+                              >
+                                <Pencil size={16} />
+                              </button>
+                            </Can>
+                          </>
+                        )}
                       </div>
                     </td>
                   </tr>
