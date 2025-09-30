@@ -31,7 +31,7 @@ def categoria_base():
         "nombre": "TEST_CATEGORIA",
         "descripcion": "Categoría para pruebas unitarias",
         "descuento": "8.50",
-        "isActive": True
+        "is_active": True
     }
 
 @pytest.fixture
@@ -41,7 +41,7 @@ def categoria_creada():
         nombre="CATEGORIA_EXISTENTE",
         descripcion="Categoría que ya existe en la BD",
         descuento=Decimal("5.00"),
-        isActive=True
+        is_active=True
     )
 
 # -------------------- Tests de Creación --------------------
@@ -60,7 +60,7 @@ class TestCrearCategoriaCliente:
         assert response.data["nombre"] == "TEST_CATEGORIA"
         assert response.data["descripcion"] == "Categoría para pruebas unitarias"
         assert Decimal(response.data["descuento"]) == Decimal("8.50")
-        assert response.data["isActive"] is True
+        assert response.data["is_active"] is True
         
         # Verificar en la BD
         assert CategoriaCliente.objects.filter(nombre="TEST_CATEGORIA").exists()
@@ -75,7 +75,7 @@ class TestCrearCategoriaCliente:
         assert response.status_code == status.HTTP_201_CREATED
         assert response.data["nombre"] == "CATEGORIA_MINIMA"
         assert response.data["descuento"] == "0.00"  # Valor por defecto
-        assert response.data["isActive"] is True  # Valor por defecto
+        assert response.data["is_active"] is True  # Valor por defecto
     
     def test_crear_categoria_nombre_existente(self, api_client, categoria_creada):
         """Test intentar crear categoría con nombre que ya existe"""
@@ -125,12 +125,12 @@ class TestEditarCategoriaCliente:
     
     def test_editar_categoria_completa(self, api_client, categoria_creada):
         """Test edición completa de una categoría"""
-        url = reverse("categorias-clientes-detail", args=[categoria_creada.idCategoria])
+        url = reverse("categorias-clientes-detail", args=[categoria_creada.id])
         data = {
             "nombre": "CATEGORIA_EDITADA",
             "descripcion": "Descripción actualizada en test",
             "descuento": "7.75",
-            "isActive": True
+            "is_active": True
         }
         
         response = api_client.put(url, data, format="json")
@@ -147,7 +147,7 @@ class TestEditarCategoriaCliente:
     
     def test_editar_solo_descuento(self, api_client, categoria_creada):
         """Test edición parcial: solo actualizar el descuento"""
-        url = reverse("categorias-clientes-detail", args=[categoria_creada.idCategoria])
+        url = reverse("categorias-clientes-detail", args=[categoria_creada.id])
         data = {"descuento": "12.50"}
         
         response = api_client.patch(url, data, format="json")
@@ -170,7 +170,7 @@ class TestEditarCategoriaCliente:
         )
         
         # Intentar cambiar el nombre a uno que ya existe
-        url = reverse("categorias-clientes-detail", args=[categoria_creada.idCategoria])
+        url = reverse("categorias-clientes-detail", args=[categoria_creada.id])
         data = {"nombre": "OTRA_CATEGORIA"}
         
         response = api_client.patch(url, data, format="json")
@@ -190,7 +190,7 @@ class TestEditarCategoriaCliente:
     def test_editar_sin_autenticacion(self, categoria_creada):
         """Test que no se puede editar sin autenticación"""
         client = APIClient()  # Cliente sin autenticar
-        url = reverse("categorias-clientes-detail", args=[categoria_creada.idCategoria])
+        url = reverse("categorias-clientes-detail", args=[categoria_creada.id])
         data = {"descuento": "1.00"}
         
         response = client.patch(url, data, format="json")
@@ -204,10 +204,10 @@ class TestInactivarCategoriaCliente:
     
     def test_inactivar_categoria(self, api_client, categoria_creada):
         """Test inactivar una categoría activa"""
-        url = reverse("categorias-clientes-detail", args=[categoria_creada.idCategoria])
+        url = reverse("categorias-clientes-detail", args=[categoria_creada.id])
         
         # Verificar que está activa inicialmente
-        assert categoria_creada.isActive is True
+        assert categoria_creada.is_active is True
         
         # Eliminar (inactivar)
         response = api_client.delete(url)
@@ -216,16 +216,16 @@ class TestInactivarCategoriaCliente:
         
         # Verificar en la BD que se inactivó pero no se eliminó
         categoria_creada.refresh_from_db()
-        assert categoria_creada.isActive is False
-        assert CategoriaCliente.objects.filter(idCategoria=categoria_creada.idCategoria).exists()
+        assert categoria_creada.is_active is False
+        assert CategoriaCliente.objects.filter(id=categoria_creada.id).exists()
     
     def test_inactivar_categoria_ya_inactiva(self, api_client, categoria_creada):
         """Test intentar inactivar una categoría que ya está inactiva"""
         # Primero la inactivamos
-        categoria_creada.isActive = False
+        categoria_creada.is_active = False
         categoria_creada.save()
         
-        url = reverse("categorias-clientes-detail", args=[categoria_creada.idCategoria])
+        url = reverse("categorias-clientes-detail", args=[categoria_creada.id])
         response = api_client.delete(url)
         
         assert response.status_code == status.HTTP_404_NOT_FOUND
@@ -233,7 +233,7 @@ class TestInactivarCategoriaCliente:
     def test_categoria_inactiva_no_aparece_en_listado(self, api_client, categoria_creada):
         """Test que categoría inactiva no aparece en listado normal"""
         # Inactivar la categoría
-        categoria_creada.isActive = False
+        categoria_creada.is_active = False
         categoria_creada.save()
         
         # Obtener listado normal (sin all=true)
@@ -242,13 +242,13 @@ class TestInactivarCategoriaCliente:
         
         assert response.status_code == status.HTTP_200_OK
         # No debe estar en el listado
-        categorias_ids = [cat["idCategoria"] for cat in response.data]
-        assert str(categoria_creada.idCategoria) not in categorias_ids
+        categorias_ids = [cat["id"] for cat in response.data]
+        assert str(categoria_creada.id) not in categorias_ids
     
     def test_categoria_inactiva_aparece_con_all_true(self, api_client, categoria_creada):
         """Test que categoría inactiva aparece en listado con all=true"""
         # Inactivar la categoría
-        categoria_creada.isActive = False
+        categoria_creada.is_active = False
         categoria_creada.save()
         
         # Obtener listado con all=true
@@ -257,13 +257,13 @@ class TestInactivarCategoriaCliente:
         
         assert response.status_code == status.HTTP_200_OK
         # Debe estar en el listado
-        categorias_ids = [cat["idCategoria"] for cat in response.data]
-        assert str(categoria_creada.idCategoria) in categorias_ids
+        categorias_ids = [cat["id"] for cat in response.data]
+        assert str(categoria_creada.id) in categorias_ids
     
     def test_inactivar_sin_autenticacion(self, categoria_creada):
         """Test que no se puede inactivar sin autenticación"""
         client = APIClient()  # Cliente sin autenticar
-        url = reverse("categorias-clientes-detail", args=[categoria_creada.idCategoria])
+        url = reverse("categorias-clientes-detail", args=[categoria_creada.id])
         
         response = client.delete(url)
         
