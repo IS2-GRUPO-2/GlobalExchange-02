@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { toast } from "react-toastify";
 import type { Cliente } from "../features/clientes/types/Cliente";
 import { useAuth } from "../context/useAuth";
-import { getClienteActual } from "../services/usuarioService";
+import { getClienteActual } from "../features/usuario/services/usuarioService";
 import { getHistorialTransacciones } from "../services/clienteService";
 import type { TransaccionDetalle } from "../types/Transaccion";
 import { formatNumberDecimals } from "../utils/format";

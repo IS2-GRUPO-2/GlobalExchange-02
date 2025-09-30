@@ -1,8 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
-import type { User } from "../types/User";
+import type { User } from "../features/usuario/types/User";
 import type { Role } from "../types/Role";
 import { getRoles } from "../services/rolesService";
-import { getUserRoles, assignUserRoles } from "../services/usuarioService";
+import { getUserRoles, assignUserRoles } from "../features/usuario/services/usuarioService";
 import { toast } from "react-toastify";
 import { Search } from "lucide-react";
 import Can from "./Can";

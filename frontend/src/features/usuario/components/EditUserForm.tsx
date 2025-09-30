@@ -3,8 +3,8 @@ import * as yup from "yup";
 import { useForm, type SubmitHandler } from "react-hook-form";
 import { toast } from "react-toastify";
 import { type User } from "../types/User";
-import Can from "./Can";
-import { USUARIOS } from "../types/perms";
+import Can from "../../../components/Can";
+import { USUARIOS } from "../../../types/perms";
 
 export type EditUserFormData = {
   id: number;

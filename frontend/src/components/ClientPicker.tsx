@@ -5,7 +5,7 @@ import {
   getUserClients,
   getClienteActual,
   setClienteActual,
-} from "../services/usuarioService";
+} from "../features/usuario/services/usuarioService";
 
 type Props = {
   userId: number;

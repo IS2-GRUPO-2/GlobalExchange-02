@@ -1,9 +1,9 @@
 import { useState, useEffect } from "react";
 import { simularOperacionPrivadaConInstancia } from "../services/simulacionService";
 import { type SimulacionResponse } from "../types/Simulacion";
-import { getClienteActual } from "../services/usuarioService";
+import { getClienteActual } from "../features/usuario/services/usuarioService";
 import { type Cliente } from "../features/clientes/types/Cliente";
-import type { DecodedToken } from "../types/User";
+import type { DecodedToken } from "../features/usuario/types/User";
 import { jwtDecode } from "jwt-decode";
 import { toast } from "react-toastify";
 

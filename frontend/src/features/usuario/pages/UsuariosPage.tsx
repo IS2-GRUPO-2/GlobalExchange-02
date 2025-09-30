@@ -18,14 +18,14 @@ import {
 import type { UserFormData } from "../components/UserForm";
 import type { EditUserFormData } from "../components/EditUserForm";
 import { toast } from "react-toastify";
-import Modal from "../components/Modal";
+import Modal from "../../../components/Modal";
 import UserForm from "../components/UserForm";
 import EditUserForm from "../components/EditUserForm";
-import AssignedClients from "../components/AssignedClients"; 
-import AssignedRoles from "../components/AssignedRoles";
+import AssignedClients from "../../../components/AssignedClients"; 
+import AssignedRoles from "../../../components/AssignedRoles";
 import { KeyRound } from "lucide-react";
-import Can from "../components/Can";
-import { USUARIOS } from "../types/perms";
+import Can from "../../../components/Can";
+import { USUARIOS } from "../../../types/perms";
 
 const UsuariosPage = () => {
   const [usuarios, setUsuarios] = useState<User[]>([]);

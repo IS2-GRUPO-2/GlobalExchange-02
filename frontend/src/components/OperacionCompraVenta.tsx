@@ -5,9 +5,9 @@ import type {
   OperacionCompleta,
   TransaccionRequest,
 } from "../types/Transaccion";
-import type { DecodedToken } from "../types/User";
+import type { DecodedToken } from "../features/usuario/types/User";
 import { jwtDecode } from "jwt-decode";
-import { getClienteActual } from "../services/usuarioService";
+import { getClienteActual } from "../features/usuario/services/usuarioService";
 import {
   simularOperacionCompleta,
   crearTransaccion,
