@@ -48,7 +48,7 @@ class TasaService:
         """
         return (
             Decimal(tasa.precioBase) * (1 + Decimal(metodo.comision_cobro_porcentaje) / 100)
-            + Decimal(tasa.comisionBaseVenta) * (1 - Decimal(cliente.idCategoria.descuento) / 100)
+            + Decimal(tasa.comisionBaseVenta) * (1 - Decimal(cliente.id_categoria.descuento) / 100)
         )
 
     @staticmethod
@@ -59,7 +59,7 @@ class TasaService:
         """
         return (
             Decimal(tasa.precioBase) * (1 + Decimal(metodo.comision_pago_porcentaje) / 100)
-            + Decimal(tasa.comisionBaseCompra) * (1 - Decimal(cliente.idCategoria.descuento) / 100)
+            + Decimal(tasa.comisionBaseCompra) * (1 - Decimal(cliente.id_categoria.descuento) / 100)
         )
 
     # -------------------------

@@ -1,6 +1,6 @@
 import axios from "axios";
 import { type User } from "../types/User";
-import { type Cliente } from "../types/Cliente";
+import { type Cliente } from "../features/clientes/types/Cliente";
 
 // Usamos rutas relativas para que las peticiones pasen por el proxy de Nginx
 const API_URL = "/api/usuarios/";

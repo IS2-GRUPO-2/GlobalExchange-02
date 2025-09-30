@@ -1,4 +1,4 @@
-import { type Cliente } from "./Cliente";
+import { type Cliente } from "../features/clientes/types/Cliente";
 export type UserProfileToken = {
   access: string;
   refresh: string;

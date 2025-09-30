@@ -6,7 +6,7 @@ import {
   getClientes,
   updateCliente,
 } from "../services/clienteService";
-import { type Cliente } from "../../../types/Cliente";
+import { type Cliente } from "../types/Cliente";
 import type { ClientFormData } from "../components/ClientForm";
 
 export const useClientes = () => {
@@ -46,7 +46,7 @@ export const useClientes = () => {
     let clienteData: Partial<Cliente> = {
       nombre: clientData.nombre,
       isPersonaFisica: clientData.isPersonaFisica,
-      idCategoria: clientData.idCategoria,
+      id_categoria: clientData.idCategoria,
       correo: clientData.correo,
       telefono: clientData.telefono,
       direccion: clientData.direccion,
@@ -71,7 +71,7 @@ export const useClientes = () => {
       let clienteData: Partial<Cliente> = {
         nombre: clientData.nombre,
         isPersonaFisica: clientData.isPersonaFisica,
-        idCategoria: clientData.idCategoria,
+        id_categoria: clientData.idCategoria,
         correo: clientData.correo,
         telefono: clientData.telefono,
         direccion: clientData.direccion,
@@ -80,10 +80,10 @@ export const useClientes = () => {
 
       if (clientData.isPersonaFisica) {
         clienteData.cedula = clientData.documento;
-        clienteData.ruc = "";
+        clienteData.ruc = undefined;
       } else {
         clienteData.ruc = clientData.documento;
-        clienteData.cedula = "";
+        clienteData.cedula = undefined;
       }
 
       try {

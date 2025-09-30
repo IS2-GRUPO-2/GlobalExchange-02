@@ -246,8 +246,8 @@ def calcular_simulacion_operacion_privada_con_instancia(cliente_id, divisa_orige
         "divisa_origen": divisa_origen.codigo,
         "divisa_destino": divisa_destino.codigo,
         "parametros": {
-            "nombre_categoria": cliente.idCategoria.nombre,
-            "descuento_categoria": float(cliente.idCategoria.descuento),
+            "nombre_categoria": cliente.id_categoria.nombre,
+            "descuento_categoria": float(cliente.id_categoria.descuento),
             "nombre_metodo": metodo_nombre,
             "comision_metodo": float(com_metodo),
         },
@@ -290,8 +290,8 @@ def calcular_simulacion_operacion_privada(cliente_id, divisa_origen_id, divisa_d
         "divisa_origen": divisa_origen.codigo,
         "divisa_destino": divisa_destino.codigo,
         "parametros": {
-            "nombre_categoria": cliente.idCategoria.nombre,
-            "descuento_categoria": float(cliente.idCategoria.descuento),
+            "nombre_categoria": cliente.id_categoria.nombre,
+            "descuento_categoria": float(cliente.id_categoria.descuento),
             "nombre_metodo": metodo.get_nombre_display(),
             "comision_metodo": float(com_metodo),
         },

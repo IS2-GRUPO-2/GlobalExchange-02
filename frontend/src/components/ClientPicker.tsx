@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import type { Cliente } from "../types/Cliente";
+import type { Cliente } from "../features/clientes/types/Cliente";
 import { toast } from "react-toastify";
 import {
   getUserClients,

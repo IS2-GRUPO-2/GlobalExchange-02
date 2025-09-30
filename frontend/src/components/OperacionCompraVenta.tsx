@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { toast } from "react-toastify";
-import type { Cliente } from "../types/Cliente";
+import type { Cliente } from "../features/clientes/types/Cliente";
 import type {
   OperacionCompleta,
   TransaccionRequest,

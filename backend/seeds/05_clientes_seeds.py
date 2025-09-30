@@ -35,7 +35,7 @@ def run():
         {
             'nombre': 'María Elena Cliente González',
             'isPersonaFisica': True,
-            'idCategoria': categoria_minorista,
+            'id_categoria': categoria_minorista,
             'cedula': '12345678',
             'correo': 'cliente@globalexchange.com',
             'telefono': '+54911234567',
@@ -46,7 +46,7 @@ def run():
         {
             'nombre': 'Ana García Fernández',
             'isPersonaFisica': True,
-            'idCategoria': categoria_premium,
+            'id_categoria': categoria_premium,
             'cedula': '23456789',
             'correo': 'ana.garcia@email.com',
             'telefono': '+54911234568',
@@ -57,7 +57,7 @@ def run():
         {
             'nombre': 'Carlos López Martínez',
             'isPersonaFisica': True,
-            'idCategoria': categoria_vip,
+            'id_categoria': categoria_vip,
             'cedula': '34567890',
             'correo': 'carlos.lopez@email.com',
             'telefono': '+54911234569',
@@ -68,7 +68,7 @@ def run():
         {
             'nombre': 'Sofía Martínez Silva',
             'isPersonaFisica': True,
-            'idCategoria': categoria_mayorista,
+            'id_categoria': categoria_mayorista,
             'cedula': '45678901',
             'correo': 'sofia.martinez@email.com',
             'telefono': '+54911234570',
@@ -79,7 +79,7 @@ def run():
         {
             'nombre': 'Pedro González & Asociados S.A.',
             'isPersonaFisica': False,
-            'idCategoria': categoria_corporativo,
+            'id_categoria': categoria_corporativo,
             'cedula': None,
             'correo': 'pedro.gonzalez@email.com',
             'telefono': '+54911234571',
@@ -90,7 +90,7 @@ def run():
         {
             'nombre': 'Laura Rodríguez Importaciones SRL',
             'isPersonaFisica': False,
-            'idCategoria': categoria_mayorista,
+            'id_categoria': categoria_mayorista,
             'cedula': None,
             'correo': 'laura.rodriguez@email.com',
             'telefono': '+54911234572',
@@ -107,7 +107,7 @@ def run():
             defaults=cliente_data
         )
         if created:
-            print(f"  → Cliente creado: {cliente.nombre} ({cliente.correo}) - {cliente.idCategoria.nombre}")
+            print(f"  → Cliente creado: {cliente.nombre} ({cliente.correo}) - {cliente.id_categoria.nombre}")
     
     # Asignar usuarios a clientes (relación ManyToMany)
     try:

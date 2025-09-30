@@ -30,7 +30,7 @@ def test_get_historial_transacciones_returns_transactions(api_client):
     cliente = Cliente.objects.create(
         nombre="Juan Pérez",
         isPersonaFisica=True,
-        idCategoria=categoria,
+        id_categoria=categoria,
         cedula="1234567",
         correo="juan@example.com",
         telefono="123456",

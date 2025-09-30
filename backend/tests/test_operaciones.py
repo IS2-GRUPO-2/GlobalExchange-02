@@ -232,7 +232,8 @@ def cliente_con_categoria():
         nombre="Juan Perez", 
         correo="juan@example.com",
         telefono="+595981123456",
-        idCategoria=categoria
+        direccion="Dirección de prueba",
+        id_categoria=categoria
     )
     return cliente
 
