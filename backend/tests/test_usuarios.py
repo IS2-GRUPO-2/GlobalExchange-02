@@ -39,7 +39,7 @@ def cliente_test():
     return Cliente.objects.create(
         nombre='Cliente Test',
         isPersonaFisica=True,
-        idCategoria=categoria,
+        id_categoria=categoria,
         correo='cliente.test@example.com',
         telefono='123456789',
         direccion='Dirección de prueba',

@@ -7,7 +7,7 @@
  * @property {string} idCliente - ID único del cliente
  * @property {string} nombre - Nombre completo del cliente
  * @property {boolean} isPersonaFisica - Indica si es persona física (true) o jurídica (false)
- * @property {string} idCategoria - ID de la categoría del cliente
+ * @property {string} id_categoria - ID de la categoría del cliente
  * @property {CategoriaCliente} [categoria] - Objeto de categoría del cliente (opcional)
  * @property {string} [cedula] - Cédula de identidad (para personas físicas)
  * @property {string} correo - Correo electrónico del cliente
