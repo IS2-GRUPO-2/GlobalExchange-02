@@ -125,15 +125,15 @@ class CategoriaClienteViewSet(viewsets.ModelViewSet):
         if request.query_params.get('all', '').lower() == 'true':
             queryset = self.filter_queryset(self.get_queryset())
         else:
-            queryset = self.filter_queryset(self.get_queryset().filter(isActive=True))
+            queryset = self.filter_queryset(self.get_queryset().filter(is_active=True))
             
         serializer = self.get_serializer(queryset, many=True)
         return Response(serializer.data)
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()
-        if (not instance.isActive):
+        if (not instance.is_active):
             return Response(status=status.HTTP_404_NOT_FOUND)
-        instance.isActive = False
+        instance.is_active = False
         instance.save()
         return Response(status=status.HTTP_200_OK)
     
