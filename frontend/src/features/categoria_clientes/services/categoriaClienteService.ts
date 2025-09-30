@@ -53,7 +53,7 @@ export const updateCategoriaCliente = (id: string, data: Partial<CategoriaClient
   axios.patch<CategoriaCliente>(`${API_URL}${id}/`, data);
 
 // 👇 Funciones adicionales que podrías necesitar
-export const createCategoriaCliente = (data: Omit<CategoriaCliente, 'idCategoria'>) =>
+export const createCategoriaCliente = (data: Omit<CategoriaCliente, 'id'>) =>
   axios.post<CategoriaCliente>(API_URL, data);
 
 export const deleteCategoriaCliente = (id: string) =>

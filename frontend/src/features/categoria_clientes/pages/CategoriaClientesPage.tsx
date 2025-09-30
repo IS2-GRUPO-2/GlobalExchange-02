@@ -14,11 +14,11 @@ import { CATEGORIAS_CLIENTE } from "../../../types/perms";
 
 // Type for the form submission data
 interface FormCategoriaCliente {
-  idCategoria?: string;
+  id?: string;
   nombre: string;
   descripcion: string;
   descuento: number;
-  isActive?: boolean;
+  is_active?: boolean;
 }
 
 const CategoriasPage = () => {
@@ -74,7 +74,7 @@ const CategoriasPage = () => {
         nombre: data.nombre,
         descripcion: data.descripcion,
         descuento: data.descuento,
-        isActive: true,
+        is_active: true,
       });
       toast.success("Categoría creada con éxito!");
       fetchCategorias();
@@ -87,16 +87,16 @@ const CategoriasPage = () => {
 
   const handleEditCategoria = async (data: FormCategoriaCliente) => {
     try {
-      if (!data.idCategoria) {
+      if (!data.id) {
         toast.error("ID de categoría no válido");
         return;
       }
       
-      await updateCategoriaCliente(data.idCategoria, {
+      await updateCategoriaCliente(data.id, {
         nombre: data.nombre,
         descripcion: data.descripcion,
         descuento: data.descuento,
-        isActive: data.isActive,
+        is_active: data.is_active,
       });
       toast.success("Categoría actualizada con éxito!");
       fetchCategorias();
@@ -109,11 +109,11 @@ const CategoriasPage = () => {
 
   const handleToggleActive = async (cat: CategoriaCliente) => {
     try {
-      await updateCategoriaCliente(cat.idCategoria, {
-        isActive: !cat.isActive,
+      await updateCategoriaCliente(cat.id, {
+        is_active: !cat.is_active,
       });
       toast.success(
-        `Categoría ${cat.isActive ? "inactivada" : "activada"} con éxito`
+        `Categoría ${cat.is_active ? "inactivada" : "activada"} con éxito`
       );
       fetchCategorias();
     } catch {
@@ -164,19 +164,19 @@ const CategoriasPage = () => {
             </thead>
             <tbody className="divide-y divide-gray-200">
               {categorias.map((cat) => (
-                <tr key={cat.idCategoria}>
+                <tr key={cat.id}>
                   <td className="font-medium">{cat.nombre}</td>
                   <td>{cat.descripcion || "-"}</td>
                   <td>{cat.descuento}%</td>
                   <td>
                     <span
                       className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                        cat.isActive
+                        cat.is_active
                           ? "bg-green-100 text-green-800"
                           : "bg-red-100 text-red-900"
                       }`}
                     >
-                      {cat.isActive ? "Activo" : "Inactivo"}
+                      {cat.is_active ? "Activo" : "Inactivo"}
                     </span>
                   </td>
                   <td>
@@ -201,9 +201,9 @@ const CategoriasPage = () => {
                         <button
                           onClick={() => handleToggleActive(cat)}
                           className="p-1 text-gray-500 hover:text-red-600 rounded-full hover:bg-gray-100"
-                          title={cat.isActive ? "Desactivar" : "Activar"}
+                          title={cat.is_active ? "Desactivar" : "Activar"}
                         >
-                          {cat.isActive ? (
+                          {cat.is_active ? (
                             <X size={16} />
                           ) : (
                             <Check size={16} />
@@ -266,18 +266,18 @@ const CategoriasPage = () => {
                     <h3 className="text-sm font-medium text-gray-500">Estado</h3>
                     <span
                       className={`inline-flex mt-1 items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                        selectedCategoria.isActive
+                        selectedCategoria.is_active
                           ? "bg-green-100 text-green-800"
                           : "bg-red-100 text-red-900"
                       }`}
                     >
-                      {selectedCategoria.isActive ? "Activo" : "Inactivo"}
+                      {selectedCategoria.is_active ? "Activo" : "Inactivo"}
                     </span>
                   </div>
                   
                   <div>
                     <h3 className="text-sm font-medium text-gray-500">ID</h3>
-                    <p className="mt-1 text-sm text-gray-500">{selectedCategoria.idCategoria}</p>
+                    <p className="mt-1 text-sm text-gray-500">{selectedCategoria.id}</p>
                   </div>
                 </div>
               </div>

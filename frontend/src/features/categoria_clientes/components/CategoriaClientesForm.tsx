@@ -5,11 +5,11 @@ import { toast } from "react-toastify";
 import type { CategoriaCliente } from "../../clientes/types/Cliente";
 
 interface FormCategoriaCliente {
-  idCategoria?: string;
+  id?: string;
   nombre: string;
   descripcion: string;
   descuento: number;
-  isActive?: boolean;
+  is_active?: boolean;
 }
 
 interface Props {
@@ -44,7 +44,7 @@ const CategoriaClienteForm = ({
     resolver: yupResolver(schema),
     defaultValues: isEditForm
       ? {
-          idCategoria: categoria?.idCategoria,
+          id: categoria?.id,
           nombre: categoria?.nombre,
           descripcion: categoria?.descripcion,
           descuento: categoria?.descuento,

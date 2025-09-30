@@ -75,7 +75,7 @@ const ClientForm = ({
       isEditForm || readOnly
         ? {
             nombre: cliente?.nombre,
-            idCategoria: cliente?.idCategoria,
+            idCategoria: cliente?.id_categoria,
             documento: cliente?.isPersonaFisica
               ? cliente?.cedula
               : cliente?.ruc,
@@ -101,8 +101,8 @@ const ClientForm = ({
         const response = await getActiveCategoriaClientes();
         setCategorias(response.data);
 
-        if ((isEditForm || readOnly) && cliente?.idCategoria) {
-          setValue("idCategoria", cliente.idCategoria);
+        if ((isEditForm || readOnly) && cliente?.id_categoria) {
+          setValue("idCategoria", cliente.id_categoria);
         }
       } catch (error) {
         console.error("Error al cargar categorías:", error);
@@ -271,7 +271,7 @@ const ClientForm = ({
                 : "Seleccione una categoría"}
             </option>
             {categorias.map((categoria) => (
-              <option key={categoria.idCategoria} value={categoria.idCategoria}>
+              <option key={categoria.id} value={categoria.id}>
                 {categoria.nombre} {`(${categoria.descuento}% desc.)`}
               </option>
             ))}
