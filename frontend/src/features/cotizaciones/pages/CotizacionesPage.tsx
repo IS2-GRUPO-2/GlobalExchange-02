@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { toast } from "react-toastify";
 
 import type { Tasa, TasaCreate } from "../types/Tasa";
-import type { Divisa, PaginatedDivisas } from "../types/Divisa";
+import type { Divisa, PaginatedDivisas } from "../../../types/Divisa";
 
 import {
   createTasa,
@@ -13,12 +13,12 @@ import {
   updateTasa,
 } from "../services/tasaService";
 
-import { getDivisas } from "../services/divisaService";
-import { useAuth } from "../context/useAuth";
-import Modal from "../components/Modal";
+import { getDivisas } from "../../../services/divisaService";
+import { useAuth } from "../../../context/useAuth";
+import Modal from "../../../components/Modal";
 import TasaForm, { type TasaFormData } from "../components/TasaForm";
-import Can from "../components/Can";
-import { TASAS } from "../types/perms";
+import Can from "../../../components/Can";
+import { TASAS } from "../../../types/perms";
 
 const CotizacionesPage = () => {
   // datos

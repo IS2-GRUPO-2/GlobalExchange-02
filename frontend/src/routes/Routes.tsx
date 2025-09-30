@@ -24,7 +24,7 @@ import {
   TAUSER,
   OPERACION,
 } from "../types/perms";
-import CotizacionesPage from "../pages/CotizacionesPage";
+import CotizacionesPage from "../features/cotizaciones/pages/CotizacionesPage";
 import RequireAuth from "./RequiereAuth";
 import SimulacionOperacionPage from "../pages/SimulacionOperacionPage";
 import ConfiguracionTauserPage from "../pages/ConfiguracionTauserPage";
