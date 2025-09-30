@@ -4,7 +4,7 @@ import UsuariosPage from "../pages/UsuariosPage";
 import ClientesPage from "../features/clientes/pages/ClientesPage";
 import LoginPage from "../pages/LoginPage";
 import RegisterPage from "../pages/RegisterPage";
-import RolesPage from "../pages/RolesPage";
+import RolesPage from "../features/roles/pages/RolesPage";
 import MainMenuPage from "../pages/MenuPage";
 import DivisasPage from "../pages/DivisasPage";
 import MetodosFinancierosPage from "../features/financiero/Pages/MetodosFinancierosPage";

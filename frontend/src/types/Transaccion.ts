@@ -5,7 +5,7 @@
 import type { MetodoFinanciero } from "../features/financiero/types/MetodoFinanciero";
 import type { Cliente } from "../features/clientes/types/Cliente";
 import type { Divisa } from "./Divisa";
-import type { Role } from "./Role";
+import type { Role } from "../features/roles/types/Role";
 import type { SimulacionResponse } from "./Simulacion";
 import type { Tauser } from "./Tauser";
 
