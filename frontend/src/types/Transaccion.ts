@@ -2,7 +2,7 @@
  * @fileoverview Tipos de datos para transacciones de operaciones.
  */
 
-import type { MetodoFinanciero } from "../features/financiero/types/MetodoFinanciero";
+import type { MetodoFinanciero } from "../features/metodos_financieros/types/MetodoFinanciero";
 import type { Cliente } from "./Cliente";
 import type { Divisa } from "./Divisa";
 import type { Role } from "./Role";
