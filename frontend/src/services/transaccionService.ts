@@ -58,7 +58,7 @@ export const simularOperacionCompleta = async (
   const simulacionResponse = await simularOperacionPrivadaConInstancia(simulacionData);
   
   // Obtenemos información del tauser
-  const { getTauserById } = await import('./tauserService');
+  const { getTauserById } = await import('../features/tauser/services/tauserService');
   const tauserResponse = await getTauserById(tauserId);
   
   return {
