@@ -29,6 +29,9 @@ class Tauser(models.Model):
     longitud = models.DecimalField(max_digits=9, decimal_places=6)
     is_active = models.BooleanField(default=True)
 
+    class Meta:
+        ordering = ['codigo']
+
     def __str__(self):
         return f"{self.codigo} - {self.nombre}"
 

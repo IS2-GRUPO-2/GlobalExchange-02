@@ -20,7 +20,7 @@ class TauserViewSet(viewsets.ModelViewSet):
     ViewSet para gestionar Tausers (terminales de autoservicio).
     Permite listar, crear, editar y eliminar Tausers.
     """
-    queryset = Tauser.objects.all()
+    queryset = Tauser.objects.all().order_by('codigo')
     serializer_class = TauserSerializer
     permission_classes = [permissions.IsAuthenticated, DjangoModelPermissions]
 
