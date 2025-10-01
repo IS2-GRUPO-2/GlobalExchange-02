@@ -90,8 +90,8 @@ class TauserViewSet(viewsets.ModelViewSet):
         Soft delete: marca el Tauser como inactivo en lugar de eliminarlo.
         """
         instance = self.get_object()
-        if not instance.isActive:
+        if not instance.is_active:
             return Response(status=status.HTTP_404_NOT_FOUND)
-        instance.isActive = False
+        instance.is_active = False
         instance.save()
         return Response(status=status.HTTP_200_OK)
