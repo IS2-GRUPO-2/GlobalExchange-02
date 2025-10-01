@@ -27,7 +27,7 @@ import {
 import CotizacionesPage from "../pages/CotizacionesPage";
 import RequireAuth from "./RequiereAuth";
 import SimulacionOperacionPage from "../pages/SimulacionOperacionPage";
-import ConfiguracionTauserPage from "../pages/ConfiguracionTauserPage";
+import ConfiguracionTauserPage from "../features/tauser/pages/ConfiguracionTauserPage";
 import OperacionPage from "../pages/OperacionPage";
 import HistorialPage from "../pages/HistorialPage";
 

@@ -10,7 +10,7 @@ import "leaflet/dist/leaflet.css";
 import type { Tauser } from "../types/Tauser";
 
 interface FormTauser {
-  idTauser?: string;
+  id?: string;
   codigo: string;
   nombre: string;
   direccion: string;
@@ -18,7 +18,7 @@ interface FormTauser {
   departamento: string;
   latitud: number;
   longitud: number;
-  isActive?: boolean;
+  is_active?: boolean;
 }
 
 interface Props {
@@ -89,7 +89,7 @@ const TauserForm = ({ tauser, isEditForm, onSubmit, onCancel }: Props) => {
     resolver: yupResolver(schema),
     defaultValues: isEditForm
       ? {
-          idTauser: tauser?.idTauser,
+          id: tauser?.id,
           codigo: tauser?.codigo,
           nombre: tauser?.nombre,
           direccion: tauser?.direccion,
@@ -97,7 +97,7 @@ const TauserForm = ({ tauser, isEditForm, onSubmit, onCancel }: Props) => {
           departamento: tauser?.departamento,
           latitud: tauser?.latitud,
           longitud: tauser?.longitud,
-          isActive: tauser?.isActive,
+          is_active: tauser?.is_active,
         }
       : {
           codigo: "",
@@ -107,7 +107,7 @@ const TauserForm = ({ tauser, isEditForm, onSubmit, onCancel }: Props) => {
           departamento: "",
           latitud: -25.263739, // valor inicial (ejemplo: Asunción)
           longitud: -57.575926,
-          isActive: true,
+          is_active: true,
         },
   });
 
@@ -133,7 +133,7 @@ const TauserForm = ({ tauser, isEditForm, onSubmit, onCancel }: Props) => {
 
       {/* Contenedor principal con scroll */}
       <div className="bg-white rounded-lg shadow-md overflow-hidden">
-        <div className="max-h-[70vh] overflow-y-auto p-6">
+        <div className="max-h-[60vh] overflow-y-auto p-6">
           <form onSubmit={handleSubmit(onFormSubmit)} className="space-y-6">
             {/* Primera fila: Código y Nombre */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
