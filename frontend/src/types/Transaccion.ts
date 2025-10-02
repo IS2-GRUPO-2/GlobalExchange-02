@@ -7,7 +7,7 @@ import type { Cliente } from "../features/clientes/types/Cliente";
 import type { Divisa } from "./Divisa";
 import type { Role } from "./Role";
 import type { SimulacionResponse } from "./Simulacion";
-import type { Tauser } from "./Tauser";
+import type { Tauser } from "../features/tauser/types/Tauser";
 
 export interface TransaccionRequest {
   cliente_id: string;

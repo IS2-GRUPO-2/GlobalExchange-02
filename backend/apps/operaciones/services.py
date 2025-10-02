@@ -369,10 +369,10 @@ def crear_transaccion_desde_simulacion(operador_id, cliente_id, divisa_origen_id
     
     # Obtener instancias necesarias
     operador = User.objects.get(id=operador_id)
-    cliente = Cliente.objects.get(idCliente=cliente_id)
+    cliente = Cliente.objects.get(id=cliente_id)
     divisa_origen = _get_divisa(divisa_origen_id)
     divisa_destino = _get_divisa(divisa_destino_id)
-    tauser = Tauser.objects.get(idTauser=tauser_id)
+    tauser = Tauser.objects.get(id=tauser_id)
     
     # Determinar el método financiero a usar
     if detalle_metodo_id:

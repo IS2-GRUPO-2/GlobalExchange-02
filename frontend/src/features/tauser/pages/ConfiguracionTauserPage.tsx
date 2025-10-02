@@ -7,13 +7,13 @@ import {
 import type { Tauser } from "../types/Tauser";
 import { Edit, Search, Plus, Check, X, Eye } from "lucide-react";
 import { toast } from "react-toastify";
-import Modal from "../components/Modal";
+import Modal from "../../../components/Modal";
 import TauserForm from "../components/TauserForm";
 import { MapContainer, TileLayer, Marker } from "react-leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
-import Can from "../components/Can";
-import { TAUSER } from "../types/perms";
+import Can from "../../../components/Can";
+import { TAUSER } from "../../../types/perms";
 
 const ConfiguracionTauserPage = () => {
   const [tausers, setTausers] = useState<Tauser[]>([]);
@@ -63,7 +63,7 @@ const ConfiguracionTauserPage = () => {
 
   const handleCreateTauser = async (data: Partial<Tauser>) => {
     try {
-      await createTauser({ ...data, isActive: true });
+      await createTauser({ ...data, is_active: true });
       toast.success("Tauser creado con éxito!");
       fetchTausers();
     } catch {
@@ -75,11 +75,11 @@ const ConfiguracionTauserPage = () => {
 
   const handleEditTauser = async (data: Partial<Tauser>) => {
     try {
-      if (!data.idTauser) {
+      if (!data.id) {
         toast.error("ID de Tauser no válido");
         return;
       }
-      await updateTauser(data.idTauser, data);
+      await updateTauser(data.id, data);
       toast.success("Tauser actualizado con éxito!");
       fetchTausers();
     } catch {
@@ -91,9 +91,9 @@ const ConfiguracionTauserPage = () => {
 
   const handleToggleActiveTauser = async (tauser: Tauser) => {
     try {
-      await updateTauser(tauser.idTauser, { isActive: !tauser.isActive });
+      await updateTauser(tauser.id, { is_active: !tauser.is_active });
       toast.success(
-        `Tauser ${tauser.isActive ? "inactivado" : "activado"} con éxito`
+        `Tauser ${tauser.is_active ? "inactivado" : "activado"} con éxito`
       );
       fetchTausers();
     } catch {
@@ -140,15 +140,15 @@ const ConfiguracionTauserPage = () => {
             </thead>
             <tbody className="divide-y divide-gray-200">
               {tausers.map((tauser) => (
-                <tr key={tauser.idTauser}>
+                <tr key={tauser.id}>
                   <td className="font-medium">{tauser.codigo}</td>
                   <td>{tauser.nombre}</td>
                   <td>{tauser.direccion}</td>
                   <td>{tauser.ciudad}</td>
                   <td>{tauser.departamento}</td>
                   <td>
-                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${tauser.isActive ? "bg-green-100 text-green-800" : "bg-red-100 text-red-900"}`}>
-                      {tauser.isActive ? "Activo" : "Inactivo"}
+                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${tauser.is_active ? "bg-green-100 text-green-800" : "bg-red-100 text-red-900"}`}>
+                      {tauser.is_active ? "Activo" : "Inactivo"}
                     </span>
                   </td>
                   <td>
@@ -164,10 +164,10 @@ const ConfiguracionTauserPage = () => {
                       <Can anyOf={[TAUSER.DELETE]}>
                         <button
                           onClick={() => handleToggleActiveTauser(tauser)}
-                          className={`p-1 text-gray-500 rounded-full hover:bg-gray-100 ${tauser.isActive ? "hover:text-red-600" : "hover:text-green-600"}`}
-                          title={tauser.isActive ? "Inactivar" : "Activar"}
+                          className={`p-1 text-gray-500 rounded-full hover:bg-gray-100 ${tauser.is_active ? "hover:text-red-600" : "hover:text-green-600"}`}
+                          title={tauser.is_active ? "Inactivar" : "Activar"}
                         >
-                          {tauser.isActive ? <X size={16} /> : <Check size={16} />}
+                          {tauser.is_active ? <X size={16} /> : <Check size={16} />}
                         </button>
                       </Can>
                     </div>
@@ -190,7 +190,7 @@ const ConfiguracionTauserPage = () => {
 
         <Modal isOpen={detailsModalOpen} onClose={closeDetailsModal}>
           {selectedTauser && (
-            <div className="p-2">
+            <div className="max-h-[90vh] overflow-y-auto p-2">
               <h2 className="text-2xl font-bold mb-6 text-gray-800">Detalles de Tauser</h2>
               <div className="bg-white rounded-lg shadow-sm p-6 space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -224,13 +224,13 @@ const ConfiguracionTauserPage = () => {
                   </div>
                   <div>
                     <h3 className="text-sm font-medium text-gray-500">Estado</h3>
-                    <span className={`inline-flex mt-1 items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${selectedTauser.isActive ? "bg-green-100 text-green-800" : "bg-red-100 text-red-900"}`}>
-                      {selectedTauser.isActive ? "Activo" : "Inactivo"}
+                    <span className={`inline-flex mt-1 items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${selectedTauser.is_active ? "bg-green-100 text-green-800" : "bg-red-100 text-red-900"}`}>
+                      {selectedTauser.is_active ? "Activo" : "Inactivo"}
                     </span>
                   </div>
                   <div>
                     <h3 className="text-sm font-medium text-gray-500">ID</h3>
-                    <p className="mt-1 text-sm text-gray-500">{selectedTauser.idTauser}</p>
+                    <p className="mt-1 text-sm text-gray-500">{selectedTauser.id}</p>
                   </div>
                 </div>
                 {/* Ubicación en el mapa (desplegable) */}
