@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { toast } from "react-toastify";
 import { Edit, UserPlus, Search, Trash2, Eye } from "lucide-react";
 import type { Role } from "../types/Role";
-import type { Permission } from "../types/Permission";
+import type { Permission } from "../../../types/Permission";
 import {
   getRoles,
   getPermissions,
@@ -10,10 +10,10 @@ import {
   updateRole,
   deleteRole,
 } from "../services/rolesService";
-import Modal from "../components/Modal";
+import Modal from "../../../components/Modal";
 import RoleForm, { type RoleFormData } from "../components/RoleForm";
-import Can from "../components/Can";
-import { ROLES } from "../types/perms";
+import Can from "../../../components/Can";
+import { ROLES } from "../../../types/perms";
 
 const RolesPage = () => {
   const [roles, setRoles] = useState<Role[]>([]);
