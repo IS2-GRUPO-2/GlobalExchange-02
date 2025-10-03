@@ -1,6 +1,6 @@
 import axios from "axios";
 import type { PaginatedCliente, Cliente } from "../features/clientes/types/Cliente";
-import { type User } from "../types/User";
+import { type User } from "../features/usuario/types/User";
 import type { TransaccionDetalle } from "../types/Transaccion";
 
 // Usamos rutas relativas para que las peticiones pasen por el proxy de Nginx

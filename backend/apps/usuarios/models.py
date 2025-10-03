@@ -22,7 +22,7 @@ class User(AbstractUser):
         related_name="usuarios",
         blank=True
     )
-    clienteActual = models.ForeignKey(
+    cliente_actual = models.ForeignKey(
         "clientes.Cliente",
         null=True, blank=True,
         on_delete=models.SET_NULL,

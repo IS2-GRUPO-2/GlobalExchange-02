@@ -3,7 +3,7 @@
  */
 
 import React from "react";
-import type { User, DecodedToken } from "../types/User";
+import type { User, DecodedToken } from "../features/usuario/types/User";
 import { createContext, useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import {
@@ -13,7 +13,7 @@ import {
 } from "../services/authService";
 import { jwtDecode } from "jwt-decode";
 import axios from "axios";
-import { getUsuario } from "../services/usuarioService";
+import { getUsuario } from "../features/usuario/services/usuarioService";
 
 /**
  * @typedef {Object} UserContextType

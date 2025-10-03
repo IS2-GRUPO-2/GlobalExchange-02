@@ -473,7 +473,7 @@ class MetodoFinancieroDetalleViewSet(viewsets.ModelViewSet):
         """
         if not (self.request.user.has_perm('operaciones.add_metodofinanciero')):
             # Para usuarios no-admin, asignar automáticamente el primer cliente asignado
-            cliente = self.request.user.clienteActual
+            cliente = self.request.user.cliente_actual
             if cliente is not None:
                 serializer.save(cliente=cliente)
             else:
@@ -583,7 +583,7 @@ class CuentaBancariaViewSet(viewsets.ModelViewSet):
         else:
             # Usuarios regulares ven solo las de sus clientes (no las de la casa)
             return queryset.filter(
-                metodo_financiero_detalle__cliente=self.request.user.clienteActual,
+                metodo_financiero_detalle__cliente=self.request.user.cliente_actual,
                 metodo_financiero_detalle__es_cuenta_casa=False
             )
 
@@ -646,7 +646,7 @@ class BilleteraDigitalViewSet(viewsets.ModelViewSet):
         else:
             # Usuarios regulares ven solo las de sus clientes (no las de la casa)
             return queryset.filter(
-                metodo_financiero_detalle__cliente=self.request.user.clienteActual,
+                metodo_financiero_detalle__cliente=self.request.user.cliente_actual,
                 metodo_financiero_detalle__es_cuenta_casa=False
             )
 
@@ -707,7 +707,7 @@ class TarjetaViewSet(viewsets.ModelViewSet):
         else:
             # Usuarios regulares ven solo las de sus clientes (no las de la casa)
             return queryset.filter(
-                metodo_financiero_detalle__cliente=self.request.user.clienteActual,
+                metodo_financiero_detalle__cliente=self.request.user.cliente_actual,
                 metodo_financiero_detalle__es_cuenta_casa=False
             )
 
