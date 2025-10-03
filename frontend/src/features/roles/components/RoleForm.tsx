@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import type { Permission } from "../types/Permission";
+import type { Permission } from "../../../types/Permission";
 import type { Role } from "../types/Role";
 import { Search } from "lucide-react";
 

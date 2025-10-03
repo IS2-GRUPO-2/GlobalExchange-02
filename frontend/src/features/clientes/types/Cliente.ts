@@ -7,7 +7,7 @@
  * @property {string} idCliente - ID único del cliente
  * @property {string} nombre - Nombre completo del cliente
  * @property {boolean} isPersonaFisica - Indica si es persona física (true) o jurídica (false)
- * @property {string} idCategoria - ID de la categoría del cliente
+ * @property {string} id_categoria - ID de la categoría del cliente
  * @property {CategoriaCliente} [categoria] - Objeto de categoría del cliente (opcional)
  * @property {string} [cedula] - Cédula de identidad (para personas físicas)
  * @property {string} correo - Correo electrónico del cliente
@@ -20,7 +20,7 @@ export type Cliente = {
   idCliente: string;
   nombre: string;
   isPersonaFisica: boolean;
-  idCategoria: string;
+  id_categoria: string;
   categoria?: CategoriaCliente;
   cedula?: string;
   correo: string;
@@ -32,18 +32,18 @@ export type Cliente = {
 
 /**
  * @typedef {Object} CategoriaCliente
- * @property {string} idCategoria - ID único de la categoría
+ * @property {string} id - ID único de la categoría
  * @property {string} nombre - Nombre de la categoría
  * @property {string} descripcion - Descripción de la categoría
  * @property {number} descuento - Porcentaje de descuento aplicable (0-100)
  * @property {boolean} isActive - Estado activo/inactivo de la categoría
  */
 export type CategoriaCliente = {
-  idCategoria: string;
+  id: string;
   nombre: string;
   descripcion: string;
   descuento: number;
-  isActive: boolean;
+  is_active: boolean;
 };
 
 export type PaginatedCliente = {

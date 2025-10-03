@@ -118,7 +118,7 @@ class UserViewSet(viewsets.ModelViewSet):
             Response: Lista de clientes asignados al usuario.
         """
         usuario = self.get_object()
-        clientes = usuario.clientes.all()
+        clientes = usuario.clientes.filter(isActive=True)
         serializer = ClienteSerializer(clientes, many=True)
         return Response(serializer.data)
 

@@ -246,8 +246,8 @@ def calcular_simulacion_operacion_privada_con_instancia(cliente_id, divisa_orige
         "divisa_origen": divisa_origen.codigo,
         "divisa_destino": divisa_destino.codigo,
         "parametros": {
-            "nombre_categoria": cliente.idCategoria.nombre,
-            "descuento_categoria": float(cliente.idCategoria.descuento),
+            "nombre_categoria": cliente.id_categoria.nombre,
+            "descuento_categoria": float(cliente.id_categoria.descuento),
             "nombre_metodo": metodo_nombre,
             "comision_metodo": float(com_metodo),
         },
@@ -290,8 +290,8 @@ def calcular_simulacion_operacion_privada(cliente_id, divisa_origen_id, divisa_d
         "divisa_origen": divisa_origen.codigo,
         "divisa_destino": divisa_destino.codigo,
         "parametros": {
-            "nombre_categoria": cliente.idCategoria.nombre,
-            "descuento_categoria": float(cliente.idCategoria.descuento),
+            "nombre_categoria": cliente.id_categoria.nombre,
+            "descuento_categoria": float(cliente.id_categoria.descuento),
             "nombre_metodo": metodo.get_nombre_display(),
             "comision_metodo": float(com_metodo),
         },
@@ -369,10 +369,10 @@ def crear_transaccion_desde_simulacion(operador_id, cliente_id, divisa_origen_id
     
     # Obtener instancias necesarias
     operador = User.objects.get(id=operador_id)
-    cliente = Cliente.objects.get(idCliente=cliente_id)
+    cliente = Cliente.objects.get(id=cliente_id)
     divisa_origen = _get_divisa(divisa_origen_id)
     divisa_destino = _get_divisa(divisa_destino_id)
-    tauser = Tauser.objects.get(idTauser=tauser_id)
+    tauser = Tauser.objects.get(id=tauser_id)
     
     # Determinar el método financiero a usar
     if detalle_metodo_id:

@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { getPublicTasas } from "../services/tasaService";
+import { getPublicTasas } from "../features/cotizaciones/services/tasaService";
 import { toast } from "react-toastify";
 
 type PublicRate = {

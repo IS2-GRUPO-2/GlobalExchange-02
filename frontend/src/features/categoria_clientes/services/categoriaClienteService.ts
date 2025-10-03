@@ -1,18 +1,9 @@
 import axios from "axios";
-import { type CategoriaCliente } from "../types/Cliente";
+import { type CategoriaCliente } from "../../clientes/types/Cliente";
 
 // Usamos rutas relativas para que las peticiones pasen por el proxy de Nginx
 const API_URL = "/api/categorias/";
 
-// 👇 función auxiliar para obtener headers con token
-const getAuthHeaders = () => {
-  const token = localStorage.getItem("token"); // el mismo que guardas en login
-  return {
-    headers: {
-      Authorization: token ? `Bearer ${token}` : "",
-    },
-  };
-};
 
 // 👇 Interfaz para los parámetros de consulta
 interface GetCategoriasParams {
@@ -38,7 +29,7 @@ export const getCategoriaClientes = (params?: GetCategoriasParams) => {
     ? `${API_URL}?${searchParams.toString()}`
     : API_URL;
     
-  return axios.get<CategoriaCliente[]>(url, getAuthHeaders());
+  return axios.get<CategoriaCliente[]>(url);
 };
 
 // 👇 Funciones específicas para casos de uso comunes
@@ -56,14 +47,14 @@ export const searchCategoriaClientes = (searchTerm: string, includeInactive = fa
 
 // 👇 Mantener las funciones existentes
 export const getCategoriaCliente = (id: string) =>
-  axios.get<CategoriaCliente>(`${API_URL}${id}/`, getAuthHeaders());
+  axios.get<CategoriaCliente>(`${API_URL}${id}/`);
 
 export const updateCategoriaCliente = (id: string, data: Partial<CategoriaCliente>) =>
-  axios.patch<CategoriaCliente>(`${API_URL}${id}/`, data, getAuthHeaders());
+  axios.patch<CategoriaCliente>(`${API_URL}${id}/`, data);
 
 // 👇 Funciones adicionales que podrías necesitar
-export const createCategoriaCliente = (data: Omit<CategoriaCliente, 'idCategoria'>) =>
-  axios.post<CategoriaCliente>(API_URL, data, getAuthHeaders());
+export const createCategoriaCliente = (data: Omit<CategoriaCliente, 'id'>) =>
+  axios.post<CategoriaCliente>(API_URL, data);
 
 export const deleteCategoriaCliente = (id: string) =>
-  axios.delete(`${API_URL}${id}/`, getAuthHeaders());
+  axios.delete(`${API_URL}${id}/`);

@@ -232,7 +232,8 @@ def cliente_con_categoria():
         nombre="Juan Perez", 
         correo="juan@example.com",
         telefono="+595981123456",
-        idCategoria=categoria
+        direccion="Dirección de prueba",
+        id_categoria=categoria
     )
     return cliente
 
@@ -1214,7 +1215,7 @@ def transaccion_data(admin_user, cliente_con_categoria, setup_divisas_y_tasa):
         'monto_origen': '730000.00',
         'monto_destino': '100.00',
         'metodo_financiero': metodo.id,
-        'tauser': tauser.idTauser,
+        'tauser': tauser.id,
         'estado': 'pendiente'
     }
 

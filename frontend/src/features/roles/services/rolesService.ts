@@ -1,6 +1,6 @@
 import axios from "axios";
 import type { Role } from "../types/Role";
-import type { Permission } from "../types/Permission";
+import type { Permission } from "../../../types/Permission";
 
 const ROLES_API = "/api/roles/";
 const PERMISOS_API = "/api/permisos/";
