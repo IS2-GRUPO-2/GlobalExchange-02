@@ -1,22 +1,21 @@
 import React, { useState, useEffect } from 'react';
-import type { Banco } from '../types/MetodoFinanciero';
+import type { BilleteraDigitalCatalogo } from '../types/MetodoFinanciero';
 
-interface BancoFormProps {
-  banco?: Banco;
-  onSubmit: (bancoData: Banco) => Promise<void>;
+interface BilleteraDigitalCatalogoFormProps {
+  billetera?: BilleteraDigitalCatalogo;
+  onSubmit: (billeteraData: BilleteraDigitalCatalogo) => Promise<void>;
   onCancel: () => void;
   isSubmitting?: boolean;
 }
 
-const BancoForm: React.FC<BancoFormProps> = ({
-  banco,
+const BilleteraDigitalCatalogoForm: React.FC<BilleteraDigitalCatalogoFormProps> = ({
+  billetera,
   onSubmit,
   onCancel,
   isSubmitting = false
 }) => {
-  const [formData, setFormData] = useState<Banco>({
+  const [formData, setFormData] = useState<BilleteraDigitalCatalogo>({
     nombre: '',
-    cvu: '',
     comision_compra: 0,
     comision_venta: 0,
     comision_personalizada_compra: false,
@@ -27,28 +26,20 @@ const BancoForm: React.FC<BancoFormProps> = ({
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   useEffect(() => {
-    if (banco) {
-      setFormData(banco);
+    if (billetera) {
+      setFormData(billetera);
     }
-  }, [banco]);
+  }, [billetera]);
 
   const validateForm = (): boolean => {
     const newErrors: Record<string, string> = {};
 
     if (!formData.nombre.trim()) {
-      newErrors.nombre = 'El nombre del banco es obligatorio';
+      newErrors.nombre = 'El nombre de la billetera es obligatorio';
     } else if (formData.nombre.length < 2) {
       newErrors.nombre = 'El nombre debe tener al menos 2 caracteres';
     } else if (formData.nombre.length > 100) {
       newErrors.nombre = 'El nombre no puede exceder 100 caracteres';
-    }
-
-    if (!formData.cvu.trim()) {
-      newErrors.cvu = 'El CVU del banco es obligatorio';
-    } else if (formData.cvu.length !== 22) {
-      newErrors.cvu = 'El CVU debe tener exactamente 22 dígitos';
-    } else if (!/^\d+$/.test(formData.cvu)) {
-      newErrors.cvu = 'El CVU solo puede contener números';
     }
 
     if (formData.comision_compra < 0) {
@@ -90,17 +81,17 @@ const BancoForm: React.FC<BancoFormProps> = ({
     try {
       await onSubmit(formData);
     } catch (error) {
-      console.error('Error submitting banco form:', error);
+      console.error('Error submitting billetera digital catálogo form:', error);
     }
   };
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <div className="space-y-4">
-        {/* Nombre del Banco */}
+        {/* Nombre de la Billetera */}
         <div>
           <label htmlFor="nombre" className="block text-sm font-medium text-gray-700 mb-1">
-            Nombre del Banco
+            Nombre de la Billetera Digital
           </label>
           <input
             type="text"
@@ -111,34 +102,11 @@ const BancoForm: React.FC<BancoFormProps> = ({
             className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
               errors.nombre ? 'border-red-500' : 'border-gray-300'
             }`}
-            placeholder="Ej: Santander, Itaú, BBVA"
+            placeholder="Ej: PayPal, MercadoPago, Binance Pay, TigoMoney"
             disabled={isSubmitting}
           />
           {errors.nombre && (
             <p className="mt-1 text-sm text-red-600">{errors.nombre}</p>
-          )}
-        </div>
-
-        {/* CVU del Banco */}
-        <div>
-          <label htmlFor="cvu" className="block text-sm font-medium text-gray-700 mb-1">
-            CVU del Banco
-          </label>
-          <input
-            type="text"
-            id="cvu"
-            name="cvu"
-            value={formData.cvu}
-            onChange={handleChange}
-            className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
-              errors.cvu ? 'border-red-500' : 'border-gray-300'
-            }`}
-            placeholder="22 dígitos del CVU del banco"
-            disabled={isSubmitting}
-            maxLength={22}
-          />
-          {errors.cvu && (
-            <p className="mt-1 text-sm text-red-600">{errors.cvu}</p>
           )}
         </div>
 
@@ -156,7 +124,7 @@ const BancoForm: React.FC<BancoFormProps> = ({
             className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
               errors.comision_compra ? 'border-red-500' : 'border-gray-300'
             }`}
-            placeholder="Ej: 2.5"
+            placeholder="Ej: 3.0"
             disabled={isSubmitting}
             step="0.01"
             min="0"
@@ -181,7 +149,7 @@ const BancoForm: React.FC<BancoFormProps> = ({
             className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
               errors.comision_venta ? 'border-red-500' : 'border-gray-300'
             }`}
-            placeholder="Ej: 3.0"
+            placeholder="Ej: 3.5"
             disabled={isSubmitting}
             step="0.01"
             min="0"
@@ -236,7 +204,7 @@ const BancoForm: React.FC<BancoFormProps> = ({
             disabled={isSubmitting}
           />
           <label htmlFor="is_active" className="ml-2 block text-sm text-gray-700">
-            Banco activo (disponible para uso)
+            Billetera activa (disponible para uso)
           </label>
         </div>
       </div>
@@ -244,23 +212,24 @@ const BancoForm: React.FC<BancoFormProps> = ({
       {/* Botones */}
       <div className="flex space-x-3 pt-4">
         <button
-          type="button"
-          onClick={onCancel}
           disabled={isSubmitting}
-          className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-200 border border-gray-300 rounded-md hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-500 disabled:opacity-50"
+          type="submit"
+          className="flex-1 btn-primary text-white py-2 px-4 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
         >
-          Cancelar
+          {isSubmitting ? 'Procesando...' : (billetera ? 'Actualizar' : 'Crear')}
         </button>
         <button
-          type="submit"
+          type="button"
+          onClick={onCancel}
+          className="flex-1 bg-gray-300 text-gray-700 py-2 px-4 rounded-md hover:bg-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-500"          
           disabled={isSubmitting}
-          className="btn-primary disabled:opacity-50 disabled:cursor-not-allowed"
+          
         >
-          {isSubmitting ? 'Guardando...' : (banco ? 'Actualizar' : 'Crear')}
+          Cancelar
         </button>
       </div>
     </form>
   );
 };
 
-export default BancoForm;
+export default BilleteraDigitalCatalogoForm;

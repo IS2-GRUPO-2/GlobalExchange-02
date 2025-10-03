@@ -80,18 +80,12 @@ export const CatalogTable: React.FC<CatalogTableProps> = ({
                 <td className="font-medium">
                   {catalogTab === "tarjetas" ? item.marca : item.nombre}
                 </td>
-                <td className="text-sm text-gray-900">
-                  {item.comision_compra}%
-                </td>
-                <td className="text-sm text-gray-900">
-                  {item.comision_venta}%
-                </td>
                 <td>
                   <span
                     className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
                       item.comision_personalizada_compra
                         ? "bg-green-100 text-green-800"
-                        : "bg-gray-100 text-gray-800"
+                        : "bg-red-100 text-red-800"
                     }`}
                   >
                     {item.comision_personalizada_compra ? "Sí" : "No"}
@@ -102,11 +96,17 @@ export const CatalogTable: React.FC<CatalogTableProps> = ({
                     className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
                       item.comision_personalizada_venta
                         ? "bg-green-100 text-green-800"
-                        : "bg-gray-100 text-gray-800"
+                        : "bg-red-100 text-red-800"
                     }`}
                   >
                     {item.comision_personalizada_venta ? "Sí" : "No"}
                   </span>
+                </td>
+                 <td className="text-sm text-gray-900">
+                  {item.comision_compra}%
+                </td>
+                <td className="text-sm text-gray-900">
+                  {item.comision_venta}%
                 </td>
                 <td>
                   <span

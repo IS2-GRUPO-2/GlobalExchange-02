@@ -2,7 +2,7 @@
  * @fileoverview Tipos de datos para simulaciones de operaciones.
  */
 
-import {type MetodoFinanciero} from '../features/financiero/types/MetodoFinanciero'
+import {type MetodoFinanciero} from '../features/metodos_financieros/types/MetodoFinanciero'
 
 /**
  * @typedef {Object} SimulacionRequest

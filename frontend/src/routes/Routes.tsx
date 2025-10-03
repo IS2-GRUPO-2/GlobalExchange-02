@@ -7,8 +7,8 @@ import RegisterPage from "../pages/RegisterPage";
 import RolesPage from "../features/roles/pages/RolesPage";
 import MainMenuPage from "../pages/MenuPage";
 import DivisasPage from "../pages/DivisasPage";
-import MetodosFinancierosPage from "../features/financiero/Pages/MetodosFinancierosPage";
-import MetodosFinancierosClientePage from "../features/financiero/Pages/MetodosFinancierosClientePage";
+import MetodosFinancierosPage from "../features/metodos_financieros/Pages/MetodosFinancierosPage";
+import MetodosFinancierosClientePage from "../features/metodos_financieros/Pages/MetodosFinancierosClientePage";
 import ConfiguracionesPage from "../pages/ConfiguracionesPage";
 import CategoriaClientePage from "../features/categoria_clientes/pages/CategoriaClientesPage";
 import {
