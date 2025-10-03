@@ -68,6 +68,7 @@ class TarjetaCatalogo(models.Model):
     def __str__(self):
         return self.marca
 
+# ======================== Tipos de Métodos Financieros ========================
 
 class TipoMetodoFinanciero(models.TextChoices):
     """Tipos de métodos financieros"""

@@ -7,7 +7,7 @@
     type SimulacionResponse,
   } from "../types/Simulacion";
   import { type Divisa } from "../types/Divisa";
-  import { type MetodoFinanciero } from "../features/financiero/types/MetodoFinanciero";
+  import { type MetodoFinanciero } from "../features/metodos_financieros/types/MetodoFinanciero";
   import { getDivisasConTasa } from "../services/divisaService";
   import { toast } from "react-toastify";
 

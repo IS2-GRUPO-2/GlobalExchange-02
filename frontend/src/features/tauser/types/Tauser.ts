@@ -1,5 +1,5 @@
 export interface Tauser {
-  idTauser: string;
+  id: string;
   codigo: string;
   nombre: string;
   direccion: string;
@@ -7,5 +7,5 @@ export interface Tauser {
   departamento: string;
   latitud: number;
   longitud: number;
-  isActive: boolean;
+  is_active: boolean;
 }

@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { MapPin, Building2 } from "lucide-react";
-import type { Tauser } from "../types/Tauser";
-import { getTausers } from "../services/tauserService";
+import type { Tauser } from "../features/tauser/types/Tauser";
+import { getTausers } from "../features/tauser/services/tauserService";
 
 interface EtapaSeleccionTauserProps {
   tauserSeleccionado: string;
@@ -25,7 +25,7 @@ export default function EtapaSeleccionTauser({
       try {
         const data = await getTausers({ all: true });
         // Filtrar solo los tausers activos
-        const tausersActivos = Array.isArray(data) ? data.filter((t: Tauser) => t.isActive) : [];
+        const tausersActivos = Array.isArray(data) ? data.filter((t: Tauser) => t.is_active) : [];
         setTausers(tausersActivos);
       } catch (err) {
         console.error("Error cargando tausers", err);
@@ -69,12 +69,12 @@ export default function EtapaSeleccionTauser({
       {tausers.length > 0 ? (
         <div className="grid gap-4 max-h-96 overflow-y-auto">
           {tausers.map((tauser) => {
-            const isSelected = tauserSeleccionado === tauser.idTauser;
+            const isSelected = tauserSeleccionado === tauser.id;
             
             return (
               <div
-                key={tauser.idTauser}
-                onClick={() => onTauserChange(tauser.idTauser)}
+                key={tauser.id}
+                onClick={() => onTauserChange(tauser.id)}
                 className={`
                   p-4 border rounded-lg cursor-pointer transition-all duration-200
                   ${isSelected 

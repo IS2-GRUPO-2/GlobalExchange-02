@@ -2,12 +2,12 @@
  * @fileoverview Tipos de datos para transacciones de operaciones.
  */
 
-import type { MetodoFinanciero } from "../features/financiero/types/MetodoFinanciero";
+import type { MetodoFinanciero } from "../features/metodos_financieros/types/MetodoFinanciero";
 import type { Cliente } from "../features/clientes/types/Cliente";
 import type { Divisa } from "./Divisa";
-import type { Role } from "./Role";
+import type { Role } from "../features/roles/types/Role";
 import type { SimulacionResponse } from "./Simulacion";
-import type { Tauser } from "./Tauser";
+import type { Tauser } from "../features/tauser/types/Tauser";
 
 export interface TransaccionRequest {
   cliente_id: string;

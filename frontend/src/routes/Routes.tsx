@@ -4,11 +4,11 @@ import UsuariosPage from "../features/usuario/pages/UsuariosPage";
 import ClientesPage from "../features/clientes/pages/ClientesPage";
 import LoginPage from "../pages/LoginPage";
 import RegisterPage from "../pages/RegisterPage";
-import RolesPage from "../pages/RolesPage";
+import RolesPage from "../features/roles/pages/RolesPage";
 import MainMenuPage from "../pages/MenuPage";
 import DivisasPage from "../pages/DivisasPage";
-import MetodosFinancierosPage from "../features/financiero/Pages/MetodosFinancierosPage";
-import MetodosFinancierosClientePage from "../features/financiero/Pages/MetodosFinancierosClientePage";
+import MetodosFinancierosPage from "../features/metodos_financieros/Pages/MetodosFinancierosPage";
+import MetodosFinancierosClientePage from "../features/metodos_financieros/Pages/MetodosFinancierosClientePage";
 import ConfiguracionesPage from "../pages/ConfiguracionesPage";
 import CategoriaClientePage from "../features/categoria_clientes/pages/CategoriaClientesPage";
 import {
@@ -24,10 +24,10 @@ import {
   TAUSER,
   OPERACION,
 } from "../types/perms";
-import CotizacionesPage from "../pages/CotizacionesPage";
+import CotizacionesPage from "../features/cotizaciones/pages/CotizacionesPage";
 import RequireAuth from "./RequiereAuth";
 import SimulacionOperacionPage from "../pages/SimulacionOperacionPage";
-import ConfiguracionTauserPage from "../pages/ConfiguracionTauserPage";
+import ConfiguracionTauserPage from "../features/tauser/pages/ConfiguracionTauserPage";
 import OperacionPage from "../pages/OperacionPage";
 import HistorialPage from "../pages/HistorialPage";
 
