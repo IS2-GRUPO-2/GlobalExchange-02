@@ -1,11 +1,11 @@
 import { useCallback, useState } from "react";
-import type { Divisa } from "../../../types/Divisa";
+import type { Divisa } from "../types/Divisa";
 import {
   createDivisa,
   deactivateDivisa,
   getDivisas,
   updateDivisa,
-} from "../../../services/divisaService";
+} from "../services/divisaService";
 import { toast } from "react-toastify";
 import type { DivisaFormData } from "../components/DivisaForm";
 

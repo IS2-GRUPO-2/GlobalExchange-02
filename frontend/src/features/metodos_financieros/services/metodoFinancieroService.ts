@@ -19,7 +19,7 @@ import type {
 } from "../types/MetodoFinanciero";
 
 // Usar proxy de Vite para desarrollo
-const API_URL = "/api/operaciones/";
+const API_URL = "/api/financiero/";
 
 interface GetParams {
   page?: number;
@@ -231,6 +231,19 @@ export const getMetodosFinancieros = async (
     return res.data;
   } catch (err: any) {
     console.error("Error fetching métodos financieros: ", err.response?.data || err.message);
+    throw err;
+  }
+};
+
+export const getMetodosFinancierosPorOperacion = async (op_perspectiva_casa: 'compra' | 'venta'): Promise<MetodoFinanciero[]> => {
+  try {
+    const res = await axios.get<MetodoFinanciero[]>(
+      `${API_URL}metodos/metodos-operacion/`,
+      { params: { op_perspectiva_casa: op_perspectiva_casa } }
+    );
+    return res.data;
+  } catch (err: any) {
+    console.error("Error fetching métodos financieros por operación: ", err.response?.data || err.message);
     throw err;
   }
 };
@@ -514,6 +527,53 @@ export const toggleActiveTarjeta = async (id: number) => {
     return res.data;
   } catch (err) {
     console.error("Error toggling tarjeta status: ", err);
+    throw err;
+  }
+};
+
+// ======================== MÉTODOS CLIENTE ESPECÍFICOS ========================
+
+/**
+ * Obtiene las cuentas bancarias activas del cliente actual
+ */
+export const getMisCuentasBancarias = async (): Promise<CuentaBancaria[]> => {
+  try {
+    const res = await axios.get<CuentaBancaria[]>(
+      `${API_URL}cuentas-bancarias/mis-cuentas/`
+    );
+    return res.data;
+  } catch (err) {
+    console.error("Error obteniendo mis cuentas bancarias: ", err);
+    throw err;
+  }
+};
+
+/**
+ * Obtiene las billeteras digitales activas del cliente actual
+ */
+export const getMisBilleterasDigitales = async (): Promise<BilleteraDigital[]> => {
+  try {
+    const res = await axios.get<BilleteraDigital[]>(
+      `${API_URL}billeteras-digitales/mis-billeteras/`
+    );
+    return res.data;
+  } catch (err) {
+    console.error("Error obteniendo mis billeteras digitales: ", err);
+    throw err;
+  }
+};
+
+/**
+ * Obtiene las tarjetas activas del cliente actual
+ */
+export const getMisTarjetas = async (): Promise<Tarjeta[]> => {
+  try {
+    const res = await axios.get<Tarjeta[]>(
+      `${API_URL}tarjetas/mis-tarjetas/`
+    );
+    return res.data;
+  } catch (err) {
+    console.error("Error obteniendo mis tarjetas: ", err);
     throw err;
   }
 };

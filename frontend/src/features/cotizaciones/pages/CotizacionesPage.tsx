@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { toast } from "react-toastify";
 
 import type { Tasa, TasaCreate } from "../types/Tasa";
-import type { Divisa, PaginatedDivisas } from "../../../types/Divisa";
+import type { Divisa, PaginatedDivisas } from "../../divisas/types/Divisa";
 
 import {
   createTasa,
@@ -13,7 +13,7 @@ import {
   updateTasa,
 } from "../services/tasaService";
 
-import { getDivisas } from "../../../services/divisaService";
+import { getDivisas } from "../../divisas/services/divisaService";
 import { useAuth } from "../../../context/useAuth";
 import Modal from "../../../components/Modal";
 import TasaForm, { type TasaFormData } from "../components/TasaForm";

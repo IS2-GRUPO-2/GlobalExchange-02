@@ -1,8 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
 import { ChevronDown } from "lucide-react";
 import type { Tasa } from "../types/Tasa";
-import type { Divisa, PaginatedDivisas } from "../../../types/Divisa";
-import { getDivisasSinTasa, getDivisa } from "../../../services/divisaService";
+import type { Divisa, PaginatedDivisas } from "../../divisas/types/Divisa";
+import { getDivisasSinTasa, getDivisa } from "../../divisas/services/divisaService";
 
 export type TasaFormData = {
   divisa: number;

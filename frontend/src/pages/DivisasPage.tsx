@@ -1,7 +1,7 @@
 import { Check, Coins, Edit, Plus, X } from "lucide-react";
 import { useState, useEffect } from "react";
-import { type Divisa } from "../types/Divisa";
-import { createDenominacion } from "../services/divisaService";
+import { type Divisa } from "../features/divisas/types/Divisa";
+import { createDenominacion } from "../features/divisas/services/divisaService";
 import Modal from "../components/Modal";
 import DivisaForm, { type DivisaFormData } from "../components/DivisaForm";
 import { toast } from "react-toastify";

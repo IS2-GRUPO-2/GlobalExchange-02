@@ -7,7 +7,7 @@ import type { LimiteDivisaFormData } from "../types/Limite";
 import {
   getLimiteConfig,
   updateLimiteConfig,
-} from "../../../services/divisaService";
+} from "../services/divisaService";
 import { useAuthZ } from "../../../context/AuthZContext";
 import { LIMITES_DIVISA_CONFIG } from "../../../types/perms";
 import { formatNumber, unformatNumber } from "../utils/format";

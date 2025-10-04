@@ -2,8 +2,8 @@ import * as yup from "yup";
 import { useForm } from "react-hook-form";
 import { toast } from "react-toastify";
 import { yupResolver } from "@hookform/resolvers/yup";
-import type { Divisa } from "../types/Divisa";
-import { getDivisas } from "../services/divisaService";
+import type { Divisa } from "../features/divisas/types/Divisa";
+import { getDivisas } from "../features/divisas/services/divisaService";
 import { useEffect, useState } from "react";
 
 export type DivisaFormData = {
