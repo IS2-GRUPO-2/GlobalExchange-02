@@ -13,7 +13,7 @@ def run():
             'departamento': 'Central',
             'latitud': Decimal('-25.263739'),
             'longitud': Decimal('-57.575926'),
-            'isActive': True
+            'is_active': True
         },
         {
             'codigo': 'TAU-CDE-001',
@@ -23,7 +23,7 @@ def run():
             'departamento': 'Alto Paraná',
             'latitud': Decimal('-25.516336'),
             'longitud': Decimal('-54.611389'),
-            'isActive': True
+            'is_active': True
         },
         {
             'codigo': 'TAU-ITA-001',
@@ -33,7 +33,7 @@ def run():
             'departamento': 'Central',
             'latitud': Decimal('-25.484722'),
             'longitud': Decimal('-57.367222'),
-            'isActive': True
+            'is_active': True
         },
         {
             'codigo': 'TAU-ENC-001',
@@ -43,7 +43,7 @@ def run():
             'departamento': 'Itapúa',
             'latitud': Decimal('-27.330556'),
             'longitud': Decimal('-55.866667'),
-            'isActive': True
+            'is_active': True
         },
     ]
 

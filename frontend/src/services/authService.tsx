@@ -3,7 +3,7 @@
  */
 
 import axios from "axios";
-import { type UserProfileToken } from "../types/User";
+import { type UserProfileToken } from "../features/usuario/types/User";
 
 // Usamos rutas relativas para que las peticiones pasen por el proxy de Nginx
 const api = "/api";

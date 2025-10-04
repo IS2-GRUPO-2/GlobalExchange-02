@@ -110,8 +110,8 @@ def calcular_operacion(divisa_origen_id, divisa_destino_id, monto: Decimal, op_p
         "divisa_origen": divisa_origen.codigo,
         "divisa_destino": divisa_destino.codigo,
         "parametros": {
-            "nombre_categoria": cliente.idCategoria.nombre if cliente_id else None,
-            "descuento_categoria": float(cliente.idCategoria.descuento) if cliente_id else None,
+            "nombre_categoria": cliente.id_categoria.nombre if cliente_id else None,
+            "descuento_categoria": float(cliente.id_categoria.descuento) if cliente_id else None,
             "nombre_metodo": metodo_nombre,
             "comision_metodo": float(com_metodo),
         },

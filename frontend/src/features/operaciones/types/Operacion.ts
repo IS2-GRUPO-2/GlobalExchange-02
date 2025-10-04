@@ -2,7 +2,6 @@
  * @fileoverview Tipos de datos para simulaciones de operaciones.
  */
 
-// import {type MetodoFinanciero} from '../features/financiero/types/MetodoFinanciero'
 
 /**
  * @typedef {Object} CalcularOperacionResponse

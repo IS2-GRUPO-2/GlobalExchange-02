@@ -1,10 +1,10 @@
 import { useEffect, useState } from "react";
-import { type Denominacion, type Divisa } from "../types/Divisa";
+import { type Denominacion, type Divisa } from "../features/divisas/types/Divisa";
 import {
   deactivateDenominacion,
   getDenominacionesOfDivisa,
   updateDenominacion,
-} from "../services/divisaService";
+} from "../features/divisas/services/divisaService";
 import { toast } from "react-toastify";
 import * as yup from "yup";
 import { Check, Plus, X } from "lucide-react";

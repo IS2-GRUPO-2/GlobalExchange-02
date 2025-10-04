@@ -1,9 +1,8 @@
 import { useState, useEffect } from "react";
 import { Building2, MapPin } from "lucide-react";
 import { type CalcularOperacionResponse } from "../types/Operacion";
-import type { Tauser } from "../../../types/Tauser";
-import { getTauserById } from "../../../services/tauserService";
-
+import type { Tauser } from "../../tauser/types/Tauser";
+import { getTauserById } from "../../tauser/services/tauserService"; 
 interface EtapaResultadoProps {
   resultado: CalcularOperacionResponse;
   tauserSeleccionado?: string; // ID del tauser seleccionado, si existe

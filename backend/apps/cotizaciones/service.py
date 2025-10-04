@@ -28,7 +28,7 @@ class TasaService:
         precio_base = Decimal(tasa.precioBase)
         comision_base = Decimal(tasa.comisionBaseCompra)
         if cliente:
-            categ_descuento = Decimal(cliente.idCategoria.descuento)
+            categ_descuento = Decimal(cliente.id_categoria.descuento)
         else:
             categ_descuento = Decimal(0)
 
@@ -50,7 +50,7 @@ class TasaService:
         comision_base = Decimal(tasa.comisionBaseVenta)
 
         if cliente:
-            categ_descuento = Decimal(cliente.idCategoria.descuento)
+            categ_descuento = Decimal(cliente.id_categoria.descuento)
         else:
             categ_descuento = Decimal(0)
 

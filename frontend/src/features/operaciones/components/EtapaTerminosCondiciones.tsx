@@ -1,8 +1,8 @@
 import { useState, useEffect } from "react";
 import { AlertTriangle, FileText } from "lucide-react";
 import type { CalcularOperacionResponse } from "../types/Operacion";
-import type { Tauser } from "../../../types/Tauser";
-import { getTauserById } from "../../../services/tauserService";
+import type { Tauser } from "../../tauser/types/Tauser";
+import { getTauserById } from "../../tauser/services/tauserService";
 
 
 interface EtapaTerminosCondicionesProps {

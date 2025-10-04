@@ -62,7 +62,7 @@ def cliente_test(categoria_cliente):
     return Cliente.objects.create(
         nombre='Cliente Test',
         isPersonaFisica=True,
-        idCategoria=categoria_cliente,
+        id_categoria=categoria_cliente,
         correo='cliente@test.com',
         telefono='123456789',
         direccion='Dirección test',
@@ -156,7 +156,7 @@ def tauser_test():
         departamento="Central",
         latitud=Decimal('-25.263740'),
         longitud=Decimal('-57.575926'),
-        isActive=True
+        is_active=True
     )
 
 
@@ -174,7 +174,7 @@ def transaccion_data(operador_usuario, cliente_test, divisa_usd, divisa_pyg, met
         'monto_origen': Decimal('725000.00'),
         'monto_destino': Decimal('100.00'),
         'metodo_financiero': metodo_efectivo.id,
-        'tauser': str(tauser_test.idTauser),
+        'tauser': str(tauser_test.id),
         'estado': 'pendiente'
     }
 
@@ -260,6 +260,151 @@ class TestTransaccionViewSet:
         transaccion = Transaccion.objects.get(id=response.data['id'])
         assert transaccion.operacion == 'compra'
         assert transaccion.estado == 'pendiente'
+
+    def test_create_transaccion_con_detalle_metodo(self, authenticated_client, operador_usuario, cliente_test, divisa_usd, divisa_pyg, metodo_transferencia, tauser_test):
+        """Prueba crear transacción usando metodo_financiero_detalle (nuestro método create personalizado)"""
+        from apps.financiero.models import MetodoFinancieroDetalle
+        
+        client, user = authenticated_client
+        
+        # Crear un detalle de método financiero
+        detalle_metodo = MetodoFinancieroDetalle.objects.create(
+            metodo_financiero=metodo_transferencia,
+            es_cuenta_casa=True,
+            alias='Cuenta Test API'
+        )
+        
+        # Datos de transacción usando SOLO metodo_financiero_detalle
+        transaccion_data = {
+            'operador': operador_usuario.id,
+            'cliente': str(cliente_test.idCliente),
+            'operacion': 'compra',
+            'tasa_aplicada': '7250.00',
+            'tasa_inicial': '7250.00',
+            'divisa_origen': divisa_pyg.id,
+            'divisa_destino': divisa_usd.id,
+            'monto_origen': '725000.00',
+            'monto_destino': '100.00',
+            'metodo_financiero_detalle': detalle_metodo.id,  # SOLO este campo, no metodo_financiero
+            'tauser': str(tauser_test.id),
+            'estado': 'pendiente'
+        }
+        
+        url = reverse('transaccion-list')
+        response = client.post(url, transaccion_data, format='json')
+        
+        # Verificar que se creó exitosamente
+        assert response.status_code == status.HTTP_201_CREATED
+        
+        # Verificar que nuestro método create personalizado pobló automáticamente metodo_financiero
+        transaccion = Transaccion.objects.get(id=response.data['id'])
+        assert transaccion.metodo_financiero_detalle.id == detalle_metodo.id
+        assert transaccion.metodo_financiero is not None, "metodo_financiero debe poblarse automáticamente"
+        assert transaccion.metodo_financiero.id == metodo_transferencia.id, "metodo_financiero debe ser el del detalle"
+        
+        # Verificar datos de respuesta
+        assert response.data['metodo_financiero'] == metodo_transferencia.id
+        assert response.data['metodo_financiero_detalle'] == detalle_metodo.id
+
+    def test_create_transaccion_metodo_directo(self, authenticated_client, operador_usuario, cliente_test, divisa_usd, divisa_pyg, metodo_efectivo, tauser_test):
+        """Prueba crear transacción usando metodo_financiero directo (EFECTIVO/CHEQUE)"""
+        client, user = authenticated_client
+        
+        # Datos de transacción usando SOLO metodo_financiero
+        transaccion_data = {
+            'operador': operador_usuario.id,
+            'cliente': str(cliente_test.idCliente),
+            'operacion': 'venta',
+            'tasa_aplicada': '4000.00',
+            'tasa_inicial': '4000.00',
+            'divisa_origen': divisa_usd.id,
+            'divisa_destino': divisa_pyg.id,
+            'monto_origen': '500.00',
+            'monto_destino': '2000000.00',
+            'metodo_financiero': metodo_efectivo.id,  # SOLO este campo
+            'tauser': str(tauser_test.id),
+            'estado': 'pendiente'
+        }
+        
+        url = reverse('transaccion-list')
+        response = client.post(url, transaccion_data, format='json')
+        
+        # Verificar que se creó exitosamente
+        assert response.status_code == status.HTTP_201_CREATED
+        
+        # Verificar que metodo_financiero está presente y no hay detalle
+        transaccion = Transaccion.objects.get(id=response.data['id'])
+        assert transaccion.metodo_financiero.id == metodo_efectivo.id
+        assert transaccion.metodo_financiero_detalle is None
+        
+        # Verificar datos de respuesta
+        assert response.data['metodo_financiero'] == metodo_efectivo.id
+        assert response.data['metodo_financiero_detalle'] is None
+
+    def test_create_transaccion_error_sin_metodos(self, authenticated_client, operador_usuario, cliente_test, divisa_usd, divisa_pyg, tauser_test):
+        """Prueba error al crear transacción sin ningún método financiero"""
+        client, user = authenticated_client
+        
+        # Datos de transacción SIN métodos financieros
+        transaccion_data = {
+            'operador': operador_usuario.id,
+            'cliente': str(cliente_test.idCliente),
+            'operacion': 'venta',
+            'tasa_aplicada': '4000.00',
+            'tasa_inicial': '4000.00',
+            'divisa_origen': divisa_usd.id,
+            'divisa_destino': divisa_pyg.id,
+            'monto_origen': '500.00',
+            'monto_destino': '2000000.00',
+            'tauser': str(tauser_test.id),
+            'estado': 'pendiente'
+        }
+        
+        url = reverse('transaccion-list')
+        response = client.post(url, transaccion_data, format='json')
+        
+        # Verificar que devuelve error 400
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        assert 'error' in response.data
+        assert 'Debe proporcionar' in response.data['error']
+
+    def test_create_transaccion_error_ambos_metodos(self, authenticated_client, operador_usuario, cliente_test, divisa_usd, divisa_pyg, metodo_efectivo, metodo_transferencia, tauser_test):
+        """Prueba error al crear transacción con ambos métodos financieros"""
+        from apps.financiero.models import MetodoFinancieroDetalle
+        
+        client, user = authenticated_client
+        
+        # Crear un detalle de método financiero
+        detalle_metodo = MetodoFinancieroDetalle.objects.create(
+            metodo_financiero=metodo_transferencia,
+            es_cuenta_casa=True,
+            alias='Cuenta Test'
+        )
+        
+        # Datos de transacción con AMBOS métodos
+        transaccion_data = {
+            'operador': operador_usuario.id,
+            'cliente': str(cliente_test.idCliente),
+            'operacion': 'venta',
+            'tasa_aplicada': '4000.00',
+            'tasa_inicial': '4000.00',
+            'divisa_origen': divisa_usd.id,
+            'divisa_destino': divisa_pyg.id,
+            'monto_origen': '500.00',
+            'monto_destino': '2000000.00',
+            'metodo_financiero': metodo_efectivo.id,
+            'metodo_financiero_detalle': detalle_metodo.id,
+            'tauser': str(tauser_test.id),
+            'estado': 'pendiente'
+        }
+        
+        url = reverse('transaccion-list')
+        response = client.post(url, transaccion_data, format='json')
+        
+        # Verificar que devuelve error 400
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        assert 'error' in response.data
+        assert 'No puede proporcionar ambos' in response.data['error']
     
     def test_retrieve_transaccion(self, authenticated_client, operador_usuario, cliente_test, divisa_usd, divisa_pyg, metodo_efectivo, tauser_test):
         """Prueba obtener una transacción específica"""
@@ -315,7 +460,7 @@ class TestTransaccionViewSet:
             'monto_origen': Decimal('726000.00'),  # Monto actualizado
             'monto_destino': Decimal('100.00'),
             'metodo_financiero': metodo_efectivo.id,
-            'tauser': str(tauser_test.idTauser),
+            'tauser': str(tauser_test.id),
             'estado': 'en_proceso'  # Estado actualizado
         }
         

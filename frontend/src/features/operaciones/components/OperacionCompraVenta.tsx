@@ -2,11 +2,11 @@ import { useState, useEffect } from "react";
 import { toast } from "react-toastify";
 import { operacionPrivada, getOpPerspectivaCasa } from "../services/operacionService";
 import { type CalcularOperacionResponse } from "../types/Operacion";
-import type { Cliente } from "../../../types/Cliente";
 import type { TransaccionRequest } from "../types/Transaccion";
-import type { DecodedToken } from "../../../types/User";
 import { jwtDecode } from "jwt-decode";
-import { getClienteActual } from "../../../services/usuarioService";
+import type { Cliente } from "../../clientes/types/Cliente";
+import type { DecodedToken } from "../../usuario/types/User";
+import { getClienteActual } from "../../usuario/services/usuarioService";
 import {
   crearTransaccion,
   reconfirmarTasa,
@@ -174,6 +174,8 @@ export default function OperacionCompraVenta() {
         detalle_metodo_id: detalleMetodoSeleccionado ?? undefined,
         metodo_id: metodoGenericoSeleccionado ?? undefined,
       };
+
+      console.log(operacionData);
 
       const resultado = await operacionPrivada(operacionData);
       setResultado(resultado);

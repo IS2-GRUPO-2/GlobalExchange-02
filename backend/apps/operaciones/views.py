@@ -47,13 +47,13 @@ def operacion_privada(request):
         try:
             data = serializer.validated_data
             resultado = calcular_operacion(
-                cliente_id=data.get("cliente_id"),
+                cliente_id=data.get("cliente_id", None),
                 divisa_origen_id=data.get("divisa_origen"),
                 divisa_destino_id=data.get("divisa_destino"),
                 op_perspectiva_casa=data.get("op_perspectiva_casa"),
                 monto=data.get("monto_origen"),
-                metodo_id=data.get("metodo_id"),
-                detalle_metodo_id=data.get("detalle_metodo_id")
+                metodo_id=data.get("metodo_id", None),
+                detalle_metodo_id=data.get("detalle_metodo_id", None)
             )
             return Response(resultado, status=status.HTTP_200_OK)
         except Exception as e:
@@ -137,6 +137,64 @@ class TransaccionViewSet(viewsets.ModelViewSet):
             return TransaccionSerializer
         return TransaccionDetalleSerializer
     
+    def create(self, request, *args, **kwargs):
+        """
+        Método create personalizado para manejar correctamente los métodos financieros.
+        
+        Lógica:
+        - Si se envía metodo_financiero (EFECTIVO/CHEQUE): Se usa directamente
+        - Si se envía metodo_financiero_detalle: Se obtiene metodo_financiero desde el detalle
+        - Siempre se garantiza que metodo_financiero esté poblado
+        """
+        from apps.financiero.models import MetodoFinancieroDetalle
+        
+        # Obtener los datos del request (antes de la serialización)
+        data = request.data.copy()
+        
+        # Manejar la lógica de métodos financieros
+        metodo_financiero_id = data.get('metodo_financiero')
+        metodo_financiero_detalle_id = data.get('metodo_financiero_detalle')
+        
+        if metodo_financiero_detalle_id and not metodo_financiero_id:
+            # Caso: Se envió detalle_metodo_id (cuenta bancaria, billetera, tarjeta, etc.)
+            # Obtener el método financiero desde el detalle
+            try:
+                detalle = MetodoFinancieroDetalle.objects.select_related('metodo_financiero').get(
+                    id=metodo_financiero_detalle_id
+                )
+                # Agregar el metodo_financiero automáticamente
+                data['metodo_financiero'] = detalle.metodo_financiero.id
+            except MetodoFinancieroDetalle.DoesNotExist:
+                return Response(
+                    {'error': f'MetodoFinancieroDetalle con ID {metodo_financiero_detalle_id} no existe'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+        elif metodo_financiero_id and not metodo_financiero_detalle_id:
+            # Caso: Se envió metodo_id (EFECTIVO/CHEQUE)
+            # Ya está configurado correctamente, no necesita cambios
+            pass
+        elif not metodo_financiero_id and not metodo_financiero_detalle_id:
+            return Response(
+                {'error': 'Debe proporcionar metodo_financiero o metodo_financiero_detalle'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        elif metodo_financiero_id and metodo_financiero_detalle_id:
+            return Response(
+                {'error': 'No puede proporcionar ambos metodo_financiero y metodo_financiero_detalle'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        # Ahora proceder con la validación y creación usando los datos modificados
+        serializer = self.get_serializer(data=data)
+        serializer.is_valid(raise_exception=True)
+        
+        # Crear la transacción con los datos validados y procesados
+        transaccion = serializer.save()
+        
+        # Serializar la respuesta
+        response_serializer = self.get_serializer(transaccion)
+        return Response(response_serializer.data, status=status.HTTP_201_CREATED)
+
     def destroy(self, request, *args, **kwargs):
         return Response(
             {'error': 'No se permite eliminar transacciones'}, 

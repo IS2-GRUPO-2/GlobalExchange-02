@@ -1,11 +1,11 @@
 import { useEffect, useMemo, useState } from "react";
-import type { User } from "../types/User";
-import type { Cliente } from "../types/Cliente";
+import type { User } from "../features/usuario/types/User";
+import type { Cliente } from "../features/clientes/types/Cliente";
 import { getAllClientes } from "../services/clienteService";
 import {
   getUserClients,
   asignarClientesAUsuario,
-} from "../services/usuarioService";
+} from "../features/usuario/services/usuarioService";
 import { toast } from "react-toastify";
 import { Search } from "lucide-react";
 import { USUARIOS } from "../types/perms";

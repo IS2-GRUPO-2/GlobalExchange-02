@@ -1,8 +1,8 @@
 import { useState, useEffect } from "react";
 import { CreditCard, Building2, Smartphone } from 'lucide-react';
 import { toast } from "react-toastify";
-import { getMisCuentasBancarias, getMisBilleterasDigitales, getMisTarjetas } from "../../financiero/services/metodoFinancieroService";
-import type { MetodoFinanciero, CuentaBancaria, BilleteraDigital, Tarjeta } from "../../financiero/types/MetodoFinanciero";
+import { getMisCuentasBancarias, getMisBilleterasDigitales, getMisTarjetas } from "../../metodos_financieros/services/metodoFinancieroService";
+import type { MetodoFinanciero, CuentaBancaria, BilleteraDigital, Tarjeta } from "../../metodos_financieros/types/MetodoFinanciero";
 
 interface SeleccionInstanciaMetodoProps {
   metodoFinanciero: MetodoFinanciero;

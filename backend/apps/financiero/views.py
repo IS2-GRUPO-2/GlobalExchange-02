@@ -487,7 +487,7 @@ class MetodoFinancieroDetalleViewSet(viewsets.ModelViewSet):
         """
         if not (self.request.user.has_perm('operaciones.add_metodofinanciero')):
             # Para usuarios no-admin, asignar automáticamente el primer cliente asignado
-            cliente = self.request.user.clienteActual
+            cliente = self.request.user.cliente_actual
             if cliente is not None:
                 serializer.save(cliente=cliente)
             else:
@@ -583,7 +583,7 @@ class CuentaBancariaViewSet(viewsets.ModelViewSet):
         else:
             # Usuarios regulares ven solo las de sus clientes (no las de la casa)
             return queryset.filter(
-                metodo_financiero_detalle__cliente=self.request.user.clienteActual,
+                metodo_financiero_detalle__cliente=self.request.user.cliente_actual,
                 metodo_financiero_detalle__es_cuenta_casa=False
             )
 
@@ -604,7 +604,7 @@ class CuentaBancariaViewSet(viewsets.ModelViewSet):
         """
         Retorna las cuentas bancarias activas del cliente actual.
         """
-        cliente = request.user.clienteActual
+        cliente = request.user.cliente_actual
         if not cliente:
             return Response({"error": "No se encontró cliente asociado al usuario."}, status=status.HTTP_400_BAD_REQUEST)
             
@@ -667,7 +667,7 @@ class BilleteraDigitalViewSet(viewsets.ModelViewSet):
         else:
             # Usuarios regulares ven solo las de sus clientes (no las de la casa)
             return queryset.filter(
-                metodo_financiero_detalle__cliente=self.request.user.clienteActual,
+                metodo_financiero_detalle__cliente=self.request.user.cliente_actual,
                 metodo_financiero_detalle__es_cuenta_casa=False
             )
 
@@ -688,7 +688,7 @@ class BilleteraDigitalViewSet(viewsets.ModelViewSet):
         """
         Retorna las billeteras digitales activas del cliente actual.
         """
-        cliente = request.user.clienteActual
+        cliente = request.user.cliente_actual
         if not cliente:
             return Response({"error": "No se encontró cliente asociado al usuario."}, status=status.HTTP_400_BAD_REQUEST)
             
@@ -749,7 +749,7 @@ class TarjetaViewSet(viewsets.ModelViewSet):
         else:
             # Usuarios regulares ven solo las de sus clientes (no las de la casa)
             return queryset.filter(
-                metodo_financiero_detalle__cliente=self.request.user.clienteActual,
+                metodo_financiero_detalle__cliente=self.request.user.cliente_actual,
                 metodo_financiero_detalle__es_cuenta_casa=False
             )
 
@@ -782,7 +782,7 @@ class TarjetaViewSet(viewsets.ModelViewSet):
         """
         Retorna las tarjetas activas del cliente actual.
         """
-        cliente = request.user.clienteActual
+        cliente = request.user.cliente_actual
         if not cliente:
             return Response({"error": "No se encontró cliente asociado al usuario."}, status=status.HTTP_400_BAD_REQUEST)
             

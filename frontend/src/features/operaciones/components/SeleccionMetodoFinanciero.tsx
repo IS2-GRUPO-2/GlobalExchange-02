@@ -1,8 +1,8 @@
 import { useState, useEffect } from "react";
 import { CreditCard, Building2, Smartphone, Banknote, Receipt } from 'lucide-react';
 import { toast } from "react-toastify";
-import { getMetodosFinancierosPorOperacion } from "../../financiero/services/metodoFinancieroService";
-import type { MetodoFinanciero } from "../../financiero/types/MetodoFinanciero";
+import { getMetodosFinancierosPorOperacion } from "../../metodos_financieros/services/metodoFinancieroService";
+import type { MetodoFinanciero } from "../../metodos_financieros/types/MetodoFinanciero";
 
 interface SeleccionMetodoFinancieroProps {
   opPerspectivaCasa: "compra" | "venta";

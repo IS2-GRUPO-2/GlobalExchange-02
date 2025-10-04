@@ -118,7 +118,7 @@ class UserViewSet(viewsets.ModelViewSet):
             Response: Lista de clientes asignados al usuario.
         """
         usuario = self.get_object()
-        clientes = usuario.clientes.all()
+        clientes = usuario.clientes.filter(isActive=True)
         serializer = ClienteSerializer(clientes, many=True)
         return Response(serializer.data)
 
@@ -188,7 +188,7 @@ class UserViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        user.clienteActual = cliente
+        user.cliente_actual = cliente
         user.save()
 
         return Response(
@@ -207,28 +207,28 @@ class UserViewSet(viewsets.ModelViewSet):
         - Si el actual es inválido (None, inactivo o no asignado), intenta
         seleccionar automáticamente otro cliente ASIGNADO y ACTIVO,
         lo persiste en DB y lo retorna.
-        - Solo retorna {"clienteActual": None} si el usuario no tiene clientes asignados.
+        - Solo retorna {"cliente_actual": None} si el usuario no tiene clientes asignados.
         """
         user = self.get_object()
 
         activos_qs = user.clientes.filter(isActive=True)
 
         if not user.clientes.exists():
-            return Response({"clienteActual": None}, status=status.HTTP_200_OK)
+            return Response({"cliente_actual": None}, status=status.HTTP_200_OK)
 
-        actual = user.clienteActual
+        actual = user.cliente_actual
         if actual and actual.isActive and activos_qs.filter(pk=actual.pk).exists():
-            return Response({"clienteActual": ClienteSerializer(actual).data},
+            return Response({"cliente_actual": ClienteSerializer(actual).data},
                             status=status.HTTP_200_OK)
 
         alternativo = activos_qs.order_by("nombre").first()
         if alternativo:
-            user.clienteActual = alternativo
+            user.cliente_actual = alternativo
             user.save()
-            return Response({"clienteActual": ClienteSerializer(alternativo).data},
+            return Response({"cliente_actual": ClienteSerializer(alternativo).data},
                             status=status.HTTP_200_OK)
 
-        return Response({"clienteActual": None}, status=status.HTTP_200_OK)
+        return Response({"cliente_actual": None}, status=status.HTTP_200_OK)
 
 @api_view(["GET"])
 @permission_classes([permissions.AllowAny])

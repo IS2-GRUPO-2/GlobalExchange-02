@@ -1,11 +1,11 @@
 import { useState, useEffect } from "react";
 import { toast } from "react-toastify";
 import { operacionPublica, getOpPerspectivaCasa } from "../services/operacionService";
-import { getMetodosFinancierosPorOperacion } from "../../financiero/services/metodoFinancieroService";
+import { getMetodosFinancierosPorOperacion } from "../../metodos_financieros/services/metodoFinancieroService";
 import { type CalcularOperacionResponse } from "../types/Operacion";
-import { type Divisa } from "../../../types/Divisa";
-import { type MetodoFinanciero } from "../../financiero/types/MetodoFinanciero";
-import { getDivisasConTasa } from "../../../services/divisaService";
+import { type Divisa } from "../../divisas/types/Divisa";
+import { type MetodoFinanciero } from "../../metodos_financieros/types/MetodoFinanciero";
+import { getDivisasConTasa } from "../../divisas/services/divisaService";
 
 type EtapaActual = 1 | 2 | 3;
 
@@ -22,7 +22,6 @@ export default function OperacionCompraVentaPublica() {
   // Estados para divisas y métodos
   const [divisas, setDivisas] = useState<Divisa[]>([]);
   const [divisaBase, setDivisaBase] = useState<Divisa | null>(null);
-  const [metodos, setMetodos] = useState<MetodoFinanciero[]>([]);
   
   // Estado para operación desde perspectiva de la casa
   const [opPerspectivaCasa, setOpPerspectivaCasa] = useState<"compra" | "venta" | null>(null);

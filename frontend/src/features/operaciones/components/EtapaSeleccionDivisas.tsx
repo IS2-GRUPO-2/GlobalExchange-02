@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
-import type { Divisa } from "../../../types/Divisa";
-import { getDivisasConTasa, getLimiteConfig } from "../../../services/divisaService";
+import type { Divisa } from "../../divisas/types/Divisa";
+import { getDivisasConTasa, getLimiteConfig } from "../../divisas/services/divisaService";
 
 interface Props {
   divisaOrigen: string;
