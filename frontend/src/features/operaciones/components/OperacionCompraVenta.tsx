@@ -81,7 +81,7 @@ export default function OperacionCompraVenta() {
   // Función para manejar cambio de cliente
   const handleClienteChange = (nuevoCliente: Cliente | null) => {
     resetOperacion();
-    setClienteActual(nuevoCliente);
+    setClienteActual(nuevoCliente || undefined);
 
     if (!nuevoCliente) {
       toast.error("No tienes un cliente asignado. Contacta a soporte.");
@@ -252,8 +252,8 @@ export default function OperacionCompraVenta() {
 
       // Crear transacción PENDIENTE al avanzar a términos y condiciones
       const transaccionData: TransaccionRequest = {
-        operador: userId,
-        cliente: clienteActual!.idCliente,
+        operador: Number(userId),
+        cliente: String(clienteActual!.idCliente),
         operacion: opPerspectivaCasa!,
         tasa_aplicada: resultado.tc_final,
         tasa_inicial: resultado.tc_final, // Usar tc_final como tasa inicial también
@@ -440,7 +440,7 @@ export default function OperacionCompraVenta() {
       case 6:
         return (
           <EtapaTerminosCondiciones
-            resultado={resultado}
+            resultado={resultado!}
             tauserSeleccionado={tauserSeleccionado}
             onRetroceder={retrocederEtapa5}
             onPagar={pagarConReconfirmacion}
