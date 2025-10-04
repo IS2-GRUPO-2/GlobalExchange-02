@@ -3,7 +3,7 @@ from rest_framework.response import Response
 from rest_framework.decorators import action
 from .models import Cliente, CategoriaCliente
 from apps.operaciones.models import Transaccion
-from apps.operaciones.serializers import TransaccionSerializer
+from apps.operaciones.serializers import TransaccionDetalleSerializer
 from django.contrib.auth import get_user_model
 from .serializers import ClienteSerializer, CategoriaClienteSerializer, CategoriaCliente, ClientePaginatedResponseSerializer
 from apps.usuarios.serializers import UserSerializer
@@ -103,7 +103,7 @@ La respuesta está paginada con las siguientes características:
     def get_transacciones(self, request, pk):
         _cliente = self.get_object()
         transacciones = Transaccion.objects.filter(cliente=_cliente)    
-        serializer = TransaccionSerializer(transacciones, many=True)
+        serializer = TransaccionDetalleSerializer(transacciones, many=True)
         return Response(serializer.data)
 
 class CategoriaClienteViewSet(viewsets.ModelViewSet):

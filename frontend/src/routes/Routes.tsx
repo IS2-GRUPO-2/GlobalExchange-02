@@ -19,16 +19,15 @@ import {
   ROLES,
   TASAS,
   USUARIOS,
-  SIMULACION,
   METODOS_FINANCIEROS_DETALLE,
   TAUSER,
   OPERACION,
 } from "../types/perms";
 import CotizacionesPage from "../pages/CotizacionesPage";
 import RequireAuth from "./RequiereAuth";
-import SimulacionOperacionPage from "../pages/SimulacionOperacionPage";
+
 import ConfiguracionTauserPage from "../pages/ConfiguracionTauserPage";
-import OperacionPage from "../pages/OperacionPage";
+import OperacionPage from "../features/operaciones/pages/OperacionPage";
 import HistorialPage from "../pages/HistorialPage";
 
 export const router = createBrowserRouter([
@@ -77,16 +76,9 @@ export const router = createBrowserRouter([
           </RequireAuth>
         ),
       },
+
       {
-        path: "simulacion-operacion",
-        element: (
-          <RequireAuth anyOf={[SIMULACION.USE]}>
-            <SimulacionOperacionPage />
-          </RequireAuth>
-        ),
-      },
-      {
-        path: "operacion-compra-venta",
+        path: "operaciones",
         element: (
           <RequireAuth anyOf={[OPERACION.USE]}>
             <OperacionPage />
