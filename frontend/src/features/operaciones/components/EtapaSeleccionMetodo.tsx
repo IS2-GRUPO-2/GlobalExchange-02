@@ -1,7 +1,7 @@
 import { useState } from "react";
 import SeleccionMetodoFinanciero from "./SeleccionMetodoFinanciero";
 import SeleccionInstanciaMetodo from "./SeleccionInstanciaMetodo";
-import type { MetodoFinanciero } from "../../financiero/types/MetodoFinanciero";
+import type { MetodoFinanciero } from "../../metodos_financieros/types/MetodoFinanciero";
 
 interface EtapaSeleccionMetodoProps {
   opPerspectivaCasa: "compra" | "venta";

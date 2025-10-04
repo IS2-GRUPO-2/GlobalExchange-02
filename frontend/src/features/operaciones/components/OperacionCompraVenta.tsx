@@ -54,7 +54,7 @@ export default function OperacionCompraVenta() {
   const [opPerspectivaCasa, setOpPerspectivaCasa] = useState<"compra" | "venta" | null>(null);
   
   // Cliente actual
-  const [clienteActual, setClienteActual] = useState<Cliente | null>(null);
+  const [clienteActual, setClienteActual] = useState<Cliente | undefined>(undefined);
 
   // Estados para reconfirmación y transacción
   const [transaccionId, setTransaccionId] = useState<number | null>(null);
@@ -166,7 +166,7 @@ export default function OperacionCompraVenta() {
     try {
       // Realizar la simulación/cálculo de la operación
       const operacionData = {
-        cliente_id: clienteActual.idCliente,
+        cliente_id: clienteActual!.idCliente,
         divisa_origen: Number(divisaOrigen),
         divisa_destino: Number(divisaDestino),
         monto_origen: monto,
@@ -175,7 +175,6 @@ export default function OperacionCompraVenta() {
         metodo_id: metodoGenericoSeleccionado ?? undefined,
       };
 
-      console.log(operacionData);
 
       const resultado = await operacionPrivada(operacionData);
       setResultado(resultado);
@@ -242,6 +241,11 @@ export default function OperacionCompraVenta() {
 
       if (metodoGenericoSeleccionado === null && detalleMetodoSeleccionado === null) {
         toast.error("Error: No hay método financiero seleccionado");
+        return;
+      }
+
+      if (!resultado) {
+        toast.error("No hay resultado calculado");
         return;
       }
 
@@ -406,7 +410,7 @@ export default function OperacionCompraVenta() {
           />
         ) : null;
       case 3:
-        return (
+        return resultado && (
            <EtapaResultado
             resultado={resultado}
             onRetroceder={retrocederEtapa2}
@@ -425,7 +429,7 @@ export default function OperacionCompraVenta() {
           />
         );
       case 5:
-        return (
+        return resultado && (
           <EtapaResultado
             resultado={resultado}
             tauserSeleccionado={tauserSeleccionado}
