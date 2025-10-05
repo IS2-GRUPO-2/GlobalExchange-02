@@ -45,7 +45,7 @@ const PerfilTab: React.FC<{
                     <div className="mt-6 space-y-4">
                         <div>
                             <label className="text-sm text-gray-500 font-medium">Cuenta Creada</label>
-                            <p className="text-gray-900 mt-1">{new Date(user.date_joined).toDateString()}</p>
+                            <p className="text-gray-900 mt-1">{new Date(user.date_joined).toLocaleString("en-GB", { timeZone: "UTC" })}</p>
                         </div>
                     </div>
                 </ProfileSection>
@@ -82,11 +82,12 @@ const PerfilTab: React.FC<{
                             </div>
                         </div>
                     </div>
+                    {/* TO-DO: listar permisos y roles */}
                     <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div>
                             <label className="text-sm text-gray-500 font-medium">Roles</label>
                             <ul className="mt-1 text-gray-900 text-sm list-disc list-inside">
-                                {user.id}
+                                <li className="text-gray-400">Sin roles</li>
                             </ul>
                         </div>
                         <div>
