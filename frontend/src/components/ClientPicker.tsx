@@ -41,11 +41,27 @@ const ClientPicker: React.FC<Props> = ({
         const list: Cliente[] = listRes.data ?? [];
         setOptions(list);
 
+        const storageKey = `clienteActual_${userId}`;
+        let storedCliente: Cliente | null = null;
+        try {
+          const raw = localStorage.getItem(storageKey);
+          if (raw) storedCliente = JSON.parse(raw);
+        } catch {}
+
+        let current: Cliente | null = currentRes.data?.clienteActual ?? null;
+
+        // Si hay uno guardado y es válido, forzar setClienteActual y usarlo
+        if (storedCliente && list.some(c => c.idCliente === storedCliente.idCliente)) {
+          if (!current || current.idCliente !== storedCliente.idCliente) {
+            await setClienteActual(userId, storedCliente.idCliente);
+            current = list.find(c => c.idCliente === storedCliente.idCliente) || null;
+          }
+        }
+
         if (list.length === 0) {
           setValue("");
           onChange?.(null);
         } else {
-          const current: Cliente | null = currentRes.data?.clienteActual ?? null;
           setValue(current ? current.idCliente : "");
           onChange?.(current);
         }
@@ -66,6 +82,13 @@ const ClientPicker: React.FC<Props> = ({
     const nextClient = options.find((c) => c.idCliente === nextId) || null;
     setValue(nextId);
     onChange?.(nextClient);
+    // Guardar cliente seleccionado en localStorage (objeto completo)
+    const storageKey = `clienteActual_${userId}`;
+    if (nextClient) {
+      localStorage.setItem(storageKey, JSON.stringify(nextClient));
+    } else {
+      localStorage.removeItem(storageKey);
+    }
     try {
       await setClienteActual(userId, nextId);
       window.dispatchEvent(new CustomEvent('clienteActualChanged', {
@@ -74,6 +97,15 @@ const ClientPicker: React.FC<Props> = ({
     } catch (e) {
       setValue(prevId);
       onChange?.(options.find((c) => c.idCliente === prevId) || null);
+      // Revertir localStorage si falla
+      if (prevId) {
+        const prevClient = options.find((c) => c.idCliente === prevId);
+        if (prevClient) {
+          localStorage.setItem(storageKey, JSON.stringify(prevClient));
+        }
+      } else {
+        localStorage.removeItem(storageKey);
+      }
       toast.error(errMsg(e));
     }
   }
