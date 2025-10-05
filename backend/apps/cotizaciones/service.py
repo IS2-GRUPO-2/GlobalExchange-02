@@ -9,24 +9,7 @@ class TasaService:
     Servicio central de cálculo de tasas de cambio.
     Contiene métodos estáticos para calcular tasas en distintos contextos:
     - Venta / Compra
-    - Con cliente (aplica descuento) o pública (sin descuento)
     """
-
-    @staticmethod
-    def calcular_tasa_compra(tasa: Tasa) -> Decimal:
-        """
-        Calcula la tasa de compra final.
-        Formula temporal: precioBase - comisionBase
-        """
-        return Decimal(tasa.precioBase) - Decimal(tasa.comisionBaseCompra)
-
-    @staticmethod
-    def calcular_tasa_venta(tasa: Tasa) -> Decimal:
-        """
-        Calcula la tasa de venta final.
-        Formula temporal: precioBase + comisionBase
-        """
-        return Decimal(tasa.precioBase) + Decimal(tasa.comisionBaseVenta)
     
     @staticmethod
     def crear_historial(tasa: Tasa) -> HistorialTasa:
@@ -36,54 +19,47 @@ class TasaService:
             tasaVenta=TasaService.calcular_tasa_venta(tasa),
 
         )
+   
+    @staticmethod
+    def calcular_tasa_compra(tasa: Tasa, com_metodo: Decimal=None, cliente: Cliente=None) -> Decimal:
+        """
+        Calcula la tasa de compra final
+        """
+        precio_base = Decimal(tasa.precioBase)
+        comision_base = Decimal(tasa.comisionBaseCompra)
+        if cliente:
+            categ_descuento = Decimal(cliente.id_categoria.descuento)
+        else:
+            categ_descuento = Decimal(0)
+
+        if com_metodo:
+            com_metodo = Decimal(com_metodo)
+        else:
+            com_metodo = Decimal(0)
+
+        return (
+            precio_base * (1 - com_metodo / 100) - comision_base * (1 - categ_descuento / 100)
+        )
     
-     # --------------------------------
-    #   CON CLIENTE (aplica descuento)
-    # --------------------------------
     @staticmethod
-    def calcular_tasa_venta_metodoPago_cliente(tasa: Tasa, metodo: MetodoFinanciero, cliente: Cliente) -> Decimal:
+    def calcular_tasa_venta(tasa: Tasa, com_metodo: Decimal=None, cliente: Cliente=None) -> Decimal:
         """
-        Calcula la tasa de venta considerando método y descuento de cliente.
-        Formula: precioBase * (1 + comision_cobro/100) + comisionBaseVenta * (1 - descuento/100)
+        Calcula la tasa de venta final
         """
-        return (
-            Decimal(tasa.precioBase) * (1 + Decimal(metodo.comision_cobro_porcentaje) / 100)
-            + Decimal(tasa.comisionBaseVenta) * (1 - Decimal(cliente.id_categoria.descuento) / 100)
-        )
+        precio_base = Decimal(tasa.precioBase)
+        comision_base = Decimal(tasa.comisionBaseVenta)
 
-    @staticmethod
-    def calcular_tasa_compra_metodoPago_cliente(tasa: Tasa, metodo: MetodoFinanciero, cliente: Cliente) -> Decimal:
-        """
-        Calcula la tasa de compra considerando método y descuento de cliente.
-        Formula: precioBase * (1 + comision_pago/100) + comisionBaseCompra * (1 - descuento/100)
-        """
-        return (
-            Decimal(tasa.precioBase) * (1 + Decimal(metodo.comision_pago_porcentaje) / 100)
-            + Decimal(tasa.comisionBaseCompra) * (1 - Decimal(cliente.id_categoria.descuento) / 100)
-        )
+        if cliente:
+            categ_descuento = Decimal(cliente.id_categoria.descuento)
+        else:
+            categ_descuento = Decimal(0)
 
-    # -------------------------
-    #   PÚBLICA (sin cliente)
-    # -----
-    @staticmethod
-    def calcular_tasa_venta_metodoPago(tasa: Tasa, metodo: MetodoFinanciero) -> Decimal:
-        """
-        Calcula la tasa de venta considerando el método de cobro.
-        Formula: precioBase * (1 + comision_cobro/100) + comisionBaseVenta
-        """
-        return (
-            Decimal(tasa.precioBase) * (1 + Decimal(metodo.comision_cobro_porcentaje) / 100)
-            + Decimal(tasa.comisionBaseVenta)
-        )
+        if com_metodo:
+            com_metodo = Decimal(com_metodo)
+        else:
+            com_metodo = Decimal(0)
 
-    @staticmethod
-    def calcular_tasa_compra_metodoPago(tasa: Tasa, metodo: MetodoFinanciero) -> Decimal:
-        """
-        Calcula la tasa de compra considerando el método de pago.
-        Formula: precioBase * (1 + comision_pago/100) + comisionBaseCompra
-        """
         return (
-            Decimal(tasa.precioBase) * (1 + Decimal(metodo.comision_pago_porcentaje) / 100)
-            + Decimal(tasa.comisionBaseCompra)
+            precio_base * (1 + com_metodo / 100) + comision_base * (1 - categ_descuento / 100)
         )
 
