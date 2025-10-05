@@ -51,7 +51,7 @@ urlpatterns = [
     path('api/', include("apps.divisas.urls")),
     path("api/", include("apps.cotizaciones.urls")),
     path('api/operaciones/', include("apps.operaciones.urls")),
-    path('api/financiero/', include("apps.financiero.urls")),
+    path('api/metodos_financieros/', include("apps.metodos_financieros.urls")),
     path("api/", include("apps.cotizaciones.urls")),
     path("api/auth/", include("apps.autenticacion.urls")),  
     path('api/', include("apps.tauser.urls")),

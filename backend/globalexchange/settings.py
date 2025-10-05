@@ -56,7 +56,7 @@ INSTALLED_APPS = [
     'apps.cotizaciones',
     'apps.notificaciones',
     'apps.tauser',
-    'apps.financiero',
+    'apps.metodos_financieros',
     'drf_yasg'
 ]
 

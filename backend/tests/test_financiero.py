@@ -5,7 +5,7 @@ from rest_framework.test import APIClient
 from rest_framework import status
 from django.contrib.auth import get_user_model
 
-from apps.financiero.models import (
+from apps.metodos_financieros.models import (
     MetodoFinanciero,
     MetodoFinancieroDetalle,
     CuentaBancaria,
@@ -235,20 +235,20 @@ def cliente_con_categoria():
 # Tests
 class TestMetodoFinancieroAPI:
     def test_crear_metodo_api(self, api_client, metodo_data):
-        response = api_client.post('/api/financiero/metodos/', metodo_data, format='json')
+        response = api_client.post('/api/metodos_financieros/metodos/', metodo_data, format='json')
         assert response.status_code == status.HTTP_201_CREATED
         assert MetodoFinanciero.objects.count() == 1
 
     def test_listar_metodos_api(self, api_client, metodo_data):
         # crear uno por ORM
         MetodoFinanciero.objects.create(**metodo_data)
-        response = api_client.get('/api/financiero/metodos/')
+        response = api_client.get('/api/metodos_financieros/metodos/')
         assert response.status_code == status.HTTP_200_OK
         assert len(response.data['results']) >= 1
 
     def test_eliminar_metodo_soft_delete(self, api_client, metodo_data):
         metodo = MetodoFinanciero.objects.create(**metodo_data)
-        response = api_client.delete(f'/api/financiero/metodos/{metodo.id}/')
+        response = api_client.delete(f'/api/metodos_financieros/metodos/{metodo.id}/')
         assert response.status_code == status.HTTP_200_OK
         metodo.refresh_from_db()
         assert metodo.is_active is False
@@ -260,14 +260,14 @@ class TestMetodoFinancieroDetalleAPI:
         payload = detalle_data.copy()
         payload['metodo_financiero'] = metodo.id
 
-        response = api_client.post('/api/financiero/detalles/', payload, format='json')
+        response = api_client.post('/api/metodos_financieros/detalles/', payload, format='json')
         assert response.status_code == status.HTTP_201_CREATED
         assert MetodoFinancieroDetalle.objects.count() == 1
 
     def test_eliminar_detalle_soft_delete(self, api_client, metodo_data, detalle_data):
         metodo = MetodoFinanciero.objects.create(**metodo_data)
         detalle = MetodoFinancieroDetalle.objects.create(metodo_financiero=metodo, es_cuenta_casa=True, alias='D1')
-        response = api_client.delete(f'/api/financiero/detalles/{detalle.id}/')
+        response = api_client.delete(f'/api/metodos_financieros/detalles/{detalle.id}/')
         assert response.status_code == status.HTTP_200_OK
         detalle.refresh_from_db()
         assert detalle.is_active is False
@@ -280,7 +280,7 @@ class TestMetodoFinancieroDetalleAPI:
             alias='Toggle Test'
         )
         
-        response = api_client.post(f'/api/financiero/detalles/{detalle.id}/toggle_active/')
+        response = api_client.post(f'/api/metodos_financieros/detalles/{detalle.id}/toggle_active/')
         assert response.status_code == status.HTTP_200_OK
         detalle.refresh_from_db()
         assert detalle.is_active is False
@@ -294,7 +294,7 @@ class TestCuentasBancariasAPI:
         payload = cuenta_data.copy()
         payload['metodo_financiero_detalle'] = detalle.id
 
-        response = api_client.post('/api/financiero/cuentas-bancarias/', payload, format='json')
+        response = api_client.post('/api/metodos_financieros/cuentas-bancarias/', payload, format='json')
         assert response.status_code == status.HTTP_201_CREATED
         assert CuentaBancaria.objects.count() == 1
 
@@ -303,7 +303,7 @@ class TestCuentasBancariasAPI:
         detalle = MetodoFinancieroDetalle.objects.create(metodo_financiero=metodo, es_cuenta_casa=True, alias='Casa-Acc2')
         cuenta = CuentaBancaria.objects.create(metodo_financiero_detalle=detalle, **cuenta_data_orm)
 
-        response = api_client.delete(f'/api/financiero/cuentas-bancarias/{cuenta.id}/')
+        response = api_client.delete(f'/api/metodos_financieros/cuentas-bancarias/{cuenta.id}/')
         assert response.status_code == status.HTTP_200_OK
         detalle.refresh_from_db()
         assert detalle.is_active is False
@@ -317,7 +317,7 @@ class TestBilleteraDigitalAPI:
         payload = billetera_data.copy()
         payload['metodo_financiero_detalle'] = detalle.id
 
-        response = api_client.post('/api/financiero/billeteras-digitales/', payload, format='json')
+        response = api_client.post('/api/metodos_financieros/billeteras-digitales/', payload, format='json')
         assert response.status_code == status.HTTP_201_CREATED
         assert BilleteraDigital.objects.count() == 1
 
@@ -326,7 +326,7 @@ class TestBilleteraDigitalAPI:
         detalle = MetodoFinancieroDetalle.objects.create(metodo_financiero=metodo, es_cuenta_casa=True, alias='Casa-Bill2')
         billetera = BilleteraDigital.objects.create(metodo_financiero_detalle=detalle, **billetera_data_orm)
 
-        response = api_client.delete(f'/api/financiero/billeteras-digitales/{billetera.id}/')
+        response = api_client.delete(f'/api/metodos_financieros/billeteras-digitales/{billetera.id}/')
         assert response.status_code == status.HTTP_200_OK
         detalle.refresh_from_db()
         assert detalle.is_active is False
@@ -340,7 +340,7 @@ class TestTarjetaAPI:
         payload = tarjeta_data.copy()
         payload['metodo_financiero_detalle'] = detalle.id
 
-        response = api_client.post('/api/financiero/tarjetas/', payload, format='json')
+        response = api_client.post('/api/metodos_financieros/tarjetas/', payload, format='json')
         assert response.status_code == status.HTTP_201_CREATED
         assert Tarjeta.objects.count() == 1
 
@@ -349,7 +349,7 @@ class TestTarjetaAPI:
         detalle = MetodoFinancieroDetalle.objects.create(metodo_financiero=metodo, es_cuenta_casa=True, alias='Casa-Tarj2')
         tarjeta = Tarjeta.objects.create(metodo_financiero_detalle=detalle, **tarjeta_data_orm)
 
-        response = api_client.delete(f'/api/financiero/tarjetas/{tarjeta.id}/')
+        response = api_client.delete(f'/api/metodos_financieros/tarjetas/{tarjeta.id}/')
         assert response.status_code == status.HTTP_200_OK
         detalle.refresh_from_db()
         assert detalle.is_active is False
@@ -361,7 +361,7 @@ class TestTarjetaAPI:
         payload = tarjeta_local_data.copy()
         payload['metodo_financiero_detalle'] = detalle.id
 
-        response = api_client.post('/api/financiero/tarjetas/', payload, format='json')
+        response = api_client.post('/api/metodos_financieros/tarjetas/', payload, format='json')
         assert response.status_code == status.HTTP_201_CREATED
         assert Tarjeta.objects.count() >= 1
 
@@ -370,7 +370,7 @@ class TestTarjetaAPI:
         detalle = MetodoFinancieroDetalle.objects.create(metodo_financiero=metodo, es_cuenta_casa=True, alias='Casa-TarjLocal2')
         tarjeta_local = Tarjeta.objects.create(metodo_financiero_detalle=detalle, **tarjeta_local_data_orm)
 
-        response = api_client.delete(f'/api/financiero/tarjetas/{tarjeta_local.id}/')
+        response = api_client.delete(f'/api/metodos_financieros/tarjetas/{tarjeta_local.id}/')
         assert response.status_code == status.HTTP_200_OK
         detalle.refresh_from_db()
         assert detalle.is_active is False
@@ -388,7 +388,7 @@ class TestCatalogosAPI:
             'comision_personalizada_compra': True,
             'comision_personalizada_venta': False
         }
-        response = api_client.post('/api/financiero/bancos/', banco_data, format='json')
+        response = api_client.post('/api/metodos_financieros/bancos/', banco_data, format='json')
         assert response.status_code == status.HTTP_201_CREATED
         assert Banco.objects.count() == 1
         
@@ -410,7 +410,7 @@ class TestCatalogosAPI:
         )
         
         # Desactivar banco
-        response = api_client.post(f'/api/financiero/bancos/{banco_instance.id}/toggle_active/')
+        response = api_client.post(f'/api/metodos_financieros/bancos/{banco_instance.id}/toggle_active/')
         assert response.status_code == status.HTTP_200_OK
         
         # Verificar que cuenta se desactivó
@@ -426,7 +426,7 @@ class TestCatalogosAPI:
             'comision_personalizada_compra': False,
             'comision_personalizada_venta': True
         }
-        response = api_client.post('/api/financiero/billeteras-catalogo/', billetera_data, format='json')
+        response = api_client.post('/api/metodos_financieros/billeteras-catalogo/', billetera_data, format='json')
         assert response.status_code == status.HTTP_201_CREATED
         
         billetera = BilleteraDigitalCatalogo.objects.first()
@@ -441,7 +441,7 @@ class TestCatalogosAPI:
             'comision_personalizada_compra': True,
             'comision_personalizada_venta': False
         }
-        response = api_client.post('/api/financiero/tarjetas-catalogo/', tarjeta_data, format='json')
+        response = api_client.post('/api/metodos_financieros/tarjetas-catalogo/', tarjeta_data, format='json')
         assert response.status_code == status.HTTP_201_CREATED
         
         tarjeta = TarjetaCatalogo.objects.first()

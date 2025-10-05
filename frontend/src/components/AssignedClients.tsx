@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import type { User } from "../features/usuario/types/User";
 import type { Cliente } from "../features/clientes/types/Cliente";
-import { getAllClientes } from "../services/clienteService";
+import { getAllClientes } from "../features/clientes/services/clienteService";
 import {
   getUserClients,
   asignarClientesAUsuario,

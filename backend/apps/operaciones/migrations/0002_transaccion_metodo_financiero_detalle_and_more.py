@@ -7,7 +7,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('financiero', '0001_initial'),
+        ('metodos_financieros', '0001_initial'),
         ('operaciones', '0001_initial'),
     ]
 
@@ -15,11 +15,11 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='transaccion',
             name='metodo_financiero_detalle',
-            field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, to='financiero.metodofinancierodetalle'),
+            field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, to='metodos_financieros.metodofinancierodetalle'),
         ),
         migrations.AlterField(
             model_name='transaccion',
             name='metodo_financiero',
-            field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, to='financiero.metodofinanciero'),
+            field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, to='metodos_financieros.metodofinanciero'),
         ),
     ]

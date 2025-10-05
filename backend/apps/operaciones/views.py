@@ -146,7 +146,7 @@ class TransaccionViewSet(viewsets.ModelViewSet):
         - Si se envía metodo_financiero_detalle: Se obtiene metodo_financiero desde el detalle
         - Siempre se garantiza que metodo_financiero esté poblado
         """
-        from apps.financiero.models import MetodoFinancieroDetalle
+        from apps.metodos_financieros.models import MetodoFinancieroDetalle
         
         # Obtener los datos del request (antes de la serialización)
         data = request.data.copy()

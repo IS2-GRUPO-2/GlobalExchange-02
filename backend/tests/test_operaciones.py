@@ -10,7 +10,7 @@ from apps.usuarios.models import User
 from apps.clientes.models import Cliente, CategoriaCliente
 from apps.divisas.models import Divisa
 from apps.tauser.models import Tauser
-from apps.financiero.models import MetodoFinanciero, MetodoFinancieroDetalle
+from apps.metodos_financieros.models import MetodoFinanciero, MetodoFinancieroDetalle
 from apps.cotizaciones.models import Tasa
 
 pytestmark = pytest.mark.django_db
@@ -263,7 +263,7 @@ class TestTransaccionViewSet:
 
     def test_create_transaccion_con_detalle_metodo(self, authenticated_client, operador_usuario, cliente_test, divisa_usd, divisa_pyg, metodo_transferencia, tauser_test):
         """Prueba crear transacción usando metodo_financiero_detalle (nuestro método create personalizado)"""
-        from apps.financiero.models import MetodoFinancieroDetalle
+        from apps.metodos_financieros.models import MetodoFinancieroDetalle
         
         client, user = authenticated_client
         
@@ -370,7 +370,7 @@ class TestTransaccionViewSet:
 
     def test_create_transaccion_error_ambos_metodos(self, authenticated_client, operador_usuario, cliente_test, divisa_usd, divisa_pyg, metodo_efectivo, metodo_transferencia, tauser_test):
         """Prueba error al crear transacción con ambos métodos financieros"""
-        from apps.financiero.models import MetodoFinancieroDetalle
+        from apps.metodos_financieros.models import MetodoFinancieroDetalle
         
         client, user = authenticated_client
         

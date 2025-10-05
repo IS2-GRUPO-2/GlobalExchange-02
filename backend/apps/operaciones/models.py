@@ -3,7 +3,7 @@ from apps.clientes.models import Cliente
 from apps.divisas.models import Divisa
 from apps.usuarios.models import User 
 from apps.tauser.models import Tauser
-from apps.financiero.models import MetodoFinanciero, MetodoFinancieroDetalle
+from apps.metodos_financieros.models import MetodoFinanciero, MetodoFinancieroDetalle
 
 class PermisosOperacion(models.Model):
     """

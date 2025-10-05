@@ -6,7 +6,7 @@ import LoginPage from "../pages/LoginPage";
 import RegisterPage from "../pages/RegisterPage";
 import RolesPage from "../features/roles/pages/RolesPage";
 import MainMenuPage from "../pages/MenuPage";
-import DivisasPage from "../pages/DivisasPage";
+import DivisasPage from "../features/divisas/pages/DivisasPage";
 import MetodosFinancierosPage from "../features/metodos_financieros/Pages/MetodosFinancierosPage";
 import MetodosFinancierosClientePage from "../features/metodos_financieros/Pages/MetodosFinancierosClientePage";
 import ConfiguracionesPage from "../pages/ConfiguracionesPage";

@@ -108,7 +108,7 @@ class Migration(migrations.Migration):
                 ('fecha_procesamiento', models.DateTimeField(blank=True, null=True)),
                 ('observaciones', models.TextField(blank=True)),
                 ('analista', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.PROTECT, to=settings.AUTH_USER_MODEL)),
-                ('banco_emisor', models.ForeignKey(help_text='Banco emisor del cheque', on_delete=django.db.models.deletion.PROTECT, to='financiero.banco')),
+                ('banco_emisor', models.ForeignKey(help_text='Banco emisor del cheque', on_delete=django.db.models.deletion.PROTECT, to='metodos_financieros.banco')),
                 ('cliente', models.ForeignKey(null=True, on_delete=django.db.models.deletion.PROTECT, to='clientes.cliente')),
             ],
             options={
@@ -126,7 +126,7 @@ class Migration(migrations.Migration):
                 ('is_active', models.BooleanField(default=True)),
                 ('desactivado_por_catalogo', models.BooleanField(default=False, help_text='Indica si fue desactivado por desactivación de catálogo (banco/billetera digital)')),
                 ('cliente', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.CASCADE, to='clientes.cliente')),
-                ('metodo_financiero', models.ForeignKey(on_delete=django.db.models.deletion.PROTECT, to='financiero.metodofinanciero')),
+                ('metodo_financiero', models.ForeignKey(on_delete=django.db.models.deletion.PROTECT, to='metodos_financieros.metodofinanciero')),
             ],
             options={
                 'verbose_name': 'Detalle de Método Financiero',
@@ -140,8 +140,8 @@ class Migration(migrations.Migration):
                 ('numero_cuenta', models.CharField(max_length=50)),
                 ('titular', models.CharField(max_length=100)),
                 ('cbu_cvu', models.CharField(blank=True, help_text='CBU o CVU', max_length=22)),
-                ('banco', models.ForeignKey(help_text='Banco del catálogo', on_delete=django.db.models.deletion.PROTECT, to='financiero.banco')),
-                ('metodo_financiero_detalle', models.OneToOneField(on_delete=django.db.models.deletion.CASCADE, related_name='cuenta_bancaria', to='financiero.metodofinancierodetalle')),
+                ('banco', models.ForeignKey(help_text='Banco del catálogo', on_delete=django.db.models.deletion.PROTECT, to='metodos_financieros.banco')),
+                ('metodo_financiero_detalle', models.OneToOneField(on_delete=django.db.models.deletion.CASCADE, related_name='cuenta_bancaria', to='metodos_financieros.metodofinancierodetalle')),
             ],
             options={
                 'verbose_name': 'Cuenta Bancaria',
@@ -156,8 +156,8 @@ class Migration(migrations.Migration):
                 ('email', models.EmailField(blank=True, max_length=254)),
                 ('telefono', models.CharField(blank=True, max_length=20)),
                 ('alias_billetera', models.CharField(blank=True, max_length=50)),
-                ('plataforma', models.ForeignKey(help_text='Billetera del catálogo', on_delete=django.db.models.deletion.PROTECT, to='financiero.billeteradigitalcatalogo')),
-                ('metodo_financiero_detalle', models.OneToOneField(on_delete=django.db.models.deletion.CASCADE, related_name='billetera_digital', to='financiero.metodofinancierodetalle')),
+                ('plataforma', models.ForeignKey(help_text='Billetera del catálogo', on_delete=django.db.models.deletion.PROTECT, to='metodos_financieros.billeteradigitalcatalogo')),
+                ('metodo_financiero_detalle', models.OneToOneField(on_delete=django.db.models.deletion.CASCADE, related_name='billetera_digital', to='metodos_financieros.metodofinancierodetalle')),
             ],
             options={
                 'verbose_name': 'Billetera Digital',
@@ -175,8 +175,8 @@ class Migration(migrations.Migration):
                 ('exp_month', models.IntegerField()),
                 ('exp_year', models.IntegerField()),
                 ('titular', models.CharField(max_length=100)),
-                ('metodo_financiero_detalle', models.OneToOneField(on_delete=django.db.models.deletion.CASCADE, related_name='tarjeta', to='financiero.metodofinancierodetalle')),
-                ('marca', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.PROTECT, to='financiero.tarjetacatalogo')),
+                ('metodo_financiero_detalle', models.OneToOneField(on_delete=django.db.models.deletion.CASCADE, related_name='tarjeta', to='metodos_financieros.metodofinancierodetalle')),
+                ('marca', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.PROTECT, to='metodos_financieros.tarjetacatalogo')),
             ],
             options={
                 'verbose_name': 'Tarjeta de Crédito/Débito',

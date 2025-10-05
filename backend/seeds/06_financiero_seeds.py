@@ -1,4 +1,4 @@
-from apps.financiero.models import (
+from apps.metodos_financieros.models import (
     Banco, BilleteraDigitalCatalogo, TarjetaCatalogo, MetodoFinanciero, 
     MetodoFinancieroDetalle, CuentaBancaria, BilleteraDigital, Tarjeta,
     TipoMetodoFinanciero

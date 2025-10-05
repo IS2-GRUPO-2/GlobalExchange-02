@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { type User } from "../../usuario/types/User";
 import { toast } from "react-toastify";
-import { getUsuariosAsignados } from "../../../services/clienteService";
+import { getUsuariosAsignados } from "../services/clienteService";
 import { type Cliente } from "../types/Cliente";
 
 type Props = {

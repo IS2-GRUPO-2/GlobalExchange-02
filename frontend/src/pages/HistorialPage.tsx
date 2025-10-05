@@ -3,7 +3,7 @@ import { toast } from "react-toastify";
 import type { Cliente } from "../features/clientes/types/Cliente";
 import { useAuth } from "../context/useAuth";
 import { getClienteActual } from "../features/usuario/services/usuarioService";
-import { getHistorialTransacciones } from "../services/clienteService";
+import { getHistorialTransacciones } from "../features/clientes/services/clienteService";
 import type { TransaccionDetalle } from "../features/operaciones/types/Transaccion";
 import { formatNumberDecimals } from "../utils/format";
 

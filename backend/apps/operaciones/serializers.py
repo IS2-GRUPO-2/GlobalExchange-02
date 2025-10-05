@@ -16,7 +16,7 @@ from apps.clientes.serializers import ClienteSerializer
 from apps.divisas.serializers import DivisaSerializer
 from apps.usuarios.serializers import UserSerializer
 from apps.tauser.serializers import TauserSerializer
-from apps.financiero.serializers import MetodoFinancieroSerializer
+from apps.metodos_financieros.serializers import MetodoFinancieroSerializer
 
 
 

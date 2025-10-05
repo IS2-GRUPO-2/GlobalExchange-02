@@ -1,22 +1,22 @@
 import { Check, Coins, Edit, Plus, X } from "lucide-react";
 import { useState, useEffect } from "react";
-import { type Divisa } from "../features/divisas/types/Divisa";
-import { createDenominacion } from "../features/divisas/services/divisaService";
-import Modal from "../components/Modal";
-import DivisaForm, { type DivisaFormData } from "../components/DivisaForm";
+import { type Divisa } from "../types/Divisa";
+import { createDenominacion } from "../services/divisaService";
+import Modal from "../../../components/Modal";
+import DivisaForm, { type DivisaFormData } from "../../../components/DivisaForm";
 import { toast } from "react-toastify";
-import { useAuth } from "../context/useAuth";
+import { useAuth } from "../../../context/useAuth";
 import DenominacionesDivisa, {
   type DenominacionFormData,
-} from "../components/DenominacionesDivisa";
-import { useModal } from "../hooks/useModal";
-import { useDivisa } from "../features/divisas/hooks/useDivisa";
-import SearchBar from "../components/SearchBar";
-import type { Tab } from "../types/Tab";
-import Sidebar from "../components/Sidebar";
-import LimiteConfigForm from "../features/divisas/components/LimiteConfigForm";
-import Can from "../components/Can";
-import { DENOMINACIONES, DIVISAS, LIMITES_DIVISA_CONFIG } from "../types/perms";
+} from "../../../components/DenominacionesDivisa";
+import { useModal } from "../../../hooks/useModal";
+import { useDivisa } from "../hooks/useDivisa";
+import SearchBar from "../../../components/SearchBar";
+import type { Tab } from "../../../types/Tab";
+import Sidebar from "../../../components/Sidebar";
+import LimiteConfigForm from "../components/LimiteConfigForm";
+import Can from "../../../components/Can";
+import { DENOMINACIONES, DIVISAS, LIMITES_DIVISA_CONFIG } from "../../../types/perms";
 
 const DivisasPage = () => {
   const tabs: Tab[] = [

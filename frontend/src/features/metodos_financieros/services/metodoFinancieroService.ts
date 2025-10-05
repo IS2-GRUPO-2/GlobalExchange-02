@@ -19,7 +19,7 @@ import type {
 } from "../types/MetodoFinanciero";
 
 // Usar proxy de Vite para desarrollo
-const API_URL = "/api/financiero/";
+const API_URL = "/api/metodos_financieros/";
 
 interface GetParams {
   page?: number;

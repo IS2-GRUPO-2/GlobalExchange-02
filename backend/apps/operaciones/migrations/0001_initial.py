@@ -12,7 +12,7 @@ class Migration(migrations.Migration):
     dependencies = [
         ('clientes', '0005_categoriacliente_isactive'),
         ('divisas', '0009_alter_limiteconfig_limite_diario_and_more'),
-        ('financiero', '0001_initial'),
+        ('metodos_financieros', '0001_initial'),
         ('tauser', '0001_initial'),
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
     ]
@@ -45,7 +45,7 @@ class Migration(migrations.Migration):
                 ('cliente', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='transacciones', to='clientes.cliente')),
                 ('divisa_destino', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='transacciones_destino', to='divisas.divisa')),
                 ('divisa_origen', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='transacciones_origen', to='divisas.divisa')),
-                ('metodo_financiero', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='financiero.metodofinanciero')),
+                ('metodo_financiero', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='metodos_financieros.metodofinanciero')),
                 ('operador', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='transacciones_operadas', to=settings.AUTH_USER_MODEL)),
                 ('tauser', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='transacciones', to='tauser.tauser')),
             ],
