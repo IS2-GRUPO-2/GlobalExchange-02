@@ -16,21 +16,15 @@ import { CircleUser, ChevronDown } from "lucide-react";
 import Can from "./Can";
 import { useAuth } from "../context/useAuth";
 import logoWhite from "../assets/logo-white.svg";
-import { SIMULACION, OPERACION } from "../types/perms";
+import { OPERACION } from "../types/perms";
 import ClientPicker from "./ClientPicker";
 
 /** Configuración de elementos de navegación */
 const navigation = [
   { name: "Inicio", href: "/", current: true, permisos: [] },
   {
-    name: "Simulación de Operaciones",
-    href: "/simulacion-operacion",
-    current: false,
-    permisos: [SIMULACION.USE],
-  },
-  {
     name: "Operaciones",
-    href: "/operacion-compra-venta",
+    href: "/operaciones",
     current: false,
     permisos: [OPERACION.USE],
   },

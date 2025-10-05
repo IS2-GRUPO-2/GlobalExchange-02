@@ -28,13 +28,12 @@ def run():
                 'clientes.change_cliente',
                 
                 # Operaciones completas
-                'operaciones.add_metodofinancierodetalle',
-                'operaciones.change_metodofinancierodetalle',
-                'operaciones.view_metodofinancierodetalle',
-                'operaciones.view_banco',
-                'operaciones.view_billeteradigitalcatalogo',
-                # 'operaciones.view_metodofinanciero',  # QUITADO
-                'operaciones.can_use_simulacion',
+                'metodos_financieros.add_metodofinancierodetalle',
+                'metodos_financieros.change_metodofinancierodetalle',
+                'metodos_financieros.view_metodofinancierodetalle',
+                'metodos_financieros.view_banco',
+                'metodos_financieros.view_billeteradigitalcatalogo',
+                # 'metodos_financieros.view_metodofinanciero',  # QUITADO
                 'operaciones.can_use_operacion',
                 
                 # Cotizaciones
@@ -60,12 +59,11 @@ def run():
                 'clientes.view_categoriacliente',
                 
                 # Operaciones y reportes
-                'operaciones.view_metodofinancierodetalle',
-                'operaciones.change_metodofinancierodetalle',
-                'operaciones.view_banco',
-                'operaciones.view_billeteradigitalcatalogo',
-                # 'operaciones.view_metodofinanciero',  # QUITADO
-                'operaciones.can_use_simulacion',
+                'metodos_financieros.view_metodofinancierodetalle',
+                'metodos_financieros.change_metodofinancierodetalle',
+                'metodos_financieros.view_banco',
+                'metodos_financieros.view_billeteradigitalcatalogo',
+                # 'metodos_financieros.view_metodofinanciero',  # QUITADO
                 
                 # Cotizaciones
                 'cotizaciones.view_tasa',
@@ -82,12 +80,11 @@ def run():
             'permissions': [
                 # Solo ver sus propios datos
                 'clientes.view_cliente',
-                'operaciones.view_metodofinancierodetalle',
-                'operaciones.add_metodofinancierodetalle',
+                'metodos_financieros.view_metodofinancierodetalle',
+                'metodos_financieros.add_metodofinancierodetalle',
                 'divisas.view_divisa',
                 'cotizaciones.view_tasa',
                 'cotizaciones.view_historialtasa',
-                'operaciones.can_use_simulacion',
                 'operaciones.can_use_operacion'
             ]
         },
@@ -95,8 +92,7 @@ def run():
             'name': 'Cliente Regular',
             'permissions': [
                 # Permisos básicos para clientes
-                'operaciones.view_metodofinancierodetalle',
-                'operaciones.can_use_simulacion',
+                'metodos_financieros.view_metodofinancierodetalle',
                 'operaciones.can_use_operacion',
             ]
         },
@@ -107,10 +103,10 @@ def run():
                 'usuarios.view_user',
                 'clientes.view_cliente',
                 'clientes.view_categoriacliente',
-                'operaciones.view_metodofinancierodetalle',
-                'operaciones.view_banco',
-                'operaciones.view_billeteradigitalcatalogo',
-                # 'operaciones.view_metodofinanciero',  # QUITADO
+                'metodos_financieros.view_metodofinancierodetalle',
+                'metodos_financieros.view_banco',
+                'metodos_financieros.view_billeteradigitalcatalogo',
+                # 'metodos_financieros.view_metodofinanciero',  # QUITADO
                 'cotizaciones.view_tasa',
                 'cotizaciones.view_historialtasa',
                 'divisas.view_divisa',

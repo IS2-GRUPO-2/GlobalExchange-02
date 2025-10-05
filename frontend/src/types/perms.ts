@@ -62,71 +62,68 @@ export const LIMITES_DIVISA_CONFIG = {
 };
 
 export const BANCOS = {
-  ADD: "operaciones.add_banco",
-  CHANGE: "operaciones.change_banco",
-  DELETE: "operaciones.delete_banco",
-  VIEW: "operaciones.view_banco",
+  ADD: "metodos_financieros.add_banco",
+  CHANGE: "metodos_financieros.change_banco",
+  DELETE: "metodos_financieros.delete_banco",
+  VIEW: "metodos_financieros.view_banco",
 } as const;
 
 export const BILLETERAS_DIGITALES = {
-  ADD: "operaciones.add_billeteradigital",
-  CHANGE: "operaciones.change_billeteradigital",
-  DELETE: "operaciones.delete_billeteradigital",
-  VIEW: "operaciones.view_billeteradigital",
+  ADD: "metodos_financieros.add_billeteradigital",
+  CHANGE: "metodos_financieros.change_billeteradigital",
+  DELETE: "metodos_financieros.delete_billeteradigital",
+  VIEW: "metodos_financieros.view_billeteradigital",
 } as const;
 
 export const BILLETERAS_DIGITALES_CATALOGO = {
-  ADD: "operaciones.add_billeteradigitalcatalogo",
-  CHANGE: "operaciones.change_billeteradigitalcatalogo",
-  DELETE: "operaciones.delete_billeteradigitalcatalogo",
-  VIEW: "operaciones.view_billeteradigitalcatalogo",
+  ADD: "metodos_financieros.add_billeteradigitalcatalogo",
+  CHANGE: "metodos_financieros.change_billeteradigitalcatalogo",
+  DELETE: "metodos_financieros.delete_billeteradigitalcatalogo",
+  VIEW: "metodos_financieros.view_billeteradigitalcatalogo",
 } as const;
 
 export const CHEQUES = {
-  ADD: "operaciones.add_cheque",
-  CHANGE: "operaciones.change_cheque",
-  DELETE: "operaciones.delete_cheque",
-  VIEW: "operaciones.view_cheque",
+  ADD: "metodos_financieros.add_cheque",
+  CHANGE: "metodos_financieros.change_cheque",
+  DELETE: "metodos_financieros.delete_cheque",
+  VIEW: "metodos_financieros.view_cheque",
 } as const;
 
 export const CUENTAS_BANCARIAS = {
-  ADD: "operaciones.add_cuentabancaria",
-  CHANGE: "operaciones.change_cuentabancaria",
-  DELETE: "operaciones.delete_cuentabancaria",
-  VIEW: "operaciones.view_cuentabancaria",
+  ADD: "metodos_financieros.add_cuentabancaria",
+  CHANGE: "metodos_financieros.change_cuentabancaria",
+  DELETE: "metodos_financieros.delete_cuentabancaria",
+  VIEW: "metodos_financieros.view_cuentabancaria",
 } as const;
 
 export const METODOS_FINANCIEROS = {
-  ADD: "operaciones.add_metodofinanciero",
-  CHANGE: "operaciones.change_metodofinanciero",
-  DELETE: "operaciones.delete_metodofinanciero",
-  VIEW: "operaciones.view_metodofinanciero",
+  ADD: "metodos_financieros.add_metodofinanciero",
+  CHANGE: "metodos_financieros.change_metodofinanciero",
+  DELETE: "metodos_financieros.delete_metodofinanciero",
+  VIEW: "metodos_financieros.view_metodofinanciero",
 } as const;
 
 export const METODOS_FINANCIEROS_DETALLE = {
-  ADD: "operaciones.add_metodofinancierodetalle",
-  CHANGE: "operaciones.change_metodofinancierodetalle",
-  DELETE: "operaciones.delete_metodofinancierodetalle",
-  VIEW: "operaciones.view_metodofinancierodetalle",
+  ADD: "metodos_financieros.add_metodofinancierodetalle",
+  CHANGE: "metodos_financieros.change_metodofinancierodetalle",
+  DELETE: "metodos_financieros.delete_metodofinancierodetalle",
+  VIEW: "metodos_financieros.view_metodofinancierodetalle",
 } as const;
 
 export const TARJETAS = {
-  ADD: "operaciones.add_tarjeta",
-  CHANGE: "operaciones.change_tarjeta",
-  DELETE: "operaciones.delete_tarjeta",
-  VIEW: "operaciones.view_tarjeta",
+  ADD: "metodos_financieros.add_tarjeta",
+  CHANGE: "metodos_financieros.change_tarjeta",
+  DELETE: "metodos_financieros.delete_tarjeta",
+  VIEW: "metodos_financieros.view_tarjeta",
 } as const;
 
 export const TARJETAS_CATALOGO = {
-  ADD: "operaciones.add_tarjetacatalogo",
-  CHANGE: "operaciones.change_tarjetacatalogo",
-  DELETE: "operaciones.delete_tarjetacatalogo",
-  VIEW: "operaciones.view_tarjetacatalogo",
+  ADD: "metodos_financieros.add_tarjetacatalogo",
+  CHANGE: "metodos_financieros.change_tarjetacatalogo",
+  DELETE: "metodos_financieros.delete_tarjetacatalogo",
+  VIEW: "metodos_financieros.view_tarjetacatalogo",
 } as const;
 
-export const SIMULACION = {
-  USE: "operaciones.can_use_simulacion",
-} as const;
 
 export const TAUSER = {
   ADD: "tauser.add_tauser",
