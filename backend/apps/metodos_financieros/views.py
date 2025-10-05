@@ -95,6 +95,7 @@ class BancoViewSet(viewsets.ModelViewSet):
             )
             
             for cuenta in cuentas_relacionadas:
+                cuenta.metodo_financiero_detalle.is_active = False
                 cuenta.metodo_financiero_detalle.desactivado_por_catalogo = True
                 cuenta.metodo_financiero_detalle.save()
                 affected_instances.append({
@@ -111,6 +112,7 @@ class BancoViewSet(viewsets.ModelViewSet):
             )
             
             for cuenta in cuentas_relacionadas:
+                cuenta.metodo_financiero_detalle.is_active = True
                 cuenta.metodo_financiero_detalle.desactivado_por_catalogo = False
                 cuenta.metodo_financiero_detalle.save()
                 affected_instances.append({
