@@ -96,11 +96,9 @@ class BancoViewSet(viewsets.ModelViewSet):
             from .models import CuentaBancaria
             cuentas_relacionadas = CuentaBancaria.objects.filter(
                 banco=instance,
-                metodo_financiero_detalle__is_active=True
             )
             
             for cuenta in cuentas_relacionadas:
-                cuenta.metodo_financiero_detalle.is_active = False
                 cuenta.metodo_financiero_detalle.desactivado_por_catalogo = True
                 cuenta.metodo_financiero_detalle.save()
                 affected_instances.append({
@@ -113,12 +111,10 @@ class BancoViewSet(viewsets.ModelViewSet):
             from .models import CuentaBancaria
             cuentas_relacionadas = CuentaBancaria.objects.filter(
                 banco=instance,
-                metodo_financiero_detalle__is_active=False,
                 metodo_financiero_detalle__desactivado_por_catalogo=True
             )
             
             for cuenta in cuentas_relacionadas:
-                cuenta.metodo_financiero_detalle.is_active = True
                 cuenta.metodo_financiero_detalle.desactivado_por_catalogo = False
                 cuenta.metodo_financiero_detalle.save()
                 affected_instances.append({
