@@ -29,6 +29,7 @@ import RequireAuth from "./RequiereAuth";
 import OperacionPage from "../features/operaciones/pages/OperacionPage";
 import ConfiguracionTauserPage from "../features/tauser/pages/ConfiguracionTauserPage";
 import HistorialPage from "../pages/HistorialPage";
+import PerfilUsuarioPage from "../features/usuario/pages/PerfilUsuarioPage";
 
 export const router = createBrowserRouter([
   {
@@ -55,6 +56,14 @@ export const router = createBrowserRouter([
         element: (
           <RequireAuth>
             <HistorialPage />
+          </RequireAuth>
+        ),
+      },
+      {
+        path: "perfil-usuario",
+        element: (
+          <RequireAuth>
+            <PerfilUsuarioPage />
           </RequireAuth>
         ),
       },
