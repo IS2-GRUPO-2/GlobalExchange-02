@@ -77,14 +77,7 @@ export default function SeleccionInstanciaMetodo({
     }
   };
 
-  const getMetodoTitleLabel = (tipo: string) => {
-    switch (tipo) {
-      case 'TRANSFERENCIA_BANCARIA': return 'Transferencia Bancaria';
-      case 'BILLETERA_DIGITAL': return 'Billetera Digital';
-      case 'TARJETA': return 'Tarjeta de Crédito/Débito';
-      default: return 'Otro Método';
-    }
-  };
+
 
   const getMetodoLabel = (tipo: string) => {
     switch (tipo) {
@@ -108,14 +101,6 @@ export default function SeleccionInstanciaMetodo({
 
   return (
     <div className="space-y-4">
-      <div className="text-center">
-        <h4 className="text-md font-semibold text-gray-800 mb-1">
-          {getMetodoTitleLabel(metodoFinanciero.nombre)}
-        </h4>
-        <p className="text-sm text-gray-600">
-          Selecciona cuál {getMetodoLabel(metodoFinanciero.nombre)} específica quieres usar
-        </p>
-      </div>
 
       {loading ? (
         <div className="flex justify-center py-6">

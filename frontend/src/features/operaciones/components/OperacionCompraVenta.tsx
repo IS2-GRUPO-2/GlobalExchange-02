@@ -13,6 +13,7 @@ import {
   confirmarPago,
   cancelarTransaccion,
 } from "../services/transaccionService";   
+import { formatNumber } from "../utils/formatNumber";
 // Importar las etapas
 import EtapaSeleccionDivisas from "./EtapaSeleccionDivisas";
 import EtapaSeleccionMetodo from "./EtapaSeleccionMetodo";
@@ -343,42 +344,12 @@ export default function OperacionCompraVenta() {
 
   // ========== FUNCIONES DE UTILIDAD ==========
 
-  const getTitulo = () => {
-    switch (etapaActual) {
-      case 1: return "Compra y Venta de Divisas";
-      case 2: return "Selección de Método";
-      case 3: return "Resultado de Operación";
-      case 4: return "Selección de Terminal";
-      case 5: return "Detalle de Operación";
-      case 6: return "Términos y Condiciones";
-      default: return "Operación";
-    }
-  };
-
   const getContainerWidth = () => {
-    switch (etapaActual) {
-      case 1:
-      case 2:
-      case 4:
-        return "w-full max-w-2xl";
-      case 3:
-      case 5:
-        return "w-full max-w-4xl";
-      case 6:
-        return "w-full max-w-3xl";
-      default:
-        return "w-full max-w-2xl";
-    }
+    // Mantener tamaño estable para todas las etapas
+    return "w-full max-w-4xl";
   };
 
-  const getEtapasInfo = () => [
-    { numero: 1, texto: "Divisas", activo: etapaActual >= 1 },
-    { numero: 2, texto: "Método", activo: etapaActual >= 2 },
-    { numero: 3, texto: "Resultado", activo: etapaActual >= 3 },
-    { numero: 4, texto: "Terminal", activo: etapaActual >= 4 },
-    { numero: 5, texto: "Detalle", activo: etapaActual >= 5 },
-    { numero: 6, texto: "Términos", activo: etapaActual >= 6 },
-  ];
+
 
   // ========== RENDER ==========
 
@@ -486,39 +457,6 @@ export default function OperacionCompraVenta() {
   return (
     <section id="operacion" className="flex flex-col items-center p-6 select-none">
       <div className={`${getContainerWidth()} bg-white rounded-lg shadow-lg p-6 transition-all duration-300`}>
-        
-        {/* Header */}
-        <div className="mb-6">
-          <h2 className="text-2xl font-bold text-gray-800 mb-4 text-center">
-            {getTitulo()}
-          </h2>
-
-          {/* Indicador de progreso */}
-          <div className="flex justify-between mb-2">
-            {getEtapasInfo().map((step, index) => (
-              <div key={step.numero} className={`flex items-center ${index < 5 ? "flex-1" : ""}`}>
-                <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium transition-colors ${
-                  step.activo 
-                    ? "bg-blue-600 text-white" 
-                    : "bg-gray-200 text-gray-600"
-                }`}>
-                  {step.numero}
-                </div>
-                <span className={`ml-2 text-sm font-medium ${
-                  step.activo ? "text-blue-600" : "text-gray-500"
-                }`}>
-                  {step.texto}
-                </span>
-                {index < 5 && (
-                  <div className={`flex-1 h-1 mx-4 rounded ${
-                    etapaActual > step.numero ? "bg-blue-600" : "bg-gray-200"
-                  }`} />
-                )}
-              </div>
-            ))}
-          </div>
-        </div>
-
         {/* Contenido de la etapa actual */}
         <div className="min-h-[400px]">{renderEtapaActual()}</div>
 
@@ -534,26 +472,22 @@ export default function OperacionCompraVenta() {
             </h4>
             <p className="text-sm text-gray-600 mb-4">
               La tasa pasó de{" "}
-              <b>{Number(reconfirm.tasa_anterior).toLocaleString("es-PY")}</b> a{" "}
-              <b>{Number(reconfirm.tasa_actual).toLocaleString("es-PY")}</b> (
-              {Number(reconfirm.delta_pct).toFixed(4)}%).
+              <b>{formatNumber(Number(reconfirm.tasa_anterior), 4)}</b> a{" "}
+              <b>{formatNumber(Number(reconfirm.tasa_actual), 4)}</b> (
+              {formatNumber(Number(reconfirm.delta_pct), 4)}%).
             </p>
 
             <div className="bg-gray-50 border rounded-lg p-3 text-sm text-gray-700 mb-4">
               <div className="flex justify-between">
                 <span>Monto destino anterior:</span>
                 <b>
-                  {Number(reconfirm.monto_destino_anterior).toLocaleString(
-                    "es-PY"
-                  )}
+                  {formatNumber(Number(reconfirm.monto_destino_anterior))}
                 </b>
               </div>
               <div className="flex justify-between">
                 <span>Monto destino con nueva tasa:</span>
                 <b>
-                  {Number(reconfirm.monto_destino_actual).toLocaleString(
-                    "es-PY"
-                  )}
+                  {formatNumber(Number(reconfirm.monto_destino_actual))}
                 </b>
               </div>
             </div>
