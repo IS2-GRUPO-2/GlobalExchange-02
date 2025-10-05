@@ -10,8 +10,6 @@ from .views import (
     BilleteraDigitalViewSet,
     TarjetaViewSet,
     ChequeViewSet,
-    obtener_tipos_cheque, 
-    obtener_divisas_cheque
 )
 
 
@@ -29,7 +27,5 @@ router.register(r'cheques', ChequeViewSet, basename='cheque')
 
 
 urlpatterns = [
-    path('', include(router.urls)),
-    path("cheque/tipos/", obtener_tipos_cheque, name="cheque-tipos"),
-    path("cheque/divisas/", obtener_divisas_cheque, name="cheque-divisas")
+    path('', include(router.urls))
 ]

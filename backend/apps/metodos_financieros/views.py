@@ -142,20 +142,10 @@ class BilleteraDigitalCatalogoViewSet(viewsets.ModelViewSet):
     """
     queryset = BilleteraDigitalCatalogo.objects.all()
     serializer_class = BilleteraDigitalCatalogoSerializer
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [permissions.IsAuthenticated, permissions.DjangoModelPermissions]
     filter_backends = [filters.SearchFilter]
     search_fields = ['nombre']
     pagination_class = OperacionesPagination
-
-    def get_permissions(self):
-        """
-        Instancia y retorna la lista de permisos que requiere esta vista.
-        """
-        if self.action in ['create', 'update', 'partial_update', 'destroy']:
-            permission_classes = [permissions.IsAuthenticated]
-        else:
-            permission_classes = [permissions.IsAuthenticated]
-        return [permission() for permission in permission_classes]
 
     def destroy(self, request, *args, **kwargs):
         """
@@ -176,7 +166,7 @@ class BilleteraDigitalCatalogoViewSet(viewsets.ModelViewSet):
             status=status.HTTP_200_OK
         )
 
-    @action(detail=True, methods=['post'], permission_classes=[permissions.IsAuthenticated])
+    @action(detail=True, methods=['post'])
     def toggle_active(self, request, pk=None):
         """
         Alterna el estado de activación de la billetera digital (activo/inactivo).
@@ -243,20 +233,10 @@ class TarjetaCatalogoViewSet(viewsets.ModelViewSet):
     """
     queryset = TarjetaCatalogo.objects.all()
     serializer_class = TarjetaCatalogoSerializer
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [permissions.IsAuthenticated, permissions.DjangoModelPermissions]
     filter_backends = [filters.SearchFilter]
     search_fields = ['marca']
     pagination_class = OperacionesPagination
-
-    def get_permissions(self):
-        """
-        Instancia y retorna la lista de permisos que requiere esta vista.
-        """
-        if self.action in ['create', 'update', 'partial_update', 'destroy']:
-            permission_classes = [permissions.IsAuthenticated]
-        else:
-            permission_classes = [permissions.IsAuthenticated]
-        return [permission() for permission in permission_classes]
 
     def destroy(self, request, *args, **kwargs):
         """
@@ -277,7 +257,7 @@ class TarjetaCatalogoViewSet(viewsets.ModelViewSet):
             status=status.HTTP_200_OK
         )
 
-    @action(detail=True, methods=['post'], permission_classes=[permissions.IsAuthenticated])
+    @action(detail=True, methods=['post'])
     def toggle_active(self, request, pk=None):
         """
         Alterna el estado de activación de la marca de tarjeta local (activo/inactivo).
@@ -347,22 +327,10 @@ class MetodoFinancieroViewSet(viewsets.ModelViewSet):
     """
     queryset = MetodoFinanciero.objects.all()
     serializer_class = MetodoFinancieroSerializer
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [permissions.IsAuthenticated, permissions.DjangoModelPermissions]
     filter_backends = [filters.SearchFilter]
     search_fields = ['nombre']
     pagination_class = OperacionesPagination
-
-    def get_permissions(self):
-        """
-        Instancia y retorna la lista de permisos que requiere esta vista.
-        """
-        if self.action in ['create', 'update', 'partial_update', 'destroy']:
-            permission_classes = [permissions.IsAuthenticated]
-        elif self.action == 'list_metodos_operacion':
-            permission_classes = [permissions.AllowAny]
-        else:
-            permission_classes = [permissions.IsAuthenticated]
-        return [permission() for permission in permission_classes]
 
     def destroy(self, request, *args, **kwargs):
         """
@@ -434,7 +402,7 @@ class MetodoFinancieroDetalleViewSet(viewsets.ModelViewSet):
     """
     queryset = MetodoFinancieroDetalle.objects.all()
     serializer_class = MetodoFinancieroDetalleSerializer
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [permissions.IsAuthenticated, permissions.DjangoModelPermissions]
     filter_backends = [filters.SearchFilter]
     search_fields = ['alias', 'cliente__nombre']
     pagination_class = OperacionesPagination
@@ -453,18 +421,6 @@ class MetodoFinancieroDetalleViewSet(viewsets.ModelViewSet):
         else:
             # Usuarios regulares ven los registros de sus clientes asignados (activos e inactivos)
             return queryset.filter(cliente__in=self.request.user.clientes.all())
-
-    def get_permissions(self):
-        """
-        Instancia y retorna la lista de permisos que requiere esta vista.
-        """
-        if self.action in ['update', 'partial_update', 'destroy']:
-            # Solo admins pueden editar/eliminar detalles de métodos financieros
-            permission_classes = [permissions.IsAuthenticated]
-        else:
-            # Usuarios autenticados pueden ver y crear sus propios métodos financieros
-            permission_classes = [permissions.IsAuthenticated]
-        return [permission() for permission in permission_classes]
 
     def perform_create(self, serializer):
         """
@@ -496,7 +452,7 @@ class MetodoFinancieroDetalleViewSet(viewsets.ModelViewSet):
         instance.save()
         return Response({"message": f"Detalle de método financiero {instance.alias} desactivado (eliminado lógico)."}, status=status.HTTP_200_OK)
 
-    @action(detail=True, methods=['post'], permission_classes=[permissions.IsAuthenticated])
+    @action(detail=True, methods=['post'])
     def toggle_active(self, request, pk=None):
         """
         Alterna el estado de activación del método financiero (activo/inactivo).
@@ -546,7 +502,7 @@ class CuentaBancariaViewSet(viewsets.ModelViewSet):
     """
     queryset = CuentaBancaria.objects.all()
     serializer_class = CuentaBancariaSerializer
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [permissions.IsAuthenticated, permissions.DjangoModelPermissions]
     filter_backends = [filters.SearchFilter]
     search_fields = ['banco__nombre', 'numero_cuenta', 'titular', 'cbu_cvu']
     pagination_class = OperacionesPagination
@@ -571,18 +527,6 @@ class CuentaBancariaViewSet(viewsets.ModelViewSet):
                 metodo_financiero_detalle__cliente=self.request.user.cliente_actual,
                 metodo_financiero_detalle__es_cuenta_casa=False
             )
-
-    def get_permissions(self):
-        """
-        Instancia y retorna la lista de permisos que requiere esta vista.
-        """
-        if self.action in ['update', 'partial_update', 'destroy']:
-            # Solo admins pueden editar/eliminar cuentas bancarias
-            permission_classes = [permissions.IsAuthenticated]
-        else:
-            # Usuarios autenticados pueden ver y crear sus propias cuentas bancarias
-            permission_classes = [permissions.IsAuthenticated]
-        return [permission() for permission in permission_classes]
 
     @action(detail=False, methods=['get'], url_path='mis-cuentas')
     def mis_cuentas_bancarias(self, request):
@@ -631,7 +575,7 @@ class BilleteraDigitalViewSet(viewsets.ModelViewSet):
     """
     queryset = BilleteraDigital.objects.all()
     serializer_class = BilleteraDigitalSerializer
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [permissions.IsAuthenticated, permissions.DjangoModelPermissions]
     filter_backends = [filters.SearchFilter]
     search_fields = ['plataforma__nombre', 'usuario_id', 'email', 'telefono']
     pagination_class = OperacionesPagination
@@ -655,18 +599,6 @@ class BilleteraDigitalViewSet(viewsets.ModelViewSet):
                 metodo_financiero_detalle__cliente=self.request.user.cliente_actual,
                 metodo_financiero_detalle__es_cuenta_casa=False
             )
-
-    def get_permissions(self):
-        """
-        Instancia y retorna la lista de permisos que requiere esta vista.
-        """
-        if self.action in ['update', 'partial_update', 'destroy']:
-            # Solo admins pueden editar/eliminar billeteras digitales
-            permission_classes = [permissions.IsAuthenticated]
-        else:
-            # Usuarios autenticados pueden ver y crear sus propias billeteras digitales
-            permission_classes = [permissions.IsAuthenticated]
-        return [permission() for permission in permission_classes]
 
     @action(detail=False, methods=['get'], url_path='mis-billeteras')
     def mis_billeteras_digitales(self, request):
@@ -713,7 +645,7 @@ class TarjetaViewSet(viewsets.ModelViewSet):
     """
     queryset = Tarjeta.objects.all()
     serializer_class = TarjetaSerializer
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [permissions.IsAuthenticated, permissions.DjangoModelPermissions]
     filter_backends = [filters.SearchFilter]
     search_fields = ['brand', 'last4', 'titular']
     pagination_class = OperacionesPagination
@@ -750,17 +682,6 @@ class TarjetaViewSet(viewsets.ModelViewSet):
             
         return super().create(request, *args, **kwargs)
 
-    def get_permissions(self):
-        """
-        Instancia y retorna la lista de permisos que requiere esta vista.
-        """
-        if self.action in ['update', 'partial_update', 'destroy']:
-            # Solo admins pueden editar/eliminar tarjetas
-            permission_classes = [permissions.IsAuthenticated]
-        else:
-            # Usuarios autenticados pueden ver y crear sus propias tarjetas
-            permission_classes = [permissions.IsAuthenticated]
-        return [permission() for permission in permission_classes]
 
     @action(detail=False, methods=['get'], url_path='mis-tarjetas')
     def mis_tarjetas(self, request):
@@ -801,47 +722,8 @@ class TarjetaViewSet(viewsets.ModelViewSet):
 class ChequeViewSet(viewsets.ModelViewSet):
     queryset = Cheque.objects.all()
     serializer_class = ChequeSerializer
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [permissions.IsAuthenticated, permissions.DjangoModelPermissions]
     filter_backends = [filters.SearchFilter]
     # Ajuste: los nombres de campo deben coincidir con el modelo
     search_fields = ['banco_emisor__nombre', 'numero', 'titular']
     pagination_class = OperacionesPagination
-    
-
-@api_view(["GET"])
-@permission_classes([permissions.AllowAny])
-def obtener_tipos_cheque(request):
-    """
-    Retorna la lista de tipos de cheque admitidos por el sistema.
-
-    Devuelve una lista de objetos { value, label } usando las choices
-    definidas en el campo `tipo` del modelo `Cheque`.
-    """
-    try:
-        choices = [
-            {"value": c[0], "label": c[1]} for c in Cheque._meta.get_field('tipo').choices
-        ]
-        return Response(choices, status=status.HTTP_200_OK)
-    except Exception as e:
-        return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
-
-@api_view(["GET"])
-@permission_classes([permissions.AllowAny])
-def obtener_divisas_cheque(request):
-    """
-    Retorna las divisas permitidas para cheques.
-
-    Devuelve una lista de objetos { value, label } usando la constante
-    `DIVISAS_PERMITIDAS` definida en el modelo `Cheque`.
-    """
-    try:
-        divisas = [{"value": d[0], "label": d[1]} for d in getattr(Cheque, 'DIVISAS_PERMITIDAS', [])]
-        return Response(divisas, status=status.HTTP_200_OK)
-    except Exception as e:
-        return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
-   
-
-
-
