@@ -12,7 +12,7 @@ import {
   MenuItems,
 } from "@headlessui/react";
 import { Bars3Icon, XMarkIcon } from "@heroicons/react/24/outline";
-import { CircleUser, ChevronDown } from "lucide-react";
+import { CircleUser, ChevronDown, User2, LogOut, Settings, History } from "lucide-react";
 import Can from "./Can";
 import { useAuth } from "../context/useAuth";
 import logoWhite from "../assets/logo-white.svg";
@@ -154,30 +154,68 @@ export default function Navbar() {
                       />
                     </MenuButton>
 
-                    <MenuItems className="absolute right-0 z-10 mt-2 w-48 origin-top-right rounded-md bg-zinc-900 py-1 shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
+                    <MenuItems className="absolute right-0 z-10 mt-2 w-64 origin-top-right rounded-md bg-zinc-900 py-1 shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
+                      {/* Info usuario */}
+                      <div className="px-4 py-3 border-b border-zinc-800">
+                        <div className="flex items-center space-x-3">
+                          <CircleUser className="w-8 h-8 text-gray-300" />
+                          <div>
+                            <div className="font-semibold text-white text-sm">{user?.first_name} {user?.last_name}</div>
+                            <div className="text-xs text-gray-400">{user?.email}</div>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Mi perfil */}
                       <MenuItem>
-                        <a
-                          href="/historial-transacciones"
-                          className="block px-4 py-2 text-sm text-gray-300 hover:bg-white/5"
-                        >
-                          Historial
-                        </a>
+                        {({ active }) => (
+                          <a
+                            href="/perfil-usuario"
+                            className={`flex items-center px-4 py-2 text-sm w-full gap-2 ${active ? "bg-white/5 text-white" : "text-gray-300"}`}
+                          >
+                            <User2 className="w-4 h-4" />
+                            Mi perfil
+                          </a>
+                        )}
+                      </MenuItem>
+                      <div className="my-1 border-t border-zinc-800" />
+
+                      {/* Grupo: Historial y Configuración */}
+                      <MenuItem>
+                        {({ active }) => (
+                          <a
+                            href="/historial-transacciones"
+                            className={`flex items-center px-4 py-2 text-sm w-full gap-2 ${active ? "bg-white/5 text-white" : "text-gray-300"}`}
+                          >
+                            <History className="w-4 h-4" />
+                            Historial de transacciones
+                          </a>
+                        )}
                       </MenuItem>
                       <MenuItem>
-                        <a
-                          href="/configuraciones"
-                          className="block px-4 py-2 text-sm text-gray-300 hover:bg-white/5"
-                        >
-                          Configuraciones
-                        </a>
+                        {({ active }) => (
+                          <a
+                            href="/configuraciones"
+                            className={`flex items-center px-4 py-2 text-sm w-full gap-2 ${active ? "bg-white/5 text-white" : "text-gray-300"}`}
+                          >
+                            <Settings className="w-4 h-4" />
+                            Configuraciones
+                          </a>
+                        )}
                       </MenuItem>
+                      <div className="my-1 border-t border-zinc-800" />
+
+                      {/* Logout */}
                       <MenuItem>
-                        <button
-                          onClick={logout}
-                          className="block w-full text-left px-4 py-2 text-sm text-gray-300 hover:bg-white/5"
-                        >
-                          Cerrar sesión
-                        </button>
+                        {({ active }) => (
+                          <button
+                            onClick={logout}
+                            className={`flex items-center px-4 py-2 text-sm w-full gap-2 text-left ${active ? "bg-white/5 text-white" : "text-gray-300"}`}
+                          >
+                            <LogOut className="w-4 h-4" />
+                            Cerrar sesión
+                          </button>
+                        )}
                       </MenuItem>
                     </MenuItems>
                   </>
