@@ -19,7 +19,7 @@ import {
   updateTarjeta,
   getDetallesMetodosFinancieros,
   createDetalleMetodoFinanciero,
-  toggleActiveMetodoFinanciero,
+  toggleActiveMetodoFinancieroDetalle,
   getMetodosFinancieros
 } from '../services/metodoFinancieroService';
 import type { 
@@ -28,18 +28,11 @@ import type {
   Tarjeta, 
   MetodoFinancieroDetalle,
   MetodoFinanciero,
-  ClienteTabType
+  ClienteTabType,
+  ExtendedItem
 } from '../types/MetodoFinanciero';
 
 type TabType = ClienteTabType;
-
-// ExtendedItem específico para esta página que maneja Tarjetas unificadas (LOCAL y STRIPE)
-type ExtendedItem = (CuentaBancaria | BilleteraDigital | Tarjeta) & {
-  tipo: TabType;
-  is_active: boolean;
-  detalle_id?: number;
-  desactivado_por_catalogo?: boolean;
-};
 
 const MetodosFinancierosClientePage = () => {
   const [activeTab, setActiveTab] = useState<TabType>('cuentas');
@@ -290,7 +283,7 @@ const MetodosFinancierosClientePage = () => {
     if (!item.detalle_id) return;
     
     try {
-      await toggleActiveMetodoFinanciero(item.detalle_id);
+      await toggleActiveMetodoFinancieroDetalle(item.detalle_id);
       toast.success(`${item.tipo.slice(0, -1)} ${item.is_active ? 'desactivado' : 'activado'} exitosamente!`);
       fetchAllData();
     } catch (err) {

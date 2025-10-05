@@ -25,7 +25,6 @@ router.register(r'detalles', MetodoFinancieroDetalleViewSet, basename='metodofin
 router.register(r'cuentas-bancarias', CuentaBancariaViewSet, basename='cuentabancaria')
 router.register(r'billeteras-digitales', BilleteraDigitalViewSet, basename='billeteradigital')
 router.register(r'tarjetas', TarjetaViewSet, basename='tarjeta')
-router.register(r'tarjetas-locales', TarjetaViewSet, basename='tarjetalocal')
 router.register(r'cheques', ChequeViewSet, basename='cheque')
 
 

@@ -56,20 +56,10 @@ class BancoViewSet(viewsets.ModelViewSet):
     """
     queryset = Banco.objects.all()
     serializer_class = BancoSerializer
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [permissions.IsAuthenticated, permissions.DjangoModelPermissions]
     filter_backends = [filters.SearchFilter]
     search_fields = ['nombre']
     pagination_class = OperacionesPagination
-
-    def get_permissions(self):
-        """
-        Instancia y retorna la lista de permisos que requiere esta vista.
-        """
-        if self.action in ['create', 'update', 'partial_update', 'destroy']:
-            permission_classes = [permissions.IsAuthenticated]
-        else:
-            permission_classes = [permissions.IsAuthenticated]
-        return [permission() for permission in permission_classes]
 
     def destroy(self, request, *args, **kwargs):
         """
@@ -90,11 +80,10 @@ class BancoViewSet(viewsets.ModelViewSet):
             status=status.HTTP_200_OK
         )
 
-    @action(detail=True, methods=['post'], permission_classes=[permissions.IsAuthenticated])
+    @action(detail=True, methods=['post'])
     def toggle_active(self, request, pk=None):
         """
         Alterna el estado de activación del banco (activo/inactivo).
-        
         Solo los administradores pueden usar esta funcionalidad.
         """
         instance = self.get_object()

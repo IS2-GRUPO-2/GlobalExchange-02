@@ -9,7 +9,7 @@ import {
   createBilleteraDigital,
   updateCuentaBancaria,
   updateBilleteraDigital,
-  toggleActiveMetodoFinanciero,
+  toggleActiveMetodoFinancieroDetalle,
 } from "../services/metodoFinancieroService";
 import type {
   CuentaBancaria,
@@ -125,7 +125,7 @@ export const useInstancias = () => {
     if (!item.detalle_id) return false;
 
     try {
-      await toggleActiveMetodoFinanciero(item.detalle_id);
+      await toggleActiveMetodoFinancieroDetalle(item.detalle_id);
       const tipoLabel = item.tipo === "cuentas" ? "Cuenta" : 
                        item.tipo === "billeteras digitales" ? "Billetera digital" :
                        "Tarjeta";

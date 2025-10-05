@@ -29,7 +29,6 @@ import type {
   MainTabType,
   InstanceTabType,
   CatalogTabType,
-  ExtendedItem,
 } from "../types/MetodoFinanciero";
 
 const MetodosFinancierosPage = () => {

@@ -277,12 +277,13 @@ export const updateMetodoFinanciero = async (
   }
 };
 
-export const toggleActiveMetodoFinanciero = async (id: number) => {
+
+export const toggleActiveMetodoFinancieroDetalle = async (id: number) => {
   try {
-    const res = await axios.post(`${API_URL}metodos/${id}/toggle_active/`);
+    const res = await axios.post(`${API_URL}detalles/${id}/toggle_active/`);
     return res.data;
   } catch (err) {
-    console.error("Error toggling método financiero status: ", err);
+    console.error("Error toggling detalle método financiero status: ", err);
     throw err;
   }
 };
@@ -410,18 +411,6 @@ export const updateCuentaBancaria = async (
   }
 };
 
-export const toggleActiveCuentaBancaria = async (id: number) => {
-  try {
-    const res = await axios.post(
-      `${API_URL}cuentas-bancarias/${id}/toggle_active/`
-    );
-    return res.data;
-  } catch (err) {
-    console.error("Error toggling cuenta bancaria status: ", err);
-    throw err;
-  }
-};
-
 // Billeteras Digitales
 export const getBilleterasDigitales = async (
   params: GetParams = {}
@@ -467,17 +456,6 @@ export const updateBilleteraDigital = async (
   }
 };
 
-export const toggleActiveBilleteraDigital = async (id: number) => {
-  try {
-    const res = await axios.post(
-      `${API_URL}billeteras-digitales/${id}/toggle_active/`
-    );
-    return res.data;
-  } catch (err) {
-    console.error("Error toggling billetera digital status: ", err);
-    throw err;
-  }
-};
 
 // Tarjetas
 export const getTarjetas = async (
@@ -521,15 +499,6 @@ export const updateTarjeta = async (tarjetaData: Tarjeta, id: number) => {
   }
 };
 
-export const toggleActiveTarjeta = async (id: number) => {
-  try {
-    const res = await axios.post(`${API_URL}tarjetas/${id}/toggle_active/`);
-    return res.data;
-  } catch (err) {
-    console.error("Error toggling tarjeta status: ", err);
-    throw err;
-  }
-};
 
 // ======================== MÉTODOS CLIENTE ESPECÍFICOS ========================
 
