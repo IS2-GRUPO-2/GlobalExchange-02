@@ -12,7 +12,7 @@ class Migration(migrations.Migration):
     operations = [
         migrations.AddField(
             model_name='categoriacliente',
-            name='is_active',
+            name='isActive',
             field=models.BooleanField(default=True),
         ),
     ]

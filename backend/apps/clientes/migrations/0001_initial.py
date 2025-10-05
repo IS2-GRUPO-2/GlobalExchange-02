@@ -15,9 +15,9 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name='Cliente',
             fields=[
-                ('id', models.UUIDField(default=uuid.uuid4, editable=False, primary_key=True, serialize=False)),
+                ('idCliente', models.UUIDField(default=uuid.uuid4, editable=False, primary_key=True, serialize=False)),
                 ('nombre', models.CharField(max_length=255)),
-                ('is_persona_fisica', models.BooleanField(default=True)),
+                ('isPersonaFisica', models.BooleanField(default=True)),
                 ('categoria', models.CharField(choices=[('VIP', 'VIP'), ('CORPORATIVO', 'Corporativo'), ('MINORISTA', 'Minorista')], max_length=20)),
                 ('cedula', models.CharField(blank=True, max_length=20, null=True, unique=True)),
                 ('correo', models.EmailField(max_length=254, unique=True)),
