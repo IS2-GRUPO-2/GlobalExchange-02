@@ -58,7 +58,7 @@ const RoleForm = ({ onSubmit, onCancel, permissions, initial, readOnly }: Props)
         <input
           value={name}
           onChange={(e) => setName(e.target.value)}
-          placeholder="Ej: ADMIN"
+          placeholder="Ej: Administrador"
           disabled={readOnly}
           className="w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-2 focus:ring-gray-700 focus:border-transparent disabled:bg-gray-100"
         />
