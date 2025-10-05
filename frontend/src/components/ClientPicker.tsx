@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { ChevronDown } from "lucide-react";
 import type { Cliente } from "../features/clientes/types/Cliente";
 import { toast } from "react-toastify";
 import {
@@ -6,6 +7,7 @@ import {
   getClienteActual,
   setClienteActual,
 } from "../features/usuario/services/usuarioService";
+import { Menu, MenuButton, MenuItem, MenuItems } from "@headlessui/react";
 
 type Props = {
   userId: number;
@@ -43,8 +45,7 @@ const ClientPicker: React.FC<Props> = ({
           setValue("");
           onChange?.(null);
         } else {
-          const current: Cliente | null =
-            currentRes.data?.clienteActual ?? null;
+          const current: Cliente | null = currentRes.data?.clienteActual ?? null;
           setValue(current ? current.idCliente : "");
           onChange?.(current);
         }
@@ -59,91 +60,89 @@ const ClientPicker: React.FC<Props> = ({
     })();
   }, [userId, onChange]);
 
-  const handleChange = async (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const nextId = e.target.value;
+  const handleChange = async (nextId: string) => {
     if (!nextId || nextId === value) return;
-
     const prevId = value;
     const nextClient = options.find((c) => c.idCliente === nextId) || null;
-
     setValue(nextId);
     onChange?.(nextClient);
-
     try {
       await setClienteActual(userId, nextId);
-
-      // Emitir evento personalizado cuando cambie el cliente
       window.dispatchEvent(new CustomEvent('clienteActualChanged', {
         detail: { cliente: nextClient, userId }
       }));
-      
     } catch (e) {
       setValue(prevId);
       onChange?.(options.find((c) => c.idCliente === prevId) || null);
       toast.error(errMsg(e));
     }
-  };
+  }
 
   if (loading) {
+    const buttonClass =
+      "flex items-center gap-2 min-w-[220px] w-[240px] h-10 rounded-md bg-zinc-900 border border-zinc-800 text-gray-300 text-sm px-4 py-2 " +
+      "focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 hover:bg-white/5 transition-colors";
     return (
-      <div className={`client-selector ${className}`}>
-        <select
-          disabled
-          className="block w-full rounded-md bg-gray-800 border border-gray-600 text-gray-400 text-sm px-3 py-1.5"
-        >
-          <option>Cargando clientes…</option>
-        </select>
+      <div className={`client-selector ${className} min-w-[220px] w-[240px]`}>
+        <button disabled className={buttonClass + " text-gray-500 cursor-not-allowed"}>
+          <span className="truncate flex-1 text-left">Cargando clientes…</span>
+        </button>
       </div>
     );
   }
 
   if (options.length === 0) {
+    const buttonClass =
+      "flex items-center gap-2 min-w-[220px] w-[240px] h-10 rounded-md bg-zinc-900 border border-zinc-800 text-gray-300 text-sm px-4 py-2 " +
+      "focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 hover:bg-white/5 transition-colors";
     return (
-      <div className={`client-selector ${className}`}>
-        <select
-          disabled
-          className="block w-full rounded-md bg-gray-800 border border-gray-600 text-gray-400 text-sm px-3 py-1.5"
-        >
-          <option>No hay clientes asignados</option>
-        </select>
+      <div className={`client-selector ${className} min-w-[220px] w-[240px]`}>
+        <button disabled className={buttonClass + " text-gray-500 cursor-not-allowed"}>
+          <span className="truncate flex-1 text-left">No hay clientes asignados</span>
+        </button>
       </div>
     );
   }
 
-  const currentClient = options.find((c) => c.idCliente === value) || null;
-  const otherOptions = options.filter((c) => c.idCliente !== value);
-  
-  return (
-    <div className={`client-selector ${className}`}>
+  const buttonClass =
+    "flex items-center gap-2 min-w-[240px] w-[250px] h-10 rounded-md bg-zinc-900 border border-zinc-800 text-gray-300 text-sm px-4 py-2 " +
+    "focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 hover:bg-white/5 transition-colors";
+  const menuClass =
+    "absolute z-20 mt-2 w-[250px] origin-top-right rounded-md bg-zinc-900 py-1 shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none";
 
-      <select
-        id="client-select"
-        className="block w-full  min-w-[150px] truncate rounded-md bg-gray-800 border border-gray-600 text-white text-sm px-3 py-1.5
-                   focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500
-                   hover:bg-gray-700 transition-colors"
-        value={value}
-        onChange={handleChange}
-      >
-        {value === "" ? (
-          <option value="">Seleccionar cliente…</option>
-        ) : (
-          // Oculta el cliente actual del desplegable, pero lo muestra como seleccionado
-          <option value={value} hidden>
-            {currentClient?.nombre ?? "Cliente actual"}
-          </option>
-        )}
-        {otherOptions.map((c) => (
-          <option
-            key={c.idCliente}
-            value={c.idCliente}
-            className="bg-gray-800 text-white"
-            title={c.nombre}
-          >
-            {c.nombre}
-          </option>
+  const currentClient = options.find((c) => c.idCliente === value) || null;
+
+  return (
+    <Menu as="div" className={`client-selector relative ${className} min-w-[320px] w-[340px]`}>
+      <MenuButton className={buttonClass + " flex justify-between items-center"}>
+        <span className="flex-1 text-left whitespace-normal" title={currentClient?.nombre || "Cliente actual"}>
+          {currentClient?.nombre || "Seleccionar cliente…"}
+        </span>
+        <ChevronDown className="w-4 h-4 text-gray-400 ml-2" />
+      </MenuButton>
+      <MenuItems className={menuClass}>
+        {options.map((c) => (
+          <MenuItem key={c.idCliente}>
+            {({ active }) => (
+              <button
+                className={`w-full text-left px-4 py-2 text-sm truncate ${
+                  c.idCliente === value
+                    ? "bg-white text-zinc-900 font-semibold"
+                    : active
+                    ? "bg-white/5 text-white"
+                    : "text-gray-300"
+                }`}
+                onClick={() => handleChange(c.idCliente)}
+                disabled={c.idCliente === value}
+                title={c.nombre}
+              >
+                {c.nombre}
+              </button>
+            )}
+          </MenuItem>
         ))}
-      </select>
-    </div>
+      </MenuItems>
+    </Menu>
   );
 };
 
