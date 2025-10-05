@@ -153,11 +153,11 @@ const RolesPage = () => {
                   <td>{r.permissions.length}</td>
                   <td className="text-gray-600">
                     {r.permissions
-                      .slice(0, 6)
+                      .slice(0, 4)
                       .map((pid) => permById.get(pid)?.name_es)
                       .filter(Boolean)
                       .join(", ")}
-                    {r.permissions.length > 6 ? "…" : ""}
+                    {r.permissions.length > 4 ? "…" : ""}
                   </td>
                   <td>
                     <div className="flex items-center space-x-2">
