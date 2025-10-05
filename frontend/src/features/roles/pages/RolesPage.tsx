@@ -141,8 +141,8 @@ const RolesPage = () => {
             <thead>
               <tr>
                 <th>Nombre</th>
-                <th># Permisos</th>
-                <th>Permisos (resumen)</th>
+                <th>Permisos</th>
+                <th>Resumen</th>
                 <th>Acciones</th>
               </tr>
             </thead>
