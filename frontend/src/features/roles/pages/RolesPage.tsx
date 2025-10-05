@@ -9,17 +9,27 @@ import {
   createRole,
   updateRole,
   deleteRole,
+  type Paginated,
 } from "../services/rolesService";
 import Modal from "../../../components/Modal";
 import RoleForm, { type RoleFormData } from "../components/RoleForm";
 import Can from "../../../components/Can";
 import { ROLES } from "../../../types/perms";
 
+const PAGE_SIZE = 6;
+
 const RolesPage = () => {
   const [roles, setRoles] = useState<Role[]>([]);
   const [perms, setPerms] = useState<Permission[]>([]);
   const [searchQuery, setSearchQuery] = useState<string>("");
 
+  // Paginación
+  const [page, setPage] = useState<number>(1);
+  const [totalPages, setTotalPages] = useState<number>(1);
+  const [totalCount, setTotalCount] = useState<number>(0);
+  const [loading, setLoading] = useState<boolean>(false);
+
+  // Modales
   const [createModalOpen, setCreateModalOpen] = useState<boolean>(false);
   const [editModalOpen, setEditModalOpen] = useState<boolean>(false);
   const [detailModalOpen, setDetailModalOpen] = useState<boolean>(false);
@@ -47,18 +57,33 @@ const RolesPage = () => {
   };
 
   const fetchData = async () => {
+    setLoading(true);
     try {
-      const [rRes, pRes] = await Promise.all([getRoles(searchQuery), getPermissions()]);
-      setRoles(rRes.data);
+      const [rRes, pRes] = await Promise.all([
+        getRoles(searchQuery, page, PAGE_SIZE),
+        getPermissions(),
+      ]);
+
+      const rData: Paginated<Role> = rRes.data;
+      const items = rData.results ?? [];
+      const count = rData.count ?? 0;
+
+      setRoles(items);
+      setTotalCount(count);
+      setTotalPages(Math.max(1, Math.ceil(count / PAGE_SIZE)));
+
       setPerms(pRes.data);
     } catch {
       toast.error("Error cargando roles o permisos");
+    } finally {
+      setLoading(false);
     }
   };
 
   useEffect(() => {
     fetchData();
-  }, [searchQuery]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [page, searchQuery]);
 
   const permById = useMemo(() => {
     const m = new Map<number, Permission>();
@@ -71,6 +96,7 @@ const RolesPage = () => {
       const res = await createRole({ name: data.name, permissions: data.permissions } as Omit<Role, "id">);
       if (res.status === 201 || res.status === 200) {
         toast.success("Rol creado con éxito!");
+        // Mantener la página actual y refrescar
         fetchData();
       }
     } catch {
@@ -104,7 +130,12 @@ const RolesPage = () => {
       const res = await deleteRole(role.id);
       if ((res.status ?? 200) === 200 || res.status === 204) {
         toast.success("Rol eliminado con éxito");
-        fetchData();
+        // Si borraste el único elemento de la página y hay anteriores, retrocede
+        if (roles.length === 1 && page > 1) {
+          setPage((p) => p - 1);
+        } else {
+          fetchData();
+        }
       }
     } catch {
       toast.error("No se pudo eliminar el rol");
@@ -122,7 +153,10 @@ const RolesPage = () => {
             type="text"
             placeholder="Buscar roles..."
             value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
+            onChange={(e) => {
+              setSearchQuery(e.target.value);
+              setPage(1); // evita doble fetch y resetea a la primera página
+            }}
             className="pl-10 pr-4 py-2 w-full border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-700 focus:border-transparent"
           />
         </div>
@@ -147,7 +181,12 @@ const RolesPage = () => {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200">
-              {roles.map((r) => (
+              {loading && (
+                <tr>
+                  <td colSpan={4} className="text-center py-6 text-gray-500">Cargando…</td>
+                </tr>
+              )}
+              {!loading && roles.map((r) => (
                 <tr key={r.id}>
                   <td className="font-medium">{r.name}</td>
                   <td>{r.permissions.length}</td>
@@ -190,7 +229,7 @@ const RolesPage = () => {
                   </td>
                 </tr>
               ))}
-              {roles.length === 0 && (
+              {!loading && roles.length === 0 && (
                 <tr>
                   <td colSpan={4} className="text-center text-gray-500 py-8">
                     No hay roles.
@@ -198,6 +237,34 @@ const RolesPage = () => {
                 </tr>
               )}
             </tbody>
+
+            <tfoot>
+              <tr>
+                <td colSpan={4}>
+                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mt-4">
+                    <div className="text-sm text-gray-600">
+                      Página {page} de {totalPages} · {totalCount} roles
+                    </div>
+                    <div className="flex space-x-3">
+                      <button
+                        onClick={() => setPage((p) => Math.max(p - 1, 1))}
+                        disabled={page === 1 || loading}
+                        className="px-3 py-1 btn-primary disabled:opacity-50"
+                      >
+                        Anterior
+                      </button>
+                      <button
+                        onClick={() => setPage((p) => Math.min(p + 1, totalPages))}
+                        disabled={page === totalPages || loading}
+                        className="px-3 py-1 btn-primary disabled:opacity-50"
+                      >
+                        Siguiente
+                      </button>
+                    </div>
+                  </div>
+                </td>
+              </tr>
+            </tfoot>
           </table>
         </div>
 

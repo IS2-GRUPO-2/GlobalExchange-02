@@ -5,6 +5,13 @@ import type { Permission } from "../../../types/Permission";
 const ROLES_API = "/api/roles/";
 const PERMISOS_API = "/api/permisos/";
 
+export type Paginated<T> = {
+  count: number;
+  next: string | null;
+  previous: string | null;
+  results: T[];
+};
+
 const getAuthHeaders = () => {
   const token = localStorage.getItem("token");
   return {
@@ -12,9 +19,20 @@ const getAuthHeaders = () => {
   };
 };
 
-export const getRoles = (search?: string) => {
-  const q = search?.trim() ? `?search=${encodeURIComponent(search.trim())}` : "";
-  return axios.get<Role[]>(ROLES_API + q, getAuthHeaders());
+export const getRoles = (
+  search?: string,
+  page?: number,
+  page_size?: number
+) => {
+  const params: Record<string, any> = {};
+  if (search?.trim()) params.search = search.trim();
+  if (page) params.page = page;
+  if (page_size) params.page_size = page_size;
+
+  return axios.get<Paginated<Role>>(ROLES_API, {
+    ...getAuthHeaders(),
+    params,
+  });
 };
 
 export const getRole = (id: number) =>
