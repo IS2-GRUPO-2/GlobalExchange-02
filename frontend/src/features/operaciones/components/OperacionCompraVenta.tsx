@@ -166,7 +166,7 @@ export default function OperacionCompraVenta() {
     try {
       // Realizar la simulación/cálculo de la operación
       const operacionData = {
-        cliente_id: clienteActual!.idCliente,
+        cliente_id: clienteActual!.id,
         divisa_origen: Number(divisaOrigen),
         divisa_destino: Number(divisaDestino),
         monto_origen: monto,
@@ -252,8 +252,8 @@ export default function OperacionCompraVenta() {
 
       // Crear transacción PENDIENTE al avanzar a términos y condiciones
       const transaccionData: TransaccionRequest = {
-        operador: Number(userId),
-        cliente: String(clienteActual!.idCliente),
+        id_user: Number(userId),
+        cliente: String(clienteActual!.id),
         operacion: opPerspectivaCasa!,
         tasa_aplicada: resultado.tc_final,
         tasa_inicial: resultado.tc_final, // Usar tc_final como tasa inicial también

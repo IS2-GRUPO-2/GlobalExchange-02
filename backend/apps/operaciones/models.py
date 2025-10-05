@@ -34,7 +34,7 @@ class Transaccion(models.Model):
         ('fallida', 'Fallida'),
     ]
     
-    operador = models.ForeignKey(User, on_delete=models.CASCADE, related_name='transacciones_operadas')
+    id_user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='transacciones_operadas')
     cliente = models.ForeignKey(Cliente, on_delete=models.CASCADE, related_name='transacciones')
     operacion = models.CharField(max_length=10, choices=OPERACION_CHOICES)
     tasa_aplicada = models.DecimalField(max_digits=15, decimal_places=6)

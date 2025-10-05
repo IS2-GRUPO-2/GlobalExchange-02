@@ -66,7 +66,7 @@ def calcular_operacion(divisa_origen_id, divisa_destino_id, monto: Decimal, op_p
 
     cliente = None
     if cliente_id:
-        cliente = Cliente.objects.get(idCliente=cliente_id)
+        cliente = Cliente.objects.get(id=cliente_id)
 
     divisa_origen = _get_divisa(divisa_origen_id)
     divisa_destino = _get_divisa(divisa_destino_id)

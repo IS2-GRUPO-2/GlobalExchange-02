@@ -9,7 +9,7 @@ import { getActiveCategoriaClientes } from "../../categoria_clientes/services/ca
 export type ClientFormData = {
   id?: number;
   nombre: string;
-  isPersonaFisica: boolean;
+  is_persona_fisica: boolean;
   idCategoria: string;
   documento: string;
   correo: string;
@@ -34,7 +34,7 @@ const clientSchema = yup.object().shape({
     .string()
     .required("Este campo es requerido")
     .email("Ingrese una dirección de correo válida"),
-  isPersonaFisica: yup.boolean().required("Este campo es requerido."),
+  is_persona_fisica: yup.boolean().required("Este campo es requerido."),
   idCategoria: yup.string().required("Este campo es requerido."),
   documento: yup
     .string()
@@ -76,10 +76,10 @@ const ClientForm = ({
         ? {
             nombre: cliente?.nombre,
             idCategoria: cliente?.id_categoria,
-            documento: cliente?.isPersonaFisica
+            documento: cliente?.is_persona_fisica
               ? cliente?.cedula
               : cliente?.ruc,
-            isPersonaFisica: cliente?.isPersonaFisica,
+            is_persona_fisica: cliente?.is_persona_fisica,
             direccion: cliente?.direccion,
             telefono: cliente?.telefono,
             correo: cliente?.correo,
@@ -88,7 +88,7 @@ const ClientForm = ({
             nombre: "",
             idCategoria: "",
             documento: "",
-            isPersonaFisica: false,
+            is_persona_fisica: false,
             direccion: "",
             telefono: "",
             correo: "",
@@ -291,20 +291,20 @@ const ClientForm = ({
             <input
               type="checkbox"
               id="tipo"
-              {...register("isPersonaFisica")}
+              {...register("is_persona_fisica")}
               className={`mr-2 h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded ${
-                errors.isPersonaFisica ? "border-red-500" : ""
+                errors.is_persona_fisica ? "border-red-500" : ""
               }`}
               defaultChecked={
-                isEditForm || readOnly ? cliente?.isPersonaFisica : true
+                isEditForm || readOnly ? cliente?.is_persona_fisica : true
               }
               disabled={readOnly}
             />
             Persona física
           </label>
-          {errors.isPersonaFisica && (
+          {errors.is_persona_fisica && (
             <p className="mt-1 text-sm text-red-600">
-              {errors.isPersonaFisica.message}
+              {errors.is_persona_fisica.message}
             </p>
           )}
         </div>

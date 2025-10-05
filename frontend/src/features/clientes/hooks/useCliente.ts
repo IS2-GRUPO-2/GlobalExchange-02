@@ -45,15 +45,15 @@ export const useClientes = () => {
   const registerCliente = useCallback(async (clientData: ClientFormData) => {
     let clienteData: Partial<Cliente> = {
       nombre: clientData.nombre,
-      isPersonaFisica: clientData.isPersonaFisica,
+      is_persona_fisica: clientData.is_persona_fisica,
       id_categoria: clientData.idCategoria,
       correo: clientData.correo,
       telefono: clientData.telefono,
       direccion: clientData.direccion,
-      isActive: true,
+      is_active: true,
     };
 
-    clientData.isPersonaFisica
+    clientData.is_persona_fisica
       ? (clienteData.cedula = clientData.documento)
       : (clienteData.ruc = clientData.documento);
     try {
@@ -70,15 +70,15 @@ export const useClientes = () => {
     async (clientData: ClientFormData, id: string) => {
       let clienteData: Partial<Cliente> = {
         nombre: clientData.nombre,
-        isPersonaFisica: clientData.isPersonaFisica,
+        is_persona_fisica: clientData.is_persona_fisica,
         id_categoria: clientData.idCategoria,
         correo: clientData.correo,
         telefono: clientData.telefono,
         direccion: clientData.direccion,
-        isActive: true,
+        is_active: true,
       };
 
-      if (clientData.isPersonaFisica) {
+      if (clientData.is_persona_fisica) {
         clienteData.cedula = clientData.documento;
         clienteData.ruc = undefined;
       } else {
@@ -100,21 +100,21 @@ export const useClientes = () => {
   );
 
   const toggleCliente = useCallback(async (cliente: Cliente) => {
-    if (!cliente.idCliente) return false;
+    if (!cliente.id) return false;
 
     try {
-      if (cliente.isActive) {
-        await deleteCliente(cliente.idCliente);
+      if (cliente.is_active) {
+        await deleteCliente(cliente.id);
         toast.success("Cliente desactivado exitosamente!");
       } else {
-        const activeCliente: Cliente = { ...cliente, isActive: true };
-        await updateCliente(cliente.idCliente, activeCliente);
+        const activeCliente: Cliente = { ...cliente, is_active: true };
+        await updateCliente(cliente.id, activeCliente);
         toast.success("Cliente activado exitosamente!");
       }
       return true;
     } catch (err) {
       toast.error(
-        `Error al ${cliente.isActive ? "desactivar" : "activar"} cliente`
+        `Error al ${cliente.is_active ? "desactivar" : "activar"} cliente`
       );
       console.error(err);
       return false;

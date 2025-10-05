@@ -38,7 +38,7 @@ def cliente_test():
     categoria, _ = CategoriaCliente.objects.get_or_create(nombre='VIP', descuento=10)
     return Cliente.objects.create(
         nombre='Cliente Test',
-        isPersonaFisica=True,
+        is_persona_fisica=True,
         id_categoria=categoria,
         correo='cliente.test@example.com',
         telefono='123456789',
@@ -53,7 +53,7 @@ def cliente_corporativo():
     categoria, _ = CategoriaCliente.objects.get_or_create(nombre='CORPORATIVO', descuento=5)
     return Cliente.objects.create(
         nombre='Cliente Corporativo',
-        isPersonaFisica=False,
+        is_persona_fisica=False,
         id_categoria=categoria,
         correo='corporativo@example.com',
         telefono='987654321',
@@ -148,7 +148,7 @@ class TestUserSerializer:
     def test_crear_usuario_con_clientes(self, user_data, cliente_test):
         """Prueba la creación de usuario con clientes asignados"""
         data = user_data.copy()
-        data['clientes'] = [cliente_test.idCliente]
+        data['clientes'] = [cliente_test.id]
         
         serializer = UserSerializer(data=data)
         
@@ -296,7 +296,7 @@ class TestUserAPI:
     def test_asignar_clientes_endpoint(self, authenticated_client, user_instance, cliente_test, cliente_corporativo):
         """Prueba el endpoint personalizado para asignar clientes"""
         data = {
-            'clientes': [str(cliente_test.idCliente), str(cliente_corporativo.idCliente)]
+            'clientes': [str(cliente_test.id), str(cliente_corporativo.id)]
         }
         
         response = authenticated_client.post(f'/api/usuarios/{user_instance.id}/asignar_clientes/', data, format='json')

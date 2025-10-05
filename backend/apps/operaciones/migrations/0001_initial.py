@@ -46,7 +46,7 @@ class Migration(migrations.Migration):
                 ('divisa_destino', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='transacciones_destino', to='divisas.divisa')),
                 ('divisa_origen', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='transacciones_origen', to='divisas.divisa')),
                 ('metodo_financiero', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='metodos_financieros.metodofinanciero')),
-                ('operador', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='transacciones_operadas', to=settings.AUTH_USER_MODEL)),
+                ('id_user', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='transacciones_operadas', to=settings.AUTH_USER_MODEL)),
                 ('tauser', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='transacciones', to='tauser.tauser')),
             ],
             options={

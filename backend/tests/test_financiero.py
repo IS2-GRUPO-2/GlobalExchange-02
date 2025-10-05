@@ -601,7 +601,7 @@ class TestComisionEspecifica:
         
         # Simulación: Cliente compra USD (casa vende) -> debe usar comision_venta del banco
         resultado = calcular_operacion(
-            cliente_id=cliente.idCliente,
+            cliente_id=cliente.id,
             divisa_origen_id=base.id,  # PYG (base)
             divisa_destino_id=usd.id,  # USD
             monto=1000,
@@ -658,7 +658,7 @@ class TestComisionEspecifica:
         
         # Simulación: Cliente compra USD (casa vende) -> debe usar comision_cobro_porcentaje del método
         resultado = calcular_operacion(
-            cliente_id=cliente.idCliente,
+            cliente_id=cliente.id,
             divisa_origen_id=base.id,
             divisa_destino_id=usd.id,
             monto=1000,

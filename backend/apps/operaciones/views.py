@@ -122,13 +122,13 @@ def get_op_perspectiva_casa(request) -> str:
 
 class TransaccionViewSet(viewsets.ModelViewSet):
     queryset = Transaccion.objects.select_related(
-        'operador', 'cliente', 'divisa_origen', 'divisa_destino', 
+        'id_user', 'cliente', 'divisa_origen', 'divisa_destino', 
         'metodo_financiero', 'tauser'
     ).all()
     permission_classes = [permissions.IsAuthenticated]
     filter_backends = [filters.SearchFilter, filters.OrderingFilter]
     search_fields = ['cliente__nombre', 'operador__username']
-    filterset_fields = ['operacion', 'estado', 'divisa_origen', 'divisa_destino', 'operador', 'cliente']
+    filterset_fields = ['operacion', 'estado', 'divisa_origen', 'divisa_destino', 'id_user', 'cliente']
     ordering_fields = ['fecha_inicio', 'fecha_fin', 'monto_origen', 'monto_destino', 'created_at']
     ordering = ['-created_at']
     
@@ -271,7 +271,7 @@ class TransaccionViewSet(viewsets.ModelViewSet):
         """
 
         resultado = calcular_operacion(
-            cliente_id=transaccion.cliente.idCliente,
+            cliente_id=transaccion.cliente.id,
             divisa_origen_id=transaccion.divisa_origen.id,
             divisa_destino_id=transaccion.divisa_destino.id,
             monto=transaccion.monto_origen,
