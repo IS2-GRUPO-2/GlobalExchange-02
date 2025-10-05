@@ -75,7 +75,7 @@ const RoleForm = ({ onSubmit, onCancel, permissions, initial, readOnly }: Props)
               type="text"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              placeholder="Buscar (nombre, codename o app)"
+              placeholder="Buscar"
               className="pl-9 w-full border border-gray-300 rounded-md px-3 py-1.5 text-sm focus:ring-2 focus:ring-gray-700 focus:border-transparent"
               disabled={readOnly && permissions.length === 0}
             />
