@@ -546,3 +546,50 @@ export const getMisTarjetas = async (): Promise<Tarjeta[]> => {
     throw err;
   }
 };
+
+// ======================== MÉTODOS CASA DE CAMBIO ========================
+
+/**
+ * Obtiene las cuentas bancarias de la casa de cambio (solo admins)
+ */
+export const getCasaCuentasBancarias = async (): Promise<CuentaBancaria[]> => {
+  try {
+    const res = await axios.get<CuentaBancaria[]>(
+      `${API_URL}cuentas-bancarias/casa-cuentas/`
+    );
+    return res.data;
+  } catch (err) {
+    console.error("Error obteniendo cuentas bancarias de la casa: ", err);
+    throw err;
+  }
+};
+
+/**
+ * Obtiene las billeteras digitales de la casa de cambio (solo admins)
+ */
+export const getCasaBilleterasDigitales = async (): Promise<BilleteraDigital[]> => {
+  try {
+    const res = await axios.get<BilleteraDigital[]>(
+      `${API_URL}billeteras-digitales/casa-billeteras/`
+    );
+    return res.data;
+  } catch (err) {
+    console.error("Error obteniendo billeteras digitales de la casa: ", err);
+    throw err;
+  }
+};
+
+/**
+ * Obtiene las tarjetas de la casa de cambio (solo admins)
+ */
+export const getCasaTarjetas = async (): Promise<Tarjeta[]> => {
+  try {
+    const res = await axios.get<Tarjeta[]>(
+      `${API_URL}tarjetas/casa-tarjetas/`
+    );
+    return res.data;
+  } catch (err) {
+    console.error("Error obteniendo tarjetas de la casa: ", err);
+    throw err;
+  }
+};

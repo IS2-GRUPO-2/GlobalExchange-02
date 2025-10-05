@@ -89,6 +89,7 @@ class CuentaBancariaSerializer(serializers.ModelSerializer):
     """
     banco_nombre = serializers.CharField(source='banco.nombre', read_only=True)
     banco_activo = serializers.BooleanField(source='banco.is_active', read_only=True)
+    metodo_financiero_detalle = MetodoFinancieroDetalleSerializer(read_only=True)
 
     class Meta:
         model = CuentaBancaria
@@ -103,6 +104,7 @@ class BilleteraDigitalSerializer(serializers.ModelSerializer):
     """
     plataforma_nombre = serializers.CharField(source='plataforma.nombre', read_only=True)
     plataforma_activa = serializers.BooleanField(source='plataforma.is_active', read_only=True)
+    metodo_financiero_detalle = MetodoFinancieroDetalleSerializer(read_only=True)
     
     class Meta:
         model = BilleteraDigital
@@ -117,6 +119,8 @@ class TarjetaSerializer(serializers.ModelSerializer):
     con Stripe.
     
     """
+    metodo_financiero_detalle = MetodoFinancieroDetalleSerializer(read_only=True)
+    
     class Meta:
         model = Tarjeta
         fields = '__all__'  

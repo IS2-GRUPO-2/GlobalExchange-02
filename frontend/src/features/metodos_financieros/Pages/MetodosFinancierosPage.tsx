@@ -29,6 +29,7 @@ import type {
   MainTabType,
   InstanceTabType,
   CatalogTabType,
+  ExtendedItem,
 } from "../types/MetodoFinanciero";
 
 const MetodosFinancierosPage = () => {
@@ -313,7 +314,6 @@ const MetodosFinancierosPage = () => {
       const filteredItems = filterInstances(
         instanciasHook.cuentas,
         instanciasHook.billeteras,
-        instanciasHook.detalles,
         instanceTab,
         search,
         instanciasHook.getExtendedItems
