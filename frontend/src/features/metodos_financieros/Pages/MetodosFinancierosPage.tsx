@@ -314,7 +314,6 @@ const MetodosFinancierosPage = () => {
       const filteredItems = filterInstances(
         instanciasHook.cuentas,
         instanciasHook.billeteras,
-        instanciasHook.detalles,
         instanceTab,
         search,
         instanciasHook.getExtendedItems

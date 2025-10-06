@@ -22,8 +22,8 @@ from .models import (
     BilleteraDigital,
     Tarjeta,
     Cheque
-
 )
+
 from .serializers import (
     BancoSerializer,
     BilleteraDigitalCatalogoSerializer,
@@ -35,10 +35,6 @@ from .serializers import (
     BilleteraDigitalSerializer,
     TarjetaSerializer
 )
-
-
-
-
 
 
 class OperacionesPagination(PageNumberPagination):
@@ -56,20 +52,10 @@ class BancoViewSet(viewsets.ModelViewSet):
     """
     queryset = Banco.objects.all()
     serializer_class = BancoSerializer
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [permissions.IsAuthenticated, permissions.DjangoModelPermissions]
     filter_backends = [filters.SearchFilter]
     search_fields = ['nombre']
     pagination_class = OperacionesPagination
-
-    def get_permissions(self):
-        """
-        Instancia y retorna la lista de permisos que requiere esta vista.
-        """
-        if self.action in ['create', 'update', 'partial_update', 'destroy']:
-            permission_classes = [permissions.IsAuthenticated]
-        else:
-            permission_classes = [permissions.IsAuthenticated]
-        return [permission() for permission in permission_classes]
 
     def destroy(self, request, *args, **kwargs):
         """
@@ -90,11 +76,10 @@ class BancoViewSet(viewsets.ModelViewSet):
             status=status.HTTP_200_OK
         )
 
-    @action(detail=True, methods=['post'], permission_classes=[permissions.IsAuthenticated])
+    @action(detail=True, methods=['post'])
     def toggle_active(self, request, pk=None):
         """
         Alterna el estado de activación del banco (activo/inactivo).
-        
         Solo los administradores pueden usar esta funcionalidad.
         """
         instance = self.get_object()
@@ -107,7 +92,6 @@ class BancoViewSet(viewsets.ModelViewSet):
             from .models import CuentaBancaria
             cuentas_relacionadas = CuentaBancaria.objects.filter(
                 banco=instance,
-                metodo_financiero_detalle__is_active=True
             )
             
             for cuenta in cuentas_relacionadas:
@@ -124,7 +108,6 @@ class BancoViewSet(viewsets.ModelViewSet):
             from .models import CuentaBancaria
             cuentas_relacionadas = CuentaBancaria.objects.filter(
                 banco=instance,
-                metodo_financiero_detalle__is_active=False,
                 metodo_financiero_detalle__desactivado_por_catalogo=True
             )
             
@@ -157,20 +140,10 @@ class BilleteraDigitalCatalogoViewSet(viewsets.ModelViewSet):
     """
     queryset = BilleteraDigitalCatalogo.objects.all()
     serializer_class = BilleteraDigitalCatalogoSerializer
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [permissions.IsAuthenticated, permissions.DjangoModelPermissions]
     filter_backends = [filters.SearchFilter]
     search_fields = ['nombre']
     pagination_class = OperacionesPagination
-
-    def get_permissions(self):
-        """
-        Instancia y retorna la lista de permisos que requiere esta vista.
-        """
-        if self.action in ['create', 'update', 'partial_update', 'destroy']:
-            permission_classes = [permissions.IsAuthenticated]
-        else:
-            permission_classes = [permissions.IsAuthenticated]
-        return [permission() for permission in permission_classes]
 
     def destroy(self, request, *args, **kwargs):
         """
@@ -191,7 +164,7 @@ class BilleteraDigitalCatalogoViewSet(viewsets.ModelViewSet):
             status=status.HTTP_200_OK
         )
 
-    @action(detail=True, methods=['post'], permission_classes=[permissions.IsAuthenticated])
+    @action(detail=True, methods=['post'])
     def toggle_active(self, request, pk=None):
         """
         Alterna el estado de activación de la billetera digital (activo/inactivo).
@@ -258,20 +231,10 @@ class TarjetaCatalogoViewSet(viewsets.ModelViewSet):
     """
     queryset = TarjetaCatalogo.objects.all()
     serializer_class = TarjetaCatalogoSerializer
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [permissions.IsAuthenticated, permissions.DjangoModelPermissions]
     filter_backends = [filters.SearchFilter]
     search_fields = ['marca']
     pagination_class = OperacionesPagination
-
-    def get_permissions(self):
-        """
-        Instancia y retorna la lista de permisos que requiere esta vista.
-        """
-        if self.action in ['create', 'update', 'partial_update', 'destroy']:
-            permission_classes = [permissions.IsAuthenticated]
-        else:
-            permission_classes = [permissions.IsAuthenticated]
-        return [permission() for permission in permission_classes]
 
     def destroy(self, request, *args, **kwargs):
         """
@@ -292,7 +255,7 @@ class TarjetaCatalogoViewSet(viewsets.ModelViewSet):
             status=status.HTTP_200_OK
         )
 
-    @action(detail=True, methods=['post'], permission_classes=[permissions.IsAuthenticated])
+    @action(detail=True, methods=['post'])
     def toggle_active(self, request, pk=None):
         """
         Alterna el estado de activación de la marca de tarjeta local (activo/inactivo).
@@ -362,22 +325,10 @@ class MetodoFinancieroViewSet(viewsets.ModelViewSet):
     """
     queryset = MetodoFinanciero.objects.all()
     serializer_class = MetodoFinancieroSerializer
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [permissions.IsAuthenticated, permissions.DjangoModelPermissions]
     filter_backends = [filters.SearchFilter]
     search_fields = ['nombre']
     pagination_class = OperacionesPagination
-
-    def get_permissions(self):
-        """
-        Instancia y retorna la lista de permisos que requiere esta vista.
-        """
-        if self.action in ['create', 'update', 'partial_update', 'destroy']:
-            permission_classes = [permissions.IsAuthenticated]
-        elif self.action == 'list_metodos_operacion':
-            permission_classes = [permissions.AllowAny]
-        else:
-            permission_classes = [permissions.IsAuthenticated]
-        return [permission() for permission in permission_classes]
 
     def destroy(self, request, *args, **kwargs):
         """
@@ -449,43 +400,16 @@ class MetodoFinancieroDetalleViewSet(viewsets.ModelViewSet):
     """
     queryset = MetodoFinancieroDetalle.objects.all()
     serializer_class = MetodoFinancieroDetalleSerializer
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [permissions.IsAuthenticated, permissions.DjangoModelPermissions]
     filter_backends = [filters.SearchFilter]
     search_fields = ['alias', 'cliente__nombre']
     pagination_class = OperacionesPagination
-
-    def get_queryset(self):
-        """
-        Filtrar detalles según permisos del usuario.
-        
-        - Administradores: ven todos los registros (activos e inactivos)
-        - Usuarios regulares: ven sus propios registros (activos e inactivos)
-        """
-        queryset = MetodoFinancieroDetalle.objects.all()
-        if self.request.user.has_perm('operaciones.view_metodofinanciero'):
-            # Administradores ven todos los registros
-            return queryset.filter(es_cuenta_casa=True)
-        else:
-            # Usuarios regulares ven los registros de sus clientes asignados (activos e inactivos)
-            return queryset.filter(cliente__in=self.request.user.clientes.all())
-
-    def get_permissions(self):
-        """
-        Instancia y retorna la lista de permisos que requiere esta vista.
-        """
-        if self.action in ['update', 'partial_update', 'destroy']:
-            # Solo admins pueden editar/eliminar detalles de métodos financieros
-            permission_classes = [permissions.IsAuthenticated]
-        else:
-            # Usuarios autenticados pueden ver y crear sus propios métodos financieros
-            permission_classes = [permissions.IsAuthenticated]
-        return [permission() for permission in permission_classes]
 
     def perform_create(self, serializer):
         """
         Asigna automáticamente el cliente cuando un usuario no-admin crea un método financiero.
         """
-        if not (self.request.user.has_perm('operaciones.add_metodofinanciero')):
+        if not (self.request.user.has_perm('metodos_financieros.add_metodofinancierodetalle')):
             # Para usuarios no-admin, asignar automáticamente el primer cliente asignado
             cliente = self.request.user.cliente_actual
             if cliente is not None:
@@ -497,21 +421,8 @@ class MetodoFinancieroDetalleViewSet(viewsets.ModelViewSet):
             # Para admins, usar el cliente especificado en los datos
             serializer.save()
 
-    def destroy(self, request, *args, **kwargs):
-        """Desactivación lógica del detalle de método financiero.
 
-        Aquí se marca `is_active=False` en el registro en lugar de eliminarlo
-        físicamente. Devuelve 404 si ya estaba desactivado.
-        """
-        instance = self.get_object()
-        if not instance.is_active:
-            return Response({"detail": "El detalle de método financiero ya está desactivado."}, status=status.HTTP_404_NOT_FOUND)
-
-        instance.is_active = False
-        instance.save()
-        return Response({"message": f"Detalle de método financiero {instance.alias} desactivado (eliminado lógico)."}, status=status.HTTP_200_OK)
-
-    @action(detail=True, methods=['post'], permission_classes=[permissions.IsAuthenticated])
+    @action(detail=True, methods=['post'])
     def toggle_active(self, request, pk=None):
         """
         Alterna el estado de activación del método financiero (activo/inactivo).
@@ -524,7 +435,7 @@ class MetodoFinancieroDetalleViewSet(viewsets.ModelViewSet):
         instance = self.get_object()
         
         # Verificar permisos para usuarios no-admin
-        if not (self.request.user.has_perm('operaciones.change_metodofinanciero')):
+        if not (self.request.user.has_perm('metodos_financieros.change_metodofinancierodetalle')):
             # Verificar que el método financiero pertenece al usuario
             if instance.cliente not in self.request.user.clientes.all():
                 raise PermissionDenied("No tienes permisos para modificar este método financiero.")
@@ -539,7 +450,7 @@ class MetodoFinancieroDetalleViewSet(viewsets.ModelViewSet):
         instance.is_active = not instance.is_active
         
         # Si el usuario regular está desactivando, asegurarse de que no sea por catálogo
-        if not instance.is_active and not (self.request.user.has_perm('operaciones.change_metodofinanciero')):
+        if not instance.is_active and not (self.request.user.has_perm('metodos_financieros.change_metodofinancierodetalle')):
             instance.desactivado_por_catalogo = False
         
         instance.save()
@@ -561,43 +472,26 @@ class CuentaBancariaViewSet(viewsets.ModelViewSet):
     """
     queryset = CuentaBancaria.objects.all()
     serializer_class = CuentaBancariaSerializer
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [permissions.IsAuthenticated, permissions.DjangoModelPermissions]
     filter_backends = [filters.SearchFilter]
     search_fields = ['banco__nombre', 'numero_cuenta', 'titular', 'cbu_cvu']
     pagination_class = OperacionesPagination
 
-    def get_queryset(self):
+    @action(detail=False, methods=['get'], url_path='casa-cuentas')
+    def casa_cuentas_bancarias(self, request):
         """
-        Filtrar cuentas según permisos del usuario.
+        Retorna las cuentas bancarias de la casa de cambio.
+        Solo accesible para administradores.
+        """
+        if not request.user.has_perm('metodos_financieros.view_metodofinanciero'):
+            raise PermissionDenied("No tienes permisos para ver las cuentas bancarias de la casa.")
         
-        - Administradores: ven todas las cuentas
-        - Usuarios regulares: solo ven sus propias cuentas
+        cuentas = CuentaBancaria.objects.select_related('metodo_financiero_detalle', 'banco').filter(
+            metodo_financiero_detalle__es_cuenta_casa=True
+        )
         
-        NOTA: No se filtra por is_active aquí, se incluye el estado en el serializer
-        """
-        queryset = CuentaBancaria.objects.select_related('metodo_financiero_detalle', 'banco').all()
-        
-        if self.request.user.has_perm('operaciones.view_metodofinanciero'):
-            # Admins ven todas las cuentas (casa y clientes)
-            return queryset
-        else:
-            # Usuarios regulares ven solo las de sus clientes (no las de la casa)
-            return queryset.filter(
-                metodo_financiero_detalle__cliente=self.request.user.cliente_actual,
-                metodo_financiero_detalle__es_cuenta_casa=False
-            )
-
-    def get_permissions(self):
-        """
-        Instancia y retorna la lista de permisos que requiere esta vista.
-        """
-        if self.action in ['update', 'partial_update', 'destroy']:
-            # Solo admins pueden editar/eliminar cuentas bancarias
-            permission_classes = [permissions.IsAuthenticated]
-        else:
-            # Usuarios autenticados pueden ver y crear sus propias cuentas bancarias
-            permission_classes = [permissions.IsAuthenticated]
-        return [permission() for permission in permission_classes]
+        serializer = self.get_serializer(cuentas, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
     @action(detail=False, methods=['get'], url_path='mis-cuentas')
     def mis_cuentas_bancarias(self, request):
@@ -612,30 +506,11 @@ class CuentaBancariaViewSet(viewsets.ModelViewSet):
             'metodo_financiero_detalle', 'banco'
         ).filter(
             metodo_financiero_detalle__cliente=cliente,
-            metodo_financiero_detalle__is_active=True,
-            metodo_financiero_detalle__desactivado_por_catalogo=False,
             metodo_financiero_detalle__es_cuenta_casa=False
         )
         
         serializer = self.get_serializer(cuentas, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
-
-    def destroy(self, request, *args, **kwargs):
-        """Desactivación lógica de la cuenta bancaria a través de su detalle.
-
-        Para las entidades específicas (cuenta, billetera, tarjeta) la
-        eliminación lógica se realiza marcando el `MetodoFinancieroDetalle`
-        asociado como inactivo.
-        """
-        instance = self.get_object()
-        detalle = instance.metodo_financiero_detalle
-        if not detalle.is_active:
-            return Response({"detail": "La cuenta bancaria ya está desactivada."}, status=status.HTTP_404_NOT_FOUND)
-
-        detalle.is_active = False
-        detalle.save()
-        return Response({"message": f"Cuenta bancaria {instance.banco.nombre} - {instance.numero_cuenta} desactivada (eliminado lógico)."}, status=status.HTTP_200_OK)
-
 
 class BilleteraDigitalViewSet(viewsets.ModelViewSet):
     """
@@ -646,42 +521,27 @@ class BilleteraDigitalViewSet(viewsets.ModelViewSet):
     """
     queryset = BilleteraDigital.objects.all()
     serializer_class = BilleteraDigitalSerializer
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [permissions.IsAuthenticated, permissions.DjangoModelPermissions]
     filter_backends = [filters.SearchFilter]
     search_fields = ['plataforma__nombre', 'usuario_id', 'email', 'telefono']
     pagination_class = OperacionesPagination
 
-    def get_queryset(self):
+    
+    @action(detail=False, methods=['get'], url_path='casa-billeteras')
+    def casa_billeteras_digitales(self, request):
         """
-        Filtrar billeteras según permisos del usuario.
+        Retorna las billeteras digitales de la casa de cambio.
+        Solo accesible para administradores.
+        """
+        if not request.user.has_perm('metodos_financieros.view_metodofinanciero'):
+            raise PermissionDenied("No tienes permisos para ver las billeteras digitales de la casa.")
         
-        - Usuarios regulares: solo ven sus propias billeteras
+        billeteras = BilleteraDigital.objects.select_related('metodo_financiero_detalle', 'plataforma').filter(
+            metodo_financiero_detalle__es_cuenta_casa=True
+        )
         
-        NOTA: No se filtra por is_active aquí, se incluye el estado en el serializer
-        """
-        queryset = BilleteraDigital.objects.select_related('metodo_financiero_detalle', 'plataforma').all()
-        
-        if self.request.user.has_perm('operaciones.view_metodofinanciero'):
-            # Admins ven todas las billeteras (casa y clientes)
-            return queryset
-        else:
-            # Usuarios regulares ven solo las de sus clientes (no las de la casa)
-            return queryset.filter(
-                metodo_financiero_detalle__cliente=self.request.user.cliente_actual,
-                metodo_financiero_detalle__es_cuenta_casa=False
-            )
-
-    def get_permissions(self):
-        """
-        Instancia y retorna la lista de permisos que requiere esta vista.
-        """
-        if self.action in ['update', 'partial_update', 'destroy']:
-            # Solo admins pueden editar/eliminar billeteras digitales
-            permission_classes = [permissions.IsAuthenticated]
-        else:
-            # Usuarios autenticados pueden ver y crear sus propias billeteras digitales
-            permission_classes = [permissions.IsAuthenticated]
-        return [permission() for permission in permission_classes]
+        serializer = self.get_serializer(billeteras, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
     @action(detail=False, methods=['get'], url_path='mis-billeteras')
     def mis_billeteras_digitales(self, request):
@@ -696,28 +556,11 @@ class BilleteraDigitalViewSet(viewsets.ModelViewSet):
             'metodo_financiero_detalle', 'plataforma'
         ).filter(
             metodo_financiero_detalle__cliente=cliente,
-            metodo_financiero_detalle__is_active=True,
-            metodo_financiero_detalle__desactivado_por_catalogo=False,
             metodo_financiero_detalle__es_cuenta_casa=False
         )
         
         serializer = self.get_serializer(billeteras, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
-
-    def destroy(self, request, *args, **kwargs):
-        """Desactivación lógica de la billetera digital a través de su detalle.
-
-        Marca el `MetodoFinancieroDetalle` asociado como inactivo.
-        """
-        instance = self.get_object()
-        detalle = instance.metodo_financiero_detalle
-        if not detalle.is_active:
-            return Response({"detail": "La billetera digital ya está desactivada."}, status=status.HTTP_404_NOT_FOUND)
-
-        detalle.is_active = False
-        detalle.save()
-        return Response({"message": f"Billetera digital {instance.plataforma.nombre} - {instance.usuario_id} desactivada (eliminado lógico)."}, status=status.HTTP_200_OK)
-
 
 class TarjetaViewSet(viewsets.ModelViewSet):
     """
@@ -728,54 +571,10 @@ class TarjetaViewSet(viewsets.ModelViewSet):
     """
     queryset = Tarjeta.objects.all()
     serializer_class = TarjetaSerializer
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [permissions.IsAuthenticated, permissions.DjangoModelPermissions]
     filter_backends = [filters.SearchFilter]
     search_fields = ['brand', 'last4', 'titular']
     pagination_class = OperacionesPagination
-
-    def get_queryset(self):
-        """
-        Filtrar tarjetas según permisos del usuario.
-        
-        - Usuarios regulares: solo ven sus propias tarjetas
-        
-        NOTA: No se filtra por is_active aquí, se incluye el estado en el serializer
-        """
-        queryset = Tarjeta.objects.select_related('metodo_financiero_detalle').all()
-
-        if self.request.user.has_perm('operaciones.view_metodofinanciero'):
-            # Admins ven todas las tarjetas (casa y clientes)
-            return queryset
-        else:
-            # Usuarios regulares ven solo las de sus clientes (no las de la casa)
-            return queryset.filter(
-                metodo_financiero_detalle__cliente=self.request.user.cliente_actual,
-                metodo_financiero_detalle__es_cuenta_casa=False
-            )
-
-    def create(self, request, *args, **kwargs):
-        """Override para debug - temporal"""
-        import logging
-        logger = logging.getLogger(__name__)
-        logger.error(f"DEBUG: Datos recibidos para crear tarjeta: {request.data}")
-        
-        serializer = self.get_serializer(data=request.data)
-        if not serializer.is_valid():
-            logger.error(f"DEBUG: Errores de validación: {serializer.errors}")
-            
-        return super().create(request, *args, **kwargs)
-
-    def get_permissions(self):
-        """
-        Instancia y retorna la lista de permisos que requiere esta vista.
-        """
-        if self.action in ['update', 'partial_update', 'destroy']:
-            # Solo admins pueden editar/eliminar tarjetas
-            permission_classes = [permissions.IsAuthenticated]
-        else:
-            # Usuarios autenticados pueden ver y crear sus propias tarjetas
-            permission_classes = [permissions.IsAuthenticated]
-        return [permission() for permission in permission_classes]
 
     @action(detail=False, methods=['get'], url_path='mis-tarjetas')
     def mis_tarjetas(self, request):
@@ -790,73 +589,16 @@ class TarjetaViewSet(viewsets.ModelViewSet):
             'metodo_financiero_detalle', 'marca'
         ).filter(
             metodo_financiero_detalle__cliente=cliente,
-            metodo_financiero_detalle__is_active=True,
-            metodo_financiero_detalle__desactivado_por_catalogo=False,
             metodo_financiero_detalle__es_cuenta_casa=False
         )
         
         serializer = self.get_serializer(tarjetas, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
-    def destroy(self, request, *args, **kwargs):
-        """Desactivación lógica de la tarjeta a través de su detalle.
-
-        Marca el `MetodoFinancieroDetalle` asociado como inactivo.
-        """
-        instance = self.get_object()
-        detalle = instance.metodo_financiero_detalle
-        if not detalle.is_active:
-            return Response({"detail": "La tarjeta ya está desactivada."}, status=status.HTTP_404_NOT_FOUND)
-
-        detalle.is_active = False
-        detalle.save()
-        return Response({"message": f"Tarjeta {instance.brand} ****{instance.last4} desactivada (eliminado lógico)."}, status=status.HTTP_200_OK)
-
-
 class ChequeViewSet(viewsets.ModelViewSet):
     queryset = Cheque.objects.all()
     serializer_class = ChequeSerializer
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [permissions.IsAuthenticated, permissions.DjangoModelPermissions]
     filter_backends = [filters.SearchFilter]
-    # Ajuste: los nombres de campo deben coincidir con el modelo
     search_fields = ['banco_emisor__nombre', 'numero', 'titular']
     pagination_class = OperacionesPagination
-    
-
-@api_view(["GET"])
-@permission_classes([permissions.AllowAny])
-def obtener_tipos_cheque(request):
-    """
-    Retorna la lista de tipos de cheque admitidos por el sistema.
-
-    Devuelve una lista de objetos { value, label } usando las choices
-    definidas en el campo `tipo` del modelo `Cheque`.
-    """
-    try:
-        choices = [
-            {"value": c[0], "label": c[1]} for c in Cheque._meta.get_field('tipo').choices
-        ]
-        return Response(choices, status=status.HTTP_200_OK)
-    except Exception as e:
-        return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
-
-@api_view(["GET"])
-@permission_classes([permissions.AllowAny])
-def obtener_divisas_cheque(request):
-    """
-    Retorna las divisas permitidas para cheques.
-
-    Devuelve una lista de objetos { value, label } usando la constante
-    `DIVISAS_PERMITIDAS` definida en el modelo `Cheque`.
-    """
-    try:
-        divisas = [{"value": d[0], "label": d[1]} for d in getattr(Cheque, 'DIVISAS_PERMITIDAS', [])]
-        return Response(divisas, status=status.HTTP_200_OK)
-    except Exception as e:
-        return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
-   
-
-
-

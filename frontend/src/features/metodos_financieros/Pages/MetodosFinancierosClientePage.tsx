@@ -8,18 +8,17 @@ import CuentaBancariaForm from '../components/CuentaBancariaForm';
 import BilleteraDigitalForm from '../components/BilleteraDigitalForm';
 import TarjetaForm from '../components/TarjetaForm';
 import {
-  getCuentasBancarias,
-  getBilleterasDigitales,
-  getTarjetas,
+  getMisCuentasBancarias,
+  getMisBilleterasDigitales,
+  getMisTarjetas,
   createCuentaBancaria,
   createBilleteraDigital,
   createTarjeta,
   updateCuentaBancaria,
   updateBilleteraDigital,
   updateTarjeta,
-  getDetallesMetodosFinancieros,
   createDetalleMetodoFinanciero,
-  toggleActiveMetodoFinanciero,
+  toggleActiveMetodoFinancieroDetalle,
   getMetodosFinancieros
 } from '../services/metodoFinancieroService';
 import type { 
@@ -28,25 +27,17 @@ import type {
   Tarjeta, 
   MetodoFinancieroDetalle,
   MetodoFinanciero,
-  ClienteTabType
+  ClienteTabType,
+  ExtendedItem
 } from '../types/MetodoFinanciero';
 
 type TabType = ClienteTabType;
-
-// ExtendedItem específico para esta página que maneja Tarjetas unificadas (LOCAL y STRIPE)
-type ExtendedItem = (CuentaBancaria | BilleteraDigital | Tarjeta) & {
-  tipo: TabType;
-  is_active: boolean;
-  detalle_id?: number;
-  desactivado_por_catalogo?: boolean;
-};
 
 const MetodosFinancierosClientePage = () => {
   const [activeTab, setActiveTab] = useState<TabType>('cuentas');
   const [cuentas, setCuentas] = useState<CuentaBancaria[]>([]);
   const [billeteras, setBilleteras] = useState<BilleteraDigital[]>([]);
   const [tarjetas, setTarjetas] = useState<Tarjeta[]>([]);
-  const [detalles, setDetalles] = useState<MetodoFinancieroDetalle[]>([]);
   const [metodos, setMetodos] = useState<MetodoFinanciero[]>([]);
   const [search, setSearch] = useState('');
   const [loading, setLoading] = useState(false);
@@ -70,19 +61,10 @@ const MetodosFinancierosClientePage = () => {
     }
   };
 
-  const fetchDetalles = async () => {
-    try {
-      const res = await getDetallesMetodosFinancieros({ search });
-      setDetalles(res.results.filter(d => !d.es_cuenta_casa));
-    } catch (err) {
-      console.error('Error fetching detalles:', err);
-    }
-  };
-
   const fetchCuentas = async () => {
     try {
-      const res = await getCuentasBancarias({ search });
-      setCuentas(res.results);
+      const res = await getMisCuentasBancarias();
+      setCuentas(res);
     } catch (err) {
       console.error('Error fetching cuentas:', err);
     }
@@ -90,8 +72,8 @@ const MetodosFinancierosClientePage = () => {
 
   const fetchBilleteras = async () => {
     try {
-      const res = await getBilleterasDigitales({ search });
-      setBilleteras(res.results);
+      const res = await getMisBilleterasDigitales();
+      setBilleteras(res);
     } catch (err) {
       console.error('Error fetching billeteras:', err);
     }
@@ -99,8 +81,8 @@ const MetodosFinancierosClientePage = () => {
 
   const fetchTarjetas = async () => {
     try {
-      const res = await getTarjetas({ search });
-      setTarjetas(res.results);
+      const res = await getMisTarjetas();
+      setTarjetas(res);
     } catch (err) {
       console.error('Error fetching tarjetas:', err);
     }
@@ -111,7 +93,6 @@ const MetodosFinancierosClientePage = () => {
     try {
       await Promise.all([
         fetchMetodos(),
-        fetchDetalles(),
         fetchCuentas(),
         fetchBilleteras(),
         fetchTarjetas()
@@ -123,24 +104,21 @@ const MetodosFinancierosClientePage = () => {
     }
   };
 
-  // Create extended items with active status from detalles
-  const getExtendedItems = (items: any[], tipo: TabType): ExtendedItem[] => {
-    return items.map(item => {
-      const detalle = detalles.find((d: MetodoFinancieroDetalle) => d.id === item.metodo_financiero_detalle);
-      return {
-        ...item,
-        tipo,
-        is_active: detalle?.is_active ?? true,
-        detalle_id: detalle?.id,
-        desactivado_por_catalogo: detalle?.desactivado_por_catalogo ?? false
-      };
-    });
+  // Create extended items with active status from metodo_financiero_detalle
+  const getExtendedItems = (items: any[], tipo: ClienteTabType): ExtendedItem[] => {
+    return items.map(item => ({
+      ...item,
+      tipo,
+      is_active: item.metodo_financiero_detalle?.is_active ?? true,
+      detalle_id: item.metodo_financiero_detalle?.id,
+      desactivado_por_catalogo: item.metodo_financiero_detalle?.desactivado_por_catalogo ?? false
+    }));
   };
 
   const getFilteredItems = (): ExtendedItem[] => {
     let items: ExtendedItem[] = [];
     
-    switch (activeTab) {
+    switch (activeTab as ClienteTabType) {
       case 'cuentas':
         items = getExtendedItems(cuentas, 'cuentas');
         break;
@@ -156,7 +134,7 @@ const MetodosFinancierosClientePage = () => {
     
     return items.filter(item => {
       const searchLower = search.toLowerCase();
-      switch (item.tipo) {
+      switch (item.tipo as ClienteTabType) {
         case 'cuentas':
           const cuenta = item as CuentaBancaria & ExtendedItem;
           return (cuenta.banco_nombre?.toLowerCase().includes(searchLower) ?? false) ||
@@ -263,7 +241,7 @@ const MetodosFinancierosClientePage = () => {
     
     setIsSubmitting(true);
     try {
-      switch (selectedItem.tipo) {
+      switch (selectedItem.tipo as ClienteTabType) {
         case 'cuentas':
           await updateCuentaBancaria(formData, selectedItem.id);
           break;
@@ -290,7 +268,7 @@ const MetodosFinancierosClientePage = () => {
     if (!item.detalle_id) return;
     
     try {
-      await toggleActiveMetodoFinanciero(item.detalle_id);
+      await toggleActiveMetodoFinancieroDetalle(item.detalle_id);
       toast.success(`${item.tipo.slice(0, -1)} ${item.is_active ? 'desactivado' : 'activado'} exitosamente!`);
       fetchAllData();
     } catch (err) {
@@ -383,7 +361,7 @@ const MetodosFinancierosClientePage = () => {
   const renderItemDetails = () => {
     if (!selectedItem) return null;
 
-    switch (selectedItem.tipo) {
+    switch (selectedItem.tipo as ClienteTabType) {
       case 'cuentas':
         const cuenta = selectedItem as CuentaBancaria & ExtendedItem;
         return (
