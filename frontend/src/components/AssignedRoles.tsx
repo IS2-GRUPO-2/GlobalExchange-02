@@ -33,9 +33,11 @@ export default function AssignedRoles({ user, onClose }: Props) {
         getUserRoles(user.id),
       ]);
 
-      const rolesSorted = rolesRes.data
-        .slice()
-        .sort((a, b) => a.name.localeCompare(b.name));
+      const rolesSorted = Array.isArray(rolesRes.data)
+        ? rolesRes.data
+            .slice() // Asegurarse de que rolesRes.data sea un array antes de usar slice
+            .sort((a: Role, b: Role) => a.name.localeCompare(b.name))
+        : [];
       const assignedIds = userRolesRes.data.map((r) => r.id);
 
       setAllRoles(rolesSorted);
