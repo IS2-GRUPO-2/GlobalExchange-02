@@ -24,6 +24,7 @@ const API_URL = "/api/metodos_financieros/";
 interface GetParams {
   page?: number;
   search?: string;
+  page_size?: number;
 }
 
 // ======================== CATÁLOGOS ========================
@@ -505,10 +506,11 @@ export const updateTarjeta = async (tarjetaData: Tarjeta, id: number) => {
 /**
  * Obtiene las cuentas bancarias activas del cliente actual
  */
-export const getMisCuentasBancarias = async (): Promise<CuentaBancaria[]> => {
+export const getMisCuentasBancarias = async (params: GetParams = {}): Promise<CuentaBancaria[]> => {
   try {
     const res = await axios.get<CuentaBancaria[]>(
-      `${API_URL}cuentas-bancarias/mis-cuentas/`
+      `${API_URL}cuentas-bancarias/mis-cuentas/`,
+      { params }
     );
     return res.data;
   } catch (err) {
@@ -520,10 +522,11 @@ export const getMisCuentasBancarias = async (): Promise<CuentaBancaria[]> => {
 /**
  * Obtiene las billeteras digitales activas del cliente actual
  */
-export const getMisBilleterasDigitales = async (): Promise<BilleteraDigital[]> => {
+export const getMisBilleterasDigitales = async (params: GetParams = {}): Promise<BilleteraDigital[]> => {
   try {
     const res = await axios.get<BilleteraDigital[]>(
-      `${API_URL}billeteras-digitales/mis-billeteras/`
+      `${API_URL}billeteras-digitales/mis-billeteras/`,
+      { params }
     );
     return res.data;
   } catch (err) {
@@ -535,10 +538,11 @@ export const getMisBilleterasDigitales = async (): Promise<BilleteraDigital[]> =
 /**
  * Obtiene las tarjetas activas del cliente actual
  */
-export const getMisTarjetas = async (): Promise<Tarjeta[]> => {
+export const getMisTarjetas = async (params: GetParams = {}): Promise<Tarjeta[]> => {
   try {
     const res = await axios.get<Tarjeta[]>(
-      `${API_URL}tarjetas/mis-tarjetas/`
+      `${API_URL}tarjetas/mis-tarjetas/`,
+      { params }
     );
     return res.data;
   } catch (err) {
@@ -552,10 +556,11 @@ export const getMisTarjetas = async (): Promise<Tarjeta[]> => {
 /**
  * Obtiene las cuentas bancarias de la casa de cambio (solo admins)
  */
-export const getCasaCuentasBancarias = async (): Promise<CuentaBancaria[]> => {
+export const getCasaCuentasBancarias = async (params: GetParams = {}): Promise<CuentaBancaria[]> => {
   try {
     const res = await axios.get<CuentaBancaria[]>(
-      `${API_URL}cuentas-bancarias/casa-cuentas/`
+      `${API_URL}cuentas-bancarias/casa-cuentas/`,
+      { params }
     );
     return res.data;
   } catch (err) {
@@ -567,10 +572,11 @@ export const getCasaCuentasBancarias = async (): Promise<CuentaBancaria[]> => {
 /**
  * Obtiene las billeteras digitales de la casa de cambio (solo admins)
  */
-export const getCasaBilleterasDigitales = async (): Promise<BilleteraDigital[]> => {
+export const getCasaBilleterasDigitales = async (params: GetParams = {}): Promise<BilleteraDigital[]> => {
   try {
     const res = await axios.get<BilleteraDigital[]>(
-      `${API_URL}billeteras-digitales/casa-billeteras/`
+      `${API_URL}billeteras-digitales/casa-billeteras/`,
+      { params }
     );
     return res.data;
   } catch (err) {

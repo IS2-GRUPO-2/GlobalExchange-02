@@ -238,24 +238,30 @@ const ConfiguracionTauserPage = () => {
                   <summary className="cursor-pointer text-gray-700 font-semibold">Ver ubicación en el mapa</summary>
                   <div className="h-64 w-full mt-4">
                     <MapContainer
-                      center={[
-                        selectedTauser.latitud || -25.263739,
-                        selectedTauser.longitud || -57.575926,
-                      ] as [number, number]}
-                      zoom={13}
-                      className="h-full w-full rounded-md border"
+                      {...({
+                        center: [
+                          selectedTauser.latitud || -25.263739,
+                          selectedTauser.longitud || -57.575926,
+                        ] as [number, number],
+                        zoom: 13,
+                        className: "h-full w-full rounded-md border"
+                      } as any)}
                     >
                       <TileLayer
-                        attribution='&copy; <a href="https://osm.org/copyright">OpenStreetMap</a>'
-                        url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                        {...({
+                          attribution: '&copy; <a href="https://osm.org/copyright">OpenStreetMap</a>',
+                          url: "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                        } as any)}
                       />
                       <Marker
-                        position={[selectedTauser.latitud, selectedTauser.longitud] as [number, number]}
-                        icon={new L.Icon({
-                          iconUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png",
-                          iconSize: [25, 41],
-                          iconAnchor: [12, 41],
-                        }) as any}
+                        {...({
+                          position: [selectedTauser.latitud, selectedTauser.longitud] as [number, number],
+                          icon: new L.Icon({
+                            iconUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png",
+                            iconSize: [25, 41],
+                            iconAnchor: [12, 41],
+                          })
+                        } as any)}
                       />
                     </MapContainer>
                   </div>

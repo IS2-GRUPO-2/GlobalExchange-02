@@ -36,7 +36,7 @@ const MetodosFinancierosPage = () => {
   const [mainTab, setMainTab] = useState<MainTabType>("catalogo");
   const [instanceTab, setInstanceTab] = useState<InstanceTabType>("cuentas");
   const [catalogTab, setCatalogTab] = useState<CatalogTabType>("bancos");
-  const [search, setSearch] = useState("");
+  const [searchQuery, setSearchQuery] = useState("");
 
   // Hooks personalizados
   const { isLoggedIn } = useAuth();
@@ -50,7 +50,7 @@ const MetodosFinancierosPage = () => {
     modalHook.setIsSubmitting(true);
     const success = await metodosHook.createMetodo(formData);
     if (success) {
-      metodosHook.fetchMetodos(search, metodosHook.page);
+      metodosHook.fetchMetodos("", metodosHook.page); // Recargar sin búsqueda
       modalHook.closeCreateModal();
     }
     modalHook.setIsSubmitting(false);
@@ -65,7 +65,7 @@ const MetodosFinancierosPage = () => {
       modalHook.selectedItem.id
     );
     if (success) {
-      metodosHook.fetchMetodos(search, metodosHook.page);
+      metodosHook.fetchMetodos("", metodosHook.page); // Recargar sin búsqueda
       modalHook.closeEditModal();
     }
     modalHook.setIsSubmitting(false);
@@ -74,7 +74,7 @@ const MetodosFinancierosPage = () => {
   const handleToggleMetodo = async (metodo: any) => {
     const success = await metodosHook.toggleMetodo(metodo);
     if (success) {
-      metodosHook.fetchMetodos(search, metodosHook.page);
+      metodosHook.fetchMetodos("", metodosHook.page); // Recargar sin búsqueda
     }
   };
 
@@ -88,7 +88,7 @@ const MetodosFinancierosPage = () => {
       metodoId
     );
     if (success) {
-      instanciasHook.fetchInstancias(search);
+      instanciasHook.fetchInstancias(""); // Recargar sin búsqueda
       modalHook.closeCreateModal();
     }
     modalHook.setIsSubmitting(false);
@@ -103,7 +103,7 @@ const MetodosFinancierosPage = () => {
       modalHook.selectedItem
     );
     if (success) {
-      instanciasHook.fetchInstancias(search);
+      instanciasHook.fetchInstancias(""); // Recargar sin búsqueda
       modalHook.closeEditModal();
     }
     modalHook.setIsSubmitting(false);
@@ -112,7 +112,7 @@ const MetodosFinancierosPage = () => {
   const handleToggleInstancia = async (item: ExtendedItem) => {
     const success = await instanciasHook.toggleInstancia(item);
     if (success) {
-      instanciasHook.fetchInstancias(search);
+      instanciasHook.fetchInstancias(""); // Recargar sin búsqueda
     }
   };
 
@@ -121,7 +121,7 @@ const MetodosFinancierosPage = () => {
     modalHook.setIsSubmitting(true);
     const success = await catalogosHook.createCatalogItem(formData, catalogTab);
     if (success) {
-      catalogosHook.fetchCatalogos(search);
+      catalogosHook.fetchCatalogos("", catalogosHook.page); // Recargar sin búsqueda
       modalHook.closeCreateModal();
     }
     modalHook.setIsSubmitting(false);
@@ -137,7 +137,7 @@ const MetodosFinancierosPage = () => {
       catalogTab
     );
     if (success) {
-      catalogosHook.fetchCatalogos(search);
+      catalogosHook.fetchCatalogos("", catalogosHook.page); // Recargar sin búsqueda
       modalHook.closeEditModal();
     }
     modalHook.setIsSubmitting(false);
@@ -146,23 +146,59 @@ const MetodosFinancierosPage = () => {
   const handleToggleCatalog = async (item: any, tipo: CatalogTabType) => {
     const success = await catalogosHook.toggleCatalogItem(item, tipo);
     if (success) {
-      catalogosHook.fetchCatalogos(search);
+      catalogosHook.fetchCatalogos("", catalogosHook.page); // Recargar sin búsqueda
       // También actualizar las instancias para reflejar cambios en cascada
-      instanciasHook.fetchInstancias(search);
+      instanciasHook.fetchInstancias(""); // Recargar sin búsqueda
     }
   };
 
-  // Función de búsqueda unificada
+  // Función de filtrado del lado del cliente para métodos financieros
+  const getFilteredMetodos = () => {
+    if (!searchQuery.trim()) return metodosHook.metodos;
+    
+    const searchLower = searchQuery.toLowerCase();
+    return metodosHook.metodos.filter(metodo => 
+      metodo.nombre.toLowerCase().includes(searchLower) ||
+      metodo.nombre_display?.toLowerCase().includes(searchLower)
+    );
+  };
+
+  // Función de filtrado del lado del cliente para catálogos
+  const getFilteredCatalogos = () => {
+    if (!searchQuery.trim()) {
+      return {
+        bancos: catalogosHook.bancos,
+        billeterasCatalogo: catalogosHook.billeterasCatalogo,
+        tarjetasCatalogo: catalogosHook.tarjetasCatalogo
+      };
+    }
+
+    const searchLower = searchQuery.toLowerCase();
+    return {
+      bancos: catalogosHook.bancos.filter(banco => 
+        banco.nombre.toLowerCase().includes(searchLower) ||
+        banco.cvu?.toLowerCase().includes(searchLower)
+      ),
+      billeterasCatalogo: catalogosHook.billeterasCatalogo.filter(billetera => 
+        billetera.nombre.toLowerCase().includes(searchLower)
+      ),
+      tarjetasCatalogo: catalogosHook.tarjetasCatalogo.filter(tarjeta => 
+        tarjeta.marca.toLowerCase().includes(searchLower)
+      )
+    };
+  };
+
+  // Función de búsqueda unificada - ahora solo para casos especiales
   const handleSearch = () => {
     switch (mainTab) {
       case "catalogo":
-        metodosHook.fetchMetodos(search, 1);
+        metodosHook.fetchMetodos(searchQuery, 1);
         break;
       case "catalogos":
-        catalogosHook.fetchCatalogos(search);
+        catalogosHook.fetchCatalogos(searchQuery, 1);
         break;
       case "instancias":
-        instanciasHook.fetchInstancias(search);
+        instanciasHook.fetchInstancias(searchQuery);
         break;
     }
   };
@@ -283,9 +319,10 @@ const MetodosFinancierosPage = () => {
       metodosHook.loading || instanciasHook.loading || catalogosHook.loading;
 
     if (mainTab === "catalogo") {
+      const filteredMetodos = getFilteredMetodos();
       return (
         <MetodoFinancieroTable
-          metodos={metodosHook.metodos}
+          metodos={filteredMetodos}
           loading={loading}
           onEdit={modalHook.openEditModal}
           onToggle={handleToggleMetodo}
@@ -297,15 +334,24 @@ const MetodosFinancierosPage = () => {
     }
 
     if (mainTab === "catalogos") {
+      const filteredCatalogos = getFilteredCatalogos();
+      const hasSearchQuery = searchQuery.trim() !== "";
+      
       return (
         <CatalogTable
-          bancos={catalogosHook.bancos}
-          billeterasCatalogo={catalogosHook.billeterasCatalogo}
-          tarjetasCatalogo={catalogosHook.tarjetasCatalogo}
+          bancos={filteredCatalogos.bancos}
+          billeterasCatalogo={filteredCatalogos.billeterasCatalogo}
+          tarjetasCatalogo={filteredCatalogos.tarjetasCatalogo}
           catalogTab={catalogTab}
           loading={loading}
           onEdit={modalHook.openEditModal}
           onToggle={handleToggleCatalog}
+          page={hasSearchQuery ? 1 : catalogosHook.page}
+          totalPages={hasSearchQuery ? 1 : catalogosHook.totalPages}
+          onPageChange={hasSearchQuery ? undefined : (page: number) => {
+            catalogosHook.setPage(page);
+            catalogosHook.fetchCatalogos("", page); // Sin búsqueda para paginación del servidor
+          }}
         />
       );
     }
@@ -315,7 +361,7 @@ const MetodosFinancierosPage = () => {
         instanciasHook.cuentas,
         instanciasHook.billeteras,
         instanceTab,
-        search,
+        searchQuery,
         instanciasHook.getExtendedItems
       );
 
@@ -323,7 +369,7 @@ const MetodosFinancierosPage = () => {
         <InstancesGrid
           items={filteredItems}
           instanceTab={instanceTab}
-          search={search}
+          search={searchQuery}
           loading={loading}
           onView={modalHook.openViewModal}
           onEdit={modalHook.openEditModal}
@@ -366,13 +412,19 @@ const MetodosFinancierosPage = () => {
     if (!isLoggedIn()) return;
 
     if (mainTab === "catalogo") {
-      metodosHook.fetchMetodos(search, metodosHook.page);
+      metodosHook.fetchMetodos("", metodosHook.page); // Sin búsqueda inicial
     } else if (mainTab === "catalogos") {
-      catalogosHook.fetchCatalogos(search);
+      catalogosHook.fetchCatalogos("", 1); // Sin búsqueda inicial
     } else {
-      instanciasHook.fetchInstancias(search);
+      instanciasHook.fetchInstancias(""); // Sin búsqueda inicial
     }
-  }, [isLoggedIn, mainTab, search, metodosHook.page]);
+  }, [isLoggedIn, mainTab, metodosHook.page]); // Quitar searchQuery de las dependencias
+
+  // Este useEffect maneja el filtrado en tiempo real del lado del cliente
+  useEffect(() => {
+    // Solo re-renderiza cuando cambia searchQuery, sin hacer llamadas al backend
+    // El filtrado se hace en las funciones getFilteredMetodos() y getFilteredCatalogos()
+  }, [searchQuery]);
 
   return (
     <div className="bg-gray-50 min-h-screen flex-1 overflow-y-auto p-6">
@@ -395,8 +447,8 @@ const MetodosFinancierosPage = () => {
 
       {/* Search and Create */}
       <SearchAndCreate
-        search={search}
-        setSearch={setSearch}
+        search={searchQuery}
+        setSearch={setSearchQuery}
         onSearch={handleSearch}
         onCreateClick={modalHook.openCreateModal}
         mainTab={mainTab}

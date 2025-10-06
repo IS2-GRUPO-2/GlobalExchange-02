@@ -30,19 +30,30 @@ export const useCatalogos = () => {
     TarjetaCatalogo[]
   >([]);
   const [loading, setLoading] = useState(false);
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
 
-  const fetchCatalogos = useCallback(async (search: string = "") => {
+  const fetchCatalogos = useCallback(async (search: string = "", pageNum: number = 1) => {
     setLoading(true);
     try {
       const [bancosRes, billeterasRes, tarjetasRes] = await Promise.all([
-        getBancos({ search }),
-        getBilleterasDigitalesCatalogo({ search }),
-        getTarjetasCatalogo({ search }),
+        getBancos({ search, page: pageNum, page_size: 10 }),
+        getBilleterasDigitalesCatalogo({ search, page: pageNum, page_size: 10 }),
+        getTarjetasCatalogo({ search, page: pageNum, page_size: 10 }),
       ]);
 
       setBancos(bancosRes.results);
       setBilleterasCatalogo(billeterasRes.results);
       setTarjetasCatalogo(tarjetasRes.results);
+      
+      // Calculate total pages from count (using 10 items per page like other modules)
+      const totalPagesFromResponse = Math.max(
+        Math.ceil(bancosRes.count / 10),
+        Math.ceil(billeterasRes.count / 10),
+        Math.ceil(tarjetasRes.count / 10)
+      );
+      setTotalPages(totalPagesFromResponse || 1);
+      setPage(pageNum);
     } catch (err) {
       console.error("Error fetching catálogos:", err);
       toast.error("Error al cargar catálogos");
@@ -157,9 +168,12 @@ export const useCatalogos = () => {
     billeterasCatalogo,
     tarjetasCatalogo,
     loading,
+    page,
+    totalPages,
     fetchCatalogos,
     createCatalogItem,
     updateCatalogItem,
     toggleCatalogItem,
+    setPage,
   };
 };

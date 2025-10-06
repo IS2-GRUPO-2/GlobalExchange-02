@@ -17,9 +17,12 @@ interface CatalogTableProps {
   loading: boolean;
   onEdit: (item: any) => void;
   onToggle: (item: any, tipo: CatalogTabType) => void;
+  page?: number;
+  totalPages?: number;
+  onPageChange?: (page: number) => void;
 }
 
-export const CatalogTable: React.FC<CatalogTableProps> = ({
+const CatalogTable: React.FC<CatalogTableProps> = ({
   bancos,
   billeterasCatalogo,
   tarjetasCatalogo,
@@ -27,6 +30,9 @@ export const CatalogTable: React.FC<CatalogTableProps> = ({
   loading,
   onEdit,
   onToggle,
+  page = 1,
+  totalPages = 1,
+  onPageChange,
 }) => {
   if (loading) {
     return (
@@ -154,6 +160,33 @@ export const CatalogTable: React.FC<CatalogTableProps> = ({
           )}
         </tbody>
       </table>
+
+      {/* Pagination */}
+      {onPageChange && (
+        <div className="flex justify-between items-center mt-4 pt-4">
+          <div className="text-sm text-gray-600">
+            Página {page} de {totalPages}
+          </div>
+          <div className="flex space-x-4">
+            <button
+              onClick={() => onPageChange(Math.max(page - 1, 1))}
+              disabled={page === 1}
+              className="px-3 py-1 btn-primary disabled:opacity-50"
+            >
+              Anterior
+            </button>
+            <button
+              onClick={() => onPageChange(Math.min(page + 1, totalPages))}
+              disabled={page === totalPages}
+              className="px-3 py-1 btn-primary disabled:opacity-50"
+            >
+              Siguiente
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
+
+export { CatalogTable };

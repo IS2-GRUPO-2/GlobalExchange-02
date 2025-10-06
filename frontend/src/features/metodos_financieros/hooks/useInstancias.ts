@@ -26,30 +26,14 @@ export const useInstancias = () => {
   const fetchInstancias = useCallback(async (search: string = "") => {
     setLoading(true);
     try {
+      const params = search.trim() ? { search: search.trim() } : {};
       const [cuentasRes, billeterasRes] = await Promise.all([
-        getCasaCuentasBancarias(),
-        getCasaBilleterasDigitales(),
+        getCasaCuentasBancarias(params),
+        getCasaBilleterasDigitales(params),
       ]);
 
-      // Filtrar por búsqueda si es necesario
-      const filteredCuentas = search 
-        ? cuentasRes.filter((c: any) => 
-            c.banco?.nombre?.toLowerCase().includes(search.toLowerCase()) ||
-            c.titular?.toLowerCase().includes(search.toLowerCase()) ||
-            c.numero_cuenta?.toLowerCase().includes(search.toLowerCase())
-          )
-        : cuentasRes;
-
-      const filteredBilleteras = search
-        ? billeterasRes.filter((b: any) =>
-            b.plataforma?.nombre?.toLowerCase().includes(search.toLowerCase()) ||
-            b.usuario_id?.toLowerCase().includes(search.toLowerCase()) ||
-            b.email?.toLowerCase().includes(search.toLowerCase())
-          )
-        : billeterasRes;
-
-      setCuentas(filteredCuentas);
-      setBilleteras(filteredBilleteras);
+      setCuentas(cuentasRes);
+      setBilleteras(billeterasRes);
     } catch (err) {
       console.error("Error fetching instancias:", err);
       toast.error("Error al cargar instancias");

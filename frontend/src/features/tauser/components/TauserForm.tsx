@@ -75,7 +75,7 @@ const MapSelector = ({
     },
   });
 
-  return <Marker position={position} icon={markerIcon as any} />;
+  return <Marker {...({ position, icon: markerIcon } as any)} />;
 };
 
 const TauserForm = ({ tauser, isEditForm, onSubmit, onCancel }: Props) => {
@@ -282,17 +282,21 @@ const TauserForm = ({ tauser, isEditForm, onSubmit, onCancel }: Props) => {
               </label>
               <div className="w-full h-64 border border-gray-300 rounded-md overflow-hidden">
                 <MapContainer
-                  center={[
-                    tauser?.latitud || -25.263739,
-                    tauser?.longitud || -57.575926,
-                  ] as [number, number]}
-                  zoom={13}
-                  className="h-full w-full"
-                  scrollWheelZoom={true}
+                  {...({
+                    center: [
+                      tauser?.latitud || -25.263739,
+                      tauser?.longitud || -57.575926,
+                    ] as [number, number],
+                    zoom: 13,
+                    className: "h-full w-full",
+                    scrollWheelZoom: true
+                  } as any)}
                 >
                   <TileLayer
-                    attribution='&copy; <a href="https://osm.org/copyright">OpenStreetMap</a>'
-                    url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                    {...({
+                      attribution: '&copy; <a href="https://osm.org/copyright">OpenStreetMap</a>',
+                      url: "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                    } as any)}
                   />
                   <MapSelector
                     lat={tauser?.latitud || -25.263739}
