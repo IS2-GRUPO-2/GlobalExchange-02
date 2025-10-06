@@ -92,7 +92,7 @@ class UserViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        clientes = Cliente.objects.filter(idCliente__in=clientes_ids)
+        clientes = Cliente.objects.filter(id__in=clientes_ids)
         user.clientes.set(clientes)  # reemplaza la relación actual con estos clientes
         user.save()
 
