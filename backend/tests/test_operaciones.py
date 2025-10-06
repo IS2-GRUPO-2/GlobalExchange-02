@@ -61,7 +61,7 @@ def cliente_test(categoria_cliente):
     """Cliente de prueba"""
     return Cliente.objects.create(
         nombre='Cliente Test',
-        isPersonaFisica=True,
+        is_persona_fisica=True,
         id_categoria=categoria_cliente,
         correo='cliente@test.com',
         telefono='123456789',
@@ -164,8 +164,8 @@ def tauser_test():
 def transaccion_data(operador_usuario, cliente_test, divisa_usd, divisa_pyg, metodo_efectivo, tauser_test):
     """Datos básicos para crear una transacción"""
     return {
-        'operador': operador_usuario.id,
-        'cliente': str(cliente_test.idCliente),
+        'id_user': operador_usuario.id,
+        'cliente': str(cliente_test.id),
         'operacion': 'compra',
         'tasa_aplicada': Decimal('7250.00'),
         'tasa_inicial': Decimal('7250.00'),
@@ -187,7 +187,7 @@ class TestTransaccionModel:
     def test_crear_transaccion(self, transaccion_data, operador_usuario, cliente_test, divisa_usd, divisa_pyg, metodo_efectivo, tauser_test):
         """Prueba la creación básica de una transacción"""
         transaccion = Transaccion.objects.create(
-            operador=operador_usuario,
+            id_user=operador_usuario,
             cliente=cliente_test,
             operacion='compra',
             tasa_aplicada=Decimal('7250.00'),
@@ -208,7 +208,7 @@ class TestTransaccionModel:
     def test_transaccion_str_method(self, operador_usuario, cliente_test, divisa_usd, divisa_pyg, metodo_efectivo, tauser_test):
         """Prueba el método __str__ de Transaccion"""
         transaccion = Transaccion.objects.create(
-            operador=operador_usuario,
+            id_user=operador_usuario,
             cliente=cliente_test,
             operacion='venta',
             tasa_aplicada=Decimal('7300.00'),
@@ -276,8 +276,8 @@ class TestTransaccionViewSet:
         
         # Datos de transacción usando SOLO metodo_financiero_detalle
         transaccion_data = {
-            'operador': operador_usuario.id,
-            'cliente': str(cliente_test.idCliente),
+            'id_user': operador_usuario.id,
+            'cliente': str(cliente_test.id),
             'operacion': 'compra',
             'tasa_aplicada': '7250.00',
             'tasa_inicial': '7250.00',
@@ -312,8 +312,8 @@ class TestTransaccionViewSet:
         
         # Datos de transacción usando SOLO metodo_financiero
         transaccion_data = {
-            'operador': operador_usuario.id,
-            'cliente': str(cliente_test.idCliente),
+            'id_user': operador_usuario.id,
+            'cliente': str(cliente_test.id),
             'operacion': 'venta',
             'tasa_aplicada': '4000.00',
             'tasa_inicial': '4000.00',
@@ -347,8 +347,8 @@ class TestTransaccionViewSet:
         
         # Datos de transacción SIN métodos financieros
         transaccion_data = {
-            'operador': operador_usuario.id,
-            'cliente': str(cliente_test.idCliente),
+            'id_user': operador_usuario.id,
+            'cliente': str(cliente_test.id),
             'operacion': 'venta',
             'tasa_aplicada': '4000.00',
             'tasa_inicial': '4000.00',
@@ -383,8 +383,8 @@ class TestTransaccionViewSet:
         
         # Datos de transacción con AMBOS métodos
         transaccion_data = {
-            'operador': operador_usuario.id,
-            'cliente': str(cliente_test.idCliente),
+            'id_user': operador_usuario.id,
+            'cliente': str(cliente_test.id),
             'operacion': 'venta',
             'tasa_aplicada': '4000.00',
             'tasa_inicial': '4000.00',
@@ -411,7 +411,7 @@ class TestTransaccionViewSet:
         client, user = authenticated_client
         
         transaccion = Transaccion.objects.create(
-            operador=operador_usuario,
+            id_user=operador_usuario,
             cliente=cliente_test,
             operacion='compra',
             tasa_aplicada=Decimal('7250.00'),
@@ -435,7 +435,7 @@ class TestTransaccionViewSet:
         client, user = authenticated_client
         
         transaccion = Transaccion.objects.create(
-            operador=operador_usuario,
+            id_user=operador_usuario,
             cliente=cliente_test,
             operacion='compra',
             tasa_aplicada=Decimal('7250.00'),
@@ -450,8 +450,8 @@ class TestTransaccionViewSet:
         
         url = reverse('transaccion-detail', args=[transaccion.id])
         update_data = {
-            'operador': operador_usuario.id,
-            'cliente': str(cliente_test.idCliente),
+            'id_user': operador_usuario.id,
+            'cliente': str(cliente_test.id),
             'operacion': 'compra',
             'tasa_aplicada': Decimal('7260.00'),  # Tasa actualizada
             'tasa_inicial': Decimal('7250.00'),
@@ -476,7 +476,7 @@ class TestTransaccionViewSet:
         client, user = authenticated_client
         
         transaccion = Transaccion.objects.create(
-            operador=operador_usuario,
+            id_user=operador_usuario,
             cliente=cliente_test,
             operacion='compra',
             tasa_aplicada=Decimal('7250.00'),
@@ -507,7 +507,7 @@ class TestOperacionPrivada:
         url = reverse('operacion-privada')
         
         data = {
-            'cliente_id': str(cliente_test.idCliente),
+            'cliente_id': str(cliente_test.id),
             'divisa_origen': divisa_pyg.id,
             'divisa_destino': divisa_usd.id,
             'monto_origen': Decimal('725000.00'),
@@ -635,7 +635,7 @@ class TestTransaccionAcciones:
         client, user = authenticated_client
         
         transaccion = Transaccion.objects.create(
-            operador=operador_usuario,
+            id_user=operador_usuario,
             cliente=cliente_test,
             operacion='compra',
             tasa_aplicada=Decimal('7250.00'),
@@ -662,7 +662,7 @@ class TestTransaccionAcciones:
         client, user = authenticated_client
         
         transaccion = Transaccion.objects.create(
-            operador=operador_usuario,
+            id_user=operador_usuario,
             cliente=cliente_test,
             operacion='compra',
             tasa_aplicada=Decimal('7250.00'),
@@ -689,7 +689,7 @@ class TestTransaccionAcciones:
         client, user = authenticated_client
         
         transaccion = Transaccion.objects.create(
-            operador=operador_usuario,
+            id_user=operador_usuario,
             cliente=cliente_test,
             operacion='compra',
             tasa_aplicada=Decimal('7250.00'),

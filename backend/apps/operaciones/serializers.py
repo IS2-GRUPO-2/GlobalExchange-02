@@ -21,7 +21,7 @@ from apps.metodos_financieros.serializers import MetodoFinancieroSerializer
 
 
 class TransaccionDetalleSerializer(serializers.ModelSerializer):
-    operador_detalle = UserSerializer(source='operador', read_only=True)
+    id_user_detalle = UserSerializer(source='id_user', read_only=True)
     cliente_detalle = ClienteSerializer(source='cliente', read_only=True)
     divisa_origen_detalle = DivisaSerializer(source='divisa_origen', read_only=True)
     divisa_destino_detalle = DivisaSerializer(source='divisa_destino', read_only=True)
@@ -31,12 +31,12 @@ class TransaccionDetalleSerializer(serializers.ModelSerializer):
     class Meta:
         model = Transaccion
         fields = [
-            'id', 'operador', 'cliente', 'operacion', 'tasa_aplicada', 'tasa_inicial',
+            'id', 'id_user', 'cliente', 'operacion', 'tasa_aplicada', 'tasa_inicial',
             'divisa_origen', 'divisa_destino', 'monto_origen', 'monto_destino',
             'metodo_financiero', 'fecha_inicio', 'fecha_fin', 'tauser', 'estado',
             'created_at', 'updated_at',
             # Campos detallados para lectura
-            'operador_detalle', 'cliente_detalle', 'divisa_origen_detalle',
+            'id_user_detalle', 'cliente_detalle', 'divisa_origen_detalle',
             'divisa_destino_detalle', 'metodo_financiero_detalle', 'tauser_detalle'
         ]
         read_only_fields = ['id', 'fecha_inicio', 'created_at', 'updated_at']

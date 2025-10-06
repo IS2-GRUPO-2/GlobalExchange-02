@@ -42,7 +42,7 @@ const ClientesPage = () => {
     modalHook.setIsSubmitting(true);
     const success = await clientesHook.updateClient(
       clientData,
-      modalHook.selectedItem.idCliente
+      modalHook.selectedItem.id
     );
     if (success) {
       clientesHook.fetchClientes(searchQuery, clientesHook.page);
@@ -101,27 +101,27 @@ const ClientesPage = () => {
             </thead>
             <tbody className="divide-y divide-gray-200">
               {clientesHook.clientes.map((cliente: Cliente) => (
-                <tr key={cliente.idCliente}>
+                <tr key={cliente.id}>
                   <td className="font-medium">{cliente.nombre}</td>
                   <td>{cliente.categoria?.nombre}</td>
                   <td>
                     <span
                       className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                        cliente.isActive
+                        cliente.is_active
                           ? "bg-green-100 text-green-800"
                           : "bg-red-100 text-red-900"
                       }`}
                     >
-                      {cliente.isActive ? "Activo" : "Inactivo"}
+                      {cliente.is_active ? "Activo" : "Inactivo"}
                     </span>
                   </td>
                   <td>
-                    {cliente.isPersonaFisica
+                    {cliente.is_persona_fisica
                       ? "Persona física"
                       : "Persona jurídica"}
                   </td>
                   <td>
-                    {cliente.isPersonaFisica ? cliente.cedula : cliente.ruc}
+                    {cliente.is_persona_fisica ? cliente.cedula : cliente.ruc}
                   </td>
                   <td>
                     <div className="flex items-center space-x-2">
@@ -134,13 +134,13 @@ const ClientesPage = () => {
                           <Edit size={16} />
                         </button>
                       </Can>
-                      <Can anyOf = {cliente.isActive? [CLIENTES.DELETE] : [CLIENTES.CHANGE]}>
+                      <Can anyOf = {cliente.is_active? [CLIENTES.DELETE] : [CLIENTES.CHANGE]}>
                         <button
                           onClick={() => handleToggleClient(cliente)}
                           className="p-1 text-gray-500 hover:text-red-600 rounded-full hover:bg-gray-100"
-                          title={cliente.isActive ? "Desactivar" : "Activar"}
+                          title={cliente.is_active ? "Desactivar" : "Activar"}
                         >
-                          {cliente.isActive ? (
+                          {cliente.is_active ? (
                             <UserX size={16} />
                           ) : (
                             <UserCheck size={16} />

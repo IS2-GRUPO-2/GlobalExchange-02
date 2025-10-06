@@ -9,7 +9,7 @@ import type { Role } from "../../roles/types/Role";
 import type { Tauser } from "../../tauser/types/Tauser";
 
 export interface TransaccionRequest {
-  operador: number;
+  id_user: number;
   cliente: string;
   operacion: "compra" | "venta";
   tasa_aplicada: number;
@@ -26,7 +26,7 @@ export interface TransaccionRequest {
 
 export interface Transaccion {
   id: number;
-  operador: number;
+  id_user: number;
   cliente: string;
   operacion: "compra" | "venta";
   tasa_aplicada: number;
@@ -48,7 +48,7 @@ export interface Transaccion {
 
 export interface TransaccionDetalle {
   id: number;
-  operador: number;
+  id_user: number;
   cliente: string;
   operacion: "venta" | "compra";
   tasa_aplicada: string;
@@ -64,7 +64,7 @@ export interface TransaccionDetalle {
   estado: "pendiente" | "en_proceso" | "completada" | "cancelada" | "fallida";
   created_at: Date;
   updated_at: Date;
-  operador_detalle: {
+  id_user_detalle: {
     id: number;
     username: string;
     last_login: Date;

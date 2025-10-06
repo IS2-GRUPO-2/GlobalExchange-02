@@ -45,7 +45,7 @@ const ClientPicker: React.FC<Props> = ({
         } else {
           const current: Cliente | null =
             currentRes.data?.clienteActual ?? null;
-          setValue(current ? current.idCliente : "");
+          setValue(current ? current.id : "");
           onChange?.(current);
         }
       } catch (e) {
@@ -64,7 +64,7 @@ const ClientPicker: React.FC<Props> = ({
     if (!nextId || nextId === value) return;
 
     const prevId = value;
-    const nextClient = options.find((c) => c.idCliente === nextId) || null;
+    const nextClient = options.find((c) => c.id === nextId) || null;
 
     setValue(nextId);
     onChange?.(nextClient);
@@ -79,7 +79,7 @@ const ClientPicker: React.FC<Props> = ({
       
     } catch (e) {
       setValue(prevId);
-      onChange?.(options.find((c) => c.idCliente === prevId) || null);
+      onChange?.(options.find((c) => c.id === prevId) || null);
       toast.error(errMsg(e));
     }
   };
@@ -110,8 +110,8 @@ const ClientPicker: React.FC<Props> = ({
     );
   }
 
-  const currentClient = options.find((c) => c.idCliente === value) || null;
-  const otherOptions = options.filter((c) => c.idCliente !== value);
+  const currentClient = options.find((c) => c.id === value) || null;
+  const otherOptions = options.filter((c) => c.id !== value);
   
   return (
     <div className={`client-selector ${className}`}>
@@ -134,8 +134,8 @@ const ClientPicker: React.FC<Props> = ({
         )}
         {otherOptions.map((c) => (
           <option
-            key={c.idCliente}
-            value={c.idCliente}
+            key={c.id}
+            value={c.id}
             className="bg-gray-800 text-white"
             title={c.nombre}
           >

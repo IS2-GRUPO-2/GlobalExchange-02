@@ -2,7 +2,8 @@ import { useState, useEffect } from "react";
 import { Building2, MapPin } from "lucide-react";
 import { type CalcularOperacionResponse } from "../types/Operacion";
 import type { Tauser } from "../../tauser/types/Tauser";
-import { getTauserById } from "../../tauser/services/tauserService"; 
+import { getTauserById } from "../../tauser/services/tauserService";
+import { formatNumber } from "../utils/formatNumber"; 
 interface EtapaResultadoProps {
   resultado: CalcularOperacionResponse;
   tauserSeleccionado?: string; // ID del tauser seleccionado, si existe
@@ -55,13 +56,8 @@ export default function EtapaResultado({
   }, [tauserSeleccionado]);
   
   const getTitulo = () => {
-    if (esOperacionReal) return "Resumen de tu Operación";
-    return "Resultado de tu Operación";
-  };
-
-  const getDescripcion = () => {
-    if (esOperacionReal) return "Revisa los detalles antes de proceder";
-    return "Aquí tienes los detalles de tu simulación";
+    if (esOperacionReal) return "Detalle de Operación";
+    return "Resultado de Operación";
   };
 
   const getBotonSecundario = () => {
@@ -76,13 +72,10 @@ export default function EtapaResultado({
 
   return (
     <div className="space-y-6 select-none">
-      <div className="text-center">
-        <h3 className="text-lg font-semibold text-gray-800 mb-2">
+      <div className="text-center mb-6">
+        <h2 className="text-2xl font-bold text-gray-800">
           {getTitulo()}
-        </h3>
-        <p className="text-sm text-gray-600">
-          {getDescripcion()}
-        </p>
+        </h2>
       </div>
 
       {/* Tipo de operación */}
@@ -91,9 +84,9 @@ export default function EtapaResultado({
       </div>
 
       <div className="text-center text-2xl font-bold text-gray-900 py-4 bg-green-50 rounded-lg border border-green-200">
-        {resultado.monto_origen.toLocaleString('es-PY')} {resultado.divisa_origen} 
+        {formatNumber(resultado.monto_origen)} {resultado.divisa_origen} 
         <span className="mx-4 text-green-600">→</span>
-        {resultado.monto_destino.toLocaleString('es-PY')} {resultado.divisa_destino}
+        {formatNumber(resultado.monto_destino)} {resultado.divisa_destino}
       </div>
 
       {/* Detalles */}
@@ -108,7 +101,7 @@ export default function EtapaResultado({
           
           <div>
             <span className="font-medium text-gray-700">Descuento categoría:</span>
-            <p className="text-gray-900">{resultado.parametros.descuento_categoria}%</p>
+            <p className="text-gray-900">{formatNumber(resultado.parametros.descuento_categoria ?? 0, 2)}%</p>
           </div>
 
           <div>
@@ -118,12 +111,12 @@ export default function EtapaResultado({
 
           <div>
             <span className="font-medium text-gray-700">Comisión método:</span>
-            <p className="text-gray-900">{resultado.parametros.comision_metodo}%</p>
+            <p className="text-gray-900">{formatNumber(resultado.parametros.comision_metodo ?? 0, 2)}%</p>
           </div>
 
           <div className="col-span-2">
             <span className="font-medium text-gray-700">Tasa final aplicada:</span>
-            <p className="text-gray-900 text-lg font-semibold">{resultado.tc_final}</p>
+            <p className="text-gray-900 text-lg font-semibold">{formatNumber(resultado.tc_final, 4)}</p>
           </div>
         </div>
       </div>

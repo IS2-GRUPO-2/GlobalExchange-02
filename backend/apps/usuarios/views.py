@@ -92,7 +92,7 @@ class UserViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        clientes = Cliente.objects.filter(idCliente__in=clientes_ids)
+        clientes = Cliente.objects.filter(id__in=clientes_ids)
         user.clientes.set(clientes)  # reemplaza la relación actual con estos clientes
         user.save()
 
@@ -100,7 +100,7 @@ class UserViewSet(viewsets.ModelViewSet):
             {
                 "message": "Clientes asignados correctamente",
                 "user_id": user.id,
-                "clientes": [c.idCliente for c in clientes],
+                "clientes": [c.id for c in clientes],
             },
             status=status.HTTP_200_OK,
         )
@@ -118,7 +118,7 @@ class UserViewSet(viewsets.ModelViewSet):
             Response: Lista de clientes asignados al usuario.
         """
         usuario = self.get_object()
-        clientes = usuario.clientes.filter(isActive=True)
+        clientes = usuario.clientes.filter(is_active=True)
         serializer = ClienteSerializer(clientes, many=True)
         return Response(serializer.data)
 
@@ -181,7 +181,7 @@ class UserViewSet(viewsets.ModelViewSet):
             )
 
         try:
-            cliente = user.clientes.get(pk=cliente_id, isActive=True)
+            cliente = user.clientes.get(pk=cliente_id, is_active=True)
         except Cliente.DoesNotExist:
             return Response(
                 {"error": "El cliente no está asignado al usuario o está inactivo"},
@@ -194,7 +194,7 @@ class UserViewSet(viewsets.ModelViewSet):
         return Response(
             {
                 "message": f"Cliente actual actualizado a {cliente.nombre}",
-                "cliente_id": cliente.idCliente,
+                "cliente_id": cliente.id,
             },
             status=status.HTTP_200_OK,
         )
@@ -211,13 +211,13 @@ class UserViewSet(viewsets.ModelViewSet):
         """
         user = self.get_object()
 
-        activos_qs = user.clientes.filter(isActive=True)
+        activos_qs = user.clientes.filter(is_active=True)
 
         if not user.clientes.exists():
             return Response({"cliente_actual": None}, status=status.HTTP_200_OK)
 
         actual = user.cliente_actual
-        if actual and actual.isActive and activos_qs.filter(pk=actual.pk).exists():
+        if actual and actual.is_active and activos_qs.filter(pk=actual.pk).exists():
             return Response({"cliente_actual": ClienteSerializer(actual).data},
                             status=status.HTTP_200_OK)
 

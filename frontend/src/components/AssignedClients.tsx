@@ -40,7 +40,7 @@ export default function AssignedClients({ user, onClose }: Props) {
         .slice()
         .sort((a, b) => a.nombre.localeCompare(b.nombre));
 
-      const assignedIds = assignedRes.data.map((c) => c.idCliente);
+      const assignedIds = assignedRes.data.map((c) => c.id);
 
       setAllClients(allSorted);
       setSelectedIds(assignedIds);
@@ -88,11 +88,11 @@ export default function AssignedClients({ user, onClose }: Props) {
   const q = search.trim().toLowerCase();
   const filteredAll = useMemo(() => {
     if (readOnly) {
-      return allClients.filter((c) => selectedIds.includes(c.idCliente));
+      return allClients.filter((c) => selectedIds.includes(c.id));
     }
     if (!q) return allClients;
     return allClients.filter((c) => {
-      const doc = c.isPersonaFisica ? c.cedula ?? "" : c.ruc ?? "";
+      const doc = c.is_persona_fisica ? c.cedula ?? "" : c.ruc ?? "";
       return (
         c.nombre.toLowerCase().includes(q) ||
         c.categoria?.nombre?.toLowerCase().includes(q) || // ✅ corregido
@@ -102,9 +102,9 @@ export default function AssignedClients({ user, onClose }: Props) {
   }, [allClients, selectedIds, readOnly, q]);
 
   const renderDoc = (c: Cliente) =>
-    (c.isPersonaFisica ? c.cedula : c.ruc) ?? "-";
+    (c.is_persona_fisica ? c.cedula : c.ruc) ?? "-";
   const renderTipo = (c: Cliente) =>
-    c.isPersonaFisica ? "Persona física" : "Persona jurídica";
+    c.is_persona_fisica ? "Persona física" : "Persona jurídica";
 
   const emptyColSpan = readOnly ? 5 : 6;
 
@@ -190,15 +190,15 @@ export default function AssignedClients({ user, onClose }: Props) {
                   </tr>
                 ) : (
                   filteredAll.map((c) => {
-                    const checked = selectedIds.includes(c.idCliente);
+                    const checked = selectedIds.includes(c.id);
                     return (
                       <tr
-                        key={c.idCliente}
+                        key={c.id}
                         className={
                           readOnly ? "" : "hover:bg-gray-50 cursor-pointer"
                         }
                         onClick={
-                          readOnly ? undefined : () => toggle(c.idCliente)
+                          readOnly ? undefined : () => toggle(c.id)
                         }
                       >
                         {!readOnly && (
@@ -207,7 +207,7 @@ export default function AssignedClients({ user, onClose }: Props) {
                               type="checkbox"
                               className="size-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
                               checked={checked}
-                              onChange={() => toggle(c.idCliente)}
+                              onChange={() => toggle(c.id)}
                               onClick={(e) => e.stopPropagation()}
                             />
                           </td>
@@ -227,12 +227,12 @@ export default function AssignedClients({ user, onClose }: Props) {
                         <td className="px-3 py-2 align-top">
                           <span
                             className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                              c.isActive
+                              c.is_active
                                 ? "bg-green-100 text-green-800"
                                 : "bg-red-100 text-red-900"
                             }`}
                           >
-                            {c.isActive ? "Activo" : "Inactivo"}
+                            {c.is_active ? "Activo" : "Inactivo"}
                           </span>
                         </td>
                       </tr>

@@ -19,7 +19,7 @@ class ClienteSerializer(serializers.ModelSerializer):
     """
     class Meta:
         model = Cliente
-        fields = ["idCliente", "nombre", "categoria"]
+        fields = ["id", "nombre", "categoria"]
 
 class UserSerializer(serializers.ModelSerializer):
     """

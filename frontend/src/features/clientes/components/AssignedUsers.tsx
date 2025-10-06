@@ -14,7 +14,7 @@ const AssignedUsers = ({ cliente }: Props) => {
 
   const fetchUsers = async () => {
     try {
-      const res = await getUsuariosAsignados(cliente.idCliente);
+      const res = await getUsuariosAsignados(cliente.id);
       setUsers(res.data);
       setPending(false);
     } catch (err) {

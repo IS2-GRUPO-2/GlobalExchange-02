@@ -112,18 +112,15 @@ export default function EtapaSeleccionDivisas({
 
   return (
     <div className="space-y-6">
-      <div className="text-center">
-        <h3 className="text-lg font-semibold text-gray-800 mb-2 select-none">
-          Configura tu operación
-        </h3>
-        <p className="text-sm text-gray-600 select-none">
-          Elige las divisas y el monto para tu operación
-        </p>
+      <div className="text-center mb-6">
+        <h2 className="text-2xl font-bold text-gray-800">Selección de Divisas</h2>
       </div>
 
-      {/* Selección de divisas */}
-      <div className="flex items-center space-x-4">
-        <div className="w-80">
+      {/* Sección de divisas centralizada */}
+      <div className="flex flex-col items-center space-y-4 max-w-4xl mx-auto">
+        {/* Selección de divisas */}
+        <div className="flex items-center justify-center space-x-4 w-full">
+          <div className="w-80">
           <label className="block text-sm font-medium text-gray-700 mb-2 select-none">
             Divisa de origen (Entregas)
           </label>
@@ -212,42 +209,92 @@ export default function EtapaSeleccionDivisas({
       </div>
 
       {/* Input monto */}
-      <div className="bg-gray-50 border border-gray-300 rounded-lg p-6 text-center">
-        <label
-          htmlFor="monto"
-          className="block text-sm font-medium text-gray-700 mb-3 select-none"
-        >
-          Monto que vas a entregar{codigoDivisaOrigen && ` (${codigoDivisaOrigen})`}
-        </label>
-        <input
-          id="monto"
-          type="number"
-          min={0}
-          value={monto === 0 ? "" : monto}
-          onChange={(e) => {
-            const value = Number(e.target.value);
-            if (value >= 0 || e.target.value === "") {
-              setLimiteMsg(""); // hasta revalidar
-              setMonto(value);
-            }
-          }}
-          onKeyDown={(e) => {
-            if (e.key === "-" || e.key === "e" || e.key === "E") {
-              e.preventDefault();
-            }
-          }}
-          placeholder="Ingrese el monto"
-          className="w-full text-3xl font-semibold text-gray-900 text-center bg-transparent focus:outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-        />
+      {/* <div className="w-full max-w-[672px]">
+        <div className="bg-gray-50 border border-gray-300 rounded-lg p-6 text-center">
+          <label
+            htmlFor="monto"
+            className="block text-sm font-medium text-gray-700 mb-8 select-none"
+          >
+            Monto que vas a entregar{codigoDivisaOrigen && ` (${codigoDivisaOrigen})`}
+          </label>
+          <div className="relative">
+          
 
-        {codigoDivisaOrigen && monto > 0 && (
-          <div className="mt-3 p-2 bg-blue-50 border border-blue-200 rounded-lg">
-            <div className="text-xs text-blue-600 mb-1 select-none">Monto formateado:</div>
-            <span className="text-lg font-bold text-blue-800 select-none">
-              {monto.toLocaleString("es-PY")} {codigoDivisaOrigen}
-            </span>
+            <div className="text-3xl font-semibold text-gray-900 text-center py-4">
+              {monto > 0 ? formatNumber(monto) : ''}
+              {monto > 0 && codigoDivisaOrigen && (
+                <span className="ml-2 text-xl text-gray-600">{codigoDivisaOrigen}</span>
+              )}
+            </div>
+            <input
+              id="monto"
+              type="number"
+              min={0}
+              value={monto === 0 ? "" : monto}
+              onChange={(e) => {
+                const value = Number(e.target.value);
+                if (value >= 0 || e.target.value === "") {
+                  setLimiteMsg(""); // hasta revalidar
+                  setMonto(value);
+                }
+              }}
+              onKeyDown={(e) => {
+                if (e.key === "-" || e.key === "e" || e.key === "E") {
+                  e.preventDefault();
+                }
+              }}
+              placeholder="Ingrese el monto"
+              className="absolute inset-0 opacity-10 w-full cursor-pointer"
+            />
           </div>
-        )}
+
+        </div>
+      </div> */}
+
+      <div className="w-full max-w-[672px]">
+        <div className="bg-gray-50 border border-gray-300 rounded-lg p-6 text-center">
+          <label
+            htmlFor="monto"
+            className="block text-sm font-medium text-gray-700 mb-3 select-none"
+          >
+            Monto que vas a entregar{codigoDivisaOrigen && ` (${codigoDivisaOrigen})`}
+          </label>
+          <input
+            id="monto"
+            type="number"
+            min={0}
+            value={monto === 0 ? "" : monto}
+            onChange={(e) => {
+              const value = Number(e.target.value);
+              if (value >= 0 || e.target.value === "") {
+                setLimiteMsg(""); // hasta revalidar
+                setMonto(value);
+              }
+            }}
+            onKeyDown={(e) => {
+              if (e.key === "-" || e.key === "e" || e.key === "E") {
+                e.preventDefault();
+              }
+            }}
+            placeholder="Ingrese el monto"
+            className="w-full text-3xl font-semibold text-gray-900 text-center bg-transparent focus:outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+          />
+
+          {codigoDivisaOrigen && monto > 0 && (
+            <div className="mt-3 p-2 bg-blue-50 border border-blue-200 rounded-lg">
+              <div className="text-xs text-blue-600 mb-1 select-none">Monto formateado:</div>
+              <span className="text-lg font-bold text-blue-800 select-none">
+                {monto.toLocaleString("es-PY")} {codigoDivisaOrigen}
+              </span>
+            </div>
+          )}
+        </div>
+      </div>
+
+
+
+
+
       </div>
 
       {/* Mensaje de límite (simple) */}

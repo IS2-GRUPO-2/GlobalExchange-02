@@ -1,8 +1,9 @@
 import { useState, useEffect } from "react";
-import { AlertTriangle, FileText } from "lucide-react";
+import { AlertTriangle } from "lucide-react";
 import type { CalcularOperacionResponse } from "../types/Operacion";
 import type { Tauser } from "../../tauser/types/Tauser";
 import { getTauserById } from "../../tauser/services/tauserService";
+import { formatNumber } from "../utils/formatNumber";
 
 
 interface EtapaTerminosCondicionesProps {
@@ -46,25 +47,19 @@ export default function EtapaTerminosCondiciones({
 
   return (
     <div className="space-y-6 select-none">
-      <div className="text-center">
-        <h3 className="text-lg font-semibold text-gray-800 mb-2 flex items-center justify-center gap-2">
-          <FileText className="w-5 h-5" />
+      <div className="text-center mb-6">
+        <h2 className="text-2xl font-bold text-gray-800">
           Términos y Condiciones
-        </h3>
-        {/* Si querés mostrar el ID de transacción */}
-        {/* <p className="text-xs text-gray-500">Transacción #{transaccionId}</p> */}
-        <p className="text-sm text-gray-600">
-          Lee y acepta los términos antes de proceder con la transacción
-        </p>
+        </h2>
       </div>
 
       {/* Resumen rápido de la operación */}
       <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
         <h4 className="font-medium text-gray-800 mb-2">Resumen de tu operación:</h4>
         <div className="text-center text-lg font-semibold text-gray-900 py-2">
-          {resultado.monto_origen.toLocaleString('es-PY')} {resultado.divisa_origen}
+          {formatNumber(resultado.monto_origen)} {resultado.divisa_origen}
           <span className="mx-2 text-gray-600">→</span>
-          {resultado.monto_destino.toLocaleString('es-PY')} {resultado.divisa_destino}
+          {formatNumber(resultado.monto_destino)} {resultado.divisa_destino}
         </div>
         {loading && <p className="text-sm text-gray-500 text-center">Cargando terminal...</p>}
         {tauserInfo && !loading && (
@@ -120,7 +115,7 @@ export default function EtapaTerminosCondiciones({
             <ul className="list-disc list-inside space-y-1 ml-4 text-sm">
               <li>
                 <strong>Si la cotización no cambió:</strong> Su transacción se procesará automáticamente
-                con la tasa original ({resultado.tc_final.toLocaleString('es-PY', { minimumFractionDigits: 1, maximumFractionDigits: 4 })} PYG)
+                con la tasa original ({formatNumber(resultado.tc_final, 4)} PYG)
               </li>
               <li>
                 <strong>Si la cotización cambió:</strong> Se le informará sobre la nueva tasa y deberá

@@ -35,7 +35,7 @@ const HistorialPage = () => {
     if (!clienteActual) return;
     console.log("fetchHistorial llamado");
     try {
-      const res = await getHistorialTransacciones(clienteActual?.idCliente!);
+      const res = await getHistorialTransacciones(clienteActual?.id!);
       setTransacciones(res.data);
     } catch (err) {
       toast.error("Error cargando transacciones");
@@ -108,8 +108,8 @@ const HistorialPage = () => {
                 <td>{transaccion.tauser_detalle.codigo}</td>
                 <td>{transaccion.estado.toUpperCase()}</td>
                 <td>
-                  {transaccion.operador_detalle.first_name}{" "}
-                  {transaccion.operador_detalle.last_name}
+                  {transaccion.id_user_detalle.first_name}{" "}
+                  {transaccion.id_user_detalle.last_name}
                 </td>
                 <td>{transaccion.metodo_financiero_detalle.nombre}</td>
               </tr>
