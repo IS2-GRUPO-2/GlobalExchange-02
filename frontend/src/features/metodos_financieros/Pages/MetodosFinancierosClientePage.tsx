@@ -6,6 +6,9 @@ import MetodoFinancieroCard from '../components/MetodoFinancieroCard';
 import CuentaBancariaForm from '../components/CuentaBancariaForm';
 import BilleteraDigitalForm from '../components/BilleteraDigitalForm';
 import TarjetaForm from '../components/TarjetaForm';
+import { useAuth } from '../../../context/useAuth';
+import { getClienteActual } from '../../usuario/services/usuarioService';
+import type { Cliente } from '../../clientes/types/Cliente';
 import {
   getMisCuentasBancarias,
   getMisBilleterasDigitales,
@@ -34,11 +37,14 @@ type TabType = ClienteTabType;
 
 const MetodosFinancierosClientePage = () => {
   const [activeTab, setActiveTab] = useState<TabType>('cuentas');
+  const [clienteActual, setClienteActual] = useState<Cliente | null>(null);
   const [cuentas, setCuentas] = useState<CuentaBancaria[]>([]);
   const [billeteras, setBilleteras] = useState<BilleteraDigital[]>([]);
   const [tarjetas, setTarjetas] = useState<Tarjeta[]>([]);
   const [metodos, setMetodos] = useState<MetodoFinanciero[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
+  
+  const { user } = useAuth();
   
   // Modal states
   const [createModalOpen, setCreateModalOpen] = useState(false);
@@ -46,6 +52,44 @@ const MetodosFinancierosClientePage = () => {
   const [viewModalOpen, setViewModalOpen] = useState(false);
   const [selectedItem, setSelectedItem] = useState<ExtendedItem | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Listener para cambios de cliente
+  useEffect(() => {
+    const handleClienteChangeEvent = (event: CustomEvent) => {
+      const { cliente } = event.detail;
+      setClienteActual(cliente);
+    };
+
+    window.addEventListener(
+      "clienteActualChanged",
+      handleClienteChangeEvent as EventListener
+    );
+
+    return () => {
+      window.removeEventListener(
+        "clienteActualChanged",
+        handleClienteChangeEvent as EventListener
+      );
+    };
+  }, []);
+
+  // Obtener cliente inicial
+  useEffect(() => {
+    const fetchClienteActual = async () => {
+      if (!user?.id) return;
+      
+      try {
+        const res = await getClienteActual(user.id);
+        const { clienteActual } = res.data;
+        setClienteActual(clienteActual);
+      } catch (err) {
+        console.error("Error obteniendo cliente actual", err);
+        toast.error("Error al obtener cliente actual");
+      }
+    };
+    
+    fetchClienteActual();
+  }, [user?.id]);
 
   // Fetch data functions - Solo cargar datos iniciales SIN búsqueda
   const fetchAllData = async () => {
@@ -450,6 +494,13 @@ const MetodosFinancierosClientePage = () => {
     fetchAllData();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []); // Solo cargar UNA vez, sin dependencia de searchQuery
+
+  // Recargar datos cuando cambie el cliente
+  useEffect(() => {
+    if (clienteActual) {
+      fetchAllData();
+    }
+  }, [clienteActual]);
 
   const currentItems = getCurrentItems();
 
