@@ -89,10 +89,18 @@ class CuentaBancariaSerializer(serializers.ModelSerializer):
     """
     banco_nombre = serializers.CharField(source='banco.nombre', read_only=True)
     banco_activo = serializers.BooleanField(source='banco.is_active', read_only=True)
+    metodo_financiero_detalle_data = MetodoFinancieroDetalleSerializer(source='metodo_financiero_detalle', read_only=True)
 
     class Meta:
         model = CuentaBancaria
         fields = '__all__'
+        
+    def to_representation(self, instance):
+        """Personalizar la representación para incluir metodo_financiero_detalle"""
+        representation = super().to_representation(instance)
+        # Mover los datos del detalle al nombre esperado por el frontend
+        representation['metodo_financiero_detalle'] = representation.pop('metodo_financiero_detalle_data', None)
+        return representation
 
 
 class BilleteraDigitalSerializer(serializers.ModelSerializer):
@@ -103,10 +111,18 @@ class BilleteraDigitalSerializer(serializers.ModelSerializer):
     """
     plataforma_nombre = serializers.CharField(source='plataforma.nombre', read_only=True)
     plataforma_activa = serializers.BooleanField(source='plataforma.is_active', read_only=True)
+    metodo_financiero_detalle_data = MetodoFinancieroDetalleSerializer(source='metodo_financiero_detalle', read_only=True)
     
     class Meta:
         model = BilleteraDigital
         fields = '__all__'
+        
+    def to_representation(self, instance):
+        """Personalizar la representación para incluir metodo_financiero_detalle"""
+        representation = super().to_representation(instance)
+        # Mover los datos del detalle al nombre esperado por el frontend
+        representation['metodo_financiero_detalle'] = representation.pop('metodo_financiero_detalle_data', None)
+        return representation
 
 
 class TarjetaSerializer(serializers.ModelSerializer):
@@ -117,9 +133,18 @@ class TarjetaSerializer(serializers.ModelSerializer):
     con Stripe.
     
     """
+    metodo_financiero_detalle_data = MetodoFinancieroDetalleSerializer(source='metodo_financiero_detalle', read_only=True)
+    
     class Meta:
         model = Tarjeta
-        fields = '__all__'  
+        fields = '__all__'
+        
+    def to_representation(self, instance):
+        """Personalizar la representación para incluir metodo_financiero_detalle"""
+        representation = super().to_representation(instance)
+        # Mover los datos del detalle al nombre esperado por el frontend
+        representation['metodo_financiero_detalle'] = representation.pop('metodo_financiero_detalle_data', None)
+        return representation  
 
 
 class ChequeSerializer(serializers.ModelSerializer):

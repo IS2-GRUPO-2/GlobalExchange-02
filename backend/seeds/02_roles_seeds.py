@@ -93,6 +93,29 @@ def run():
             'permissions': [
                 # Permisos básicos para clientes
                 'metodos_financieros.view_metodofinancierodetalle',
+                'metodos_financieros.add_metodofinancierodetalle',
+                'metodos_financieros.change_metodofinancierodetalle',
+                'metodos_financieros.delete_metodofinancierodetalle',
+                
+                # Permisos para gestionar sus métodos financieros específicos
+                'metodos_financieros.add_cuentabancaria',
+                'metodos_financieros.change_cuentabancaria',
+                'metodos_financieros.view_cuentabancaria',
+                'metodos_financieros.delete_cuentabancaria',
+                'metodos_financieros.add_billeteradigital',
+                'metodos_financieros.change_billeteradigital',
+                'metodos_financieros.view_billeteradigital',
+                'metodos_financieros.delete_billeteradigital',
+                'metodos_financieros.add_tarjeta',
+                'metodos_financieros.change_tarjeta',
+                'metodos_financieros.view_tarjeta',
+                'metodos_financieros.delete_tarjeta',
+                
+                # Permisos para ver catálogos (necesarios para formularios)
+                'metodos_financieros.view_banco',
+                'metodos_financieros.view_billeteradigitalcatalogo',
+                'metodos_financieros.view_tarjetacatalogo',
+                
                 'operaciones.can_use_operacion',
             ]
         },

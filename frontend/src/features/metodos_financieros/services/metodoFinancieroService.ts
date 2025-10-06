@@ -277,12 +277,13 @@ export const updateMetodoFinanciero = async (
   }
 };
 
-export const toggleActiveMetodoFinanciero = async (id: number) => {
+
+export const toggleActiveMetodoFinancieroDetalle = async (id: number) => {
   try {
-    const res = await axios.post(`${API_URL}metodos/${id}/toggle_active/`);
+    const res = await axios.post(`${API_URL}detalles/${id}/toggle_active/`);
     return res.data;
   } catch (err) {
-    console.error("Error toggling método financiero status: ", err);
+    console.error("Error toggling detalle método financiero status: ", err);
     throw err;
   }
 };
@@ -410,18 +411,6 @@ export const updateCuentaBancaria = async (
   }
 };
 
-export const toggleActiveCuentaBancaria = async (id: number) => {
-  try {
-    const res = await axios.post(
-      `${API_URL}cuentas-bancarias/${id}/toggle_active/`
-    );
-    return res.data;
-  } catch (err) {
-    console.error("Error toggling cuenta bancaria status: ", err);
-    throw err;
-  }
-};
-
 // Billeteras Digitales
 export const getBilleterasDigitales = async (
   params: GetParams = {}
@@ -467,17 +456,6 @@ export const updateBilleteraDigital = async (
   }
 };
 
-export const toggleActiveBilleteraDigital = async (id: number) => {
-  try {
-    const res = await axios.post(
-      `${API_URL}billeteras-digitales/${id}/toggle_active/`
-    );
-    return res.data;
-  } catch (err) {
-    console.error("Error toggling billetera digital status: ", err);
-    throw err;
-  }
-};
 
 // Tarjetas
 export const getTarjetas = async (
@@ -521,15 +499,6 @@ export const updateTarjeta = async (tarjetaData: Tarjeta, id: number) => {
   }
 };
 
-export const toggleActiveTarjeta = async (id: number) => {
-  try {
-    const res = await axios.post(`${API_URL}tarjetas/${id}/toggle_active/`);
-    return res.data;
-  } catch (err) {
-    console.error("Error toggling tarjeta status: ", err);
-    throw err;
-  }
-};
 
 // ======================== MÉTODOS CLIENTE ESPECÍFICOS ========================
 
@@ -574,6 +543,53 @@ export const getMisTarjetas = async (): Promise<Tarjeta[]> => {
     return res.data;
   } catch (err) {
     console.error("Error obteniendo mis tarjetas: ", err);
+    throw err;
+  }
+};
+
+// ======================== MÉTODOS CASA DE CAMBIO ========================
+
+/**
+ * Obtiene las cuentas bancarias de la casa de cambio (solo admins)
+ */
+export const getCasaCuentasBancarias = async (): Promise<CuentaBancaria[]> => {
+  try {
+    const res = await axios.get<CuentaBancaria[]>(
+      `${API_URL}cuentas-bancarias/casa-cuentas/`
+    );
+    return res.data;
+  } catch (err) {
+    console.error("Error obteniendo cuentas bancarias de la casa: ", err);
+    throw err;
+  }
+};
+
+/**
+ * Obtiene las billeteras digitales de la casa de cambio (solo admins)
+ */
+export const getCasaBilleterasDigitales = async (): Promise<BilleteraDigital[]> => {
+  try {
+    const res = await axios.get<BilleteraDigital[]>(
+      `${API_URL}billeteras-digitales/casa-billeteras/`
+    );
+    return res.data;
+  } catch (err) {
+    console.error("Error obteniendo billeteras digitales de la casa: ", err);
+    throw err;
+  }
+};
+
+/**
+ * Obtiene las tarjetas de la casa de cambio (solo admins)
+ */
+export const getCasaTarjetas = async (): Promise<Tarjeta[]> => {
+  try {
+    const res = await axios.get<Tarjeta[]>(
+      `${API_URL}tarjetas/casa-tarjetas/`
+    );
+    return res.data;
+  } catch (err) {
+    console.error("Error obteniendo tarjetas de la casa: ", err);
     throw err;
   }
 };

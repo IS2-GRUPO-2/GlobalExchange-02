@@ -1,15 +1,14 @@
 import { useState, useCallback } from "react";
 import { toast } from "react-toastify";
 import {
-  getCuentasBancarias,
-  getBilleterasDigitales,
-  getDetallesMetodosFinancieros,
+  getCasaCuentasBancarias,
+  getCasaBilleterasDigitales,
   createDetalleMetodoFinanciero,
   createCuentaBancaria,
   createBilleteraDigital,
   updateCuentaBancaria,
   updateBilleteraDigital,
-  toggleActiveMetodoFinanciero,
+  toggleActiveMetodoFinancieroDetalle,
 } from "../services/metodoFinancieroService";
 import type {
   CuentaBancaria,
@@ -22,21 +21,35 @@ import type {
 export const useInstancias = () => {
   const [cuentas, setCuentas] = useState<CuentaBancaria[]>([]);
   const [billeteras, setBilleteras] = useState<BilleteraDigital[]>([]);
-  const [detalles, setDetalles] = useState<MetodoFinancieroDetalle[]>([]);
   const [loading, setLoading] = useState(false);
 
   const fetchInstancias = useCallback(async (search: string = "") => {
     setLoading(true);
     try {
-      const [detallesRes, cuentasRes, billeterasRes] = await Promise.all([
-        getDetallesMetodosFinancieros({ search }),
-        getCuentasBancarias({ search }),
-        getBilleterasDigitales({ search }),
+      const [cuentasRes, billeterasRes] = await Promise.all([
+        getCasaCuentasBancarias(),
+        getCasaBilleterasDigitales(),
       ]);
 
-      setDetalles(detallesRes.results.filter((d) => d.es_cuenta_casa));
-      setCuentas(cuentasRes.results);
-      setBilleteras(billeterasRes.results);
+      // Filtrar por búsqueda si es necesario
+      const filteredCuentas = search 
+        ? cuentasRes.filter((c: any) => 
+            c.banco?.nombre?.toLowerCase().includes(search.toLowerCase()) ||
+            c.titular?.toLowerCase().includes(search.toLowerCase()) ||
+            c.numero_cuenta?.toLowerCase().includes(search.toLowerCase())
+          )
+        : cuentasRes;
+
+      const filteredBilleteras = search
+        ? billeterasRes.filter((b: any) =>
+            b.plataforma?.nombre?.toLowerCase().includes(search.toLowerCase()) ||
+            b.usuario_id?.toLowerCase().includes(search.toLowerCase()) ||
+            b.email?.toLowerCase().includes(search.toLowerCase())
+          )
+        : billeterasRes;
+
+      setCuentas(filteredCuentas);
+      setBilleteras(filteredBilleteras);
     } catch (err) {
       console.error("Error fetching instancias:", err);
       toast.error("Error al cargar instancias");
@@ -125,7 +138,7 @@ export const useInstancias = () => {
     if (!item.detalle_id) return false;
 
     try {
-      await toggleActiveMetodoFinanciero(item.detalle_id);
+      await toggleActiveMetodoFinancieroDetalle(item.detalle_id);
       const tipoLabel = item.tipo === "cuentas" ? "Cuenta" : 
                        item.tipo === "billeteras digitales" ? "Billetera digital" :
                        "Tarjeta";
@@ -150,26 +163,20 @@ export const useInstancias = () => {
   // Función auxiliar para obtener items extendidos con estado activo
   const getExtendedItems = useCallback(
     (items: any[], tipo: InstanceTabType): ExtendedItem[] => {
-      return items.map((item) => {
-        const detalle = detalles.find(
-          (d) => d.id === item.metodo_financiero_detalle
-        );
-        return {
-          ...item,
-          tipo,
-          is_active: detalle?.is_active ?? true,
-          detalle_id: detalle?.id,
-          desactivado_por_catalogo: detalle?.desactivado_por_catalogo ?? false,
-        };
-      });
+      return items.map((item) => ({
+        ...item,
+        tipo,
+        is_active: item.metodo_financiero_detalle?.is_active ?? true,
+        detalle_id: item.metodo_financiero_detalle?.id,
+        desactivado_por_catalogo: item.metodo_financiero_detalle?.desactivado_por_catalogo ?? false,
+      }));
     },
-    [detalles]
+    []
   );
 
   return {
     cuentas,
     billeteras,
-    detalles,
     loading,
     fetchInstancias,
     createInstancia,

@@ -1,7 +1,6 @@
 import type {
   CuentaBancaria,
   BilleteraDigital,
-  MetodoFinancieroDetalle,
   InstanceTabType,
   ExtendedItem,
   MetodoFinanciero,
@@ -10,7 +9,6 @@ import type {
 export const filterInstances = (
   cuentas: CuentaBancaria[],
   billeteras: BilleteraDigital[],
-  detalles: MetodoFinancieroDetalle[],
   instanceTab: InstanceTabType,
   search: string,
   getExtendedItems: (items: any[], tipo: InstanceTabType) => ExtendedItem[]
@@ -25,12 +23,6 @@ export const filterInstances = (
       items = getExtendedItems(billeteras, "billeteras digitales");
       break;
   }
-
-  // Filter only casa accounts
-  items = items.filter((item) => {
-    const detalle = detalles.find((d) => d.id === item.detalle_id);
-    return detalle?.es_cuenta_casa;
-  });
 
   if (!search) return items;
 
