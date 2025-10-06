@@ -121,7 +121,7 @@ const MetodosFinancierosPage = () => {
     modalHook.setIsSubmitting(true);
     const success = await catalogosHook.createCatalogItem(formData, catalogTab);
     if (success) {
-      catalogosHook.fetchCatalogos(""); // Recargar sin búsqueda
+      catalogosHook.fetchCatalogos("", catalogosHook.page); // Recargar sin búsqueda
       modalHook.closeCreateModal();
     }
     modalHook.setIsSubmitting(false);
@@ -137,7 +137,7 @@ const MetodosFinancierosPage = () => {
       catalogTab
     );
     if (success) {
-      catalogosHook.fetchCatalogos(""); // Recargar sin búsqueda
+      catalogosHook.fetchCatalogos("", catalogosHook.page); // Recargar sin búsqueda
       modalHook.closeEditModal();
     }
     modalHook.setIsSubmitting(false);
@@ -146,7 +146,7 @@ const MetodosFinancierosPage = () => {
   const handleToggleCatalog = async (item: any, tipo: CatalogTabType) => {
     const success = await catalogosHook.toggleCatalogItem(item, tipo);
     if (success) {
-      catalogosHook.fetchCatalogos(""); // Recargar sin búsqueda
+      catalogosHook.fetchCatalogos("", catalogosHook.page); // Recargar sin búsqueda
       // También actualizar las instancias para reflejar cambios en cascada
       instanciasHook.fetchInstancias(""); // Recargar sin búsqueda
     }
@@ -195,7 +195,7 @@ const MetodosFinancierosPage = () => {
         metodosHook.fetchMetodos(searchQuery, 1);
         break;
       case "catalogos":
-        catalogosHook.fetchCatalogos(searchQuery);
+        catalogosHook.fetchCatalogos(searchQuery, 1);
         break;
       case "instancias":
         instanciasHook.fetchInstancias(searchQuery);
@@ -335,6 +335,8 @@ const MetodosFinancierosPage = () => {
 
     if (mainTab === "catalogos") {
       const filteredCatalogos = getFilteredCatalogos();
+      const hasSearchQuery = searchQuery.trim() !== "";
+      
       return (
         <CatalogTable
           bancos={filteredCatalogos.bancos}
@@ -344,6 +346,12 @@ const MetodosFinancierosPage = () => {
           loading={loading}
           onEdit={modalHook.openEditModal}
           onToggle={handleToggleCatalog}
+          page={hasSearchQuery ? 1 : catalogosHook.page}
+          totalPages={hasSearchQuery ? 1 : catalogosHook.totalPages}
+          onPageChange={hasSearchQuery ? undefined : (page: number) => {
+            catalogosHook.setPage(page);
+            catalogosHook.fetchCatalogos("", page); // Sin búsqueda para paginación del servidor
+          }}
         />
       );
     }
@@ -406,7 +414,7 @@ const MetodosFinancierosPage = () => {
     if (mainTab === "catalogo") {
       metodosHook.fetchMetodos("", metodosHook.page); // Sin búsqueda inicial
     } else if (mainTab === "catalogos") {
-      catalogosHook.fetchCatalogos(""); // Sin búsqueda inicial
+      catalogosHook.fetchCatalogos("", 1); // Sin búsqueda inicial
     } else {
       instanciasHook.fetchInstancias(""); // Sin búsqueda inicial
     }

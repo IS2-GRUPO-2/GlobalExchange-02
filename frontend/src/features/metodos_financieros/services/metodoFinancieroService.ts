@@ -24,6 +24,7 @@ const API_URL = "/api/metodos_financieros/";
 interface GetParams {
   page?: number;
   search?: string;
+  page_size?: number;
 }
 
 // ======================== CATÁLOGOS ========================
