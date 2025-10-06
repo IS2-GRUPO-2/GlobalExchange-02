@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import { CreditCard, Building2, Smartphone, Plus, Search } from 'lucide-react';
 import { toast } from 'react-toastify';
-import { useAuth } from '../../../context/useAuth';
 import Modal from '../../../components/Modal';
 import MetodoFinancieroCard from '../components/MetodoFinancieroCard';
 import CuentaBancariaForm from '../components/CuentaBancariaForm';
@@ -39,8 +38,7 @@ const MetodosFinancierosClientePage = () => {
   const [billeteras, setBilleteras] = useState<BilleteraDigital[]>([]);
   const [tarjetas, setTarjetas] = useState<Tarjeta[]>([]);
   const [metodos, setMetodos] = useState<MetodoFinanciero[]>([]);
-  const [search, setSearch] = useState('');
-  const [loading, setLoading] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
   
   // Modal states
   const [createModalOpen, setCreateModalOpen] = useState(false);
@@ -49,112 +47,82 @@ const MetodosFinancierosClientePage = () => {
   const [selectedItem, setSelectedItem] = useState<ExtendedItem | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const { isLoggedIn } = useAuth();
-
-  // Fetch data functions
-  const fetchMetodos = async () => {
-    try {
-      const res = await getMetodosFinancieros();
-      setMetodos(res.results);
-    } catch (err) {
-      console.error('Error fetching métodos:', err);
-    }
-  };
-
-  const fetchCuentas = async () => {
-    try {
-      const res = await getMisCuentasBancarias();
-      setCuentas(res);
-    } catch (err) {
-      console.error('Error fetching cuentas:', err);
-    }
-  };
-
-  const fetchBilleteras = async () => {
-    try {
-      const res = await getMisBilleterasDigitales();
-      setBilleteras(res);
-    } catch (err) {
-      console.error('Error fetching billeteras:', err);
-    }
-  };
-
-  const fetchTarjetas = async () => {
-    try {
-      const res = await getMisTarjetas();
-      setTarjetas(res);
-    } catch (err) {
-      console.error('Error fetching tarjetas:', err);
-    }
-  };
-
+  // Fetch data functions - Solo cargar datos iniciales SIN búsqueda
   const fetchAllData = async () => {
-    setLoading(true);
     try {
-      await Promise.all([
-        fetchMetodos(),
-        fetchCuentas(),
-        fetchBilleteras(),
-        fetchTarjetas()
+      // Fetch todos los datos SIN parámetros de búsqueda
+      const [metodosRes, cuentasRes, billeterasRes, tarjetasRes] = await Promise.all([
+        getMetodosFinancieros(),
+        getMisCuentasBancarias(), // Sin params - obtener todo
+        getMisBilleterasDigitales(), // Sin params - obtener todo  
+        getMisTarjetas() // Sin params - obtener todo
       ]);
+      
+      setMetodos(metodosRes.results);
+      setCuentas(cuentasRes);
+      setBilleteras(billeterasRes);
+      setTarjetas(tarjetasRes);
     } catch (err) {
       toast.error('Error al cargar los métodos financieros');
-    } finally {
-      setLoading(false);
     }
   };
 
-  // Create extended items with active status from metodo_financiero_detalle
-  const getExtendedItems = (items: any[], tipo: ClienteTabType): ExtendedItem[] => {
-    return items.map(item => ({
+  // Filtrar items del lado del cliente
+  const getFilteredItems = (items: any[], tipo: ClienteTabType): ExtendedItem[] => {
+    const extendedItems = items.map(item => ({
       ...item,
       tipo,
       is_active: item.metodo_financiero_detalle?.is_active ?? true,
       detalle_id: item.metodo_financiero_detalle?.id,
       desactivado_por_catalogo: item.metodo_financiero_detalle?.desactivado_por_catalogo ?? false
     }));
-  };
 
-  const getFilteredItems = (): ExtendedItem[] => {
-    let items: ExtendedItem[] = [];
-    
-    switch (activeTab as ClienteTabType) {
-      case 'cuentas':
-        items = getExtendedItems(cuentas, 'cuentas');
-        break;
-      case 'billeteras digitales':
-        items = getExtendedItems(billeteras, 'billeteras digitales');
-        break;
-      case 'tarjetas':
-        items = getExtendedItems(tarjetas, 'tarjetas');
-        break;
-    }
+    if (!searchQuery.trim()) return extendedItems;
 
-    if (!search) return items;
-    
-    return items.filter(item => {
-      const searchLower = search.toLowerCase();
-      switch (item.tipo as ClienteTabType) {
+    const searchLower = searchQuery.toLowerCase();
+    return extendedItems.filter(item => {
+      switch (tipo) {
         case 'cuentas':
           const cuenta = item as CuentaBancaria & ExtendedItem;
-          return (cuenta.banco_nombre?.toLowerCase().includes(searchLower) ?? false) ||
-                 cuenta.titular.toLowerCase().includes(searchLower) ||
-                 cuenta.numero_cuenta.includes(searchLower);
+          return (
+            cuenta.titular?.toLowerCase().includes(searchLower) ||
+            cuenta.numero_cuenta?.toLowerCase().includes(searchLower) ||
+            cuenta.cbu_cvu?.toLowerCase().includes(searchLower) ||
+            cuenta.banco_nombre?.toLowerCase().includes(searchLower)
+          );
         case 'billeteras digitales':
           const billetera = item as BilleteraDigital & ExtendedItem;
-          return (billetera.plataforma_nombre?.toLowerCase().includes(searchLower) ?? false) ||
-                 billetera.usuario_id.toLowerCase().includes(searchLower) ||
-                 (billetera.email?.toLowerCase().includes(searchLower) ?? false);
+          return (
+            billetera.usuario_id?.toLowerCase().includes(searchLower) ||
+            billetera.email?.toLowerCase().includes(searchLower) ||
+            billetera.telefono?.toLowerCase().includes(searchLower) ||
+            billetera.plataforma_nombre?.toLowerCase().includes(searchLower)
+          );
         case 'tarjetas':
-          const tarjeta = item as any;
-          return (tarjeta.brand?.toLowerCase().includes(searchLower) ?? false) ||
-                 (tarjeta.marca_nombre?.toLowerCase().includes(searchLower) ?? false) ||
-                 (tarjeta.titular?.toLowerCase().includes(searchLower) ?? false) ||
-                 (tarjeta.last4?.includes(searchLower) ?? false);
+          const tarjeta = item as Tarjeta & ExtendedItem;
+          return (
+            (tarjeta as any).titular?.toLowerCase().includes(searchLower) ||
+            (tarjeta as any).last4?.toLowerCase().includes(searchLower) ||
+            (tarjeta as any).brand?.toLowerCase().includes(searchLower) ||
+            (tarjeta as any).marca_nombre?.toLowerCase().includes(searchLower)
+          );
         default:
-          return false;
+          return true;
       }
     });
+  };
+
+  const getCurrentItems = (): ExtendedItem[] => {
+    switch (activeTab as ClienteTabType) {
+      case 'cuentas':
+        return getFilteredItems(cuentas, 'cuentas');
+      case 'billeteras digitales':
+        return getFilteredItems(billeteras, 'billeteras digitales');
+      case 'tarjetas':
+        return getFilteredItems(tarjetas, 'tarjetas');
+      default:
+        return [];
+    }
   };
 
   // Modal handlers
@@ -355,6 +323,8 @@ const MetodosFinancierosClientePage = () => {
             isSubmitting={isSubmitting}
           />
         );
+      default:
+        return null;
     }
   };
 
@@ -471,28 +441,17 @@ const MetodosFinancierosClientePage = () => {
             </div>
           </div>
         );
+      default:
+        return null;
     }
   };
 
   useEffect(() => {
-    if (isLoggedIn()) {
-      fetchAllData();
-    }
-  }, [isLoggedIn, search]);
+    fetchAllData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Solo cargar UNA vez, sin dependencia de searchQuery
 
-  // Actualizar datos cuando la página vuelve a tener foco
-  useEffect(() => {
-    const handleFocus = () => {
-      if (isLoggedIn()) {
-        fetchAllData();
-      }
-    };
-
-    window.addEventListener('focus', handleFocus);
-    return () => window.removeEventListener('focus', handleFocus);
-  }, [isLoggedIn]);
-
-  const filteredItems = getFilteredItems();
+  const currentItems = getCurrentItems();
 
   return (
     <div className="bg-gray-50 min-h-screen flex-1 overflow-y-auto p-6">
@@ -503,37 +462,17 @@ const MetodosFinancierosClientePage = () => {
 
       {/* Search and Create */}
       <div className="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div className="relative w-full sm:w-64 md:w-96 pl-4">
-          <div className="flex w-full sm:w-64 md:w-96 gap-2">
-            <div className="relative flex-1">
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <Search size={18} className="text-gray-400" />
-              </div>
-              <input
-                type="text"
-                placeholder={`Buscar ${getTabLabel(activeTab).toLowerCase()}...`}
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") {
-                    fetchAllData();
-                  }
-                }}
-                className="pl-10 pr-4 py-2 w-full border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-700 focus:border-transparent"
-              />
-            </div>
-
-            <button
-              onClick={() => {
-                fetchAllData();
-                toast.info('Datos actualizados');
-              }}
-              className="btn-primary flex items-center justify-center px-4 py-2"
-              title="Actualizar datos"
-            >
-              <Search size={18} />
-            </button>
+        <div className="relative w-full sm:w-64 md:w-96">
+          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+            <Search size={18} className="text-gray-400" />
           </div>
+          <input
+            type="text"
+            placeholder={`Buscar ${getTabLabel(activeTab).toLowerCase()}...`}
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="pl-10 pr-4 py-2 w-full border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-700 focus:border-transparent"
+          />
         </div>
         <button
           onClick={openCreateModal}
@@ -568,12 +507,7 @@ const MetodosFinancierosClientePage = () => {
 
       {/* Content */}
       <div className="card">
-        {loading ? (
-          <div className="text-center py-8">
-            <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
-            <p className="mt-2 text-gray-600">Cargando...</p>
-          </div>
-        ) : filteredItems.length === 0 ? (
+        {currentItems.length === 0 ? (
           <div className="text-center py-8">
             <div className="text-gray-400 mb-4">
               {getTabIcon(activeTab)}
@@ -582,15 +516,15 @@ const MetodosFinancierosClientePage = () => {
               No hay {getTabLabel(activeTab).toLowerCase()}
             </h3>
             <p className="text-gray-600 mb-4">
-              {search 
-                ? `No se encontraron resultados para "${search}"`
+              {searchQuery 
+                ? `No se encontraron resultados para "${searchQuery}"`
                 : `Comienza agregando tu primer ${activeTab.slice(0, -1)}`
               }
             </p>
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredItems.map((item) => (
+            {currentItems.map((item) => (
               <MetodoFinancieroCard
                 key={item.id}
                 item={item}
