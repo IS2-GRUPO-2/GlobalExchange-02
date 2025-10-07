@@ -28,6 +28,10 @@ class User(AbstractUser):
         on_delete=models.SET_NULL,
         related_name="usuarios_cliente_actual"
     )
+
+    mfa_enabled = models.BooleanField(default=False)
+    # El secreto TOTP se guardará automáticamente por django-otp
+    
     class Meta:
         permissions = [
             ("can_assign_clients", "Puede asignar clientes a usuarios"),

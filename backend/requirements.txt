@@ -3,6 +3,9 @@ cffi==1.17.1
 cryptography==45.0.6
 Django==5.2.5
 django-cors-headers==4.7.0
+django-formtools==2.5.1
+django-otp==1.6.1
+django-phonenumber-field==8.3.0
 django-solo==2.4.0
 djangorestframework==3.16.1
 djangorestframework_simplejwt==5.5.1
@@ -23,6 +26,7 @@ pytest-django==4.11.1
 python-dotenv==1.1.1
 pytz==2025.2
 PyYAML==6.0.2
+qrcode==8.2
 sqlparse==0.5.3
 tzdata==2025.2
 uritemplate==4.2.0

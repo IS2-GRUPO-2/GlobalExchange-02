@@ -3,8 +3,37 @@ from django.contrib.auth import get_user_model
 from .models import EmailVerificationCode
 import random
 from apps.notificaciones.notification_service import NotificationService
+
 User = get_user_model()
 notification_service = NotificationService()
+
+
+class MFASetupSerializer(serializers.Serializer):
+    """Serializer para iniciar el setup de MFA"""
+    pass
+
+
+class MFAEnableSerializer(serializers.Serializer):
+    """Serializer para habilitar MFA con verificación de código"""
+    token = serializers.CharField(max_length=6, help_text="Código TOTP de 6 dígitos")
+
+
+class MFADisableSerializer(serializers.Serializer):
+    """Serializer para deshabilitar MFA con verificación de código"""
+    token = serializers.CharField(max_length=6, help_text="Código TOTP de 6 dígitos")
+
+
+class MFAVerifySerializer(serializers.Serializer):
+    """Serializer para verificar código TOTP durante login"""
+    temp_token = serializers.CharField(help_text="Token temporal recibido en el login")
+    token = serializers.CharField(max_length=6, help_text="Código TOTP de 6 dígitos")
+
+
+class CustomLoginSerializer(serializers.Serializer):
+    """Serializer para login con soporte de MFA"""
+    username = serializers.CharField()
+    password = serializers.CharField(write_only=True)
+
 class RegisterSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True)
 
