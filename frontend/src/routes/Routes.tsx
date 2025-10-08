@@ -11,6 +11,7 @@ import MetodosFinancierosPage from "../features/metodos_financieros/Pages/Metodo
 import MetodosFinancierosClientePage from "../features/metodos_financieros/Pages/MetodosFinancierosClientePage";
 import ConfiguracionesPage from "../pages/ConfiguracionesPage";
 import CategoriaClientePage from "../features/categoria_clientes/pages/CategoriaClientesPage";
+import SecuritySettingsPage from "../pages/SecuritySettingsPage";
 import {
   CATEGORIAS_CLIENTE,
   CLIENTES,
@@ -55,6 +56,15 @@ export const router = createBrowserRouter([
         element: (
           <RequireAuth>
             <HistorialPage />
+          </RequireAuth>
+        ),
+      },
+
+      {
+        path: "settings/security",
+        element: (
+          <RequireAuth>
+            <SecuritySettingsPage />
           </RequireAuth>
         ),
       },
