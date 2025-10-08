@@ -26,12 +26,24 @@ import { useState, useEffect } from "react";
 import * as Yup from "yup";
 import { useForm } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
+import { toast } from "react-toastify";
 import {
   getMfaStatusAPI,
   setupMfaAPI,
   enableMfaAPI,
   disableMfaAPI,
 } from "../services/authService";
+import {
+  ShieldCheck,
+  ShieldX,
+  QrCode,
+  Loader2,
+  CheckCircle2,
+  KeyRound,
+  XCircle,
+  Smartphone,
+  Info
+} from "lucide-react";
 
 /**
  * Tipos para el formulario de código MFA
@@ -52,7 +64,7 @@ const codeValidation = Yup.object().shape({
 /**
  * Estados del componente MFA
  */
-type MfaState = "loading" | "disabled" | "setup" | "enabled";
+type MfaState = "loading" | "disabled" | "setup" | "enabled" | "disabling";
 
 /**
  * Componente principal de configuración MFA
@@ -62,7 +74,6 @@ const MfaSettings = () => {
   const [qrCode, setQrCode] = useState<string>("");
   const [secret, setSecret] = useState<string>("");
   const [error, setError] = useState<string>("");
-  const [success, setSuccess] = useState<string>("");
   const [loading, setLoading] = useState(false);
 
   const {
@@ -102,7 +113,6 @@ const MfaSettings = () => {
    */
   const handleStartSetup = async () => {
     setError("");
-    setSuccess("");
     setLoading(true);
 
     try {
@@ -124,12 +134,11 @@ const MfaSettings = () => {
    */
   const handleEnableMfa = async (form: MfaCodeForm) => {
     setError("");
-    setSuccess("");
     setLoading(true);
 
     try {
       await enableMfaAPI(form.code);
-      setSuccess("¡MFA habilitado exitosamente!");
+      toast.success("¡MFA habilitado exitosamente!");
       setState("enabled");
       reset();
       setQrCode("");
@@ -142,16 +151,23 @@ const MfaSettings = () => {
   };
 
   /**
+   * Inicia el proceso de desactivación de MFA
+   */
+  const handleStartDisable = () => {
+    setError("");
+    setState("disabling");
+  };
+
+  /**
    * Deshabilita MFA verificando el código TOTP ingresado
    */
   const handleDisableMfa = async (form: MfaCodeForm) => {
     setError("");
-    setSuccess("");
     setLoading(true);
 
     try {
       await disableMfaAPI(form.code);
-      setSuccess("MFA deshabilitado exitosamente");
+      toast.success("MFA deshabilitado exitosamente");
       setState("disabled");
       reset();
     } catch (err: any) {
@@ -169,7 +185,15 @@ const MfaSettings = () => {
     setQrCode("");
     setSecret("");
     setError("");
-    setSuccess("");
+    reset();
+  };
+
+  /**
+   * Cancela el proceso de desactivación
+   */
+  const handleCancelDisable = () => {
+    setState("enabled");
+    setError("");
     reset();
   };
 
@@ -178,7 +202,7 @@ const MfaSettings = () => {
    */
   if (state === "loading") {
     return (
-      <div className="bg-white rounded-lg shadow-md p-6">
+      <div className="bg-white rounded-lg shadow-lg p-6">
         <div className="animate-pulse">
           <div className="h-4 bg-gray-300 rounded w-1/4 mb-4"></div>
           <div className="h-10 bg-gray-300 rounded w-full"></div>
@@ -187,244 +211,217 @@ const MfaSettings = () => {
     );
   }
 
-  return (
-    <div className="bg-white rounded-lg shadow-md p-6 max-w-2xl">
-      {/* HEADER */}
-      <div className="mb-6">
-        <h2 className="text-2xl font-bold text-gray-900 mb-2">
-          Autenticación de Dos Factores (MFA)
-        </h2>
-        <p className="text-gray-600">
-          Agrega una capa adicional de seguridad a tu cuenta requiriendo un código de tu
-          teléfono además de tu contraseña.
-        </p>
+   return (
+    <div className="bg-white rounded-lg shadow p-5 max-w-xl">
+      {/* Header */}
+      <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center gap-2">
+          <ShieldCheck className="h-5 w-5 text-gray-700" />
+          <h2 className="text-lg font-semibold text-gray-900">
+            Autenticación de dos factores
+          </h2>
+        </div>
+
+        {/* Chip de estado */}
+        {state === "enabled" ? (
+          <span className="inline-flex items-center gap-1 text-xs font-medium px-2 py-1 rounded-full bg-green-100 text-green-700">
+            <span className="h-1.5 w-1.5 rounded-full bg-green-500" />
+            Activo
+          </span>
+        ) : (
+          <span className="inline-flex items-center gap-1 text-xs font-medium px-2 py-1 rounded-full bg-gray-100 text-gray-600">
+            <span className="h-1.5 w-1.5 rounded-full bg-gray-400" />
+            Inactivo
+          </span>
+        )}
       </div>
 
-      {/* MENSAJES DE ÉXITO/ERROR */}
-      {success && (
-        <div className="mb-4 bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded">
-          {success}
-        </div>
-      )}
-
+      {/* Mensajes de error */}
       {error && (
-        <div className="mb-4 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
-          {error}
+        <div className="mb-3 bg-red-100 border border-red-400 text-red-700 px-3 py-2 rounded text-sm">
+          <div className="flex items-center gap-2">
+            <XCircle className="h-4 w-4" />
+            <span>{error}</span>
+          </div>
         </div>
       )}
 
-      {/* ESTADO: MFA DESHABILITADO */}
+      {/* Disabled */}
       {state === "disabled" && (
-        <div>
-          <div className="flex items-center mb-4">
-            <div className="flex-shrink-0">
-              <svg
-                className="h-12 w-12 text-gray-400"
-                fill="none"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth="2"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
-              </svg>
-            </div>
-            <div className="ml-4">
-              <h3 className="text-lg font-semibold text-gray-900">
-                MFA no está habilitado
-              </h3>
-              <p className="text-gray-600">
-                Tu cuenta no está protegida con autenticación de dos factores
-              </p>
-            </div>
-          </div>
+        <div className="space-y-3">
+          <p className="text-sm text-gray-600">
+            Agrega una capa adicional de seguridad a tu cuenta.
+          </p>
 
           <button
             onClick={handleStartSetup}
             disabled={loading}
-            className="w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-6 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full flex justify-center items-center gap-2 bg-gray-900 hover:bg-gray-700 text-white text-sm font-semibold px-4 py-2 rounded-md disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
-            {loading ? "Generando..." : "Habilitar MFA"}
+            {loading ? (
+              <>
+                <Loader2 className="h-4 w-4 animate-spin" />
+                Cargando...
+              </>
+            ) : (
+              <>
+                Habilitar
+              </>
+            )}
           </button>
         </div>
       )}
 
-      {/* ESTADO: CONFIGURANDO MFA (MOSTRANDO QR) */}
+      {/* Setup */}
       {state === "setup" && (
-        <div>
-          <div className="mb-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">
-              Configurar Autenticación de Dos Factores
-            </h3>
-
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
-              <h4 className="font-semibold text-blue-900 mb-2">Paso 1: Escanea el código QR</h4>
-              <p className="text-blue-800 text-sm mb-4">
-                Usa una aplicación de autenticación como Google Authenticator, Microsoft
-                Authenticator, o Authy para escanear este código QR.
-              </p>
-
-              {/* QR CODE */}
-              <div className="flex justify-center bg-white p-4 rounded-lg mb-4">
-                {qrCode && (
-                  <img
-                    src={qrCode}
-                    alt="QR Code para MFA"
-                    className="w-48 h-48"
-                  />
-                )}
-              </div>
-
-              {/* SECRETO EN TEXTO */}
-              <div className="bg-gray-100 p-3 rounded">
-                <p className="text-xs text-gray-600 mb-1">
-                  O ingresa este código manualmente:
-                </p>
-                <code className="text-sm font-mono text-gray-900 break-all">
-                  {secret}
-                </code>
-              </div>
-            </div>
-
-            <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-6">
-              <h4 className="font-semibold text-yellow-900 mb-2">
-                Paso 2: Verifica el código
-              </h4>
-              <p className="text-yellow-800 text-sm mb-4">
-                Ingresa el código de 6 dígitos que aparece en tu aplicación de autenticación
-                para confirmar la configuración.
-              </p>
-
-              <form onSubmit={handleSubmit(handleEnableMfa)} className="space-y-4">
-                <div>
-                  <label
-                    htmlFor="code"
-                    className="block text-sm font-medium text-gray-900 mb-2"
-                  >
-                    Código de verificación
-                  </label>
-                  <input
-                    type="text"
-                    id="code"
-                    maxLength={6}
-                    placeholder="000000"
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-center text-2xl tracking-widest"
-                    disabled={loading}
-                    {...register("code")}
-                  />
-                  {errors.code && (
-                    <p className="text-red-600 text-sm mt-1">{errors.code.message}</p>
-                  )}
-                </div>
-
-                <div className="flex gap-3">
-                  <button
-                    type="submit"
-                    disabled={loading}
-                    className="flex-1 bg-green-600 hover:bg-green-700 text-white font-semibold py-2 px-4 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    {loading ? "Verificando..." : "Habilitar MFA"}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={handleCancelSetup}
-                    disabled={loading}
-                    className="flex-1 bg-gray-300 hover:bg-gray-400 text-gray-800 font-semibold py-2 px-4 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    Cancelar
-                  </button>
-                </div>
-              </form>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* ESTADO: MFA HABILITADO */}
-      {state === "enabled" && (
-        <div>
-          <div className="flex items-center mb-6">
-            <div className="flex-shrink-0">
-              <svg
-                className="h-12 w-12 text-green-500"
-                fill="none"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth="2"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path>
-              </svg>
-            </div>
-            <div className="ml-4">
-              <h3 className="text-lg font-semibold text-gray-900">
-                MFA está habilitado ✓
-              </h3>
-              <p className="text-gray-600">
-                Tu cuenta está protegida con autenticación de dos factores
-              </p>
+        <div className="space-y-4">
+          {/* QR Code */}
+          <div className="space-y-2">
+            <p className="text-sm font-medium text-gray-700">Escanea con tu app de autenticación</p>
+            <div className="bg-gray-50 border border-gray-300 rounded-md p-4 flex justify-center">
+              {qrCode ? (
+                <img src={qrCode} alt="QR MFA" className="h-40 w-40" />
+              ) : (
+                <div className="h-40 w-40 bg-gray-200 animate-pulse rounded" />
+              )}
             </div>
           </div>
 
-          <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-            <h4 className="font-semibold text-red-900 mb-2">
-              Deshabilitar autenticación de dos factores
-            </h4>
-            <p className="text-red-800 text-sm mb-4">
-              Para deshabilitar MFA, ingresa el código actual de tu aplicación de
-              autenticación.
-            </p>
+          {/* Código manual */}
+          <div className="space-y-2">
+           <p className="text-sm font-medium text-gray-700">Código manual</p>
+            <div className="mt-2 bg-gray-50 border border-gray-300 rounded px-3 py-2">
+              <code className="text-xs font-mono text-gray-900 break-all">{secret}</code>
+            </div>
+          </div>
 
-            <form onSubmit={handleSubmit(handleDisableMfa)} className="space-y-4">
-              <div>
-                <label
-                  htmlFor="code-disable"
-                  className="block text-sm font-medium text-gray-900 mb-2"
-                >
-                  Código de verificación
-                </label>
-                <input
-                  type="text"
-                  id="code-disable"
-                  maxLength={6}
-                  placeholder="000000"
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent text-center text-2xl tracking-widest"
-                  disabled={loading}
-                  {...register("code")}
-                />
-                {errors.code && (
-                  <p className="text-red-600 text-sm mt-1">{errors.code.message}</p>
-                )}
-              </div>
+          {/* Verificación */}
+          <form onSubmit={handleSubmit(handleEnableMfa)} className="space-y-3 pt-2">
+            <div>
+              <label htmlFor="code" className="block text-sm font-medium text-gray-700 mb-2">
+                Código de verificación
+              </label>
+              <input
+                id="code"
+                type="text"
+                maxLength={6}
+                placeholder="000000"
+                className="w-full text-center text-xl tracking-widest px-3 py-2 bg-gray-50 border border-gray-300 text-gray-900 rounded-md focus:ring-2 focus:ring-gray-900 focus:border-transparent"
+                disabled={loading}
+                {...register("code")}
+              />
+              {errors?.code && (
+                <p className="mt-1 text-xs text-red-600">{errors.code.message}</p>
+              )}
+            </div>
 
+            <div className="flex gap-2">
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full sm:w-auto bg-red-600 hover:bg-red-700 text-white font-semibold py-2 px-6 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                className="flex-1 flex justify-center items-center gap-2 bg-gray-900 hover:bg-gray-700 text-white text-sm font-semibold px-4 py-2 rounded-md disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
-                {loading ? "Deshabilitando..." : "Deshabilitar MFA"}
+                {loading ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    Verificando...
+                  </>
+                ) : (
+                  "Activar"
+                )}
               </button>
-            </form>
-          </div>
+              <button
+                type="button"
+                onClick={handleCancelSetup}
+                disabled={loading}
+                className="px-4 py-2 border border-gray-300 text-gray-700 hover:bg-gray-50 text-sm font-semibold rounded-md disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              >
+                Cancelar
+              </button>
+            </div>
+          </form>
         </div>
       )}
 
-      {/* INFORMACIÓN ADICIONAL */}
-      <div className="mt-6 pt-6 border-t border-gray-200">
-        <h4 className="font-semibold text-gray-900 mb-2">
-          ¿Qué es la autenticación de dos factores?
-        </h4>
-        <p className="text-sm text-gray-600 mb-2">
-          La autenticación de dos factores (MFA) agrega una capa extra de seguridad a tu
-          cuenta. Además de tu contraseña, necesitarás un código de tu teléfono para
-          iniciar sesión.
-        </p>
-        <p className="text-sm text-gray-600">
-          Aplicaciones recomendadas: Google Authenticator, Microsoft Authenticator, Authy
-        </p>
-      </div>
+      {/* Enabled */}
+      {state === "enabled" && (
+        <div className="space-y-3">
+          <p className="text-sm text-gray-600">
+            Tu cuenta está protegida con autenticación de dos factores.
+          </p>
+
+          <button
+            onClick={handleStartDisable}
+            disabled={loading}
+            className="w-full flex justify-center items-center gap-2 bg-gray-900 hover:bg-red-600 text-white text-sm font-semibold px-4 py-2 rounded-md disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          >
+            {loading ? (
+              <>
+                <Loader2 className="h-4 w-4 animate-spin" />
+                Cargando...
+              </>
+            ) : (
+              <>
+                Deshabilitar
+              </>
+            )}
+          </button>
+        </div>
+      )}
+
+      {/* Disabling */}
+      {state === "disabling" && (
+        <div className="space-y-4">
+          <p className="text-sm text-gray-600">
+            Ingresa tu código de autenticación para desactivar MFA.
+          </p>
+
+          <form onSubmit={handleSubmit(handleDisableMfa)} className="space-y-3">
+            <div>
+              <label htmlFor="code-disable" className="block text-sm font-medium text-gray-700 mb-2">
+                Código de verificación
+              </label>
+              <input
+                id="code-disable"
+                type="text"
+                maxLength={6}
+                placeholder="000000"
+                className="w-full text-center text-xl tracking-widest px-3 py-2 bg-gray-50 border border-gray-300 text-gray-900 rounded-md focus:ring-2 focus:ring-red-500 focus:border-transparent"
+                disabled={loading}
+                {...register("code")}
+              />
+              {errors?.code && (
+                <p className="mt-1 text-xs text-red-600">{errors.code.message}</p>
+              )}
+            </div>
+
+            <div className="flex gap-2">
+              <button
+                type="submit"
+                disabled={loading}
+                className="flex-1 flex justify-center items-center gap-2 bg-red-600 hover:bg-red-700 text-white text-sm font-semibold px-4 py-2 rounded-md disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              >
+                {loading ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    Deshabilitando...
+                  </>
+                ) : (
+                  "Desactivar"
+                )}
+              </button>
+              <button
+                type="button"
+                onClick={handleCancelDisable}
+                disabled={loading}
+                className="px-4 py-2 border border-gray-300 text-gray-700 hover:bg-gray-50 text-sm font-semibold rounded-md disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              >
+                Cancelar
+              </button>
+            </div>
+          </form>
+        </div>
+      )}
     </div>
   );
 };
