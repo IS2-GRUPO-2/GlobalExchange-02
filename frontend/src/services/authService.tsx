@@ -1,5 +1,13 @@
 /**
- * @fileoverview Servicios de autenticación para comunicación con la API
+ * @fileoverview Servicios de autenticación y MFA para comunicación con la API
+ * 
+ * Este módulo contiene todas las funciones para:
+ * - Autenticación básica (login, registro, refresh token)
+ * - Gestión de MFA (status, setup, enable, disable)
+ * - Verificación de MFA durante login
+ * 
+ * @author Elias Figueredo
+ * @date 08-10-2025
  */
 
 import axios from "axios";

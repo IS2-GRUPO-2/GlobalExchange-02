@@ -1,5 +1,29 @@
 /**
- * @fileoverview Contexto de autenticación para manejo de usuarios y tokens
+ * @fileoverview Contexto de autenticación con soporte para MFA
+ * 
+ * @description
+ * Provee autenticación a nivel de aplicación con soporte completo para:
+ * - Login tradicional (username/password)
+ * - Autenticación de dos factores (MFA/2FA)
+ * - Gestión de tokens JWT (access y refresh)
+ * - Registro de nuevos usuarios
+ * - Persistencia de sesión en localStorage
+ * - Configuración de headers de Axios
+ * 
+ * **Flujo de Login sin MFA:**
+ * 1. Usuario ingresa credenciales
+ * 2. Se reciben tokens JWT inmediatamente
+ * 3. Se guarda sesión y se redirecciona
+ * 
+ * **Flujo de Login con MFA:**
+ * 1. Usuario ingresa credenciales
+ * 2. Se recibe token temporal (válido 5 minutos)
+ * 3. Se solicita código TOTP de 6 dígitos
+ * 4. Al verificar código correcto, se reciben tokens JWT
+ * 5. Se guarda sesión y se redirecciona
+ * 
+ * @author Elias Figueredo
+ * @date 08-10-2025
  */
 
 import React from "react";
@@ -22,9 +46,9 @@ import { getUsuario } from "../features/usuario/services/usuarioService";
  * @property {string|null} token - Token de acceso JWT
  * @property {string|null} refresh - Token de actualización
  * @property {boolean} mfaRequired - Indica si se requiere verificación MFA
- * @property {string|null} tempToken - Token temporal para verificación MFA
- * @property {Function} loginUser - Función para iniciar sesión
- * @property {Function} verifyMfa - Función para verificar código TOTP
+ * @property {string|null} tempToken - Token temporal para verificación MFA (expira en 5 min)
+ * @property {Function} loginUser - Función para iniciar sesión con soporte MFA
+ * @property {Function} verifyMfa - Función para verificar código TOTP de 6 dígitos
  * @property {Function} registerUser - Función para registrar nuevo usuario
  * @property {Function} logout - Función para cerrar sesión
  * @property {Function} isLoggedIn - Función para verificar si está autenticado

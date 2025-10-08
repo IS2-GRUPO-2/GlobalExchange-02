@@ -3,16 +3,38 @@
  * @component MfaSettings
  * 
  * @description
- * Componente reutilizable que permite a los usuarios:
+ * Componente reutilizable que permite a los usuarios gestionar la autenticación
+ * de dos factores (2FA/MFA) de su cuenta. Incluye:
+ * 
+ * **Funcionalidades:**
  * - Ver el estado actual de MFA (habilitado/deshabilitado)
- * - Habilitar MFA generando un código QR para Google Authenticator
+ * - Habilitar MFA generando un código QR para apps de autenticación
+ * - Mostrar código manual para configuración alternativa
  * - Deshabilitar MFA ingresando un código de verificación
+ * - Validación de códigos TOTP de 6 dígitos
+ * - Manejo de estados de carga y errores
+ * 
+ * **Estados del componente:**
+ * - `loading`: Cargando estado inicial
+ * - `disabled`: MFA deshabilitado (muestra botón para habilitar)
+ * - `setup`: Proceso de configuración (muestra QR y formulario)
+ * - `enabled`: MFA habilitado (muestra botón para deshabilitar)
+ * - `disabling`: Proceso de deshabilitación (muestra formulario)
+ * 
+ * **Compatible con:**
+ * - Google Authenticator
+ * - Microsoft Authenticator
+ * - Authy
+ * - Cualquier app TOTP estándar
+ * 
+ * @author Elias Figueredo
+ * @date 08-10-2025
  * 
  * @example
  * // Uso en cualquier página
  * import MfaSettings from '../components/MfaSettings';
  * 
- * function ProfilePage() {
+ * function SecuritySettingsPage() {
  *   return (
  *     <div>
  *       <h1>Configuración de Seguridad</h1>

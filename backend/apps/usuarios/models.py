@@ -15,6 +15,16 @@ class User(AbstractUser):
     Atributos:
         email_verified (bool): Indica si el email del usuario ha sido verificado.
         clientes (ManyToMany): Relación con los clientes asignados al usuario.
+        cliente_actual (ForeignKey): Cliente seleccionado actualmente por el usuario.
+        mfa_enabled (bool): Indica si el usuario tiene MFA (2FA) habilitado.
+    
+    **MFA (Multi-Factor Authentication):**
+    El campo mfa_enabled controla si el usuario requiere autenticación de dos factores.
+    Los dispositivos TOTP y secretos se manejan mediante la librería django-otp
+    en la tabla TOTPDevice.
+    
+    **Autor del campo MFA:** Elias Figueredo
+    **Fecha:** 08-10-2025
     """
     email_verified = models.BooleanField(default=False)
     clientes = models.ManyToManyField(
@@ -29,8 +39,15 @@ class User(AbstractUser):
         related_name="usuarios_cliente_actual"
     )
 
-    mfa_enabled = models.BooleanField(default=False)
-    # El secreto TOTP se guardará automáticamente por django-otp
+    # ============================================
+    # MFA (Multi-Factor Authentication)
+    # ============================================
+    mfa_enabled = models.BooleanField(
+        default=False,
+        help_text="Indica si el usuario tiene autenticación de dos factores habilitada"
+    )
+    # NOTA: El secreto TOTP y dispositivos se gestionan automáticamente
+    # por django-otp en la tabla otp_totp_totpdevice
     
     class Meta:
         permissions = [

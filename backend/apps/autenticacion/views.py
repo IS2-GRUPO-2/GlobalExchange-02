@@ -1,3 +1,15 @@
+"""
+Vistas de Autenticación y MFA
+
+Este módulo contiene todas las vistas relacionadas con:
+- Registro y verificación de email
+- Autenticación de dos factores (MFA/2FA)
+- Login con soporte para MFA
+
+Autor: Elias Figueredo
+Fecha: 08-10-2025
+"""
+
 from django.shortcuts import render
 from django.contrib.auth import authenticate
 from rest_framework import generics, status
@@ -45,8 +57,26 @@ class VerifyEmailView(generics.GenericAPIView):
 
 class MFAStatusView(APIView):
     """
-    GET /api/auth/mfa/status/
-    Retorna el estado de MFA del usuario autenticado
+    Vista para obtener el estado de MFA del usuario
+    
+    **Endpoint:** GET /api/auth/mfa/status/
+    
+    **Permisos:** IsAuthenticated
+    
+    **Descripción:**
+    Retorna información sobre si el usuario tiene MFA habilitado y si tiene
+    un dispositivo TOTP confirmado.
+    
+    **Response:**
+    ```json
+    {
+        "mfa_enabled": true,
+        "has_device": true
+    }
+    ```
+    
+    **Autor:** Elias Figueredo
+    **Fecha:** 08-10-2025
     """
     permission_classes = [IsAuthenticated]
 
@@ -60,8 +90,32 @@ class MFAStatusView(APIView):
 
 class MFASetupView(APIView):
     """
-    POST /api/auth/mfa/setup/
-    Genera un nuevo dispositivo TOTP y retorna el QR code
+    Vista para iniciar la configuración de MFA
+    
+    **Endpoint:** POST /api/auth/mfa/setup/
+    
+    **Permisos:** IsAuthenticated
+    
+    **Descripción:**
+    Genera un nuevo dispositivo TOTP (Time-based One-Time Password) y retorna:
+    - Un código QR para escanear con apps como Google Authenticator
+    - La clave secreta para configuración manual
+    - El ID del dispositivo creado
+    
+    El dispositivo se crea en estado "no confirmado" y debe ser verificado
+    con un código TOTP válido usando el endpoint /mfa/enable/
+    
+    **Response:**
+    ```json
+    {
+        "secret": "JBSWY3DPEHPK3PXP",
+        "qr_code": "data:image/png;base64,iVBORw0KG...",
+        "device_id": 1
+    }
+    ```
+    
+    **Autor:** Elias Figueredo
+    **Fecha:** 08-10-2025
     """
     permission_classes = [IsAuthenticated]
     serializer_class = MFASetupSerializer
@@ -102,8 +156,43 @@ class MFASetupView(APIView):
 
 class MFAEnableView(APIView):
     """
-    POST /api/auth/mfa/enable/
-    Verifica el código TOTP y habilita MFA para el usuario
+    Vista para habilitar MFA verificando el código TOTP
+    
+    **Endpoint:** POST /api/auth/mfa/enable/
+    
+    **Permisos:** IsAuthenticated
+    
+    **Descripción:**
+    Verifica un código TOTP de 6 dígitos y, si es válido:
+    - Confirma el dispositivo TOTP
+    - Habilita MFA en la cuenta del usuario
+    
+    Debe llamarse después de /mfa/setup/ para completar la configuración.
+    
+    **Request Body:**
+    ```json
+    {
+        "token": "123456"
+    }
+    ```
+    
+    **Response Success:**
+    ```json
+    {
+        "message": "MFA habilitado exitosamente",
+        "mfa_enabled": true
+    }
+    ```
+    
+    **Response Error:**
+    ```json
+    {
+        "error": "Código inválido. Por favor, intenta nuevamente."
+    }
+    ```
+    
+    **Autor:** Elias Figueredo
+    **Fecha:** 08-10-2025
     """
     permission_classes = [IsAuthenticated]
     serializer_class = MFAEnableSerializer
@@ -147,8 +236,43 @@ class MFAEnableView(APIView):
 
 class MFADisableView(APIView):
     """
-    POST /api/auth/mfa/disable/
-    Verifica el código TOTP y deshabilita MFA para el usuario
+    Vista para deshabilitar MFA verificando el código TOTP
+    
+    **Endpoint:** POST /api/auth/mfa/disable/
+    
+    **Permisos:** IsAuthenticated
+    
+    **Descripción:**
+    Verifica un código TOTP de 6 dígitos y, si es válido:
+    - Elimina todos los dispositivos TOTP del usuario
+    - Deshabilita MFA en la cuenta del usuario
+    
+    Solo puede ser llamado si el usuario tiene MFA habilitado.
+    
+    **Request Body:**
+    ```json
+    {
+        "token": "123456"
+    }
+    ```
+    
+    **Response Success:**
+    ```json
+    {
+        "message": "MFA deshabilitado exitosamente",
+        "mfa_enabled": false
+    }
+    ```
+    
+    **Response Error:**
+    ```json
+    {
+        "error": "Código inválido. Por favor, intenta nuevamente."
+    }
+    ```
+    
+    **Autor:** Elias Figueredo
+    **Fecha:** 08-10-2025
     """
     permission_classes = [IsAuthenticated]
     serializer_class = MFADisableSerializer
@@ -201,14 +325,52 @@ class MFADisableView(APIView):
 
 class CustomLoginView(APIView):
     """
-    POST /api/auth/login/
-    Login con soporte para MFA de 2 pasos
+    Vista de login con soporte para autenticación de dos factores
     
-    Si el usuario NO tiene MFA:
-        - Retorna JWT inmediatamente
+    **Endpoint:** POST /api/auth/login/
     
-    Si el usuario SÍ tiene MFA:
-        - Retorna token temporal y requiere verificación TOTP
+    **Permisos:** AllowAny
+    
+    **Descripción:**
+    Login con flujo de 2 pasos que soporta MFA:
+    
+    **Caso 1 - Usuario sin MFA:**
+    - Valida credenciales (username/password)
+    - Retorna JWT access y refresh tokens inmediatamente
+    
+    **Caso 2 - Usuario con MFA:**
+    - Valida credenciales (username/password)
+    - Genera un token temporal (válido 5 minutos)
+    - Requiere verificación TOTP en /mfa/verify-login/
+    
+    **Request Body:**
+    ```json
+    {
+        "username": "usuario",
+        "password": "contraseña"
+    }
+    ```
+    
+    **Response Sin MFA:**
+    ```json
+    {
+        "access": "eyJ0eXAiOiJKV1QiLCJ...",
+        "refresh": "eyJ0eXAiOiJKV1QiLC...",
+        "mfa_required": false
+    }
+    ```
+    
+    **Response Con MFA:**
+    ```json
+    {
+        "mfa_required": true,
+        "temp_token": "eyJ0eXAiOiJKV1Qi...",
+        "message": "Por favor, ingresa tu código de autenticación"
+    }
+    ```
+    
+    **Autor:** Elias Figueredo
+    **Fecha:** 08-10-2025
     """
     serializer_class = CustomLoginSerializer
 
@@ -275,8 +437,47 @@ class CustomLoginView(APIView):
 
 class MFAVerifyLoginView(APIView):
     """
-    POST /api/auth/mfa/verify-login/
-    Verifica el código TOTP y emite JWT real
+    Vista para verificar código MFA durante el login
+    
+    **Endpoint:** POST /api/auth/mfa/verify-login/
+    
+    **Permisos:** AllowAny
+    
+    **Descripción:**
+    Segundo paso del login para usuarios con MFA habilitado.
+    - Valida el token temporal recibido en el login
+    - Verifica el código TOTP de 6 dígitos
+    - Emite JWT access y refresh tokens si todo es válido
+    
+    **Request Body:**
+    ```json
+    {
+        "temp_token": "eyJ0eXAiOiJKV1Qi...",
+        "token": "123456"
+    }
+    ```
+    
+    **Response Success:**
+    ```json
+    {
+        "access": "eyJ0eXAiOiJKV1QiLCJ...",
+        "refresh": "eyJ0eXAiOiJKV1QiLC..."
+    }
+    ```
+    
+    **Response Error:**
+    ```json
+    {
+        "error": "Código inválido"
+    }
+    ```
+    
+    **Notas:**
+    - El token temporal expira en 5 minutos
+    - El código TOTP debe ser generado por la app de autenticación del usuario
+    
+    **Autor:** Elias Figueredo
+    **Fecha:** 08-10-2025
     """
     serializer_class = MFAVerifySerializer
 
