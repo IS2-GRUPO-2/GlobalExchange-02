@@ -251,6 +251,8 @@ const MfaSettings = () => {
         <div className="space-y-3">
           <p className="text-sm text-gray-600">
             Agrega una capa adicional de seguridad a tu cuenta.
+            <br />
+            Compatible con   Google Authenticator o Authy.
           </p>
 
           <button
