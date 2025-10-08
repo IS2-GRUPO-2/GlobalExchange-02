@@ -7,20 +7,19 @@ from apps.operaciones.models import Transaccion
 
 class StockDivisaCasa(models.Model):
     stock = models.IntegerField()
-    denominacion = models.ForeignKey(Denominacion, on_delete=models.PROTECT)    
+    denominacion = models.ForeignKey(Denominacion, on_delete=models.PROTECT, unique=True)    
 
 class StockDivisaTauser(models.Model):
-    tauser = models.ForeignKey(Tauser, on_delete=models.PROTECT)
+    tauser = models.ForeignKey(Tauser, on_delete=models.PROTECT, unique=True)
     stock = models.IntegerField()
     denominacion = models.ForeignKey(Denominacion, on_delete=models.PROTECT)
 
 class TipoMovimiento(models.Model):
-    codigo = models.CharField(max_length=10)
+    codigo = models.CharField(max_length=10, unique=True)
     descripcion = models.CharField(max_length=100)
     
 class MovimientoStock(models.Model):
     tipo_movimiento = models.ForeignKey(TipoMovimiento, on_delete=models.PROTECT)
-    stock_divisa_casa = models.ForeignKey(StockDivisaCasa, on_delete=models.PROTECT)
     tauser = models.ForeignKey(Tauser, on_delete=models.PROTECT)
     transaccion = models.ForeignKey(Transaccion, null=True, on_delete=models.PROTECT)
     fecha = models.DateTimeField(auto_now_add=True)
