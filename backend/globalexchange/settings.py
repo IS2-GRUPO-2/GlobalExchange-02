@@ -57,6 +57,7 @@ INSTALLED_APPS = [
     'apps.notificaciones',
     'apps.tauser',
     'apps.metodos_financieros',
+    'apps.stock',
     'drf_yasg'
 ]
 
