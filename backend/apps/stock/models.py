@@ -16,7 +16,7 @@ class TipoMovimiento(models.Model):
     codigo = models.CharField(max_length=10, unique=True)
     descripcion = models.CharField(max_length=100)
     
-class EstadoMovimiento(models.model):
+class EstadoMovimiento(models.Model):
     estado = models.CharField(max_length=15, unique=True)
 class MovimientoStock(models.Model):
     tipo_movimiento = models.ForeignKey(TipoMovimiento, on_delete=models.PROTECT)
