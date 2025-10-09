@@ -1,10 +1,112 @@
+"""
+Serializers para Autenticación y MFA
+
+Este módulo contiene los serializers para:
+- Configuración de MFA (setup, enable, disable)
+- Verificación de MFA durante login
+- Registro y verificación de email
+
+Autor: Elias Figueredo
+Fecha: 08-10-2025
+"""
+
 from rest_framework import serializers
 from django.contrib.auth import get_user_model
 from .models import EmailVerificationCode
 import random
 from apps.notificaciones.notification_service import NotificationService
+
 User = get_user_model()
 notification_service = NotificationService()
+
+
+class MFASetupSerializer(serializers.Serializer):
+    """
+    Serializer para iniciar la configuración de MFA
+    
+    No requiere campos de entrada. Se usa solo para validación del endpoint.
+    
+    **Autor:** Elias Figueredo
+    **Fecha:** 08-10-2025
+    """
+    pass
+
+
+class MFAEnableSerializer(serializers.Serializer):
+    """
+    Serializer para habilitar MFA con verificación de código TOTP
+    
+    **Campos:**
+    - token: Código TOTP de 6 dígitos generado por la app de autenticación
+    
+    **Autor:** Elias Figueredo
+    **Fecha:** 08-10-2025
+    """
+    token = serializers.CharField(
+        max_length=6,
+        min_length=6,
+        help_text="Código TOTP de 6 dígitos"
+    )
+
+
+class MFADisableSerializer(serializers.Serializer):
+    """
+    Serializer para deshabilitar MFA con verificación de código TOTP
+    
+    **Campos:**
+    - token: Código TOTP de 6 dígitos generado por la app de autenticación
+    
+    **Autor:** Elias Figueredo
+    **Fecha:** 08-10-2025
+    """
+    token = serializers.CharField(
+        max_length=6,
+        min_length=6,
+        help_text="Código TOTP de 6 dígitos"
+    )
+
+
+class MFAVerifySerializer(serializers.Serializer):
+    """
+    Serializer para verificar código TOTP durante el proceso de login
+    
+    **Campos:**
+    - temp_token: Token temporal JWT recibido en el primer paso del login
+    - token: Código TOTP de 6 dígitos generado por la app de autenticación
+    
+    **Uso:**
+    Se utiliza en el segundo paso del login cuando el usuario tiene MFA habilitado.
+    El temp_token expira en 5 minutos.
+    
+    **Autor:** Elias Figueredo
+    **Fecha:** 08-10-2025
+    """
+    temp_token = serializers.CharField(help_text="Token temporal recibido en el login")
+    token = serializers.CharField(
+        max_length=6,
+        min_length=6,
+        help_text="Código TOTP de 6 dígitos"
+    )
+
+
+class CustomLoginSerializer(serializers.Serializer):
+    """
+    Serializer para login con soporte de autenticación de dos factores
+    
+    **Campos:**
+    - username: Nombre de usuario
+    - password: Contraseña (write_only, no se retorna en respuestas)
+    
+    **Comportamiento:**
+    - Si el usuario NO tiene MFA: retorna JWT inmediatamente
+    - Si el usuario SÍ tiene MFA: retorna temp_token para verificación
+    
+    **Autor:** Elias Figueredo
+    **Fecha:** 08-10-2025
+    """
+    username = serializers.CharField()
+    password = serializers.CharField(write_only=True)
+
 class RegisterSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True)
 

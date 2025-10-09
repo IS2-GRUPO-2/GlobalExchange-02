@@ -44,7 +44,8 @@ class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = ["id", "username", "password", "last_login",
-                  "first_name", "last_name", "email", "is_active", "date_joined", "clientes", "roles"]
+                  "first_name", "last_name", "email", "is_active", "date_joined", "clientes", "roles", "mfa_enabled"]
+        read_only_fields = ["mfa_enabled"]  # Solo se modifica mediante endpoints MFA
 
     def create(self, validated_data):
         """
