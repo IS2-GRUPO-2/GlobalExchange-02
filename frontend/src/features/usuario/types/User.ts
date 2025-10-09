@@ -1,7 +1,27 @@
 import { type Cliente } from "../../clientes/types/Cliente";
+
 export type UserProfileToken = {
   access: string;
   refresh: string;
+};
+
+export type MFALoginResponse = {
+  mfa_required: boolean;
+  temp_token?: string;
+  message?: string;
+  access?: string;
+  refresh?: string;
+};
+
+export type MFASetupResponse = {
+  secret: string;
+  qr_code: string;
+  device_id: number;
+};
+
+export type MFAStatusResponse = {
+  mfa_enabled: boolean;
+  has_device: boolean;
 };
 
 export type User = {
@@ -14,6 +34,7 @@ export type User = {
   permissions: string[];
   is_active: boolean;
   is_verified: boolean;
+  mfa_enabled?: boolean;
   clientes?: Cliente[];
 };
 
