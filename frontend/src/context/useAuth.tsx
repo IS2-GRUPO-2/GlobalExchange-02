@@ -1,5 +1,29 @@
 /**
- * @fileoverview Contexto de autenticación para manejo de usuarios y tokens
+ * @fileoverview Contexto de autenticación con soporte para MFA
+ * 
+ * @description
+ * Provee autenticación a nivel de aplicación con soporte completo para:
+ * - Login tradicional (username/password)
+ * - Autenticación de dos factores (MFA/2FA)
+ * - Gestión de tokens JWT (access y refresh)
+ * - Registro de nuevos usuarios
+ * - Persistencia de sesión en localStorage
+ * - Configuración de headers de Axios
+ * 
+ * **Flujo de Login sin MFA:**
+ * 1. Usuario ingresa credenciales
+ * 2. Se reciben tokens JWT inmediatamente
+ * 3. Se guarda sesión y se redirecciona
+ * 
+ * **Flujo de Login con MFA:**
+ * 1. Usuario ingresa credenciales
+ * 2. Se recibe token temporal (válido 5 minutos)
+ * 3. Se solicita código TOTP de 6 dígitos
+ * 4. Al verificar código correcto, se reciben tokens JWT
+ * 5. Se guarda sesión y se redirecciona
+ * 
+ * @author Elias Figueredo
+ * @date 08-10-2025
  */
 
 import React from "react";
@@ -10,6 +34,7 @@ import {
   loginAPI,
   refreshTokenAPI,
   registerAPI,
+  verifyMfaLoginAPI,
 } from "../services/authService";
 import { jwtDecode } from "jwt-decode";
 import axios from "axios";
@@ -20,7 +45,10 @@ import { getUsuario } from "../features/usuario/services/usuarioService";
  * @property {User|null} user - Usuario autenticado actual
  * @property {string|null} token - Token de acceso JWT
  * @property {string|null} refresh - Token de actualización
- * @property {Function} loginUser - Función para iniciar sesión
+ * @property {boolean} mfaRequired - Indica si se requiere verificación MFA
+ * @property {string|null} tempToken - Token temporal para verificación MFA (expira en 5 min)
+ * @property {Function} loginUser - Función para iniciar sesión con soporte MFA
+ * @property {Function} verifyMfa - Función para verificar código TOTP de 6 dígitos
  * @property {Function} registerUser - Función para registrar nuevo usuario
  * @property {Function} logout - Función para cerrar sesión
  * @property {Function} isLoggedIn - Función para verificar si está autenticado
@@ -29,7 +57,10 @@ type UserContextType = {
   user: User | null;
   token: string | null;
   refresh: string | null;
-  loginUser: (username: string, password: string) => void;
+  mfaRequired: boolean;
+  tempToken: string | null;
+  loginUser: (username: string, password: string) => Promise<void>;
+  verifyMfa: (code: string) => Promise<void>;
   registerUser: (
     username: string,
     email: string,
@@ -69,6 +100,8 @@ export const UserProvider = ({ children }: Props) => {
   const [refresh, setRefresh] = useState<string | null>(null);
   const [user, setUser] = useState<User | null>(null);
   const [isReady, setIsReady] = useState(false);
+  const [mfaRequired, setMfaRequired] = useState(false);
+  const [tempToken, setTempToken] = useState<string | null>(null);
 
   /**
    * Renueva el token de acceso usando el refresh token
@@ -137,7 +170,7 @@ export const UserProvider = ({ children }: Props) => {
   }, [refresh]);
 
   /**
-   * Inicia sesión del usuario
+   * Inicia sesión del usuario con soporte para MFA
    * @async
    * @function loginUser
    * @param {string} username - Nombre de usuario
@@ -146,37 +179,105 @@ export const UserProvider = ({ children }: Props) => {
    * 
    * @description
    * - Autentica al usuario con el backend
-   * - Decodifica el JWT para obtener información del usuario
-   * - Almacena tokens y datos del usuario en localStorage
-   * - Configura headers de autorización en Axios
-   * - Redirecciona a la página principal después del login exitoso
+   * - Si el usuario NO tiene MFA: Completa el login inmediatamente
+   * - Si el usuario SÍ tiene MFA: Guarda temp_token y solicita código TOTP
+   * - Maneja errores de autenticación
    * 
    * @example
    * await loginUser('usuario123', 'password123');
    */
   const loginUser = async (username: string, password: string) => {
-    await loginAPI(username, password)
-      .then(async (res) => {
-        if (res) {
-          localStorage.setItem("token", res?.data.access);
-          localStorage.setItem("refresh", res?.data.refresh);
-          const userObj = jwtDecode<DecodedToken>(res?.data.access);
-          const headers = {
-            headers: {
-              Authorization: `Bearer ${res?.data.access}`,
-            },
-          };
-          const user = await getUsuario(userObj.user_id, headers);
+    try {
+      const res = await loginAPI(username, password);
+      
+      if (!res) return;
 
-          console.log(userObj);
-          localStorage.setItem("user", JSON.stringify(user.data));
-          setToken(res?.data.access!);
-          setRefresh(res?.data.refresh!);
-          setUser(user.data);
-          navigate("/");
-        }
-      })
-      .catch((e) => console.log("error en useAuth" + e));
+      // Verificar si se requiere MFA
+      if (res.data.mfa_required) {
+        // Usuario tiene MFA habilitado - guardar token temporal
+        setMfaRequired(true);
+        setTempToken(res.data.temp_token || null);
+        // No navegar ni guardar tokens aún
+        return;
+      }
+
+      // Usuario sin MFA - login normal
+      if (res.data.access && res.data.refresh) {
+        localStorage.setItem("token", res.data.access);
+        localStorage.setItem("refresh", res.data.refresh);
+        
+        const userObj = jwtDecode<DecodedToken>(res.data.access);
+        const headers = {
+          headers: {
+            Authorization: `Bearer ${res.data.access}`,
+          },
+        };
+        const user = await getUsuario(userObj.user_id, headers);
+
+        localStorage.setItem("user", JSON.stringify(user.data));
+        setToken(res.data.access);
+        setRefresh(res.data.refresh);
+        setUser(user.data);
+        setMfaRequired(false);
+        setTempToken(null);
+        navigate("/");
+      }
+    } catch (e) {
+      console.log("error en useAuth: " + e);
+      throw e;
+    }
+  };
+
+  /**
+   * Verifica el código TOTP y completa el login
+   * @async
+   * @function verifyMfa
+   * @param {string} code - Código TOTP de 6 dígitos
+   * @returns {Promise<void>}
+   * 
+   * @description
+   * - Envía el código TOTP junto con el token temporal
+   * - Si el código es válido, completa el login y obtiene JWT
+   * - Almacena tokens y datos del usuario
+   * - Redirecciona a la página principal
+   * 
+   * @example
+   * await verifyMfa('123456');
+   */
+  const verifyMfa = async (code: string) => {
+    if (!tempToken) {
+      console.error("No hay token temporal");
+      return;
+    }
+
+    try {
+      const res = await verifyMfaLoginAPI(tempToken, code);
+      
+      if (!res) return;
+
+      // Login exitoso con MFA
+      localStorage.setItem("token", res.data.access);
+      localStorage.setItem("refresh", res.data.refresh);
+      
+      const userObj = jwtDecode<DecodedToken>(res.data.access);
+      const headers = {
+        headers: {
+          Authorization: `Bearer ${res.data.access}`,
+        },
+      };
+      const user = await getUsuario(userObj.user_id, headers);
+
+      localStorage.setItem("user", JSON.stringify(user.data));
+      setToken(res.data.access);
+      setRefresh(res.data.refresh);
+      setUser(user.data);
+      setMfaRequired(false);
+      setTempToken(null);
+      navigate("/");
+    } catch (e) {
+      console.log("Error al verificar MFA: " + e);
+      throw e;
+    }
   };
 
   /**
@@ -264,10 +365,13 @@ export const UserProvider = ({ children }: Props) => {
     <UserContext.Provider
       value={{
         loginUser,
+        verifyMfa,
         registerUser,
         user,
         token,
         refresh,
+        mfaRequired,
+        tempToken,
         logout,
         isLoggedIn,
       }}
