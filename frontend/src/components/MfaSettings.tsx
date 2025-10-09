@@ -57,14 +57,8 @@ import {
 } from "../services/authService";
 import {
   ShieldCheck,
-  ShieldX,
-  QrCode,
   Loader2,
-  CheckCircle2,
-  KeyRound,
   XCircle,
-  Smartphone,
-  Info
 } from "lucide-react";
 
 /**
