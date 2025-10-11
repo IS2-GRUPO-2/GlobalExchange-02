@@ -19,6 +19,7 @@ def run():
         '06_financiero_seeds',
         '07_cotizaciones_seeds',
         '08_tausers_seeds',
+        '09_stock_seeds'
     ]
     
     print("🌱 Iniciando carga de seeds...")
