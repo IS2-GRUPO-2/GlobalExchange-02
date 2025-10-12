@@ -32,15 +32,14 @@ import ConfiguracionTauserPage from "../features/tauser/pages/ConfiguracionTause
 import HistorialPage from "../pages/HistorialPage";
 
 export const router = createBrowserRouter([
-  // RUTA INDEPENDIENTE SIN NAVBAR PARA TAUSER
-  { path: "/tauser", element: <TauserPage /> }, // Página pública para terminales de autoservicio sin navbar
-  
+ 
   {
     path: "/",
     element: <App />,
     children: [
       // RUTAS PÚBLICAS DE ESTA MANERA
       { path: "", element: <MainMenuPage /> },
+      { path: "/tauser", element: <TauserPage /> },
       { path: "login", element: <LoginPage /> },
       { path: "register", element: <RegisterPage /> },
 
