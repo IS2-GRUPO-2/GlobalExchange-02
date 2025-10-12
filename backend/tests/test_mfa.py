@@ -44,7 +44,8 @@ def user_without_mfa():
         username='user_no_mfa',
         password='testpass123',
         email='no_mfa@example.com',
-        mfa_enabled=False
+        mfa_enabled=False,
+        email_verified=True  # Usuario con email verificado para tests
     )
 
 
@@ -55,7 +56,8 @@ def user_with_mfa():
         username='user_mfa',
         password='testpass123',
         email='mfa@example.com',
-        mfa_enabled=True
+        mfa_enabled=True,
+        email_verified=True  # Usuario con email verificado para tests
     )
     # Crear dispositivo TOTP confirmado
     device = TOTPDevice.objects.create(
