@@ -1,6 +1,8 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useAuth } from "../../../context/useAuth";
 import { Loader2 } from "lucide-react";
+import logo from "../../../assets/logo-black.png";
+import { getFormattedDateTime } from "../../../utils/date";
 
 type Props = {
   onVolverInicio: () => void;
@@ -28,7 +30,16 @@ export default function EtapaLogin({
   const [mfaCode, setMfaCode] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string>("");
+  const [fechaHora, setFechaHora] = useState(new Date());
 
+  // Actualizar fecha y hora cada minuto
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setFechaHora(new Date());
+    }, 1000*60);
+
+    return () => clearInterval(interval);
+  }, []);
   /**
    * Maneja el envío del formulario de credenciales
    */
@@ -134,8 +145,8 @@ export default function EtapaLogin({
   };
 
   return (
-    <div className="w-full max-w-md bg-white rounded-2xl shadow-lg p-8 text-center">
-      <h2 className="text-2xl font-bold mb-6 text-gray-900">
+    <div className="w-full max-w-md bg-white rounded-2xl shadow-lg p-8 text-center relative">
+      <h2 className="text-2xl font-bold mt-12 mb-6 text-gray-900">
         {!mfaRequired ? "Inicio de Sesión" : "Verificación de Seguridad"}
       </h2>
 
@@ -282,6 +293,7 @@ export default function EtapaLogin({
           </div>
         </div>
       </div>
+      
     </div>
   );
 }

@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import logo from "../../../assets/logo-black.png";
 import EtapaLogin from "./EtapaLogin";
+import { getFormattedDateTime } from "../../../utils/date";
 
 type EtapaActual = "inicio" | "login" | "clientes"; // Preparado para la siguiente etapa
 
@@ -8,11 +9,11 @@ export default function TauserInicio() {
   const [etapaActual, setEtapaActual] = useState<EtapaActual>("inicio");
   const [fechaHora, setFechaHora] = useState(new Date());
 
-  // Actualizar fecha y hora cada segundo
+  // Actualizar fecha y hora cada minuto
   useEffect(() => {
     const interval = setInterval(() => {
       setFechaHora(new Date());
-    }, 1000);
+    }, 1000*60);
 
     return () => clearInterval(interval);
   }, []);
@@ -50,19 +51,8 @@ export default function TauserInicio() {
 
             {/* Fecha y hora */}
             <div className="absolute bottom-8 text-sm text-gray-600">
-              {fechaHora
-                .toLocaleDateString("es-ES", {
-                  day: "2-digit",
-                  month: "long",
-                  year: "numeric",
-                })
-                .toUpperCase()}
-              ,{" "}
-              {fechaHora.toLocaleTimeString("es-ES", {
-                hour: "2-digit",
-                minute: "2-digit",
-              })}{" "}
-              H
+              {getFormattedDateTime(fechaHora).formattedDate},{" "}
+              {getFormattedDateTime(fechaHora).formattedTime}
             </div>
           </div>
         );
@@ -70,16 +60,37 @@ export default function TauserInicio() {
       case "login":
         return (
           <div className="flex flex-col items-center justify-center h-full px-6">
+            {/* Logo superior izquierdo */}
+            <div className="absolute top-4 left-4">
+              <img
+                src={logo}
+                alt="Global Exchange"
+                className="w-40 object-contain"
+              />
+            </div>
             <EtapaLogin
               onVolverInicio={volverInicio}
               onAutenticacionExitosa={avanzarAClientes}
             />
+            {/* Fecha y hora */}
+            <div className="absolute bottom-8 text-sm text-gray-600">
+              {getFormattedDateTime(fechaHora).formattedDate},{" "}
+              {getFormattedDateTime(fechaHora).formattedTime}
+            </div>
           </div>
         );
 
       case "clientes":
         return (
           <div className="flex flex-col items-center justify-center h-full px-6">
+            {/* Logo superior izquierdo */}
+            <div className="absolute top-4 left-4">
+              <img
+                src={logo}
+                alt="Global Exchange"
+                className="w-40 object-contain"
+              />
+            </div>
             <div className="text-center">
               <h2 className="text-2xl font-bold mb-4">Seleccionar Cliente</h2>
               <p className="text-gray-600 mb-8">Esta etapa será implementada próximamente</p>
@@ -89,6 +100,11 @@ export default function TauserInicio() {
               >
                 Volver al inicio
               </button>
+            </div>
+            {/* Fecha y hora */}
+            <div className="absolute bottom-8 text-sm text-gray-600">
+              {getFormattedDateTime(fechaHora).formattedDate},{" "}
+              {getFormattedDateTime(fechaHora).formattedTime}
             </div>
           </div>
         );
