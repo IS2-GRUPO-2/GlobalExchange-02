@@ -4,11 +4,15 @@ import CotizacionesTabla from "../components/CotizacionesTabla";
 
 export default function MainMenuPage() {
   return (
-    <div className="flex flex-col min-h-screen bg-gray-50">
-      <main className="flex-grow">
-        <OperacionCompraVentaPublica />
-        <CotizacionesTabla />
-      </main>
+    <div className="bg-gray-50 p-4">
+      <div className="flex flex-col lg:flex-row gap-4 items-start">
+        <div className="flex-1">
+          <CotizacionesTabla />
+        </div>
+        <div className="flex-1">
+          <OperacionCompraVentaPublica />
+        </div>
+      </div>
     </div>
   );
 }
