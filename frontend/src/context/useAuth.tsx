@@ -60,6 +60,7 @@ type UserContextType = {
   mfaRequired: boolean;
   tempToken: string | null;
   loginUser: (username: string, password: string) => Promise<void>;
+  loginUserTauser: (username: string, password: string) => Promise<void>;
   verifyMfa: (code: string) => Promise<void>;
   registerUser: (
     username: string,
@@ -189,15 +190,12 @@ export const UserProvider = ({ children }: Props) => {
   const loginUser = async (username: string, password: string) => {
     try {
       const res = await loginAPI(username, password);
-      
       if (!res) return;
 
       // Verificar si se requiere MFA
       if (res.data.mfa_required) {
-        // Usuario tiene MFA habilitado - guardar token temporal
         setMfaRequired(true);
         setTempToken(res.data.temp_token || null);
-        // No navegar ni guardar tokens aún
         return;
       }
 
@@ -205,7 +203,6 @@ export const UserProvider = ({ children }: Props) => {
       if (res.data.access && res.data.refresh) {
         localStorage.setItem("token", res.data.access);
         localStorage.setItem("refresh", res.data.refresh);
-        
         const userObj = jwtDecode<DecodedToken>(res.data.access);
         const headers = {
           headers: {
@@ -213,7 +210,6 @@ export const UserProvider = ({ children }: Props) => {
           },
         };
         const user = await getUsuario(userObj.user_id, headers);
-
         localStorage.setItem("user", JSON.stringify(user.data));
         setToken(res.data.access);
         setRefresh(res.data.refresh);
@@ -228,6 +224,41 @@ export const UserProvider = ({ children }: Props) => {
     }
   };
 
+  /**
+   * Login especial para terminal TAUSER: SOLO permite login si el usuario tiene MFA habilitado
+   * Si el usuario no tiene MFA, lanza un error y no navega ni guarda tokens
+   * Si el usuario tiene MFA, actualiza el contexto y permite avanzar de etapa
+   */
+  const loginUserTauser = async (username: string, password: string) => {
+    try {
+      // Primero, asegurarnos de que mfaRequired esté en false al inicio de cada intento
+      // Esto evita ciclos infinitos si hay un error
+      setMfaRequired(false);
+      setTempToken(null);
+      
+      // Usamos "tauser" como app_id para identificar que la petición viene del terminal
+      const res = await loginAPI(username, password, "tauser");
+      if (!res) return;
+
+      if (res.data.mfa_required) {
+        setMfaRequired(true);
+        setTempToken(res.data.temp_token || null);
+        return;
+      }
+
+      // Usuario sin MFA: lanzar error explícito
+      throw new Error("Este terminal requiere autenticación de dos factores (MFA). Solicite al administrador que habilite MFA en su cuenta.");
+    } catch (e: any) {
+      console.log("error en loginUserTauser: ", e);
+      
+      // Nos aseguramos que el estado de mfaRequired no quede en un estado incoherente
+      setMfaRequired(false);
+      setTempToken(null);
+      
+      // Re-lanzamos el error para que el componente lo maneje
+      throw e;
+    }
+  };
   /**
    * Verifica el código TOTP y completa el login
    * @async
@@ -365,6 +396,7 @@ export const UserProvider = ({ children }: Props) => {
     <UserContext.Provider
       value={{
         loginUser,
+        loginUserTauser,
         verifyMfa,
         registerUser,
         user,
