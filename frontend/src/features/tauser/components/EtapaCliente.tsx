@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { getUserClients } from "../../usuario/services/usuarioService";
+import { getPendingTransaccionesCount } from "../../clientes/services/clienteService";
 import type { Cliente } from "../../clientes/types/Cliente";
 import { useAuth } from "../../../context/useAuth";
 import { toast } from "react-toastify";
@@ -10,6 +11,7 @@ export default function EtapaCliente() {
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
+  const [pendingCounts, setPendingCounts] = useState<Record<string, number>>({});
   const itemsPerPage = 10;
 
   // Cargar los clientes asignados al usuario actual
@@ -27,6 +29,22 @@ export default function EtapaCliente() {
         
         setClientes(clientesList);
         setTotalPages(Math.ceil(clientesList.length / itemsPerPage));
+        
+        // Cargar contadores de transacciones pendientes para cada cliente
+        const counts: Record<string, number> = {};
+        await Promise.all(
+          clientesList.map(async (cliente) => {
+            try {
+              const count = await getPendingTransaccionesCount(cliente.id.toString());
+              counts[cliente.id] = count;
+            } catch (error) {
+              console.error(`Error al cargar operaciones pendientes para cliente ${cliente.id}:`, error);
+              counts[cliente.id] = 0; // Si hay error, mostramos 0
+            }
+          })
+        );
+        
+        setPendingCounts(counts);
         setLoading(false);
       } catch (error) {
         console.error("Error al cargar los clientes del usuario:", error);
@@ -78,7 +96,13 @@ export default function EtapaCliente() {
             <div>
               <div className="font-medium">{c.nombre}</div>
               <div className="text-sm text-gray-500">
-                {c.categoria?.nombre || "Sin categoría"}
+                {"Categoría: " + c.categoria?.nombre || "Sin categoría"}
+              </div>
+              <div className="text-sm text-gray-500">
+                {"Operaciones pendientes: "}
+                <span className={pendingCounts[c.id] > 0 ? "text-amber-600 font-medium" : "text-gray-600"}>
+                  {pendingCounts[c.id] || 0}
+                </span>
               </div>
             </div>
             <div>

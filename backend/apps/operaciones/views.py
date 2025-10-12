@@ -262,7 +262,49 @@ class TransaccionViewSet(viewsets.ModelViewSet):
             'canceladas': canceladas,
             'montos_por_divisa': montos_por_divisa
         })
+        # ...código existente de TransaccionViewSet...
     
+    @action(detail=False, methods=['get'])
+    def cantidad_transacciones_clientes(self, request):
+        """
+        Obtiene el conteo de transacciones por estado para un cliente específico.
+        Requiere el parámetro 'cliente' en la URL.
+        Opcionalmente acepta 'estado' para filtrar por un estado específico.
+        
+        Ejemplo de uso:
+        - /api/transacciones/cantidad_transacciones_clientes/?cliente=123
+        - /api/transacciones/cantidad_transacciones_clientes/?cliente=123&estado=pendiente
+        """
+        cliente_id = request.query_params.get('cliente')
+        if not cliente_id:
+            return Response(
+                {'error': 'Debe proporcionar el ID del cliente'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        # Filtrar transacciones por cliente
+        queryset = self.get_queryset().filter(cliente_id=cliente_id)
+        
+        # Si se especifica un estado, filtrar también por estado
+        estado = request.query_params.get('estado')
+        if estado:
+            queryset = queryset.filter(estado=estado)
+            return Response({
+                'cliente_id': cliente_id,
+                'estado': estado,
+                'total': queryset.count()
+            })
+        else:
+            # Si no se especifica estado, devolver conteo por cada estado
+            return Response({
+                'cliente_id': cliente_id,
+                'total': queryset.count(),
+                'pendientes': queryset.filter(estado='pendiente').count(),
+                'en_proceso': queryset.filter(estado='en_proceso').count(),
+                'completadas': queryset.filter(estado='completada').count(),
+                'canceladas': queryset.filter(estado='cancelada').count(),
+                'fallidas': queryset.filter(estado='fallida').count(),
+            })
     def _recalcular_tc_y_monto(self, transaccion: Transaccion):
         """
         Recalcula la tasa vigente y el monto_destino actual usando la misma lógica que la operacion:
