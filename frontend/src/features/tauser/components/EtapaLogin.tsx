@@ -21,7 +21,7 @@ export default function EtapaLogin({
   onVolverInicio,
   onAutenticacionExitosa,
 }: Props) {
-  const { loginUserTauser, verifyMfa, mfaRequired } = useAuth();
+  const { loginUserTauser, verifyMfaTauser, mfaRequired, logoutTauser } = useAuth();
 
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
@@ -31,23 +31,39 @@ export default function EtapaLogin({
 
   /**
    * Maneja el envío del formulario de credenciales
-   * Adaptado de LoginPage para manejar correctamente el flujo MFA
    */
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Prevenir múltiples submissions
+    if (loading) return;
+    
     setError("");
     setLoading(true);
     
     try {
       await loginUserTauser(username, password);
-      
-      // IMPORTANTE: No llamamos onAutenticacionExitosa aquí
-      // Si el usuario no tiene MFA, loginUser habría navegado automáticamente
-      // Si llegamos aquí sin error, significa que mfaRequired se actualizará
+      // Si llegamos aquí sin error y mfaRequired se activó, 
+      // el componente se re-renderizará automáticamente mostrando el formulario MFA
       
     } catch (e: any) {
-      // Manejo de errores igual que en LoginPage
-      setError(e.response?.data?.error || "Credenciales inválidas. Intente nuevamente.");
+      console.error("Error en handleLogin:", e);
+      
+      // Extraer mensaje de error
+      let errorMessage = "Credenciales inválidas. Intente nuevamente.";
+      
+      if (e instanceof Error) {
+        errorMessage = e.message;
+      } else if (e.response?.data?.error) {
+        errorMessage = e.response.data.error;
+      } else if (e.response?.data?.detail) {
+        errorMessage = e.response.data.detail;
+      }
+      
+      setError(errorMessage);
+      
+      // Asegurarse de que el estado esté limpio después de un error
+      // para evitar problemas de renderizado
     } finally {
       setLoading(false);
     }
@@ -55,23 +71,49 @@ export default function EtapaLogin({
 
   /**
    * Maneja el envío del código MFA
-   * Adaptado de LoginPage
    */
   const handleVerifyMfa = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Prevenir múltiples submissions
+    if (loading) return;
+    
     setError("");
     setLoading(true);
     
     try {
-      await verifyMfa(mfaCode);
+      await verifyMfaTauser(mfaCode);
       // Si llegamos aquí, la verificación MFA fue exitosa
-      // verifyMfa maneja la navegación automáticamente, pero nosotros necesitamos
-      // pasar a la siguiente etapa del terminal
       onAutenticacionExitosa();
       
     } catch (e: any) {
-      // Manejo de errores igual que en LoginPage
-      setError(e.response?.data?.error || "Código MFA inválido o expirado.");
+      console.error("Error en handleVerifyMfa:", e);
+      
+      // Extraer mensaje de error
+      let errorMessage = "Código MFA inválido o expirado.";
+      
+      if (e instanceof Error) {
+        errorMessage = e.message;
+      } else if (e.response?.data?.error) {
+        errorMessage = e.response.data.error;
+      } else if (e.response?.data?.detail) {
+        errorMessage = e.response.data.detail;
+      }
+      
+      setError(errorMessage);
+      
+      // Si el error indica que el token temporal expiró o no es válido,
+      // resetear el formulario
+      if (
+        errorMessage.toLowerCase().includes("expirad") ||
+        errorMessage.toLowerCase().includes("token") ||
+        e.response?.status === 401
+      ) {
+        // Pequeño delay para que el usuario vea el mensaje de error
+        setTimeout(() => {
+          resetLogin();
+        }, 2000);
+      }
     } finally {
       setLoading(false);
     }
@@ -81,12 +123,14 @@ export default function EtapaLogin({
    * Resetea el estado de login para volver al formulario de credenciales
    */
   const resetLogin = () => {
+    // Limpiar los inputs
     setUsername("");
     setPassword("");
     setMfaCode("");
     setError("");
-    // No podemos resetear mfaRequired desde aquí, así que volvemos al inicio
-    onVolverInicio();
+    
+    // Cerrar sesión actual en el contexto de autenticación
+    logoutTauser();
   };
 
   return (
@@ -96,7 +140,7 @@ export default function EtapaLogin({
       </h2>
 
       {!mfaRequired ? (
-        /* FORMULARIO DE CREDENCIALES - Igual que LoginPage */
+        /* FORMULARIO DE CREDENCIALES */
         <form onSubmit={handleLogin} className="space-y-4">
           <div className="text-left">
             <label htmlFor="username" className="block text-sm font-medium text-gray-700 mb-1">
@@ -152,13 +196,14 @@ export default function EtapaLogin({
           <button
             type="button"
             onClick={onVolverInicio}
-            className="w-full border border-gray-400 text-gray-700 py-3 rounded-lg hover:bg-gray-100 transition text-lg"
+            disabled={loading}
+            className="w-full border border-gray-400 text-gray-700 py-3 rounded-lg hover:bg-gray-100 transition text-lg disabled:opacity-50"
           >
             Volver
           </button>
         </form>
       ) : (
-        /* FORMULARIO DE VERIFICACIÓN MFA - Adaptado de LoginPage */
+        /* FORMULARIO DE VERIFICACIÓN MFA */
         <form onSubmit={handleVerifyMfa} className="space-y-4">
           <p className="text-gray-600 mb-4 text-left">
             Ingresa el código de 6 dígitos de tu aplicación de autenticación 
@@ -181,6 +226,7 @@ export default function EtapaLogin({
               className="w-full text-center text-2xl tracking-widest px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black font-mono"
               disabled={loading}
               required
+              autoFocus
             />
             <p className="text-sm text-gray-500 mt-1">
               El código se renueva cada 30 segundos
@@ -209,9 +255,10 @@ export default function EtapaLogin({
           <button
             type="button"
             onClick={resetLogin}
-            className="w-full border border-gray-400 text-gray-700 py-3 rounded-lg hover:bg-gray-100 transition text-lg"
+            disabled={loading}
+            className="w-full border border-gray-400 text-gray-700 py-3 rounded-lg hover:bg-gray-100 transition text-lg disabled:opacity-50"
           >
-            Cambiar Usuario
+            Volver
           </button>
         </form>
       )}
