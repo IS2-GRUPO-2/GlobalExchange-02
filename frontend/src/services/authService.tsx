@@ -52,7 +52,8 @@ export const loginAPI = async (username: string, password: string) => {
 
     return data;
   } catch (err) {
-    console.log("error en peticion para inicio de sesion " + err);
+    console.error("Error en loginAPI:", err);
+    // Re-lanzar el error para que sea capturado por las capas superiores
     throw err;
   }
 };
@@ -132,7 +133,9 @@ export const registerAPI = async (
 
     return data;
   } catch (err) {
-    console.log("Error en el endpoint de registro: " + err);
+    console.error("Error en registerAPI:", err);
+    // Re-lanzar el error para que sea capturado por las capas superiores
+    throw err;
   }
 };
 
@@ -145,7 +148,9 @@ export const verifyEmailAPI = async (email: string, code: string) => {
 
     return data;
   } catch (err) {
-    console.log("Error en el endpoint de verificacion" + err);
+    console.error("Error en verifyEmailAPI:", err);
+    // Re-lanzar el error para que sea capturado por las capas superiores
+    throw err;
   }
 };
 

@@ -33,7 +33,7 @@ export type User = {
   roles: string[];
   permissions: string[];
   is_active: boolean;
-  is_verified: boolean;
+  email_verified: boolean; // Coincide con el campo del backend
   mfa_enabled?: boolean;
   clientes?: Cliente[];
 };

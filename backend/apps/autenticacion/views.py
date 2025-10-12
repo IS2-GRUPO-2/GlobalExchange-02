@@ -396,6 +396,13 @@ class CustomLoginView(APIView):
                 status=status.HTTP_401_UNAUTHORIZED
             )
         
+        # Verificar que el email esté verificado
+        if not user.email_verified:
+            return Response(
+                {"error": "Debes verificar tu correo electrónico antes de iniciar sesión"},
+                status=status.HTTP_401_UNAUTHORIZED
+            )
+        
         # Verificar si el usuario tiene MFA habilitado
         if user.mfa_enabled:
             # Generar token temporal (válido por 5 minutos)
