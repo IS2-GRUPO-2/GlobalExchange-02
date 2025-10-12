@@ -348,6 +348,7 @@ class CustomLoginView(APIView):
     {
         "username": "usuario",
         "password": "contraseña"
+        "app_id": "tauser"
     }
     ```
     
@@ -380,6 +381,7 @@ class CustomLoginView(APIView):
         
         username = serializer.validated_data['username']
         password = serializer.validated_data['password']
+        app_id = serializer.validated_data['app_id']
         
         # Autenticar usuario con username/password
         user = authenticate(username=username, password=password)
@@ -395,7 +397,11 @@ class CustomLoginView(APIView):
                 {"error": "Usuario inactivo"},
                 status=status.HTTP_401_UNAUTHORIZED
             )
-        
+        if app_id == "tauser" and user.mfa_enabled is False:
+            return Response(
+                {"error": "El usuario no tiene MFA habilitado. Contacta al administrador."},
+                status=status.HTTP_401_UNAUTHORIZED
+            )
         # Verificar si el usuario tiene MFA habilitado
         if user.mfa_enabled:
             # Generar token temporal (válido por 5 minutos)

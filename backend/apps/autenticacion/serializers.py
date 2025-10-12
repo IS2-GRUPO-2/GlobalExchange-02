@@ -106,6 +106,7 @@ class CustomLoginSerializer(serializers.Serializer):
     """
     username = serializers.CharField()
     password = serializers.CharField(write_only=True)
+    app_id = serializers.CharField(required=False, allow_blank=True)
 
 class RegisterSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True)
