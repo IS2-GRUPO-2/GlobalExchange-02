@@ -6,7 +6,7 @@ import * as Yup from "yup";
 import { useAuth } from "../context/useAuth";
 import { useForm } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 /**
  * @typedef {Object} LoginFormInputs
@@ -81,6 +81,11 @@ const LoginPage = () => {
     formState: { errors: errorsMfa },
   } = useForm<MFAFormInputs>({ resolver: yupResolver(mfaValidation) });
 
+  // Limpiar errores cuando cambia el estado de MFA
+  useEffect(() => {
+    setError("");
+  }, [mfaRequired]);
+
   /**
    * Maneja el envío del formulario de login
    * @function handleLogin
@@ -98,7 +103,20 @@ const LoginPage = () => {
     try {
       await loginUser(form.username, form.password);
     } catch (e: any) {
-      setError(e.response?.data?.error || "Error al iniciar sesión");
+      console.error("Error en handleLogin:", e);
+      
+      // Extraer el mensaje de error de diferentes posibles estructuras
+      let errorMessage = "Error al iniciar sesión";
+      
+      if (e.response?.data?.error) {
+        errorMessage = e.response.data.error;
+      } else if (e.response?.data?.message) {
+        errorMessage = e.response.data.message;
+      } else if (e.message) {
+        errorMessage = e.message;
+      }
+      
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -121,7 +139,20 @@ const LoginPage = () => {
     try {
       await verifyMfa(form.code);
     } catch (e: any) {
-      setError(e.response?.data?.error || "Código inválido");
+      console.error("Error en handleMfaSubmit:", e);
+      
+      // Extraer el mensaje de error de diferentes posibles estructuras
+      let errorMessage = "Código inválido";
+      
+      if (e.response?.data?.error) {
+        errorMessage = e.response.data.error;
+      } else if (e.response?.data?.message) {
+        errorMessage = e.response.data.message;
+      } else if (e.message) {
+        errorMessage = e.message;
+      }
+      
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }

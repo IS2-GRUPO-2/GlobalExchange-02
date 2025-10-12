@@ -182,7 +182,7 @@ const EditUserForm = ({
               <button
                 type="button"
                 onClick={() => setReadOnly(false)}
-                className="bg-indigo-600 text-white py-2 px-4 rounded-md hover:bg-indigo-500"
+                className="bg-gray-900 text-white py-2 px-4 rounded-md hover:bg-gray-500"
               >
                 Editar
               </button>
@@ -192,7 +192,7 @@ const EditUserForm = ({
               type="button"
               onClick={handleSubmit(onFormSubmit as any)}
               disabled={isSubmitting}
-              className="bg-indigo-600 text-white py-2 px-4 rounded-md hover:bg-indigo-500 disabled:opacity-60"
+              className="bg-gray-900 text-white py-2 px-4 rounded-md hover:bg-gray-500 disabled:opacity-60"
             >
               {isSubmitting ? "Guardando..." : "Guardar"}
             </button>

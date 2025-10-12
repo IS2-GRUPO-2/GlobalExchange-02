@@ -21,8 +21,8 @@ import { toast } from "react-toastify";
 import Modal from "../../../components/Modal";
 import UserForm from "../components/UserForm";
 import EditUserForm from "../components/EditUserForm";
-import AssignedClients from "../../../components/AssignedClients"; 
-import AssignedRoles from "../../../components/AssignedRoles";
+import AssignedClients from "../components/AssignedClients"; 
+import AssignedRoles from "../components/AssignedRoles";
 import { KeyRound } from "lucide-react";
 import Can from "../../../components/Can";
 import { USUARIOS } from "../../../types/perms";
@@ -96,16 +96,52 @@ const UsuariosPage = () => {
     try {
       const nuevoUsuario = await createUsuario(userData as any);
       
-      if (userData.clientes.length > 0) {
+      if (userData.clientes && userData.clientes.length > 0) {
         await asignarClientesAUsuario(nuevoUsuario.id, userData.clientes);
       }
       
       toast.success("Usuario creado con éxito!");
       fetchUsuarios();
-    } catch (err) {
-      toast.error("Ha ocurrido un error al crear el usuario.");
-    } finally {
       closeCreateModal();
+    } catch (err: any) {
+      // Extraer mensajes de error específicos del backend
+      const errorData = err.response?.data;
+      
+      if (errorData) {
+        // Si es un objeto con campos específicos (ej: {username: ["error"], email: ["error"]})
+        if (typeof errorData === 'object' && !Array.isArray(errorData)) {
+          const errorMessages = Object.entries(errorData)
+            .map(([field, messages]) => {
+              // Traducir nombres de campos al español
+              const fieldTranslations: Record<string, string> = {
+                username: 'Usuario',
+                email: 'Correo electrónico',
+                password: 'Contraseña',
+                first_name: 'Nombre',
+                last_name: 'Apellido',
+                clientes: 'Clientes',
+              };
+              
+              const fieldName = fieldTranslations[field] || field;
+              const msg = Array.isArray(messages) ? messages[0] : messages;
+              return `${fieldName}: ${msg}`;
+            })
+            .join('\n');
+          
+          toast.error(errorMessages);
+        } else if (typeof errorData === 'string') {
+          // Si es un string directo
+          toast.error(errorData);
+        } else {
+          // Fallback genérico
+          toast.error("Ha ocurrido un error al crear el usuario.");
+        }
+      } else {
+        toast.error("Ha ocurrido un error al crear el usuario.");
+      }
+      
+      console.error("Error completo:", err.response?.data);
+      // NO cerrar el modal si hay error, para que el usuario pueda corregir
     }
   };
 
@@ -121,10 +157,41 @@ const UsuariosPage = () => {
       
       toast.success("Usuario actualizado con éxito!");
       fetchUsuarios();
-    } catch (err) {
-      toast.error("Ha ocurrido un error al actualizar el usuario.");
-    } finally {
       closeEditModal();
+    } catch (err: any) {
+      // Extraer mensajes de error específicos del backend
+      const errorData = err.response?.data;
+      
+      if (errorData) {
+        if (typeof errorData === 'object' && !Array.isArray(errorData)) {
+          const errorMessages = Object.entries(errorData)
+            .map(([field, messages]) => {
+              const fieldTranslations: Record<string, string> = {
+                username: 'Usuario',
+                email: 'Correo electrónico',
+                password: 'Contraseña',
+                first_name: 'Nombre',
+                last_name: 'Apellido',
+              };
+              
+              const fieldName = fieldTranslations[field] || field;
+              const msg = Array.isArray(messages) ? messages[0] : messages;
+              return `${fieldName}: ${msg}`;
+            })
+            .join('\n');
+          
+          toast.error(errorMessages);
+        } else if (typeof errorData === 'string') {
+          toast.error(errorData);
+        } else {
+          toast.error("Ha ocurrido un error al actualizar el usuario.");
+        }
+      } else {
+        toast.error("Ha ocurrido un error al actualizar el usuario.");
+      }
+      
+      console.error("Error completo:", err.response?.data);
+      // NO cerrar el modal si hay error
     }
   };
 
@@ -215,7 +282,7 @@ const UsuariosPage = () => {
                     <div className="flex items-center space-x-2">
                       <button
                         onClick={() => openEditModal(user)}
-                        className="p-1 text-gray-500 hover:text-blue-600 rounded-full hover:bg-gray-100"
+                        className="p-1 text-gray-500 hover:text-gray-600 rounded-full hover:bg-gray-100"
                         title="Editar"
                       >
                         <Edit size={16} />
