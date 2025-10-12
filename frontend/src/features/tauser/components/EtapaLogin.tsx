@@ -30,16 +30,7 @@ export default function EtapaLogin({
   const [mfaCode, setMfaCode] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string>("");
-  const [fechaHora, setFechaHora] = useState(new Date());
 
-  // Actualizar fecha y hora cada minuto
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setFechaHora(new Date());
-    }, 1000*60);
-
-    return () => clearInterval(interval);
-  }, []);
   /**
    * Maneja el envío del formulario de credenciales
    */
