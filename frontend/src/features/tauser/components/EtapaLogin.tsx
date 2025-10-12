@@ -1,9 +1,6 @@
-import { useState, useEffect } from "react";
+import { useState} from "react";
 import { useAuth } from "../../../context/useAuth";
 import { Loader2 } from "lucide-react";
-import logo from "../../../assets/logo-black.png";
-import { getFormattedDateTime } from "../../../utils/date";
-
 type Props = {
   onVolverInicio: () => void;
   onAutenticacionExitosa: () => void;
