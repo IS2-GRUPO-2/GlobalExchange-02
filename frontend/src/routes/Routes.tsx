@@ -26,12 +26,15 @@ import {
 } from "../types/perms";
 import CotizacionesPage from "../features/cotizaciones/pages/CotizacionesPage";
 import RequireAuth from "./RequiereAuth";
-
+import TauserPage from "../features/tauser/pages/TauserPage";
 import OperacionPage from "../features/operaciones/pages/OperacionPage";
 import ConfiguracionTauserPage from "../features/tauser/pages/ConfiguracionTauserPage";
 import HistorialPage from "../pages/HistorialPage";
 
 export const router = createBrowserRouter([
+  // RUTA INDEPENDIENTE SIN NAVBAR PARA TAUSER
+  { path: "/tauser", element: <TauserPage /> }, // Página pública para terminales de autoservicio sin navbar
+  
   {
     path: "/",
     element: <App />,
