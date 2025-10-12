@@ -3,12 +3,14 @@ import logo from "../../../assets/logo-black.png";
 import EtapaLogin from "./EtapaLogin";
 import EtapaCliente from "./EtapaCliente";
 import { getFormattedDateTime } from "../../../utils/date";
+import { useAuth } from "../../../context/useAuth";
 
-type EtapaActual = "inicio" | "login" | "clientes"; // Preparado para la siguiente etapa
+type EtapaActual = "inicio" | "login" | "clientes" | "transacciones"; // Preparado para la siguiente etapa
 
 export default function TauserInicio() {
   const [etapaActual, setEtapaActual] = useState<EtapaActual>("inicio");
   const [fechaHora, setFechaHora] = useState(new Date());
+  const { logoutTauser} = useAuth();
 
   // Actualizar fecha y hora cada minuto
   useEffect(() => {
@@ -22,7 +24,11 @@ export default function TauserInicio() {
   const iniciarOperacion = () => setEtapaActual("login");
   const volverInicio = () => setEtapaActual("inicio");
   const avanzarAClientes = () => setEtapaActual("clientes"); // Para la siguiente etapa
-
+  // Función para cerrar sesión
+  const handleLogout = () => {
+    logoutTauser();
+    volverInicio();
+  };
   const renderEtapaActual = () => {
     switch (etapaActual) {
       case "inicio":
@@ -91,6 +97,15 @@ export default function TauserInicio() {
                 alt="Global Exchange"
                 className="w-40 object-contain"
               />
+            </div>
+            {/* Botón de cerrar sesión en la esquina superior derecha */}
+            <div className="absolute top-4 right-4">
+              <button 
+                onClick={handleLogout}
+                className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg text-sm font-medium shadow-sm transition-colors"
+              >
+                Cerrar Sesión
+              </button>
             </div>
             <div className="w-full flex justify-center mt-8">
               <EtapaCliente />
