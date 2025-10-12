@@ -149,10 +149,21 @@ export const UserProvider = ({ children }: Props) => {
       async (error) => {
         const originalRequest = error.config;
         if (error.response?.status === 401) {
+          // Ignorar errores 401 de endpoints de autenticación
+          // Estos son errores esperados (credenciales incorrectas, código MFA inválido, etc.)
+          if (originalRequest.url.includes("/auth/login/") || 
+              originalRequest.url.includes("/auth/register/") ||
+              originalRequest.url.includes("/mfa/verify-login/")) {
+            return Promise.reject(error);
+          }
+          
+          // Si es un error de refresh token, hacer logout
           if (originalRequest.url.includes("/refresh")) {
             logout();
             return Promise.reject(error);
           }
+          
+          // Para otros endpoints, intentar renovar el token
           const newToken = await refreshToken();
           if (newToken) {
             error.config.headers["Authorization"] = `Bearer ${newToken}`;
@@ -190,7 +201,9 @@ export const UserProvider = ({ children }: Props) => {
     try {
       const res = await loginAPI(username, password);
       
-      if (!res) return;
+      if (!res) {
+        throw new Error("No se recibió respuesta del servidor");
+      }
 
       // Verificar si se requiere MFA
       if (res.data.mfa_required) {
@@ -220,10 +233,15 @@ export const UserProvider = ({ children }: Props) => {
         setUser(user.data);
         setMfaRequired(false);
         setTempToken(null);
+        
+        // Notificar a otros contextos que el usuario se autenticó
+        window.dispatchEvent(new Event('auth-changed'));
+        
         navigate("/");
       }
     } catch (e) {
-      console.log("error en useAuth: " + e);
+      console.error("Error en loginUser:", e);
+      // Re-lanzar el error para que sea capturado por el componente
       throw e;
     }
   };
@@ -273,6 +291,10 @@ export const UserProvider = ({ children }: Props) => {
       setUser(user.data);
       setMfaRequired(false);
       setTempToken(null);
+      
+      // Notificar a otros contextos que el usuario se autenticó
+      window.dispatchEvent(new Event('auth-changed'));
+      
       navigate("/");
     } catch (e) {
       console.log("Error al verificar MFA: " + e);
@@ -307,14 +329,18 @@ export const UserProvider = ({ children }: Props) => {
     first_name: string,
     password: string
   ): Promise<boolean> => {
-    let success = false;
-    const res = await registerAPI(username, email, first_name, password);
-    if (res) {
-      success = true;
-      console.log(res);
+    try {
+      const res = await registerAPI(username, email, first_name, password);
+      if (res) {
+        console.log("Usuario registrado exitosamente:", res);
+        return true;
+      }
+      return false;
+    } catch (e) {
+      console.error("Error en registerUser:", e);
+      // Re-lanzar el error para que el componente pueda manejarlo
+      throw e;
     }
-
-    return success;
   };
 
   /**
@@ -358,6 +384,10 @@ export const UserProvider = ({ children }: Props) => {
     setUser(null);
     setToken("");
     setRefresh("");
+    
+    // Notificar a otros contextos que el usuario cerró sesión
+    window.dispatchEvent(new Event('auth-changed'));
+    
     navigate("/");
   };
 

@@ -1,15 +1,15 @@
 import { useEffect, useMemo, useState } from "react";
-import type { User } from "../features/usuario/types/User";
-import type { Cliente } from "../features/clientes/types/Cliente";
-import { getAllClientes } from "../features/clientes/services/clienteService";
+import type { User } from "../types/User";
+import type { Cliente } from "../../clientes/types/Cliente";
+import { getAllClientes } from "../../clientes/services/clienteService";
 import {
   getUserClients,
   asignarClientesAUsuario,
-} from "../features/usuario/services/usuarioService";
+} from "../services/usuarioService";
 import { toast } from "react-toastify";
 import { Search } from "lucide-react";
-import { USUARIOS } from "../types/perms";
-import Can from "./Can";
+import { USUARIOS } from "../../../types/perms";
+import Can from "../../../components/Can";
 
 type Props = {
   user: User;
@@ -120,8 +120,7 @@ export default function AssignedClients({ user, onClose }: Props) {
 
       {/* Username */}
       <div className="mb-4">
-        <div className="text-sm text-gray-500">Usuario</div>
-        <div className="text-base font-medium text-gray-900">
+        <div className="text-based  font-medium text-gray-900">
           {user.username}
         </div>
       </div>
@@ -205,7 +204,7 @@ export default function AssignedClients({ user, onClose }: Props) {
                           <td className="px-3 py-2 align-top">
                             <input
                               type="checkbox"
-                              className="size-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                              className="size-4 rounded border-gray-300 text-gray-600 focus:ring-gray-500"
                               checked={checked}
                               onChange={() => toggle(c.id)}
                               onClick={(e) => e.stopPropagation()}
@@ -260,7 +259,7 @@ export default function AssignedClients({ user, onClose }: Props) {
             <button
               type="button"
               onClick={() => setReadOnly(false)}
-              className="rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-500"
+              className="rounded-md bg-gray-900 px-4 py-2 text-sm font-semibold text-white hover:bg-gray-500"
             >
               Editar
             </button>
@@ -270,7 +269,7 @@ export default function AssignedClients({ user, onClose }: Props) {
             type="button"
             disabled={!hasChanges || saving}
             onClick={onSave}
-            className="rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-500 disabled:opacity-60 disabled:cursor-not-allowed"
+            className="rounded-md bg-gray-600 px-4 py-2 text-sm font-semibold text-white hover:bg-gray-500 disabled:opacity-60 disabled:cursor-not-allowed"
           >
             {saving ? "Guardando…" : "Guardar"}
           </button>
