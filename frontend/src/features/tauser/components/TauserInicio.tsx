@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import logo from "../../../assets/logo-black.png";
 import EtapaLogin from "./EtapaLogin";
+import EtapaCliente from "./EtapaCliente";
 import { getFormattedDateTime } from "../../../utils/date";
 
 type EtapaActual = "inicio" | "login" | "clientes"; // Preparado para la siguiente etapa
@@ -91,15 +92,8 @@ export default function TauserInicio() {
                 className="w-40 object-contain"
               />
             </div>
-            <div className="text-center">
-              <h2 className="text-2xl font-bold mb-4">Seleccionar Cliente</h2>
-              <p className="text-gray-600 mb-8">Esta etapa será implementada próximamente</p>
-              <button
-                onClick={volverInicio}
-                className="bg-gray-600 text-white px-6 py-2 rounded-lg"
-              >
-                Volver al inicio
-              </button>
+            <div className="w-full flex justify-center mt-8">
+              <EtapaCliente />
             </div>
             {/* Fecha y hora */}
             <div className="absolute bottom-8 text-sm text-gray-600">
