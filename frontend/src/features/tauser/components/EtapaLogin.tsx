@@ -101,18 +101,6 @@ export default function EtapaLogin({
       
       setError(errorMessage);
       
-      // Si el error indica que el token temporal expiró o no es válido,
-      // resetear el formulario
-      if (
-        errorMessage.toLowerCase().includes("expirad") ||
-        errorMessage.toLowerCase().includes("token") ||
-        e.response?.status === 401
-      ) {
-        // Pequeño delay para que el usuario vea el mensaje de error
-        setTimeout(() => {
-          resetLogin();
-        }, 2000);
-      }
     } finally {
       setLoading(false);
     }
