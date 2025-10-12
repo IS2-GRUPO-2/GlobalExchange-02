@@ -1,14 +1,25 @@
-import { useState } from "react";
-import EtapaLogin from "./EtapaLogin";
+import { useState, useEffect } from "react";
 import logo from "../../../assets/logo-black.png";
+import EtapaLogin from "./EtapaLogin";
 
-type EtapaActual = "inicio" | "login";
+type EtapaActual = "inicio" | "login" | "clientes"; // Preparado para la siguiente etapa
 
 export default function TauserInicio() {
   const [etapaActual, setEtapaActual] = useState<EtapaActual>("inicio");
+  const [fechaHora, setFechaHora] = useState(new Date());
+
+  // Actualizar fecha y hora cada segundo
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setFechaHora(new Date());
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, []);
 
   const iniciarOperacion = () => setEtapaActual("login");
   const volverInicio = () => setEtapaActual("inicio");
+  const avanzarAClientes = () => setEtapaActual("clientes"); // Para la siguiente etapa
 
   const renderEtapaActual = () => {
     switch (etapaActual) {
@@ -39,7 +50,7 @@ export default function TauserInicio() {
 
             {/* Fecha y hora */}
             <div className="absolute bottom-8 text-sm text-gray-600">
-              {new Date()
+              {fechaHora
                 .toLocaleDateString("es-ES", {
                   day: "2-digit",
                   month: "long",
@@ -47,7 +58,7 @@ export default function TauserInicio() {
                 })
                 .toUpperCase()}
               ,{" "}
-              {new Date().toLocaleTimeString("es-ES", {
+              {fechaHora.toLocaleTimeString("es-ES", {
                 hour: "2-digit",
                 minute: "2-digit",
               })}{" "}
@@ -57,7 +68,30 @@ export default function TauserInicio() {
         );
 
       case "login":
-        return <EtapaLogin onVolverInicio={volverInicio} />;
+        return (
+          <div className="flex flex-col items-center justify-center h-full px-6">
+            <EtapaLogin
+              onVolverInicio={volverInicio}
+              onAutenticacionExitosa={avanzarAClientes}
+            />
+          </div>
+        );
+
+      case "clientes":
+        return (
+          <div className="flex flex-col items-center justify-center h-full px-6">
+            <div className="text-center">
+              <h2 className="text-2xl font-bold mb-4">Seleccionar Cliente</h2>
+              <p className="text-gray-600 mb-8">Esta etapa será implementada próximamente</p>
+              <button
+                onClick={volverInicio}
+                className="bg-gray-600 text-white px-6 py-2 rounded-lg"
+              >
+                Volver al inicio
+              </button>
+            </div>
+          </div>
+        );
 
       default:
         return null;
