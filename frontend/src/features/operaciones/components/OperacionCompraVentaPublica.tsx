@@ -115,8 +115,8 @@ export default function OperacionCompraVentaPublica() {
 //   };
 
   return (
-    <section className="flex flex-col items-center p-6 select-none">
-      <div className="w-full max-w-md bg-white rounded-lg shadow-lg p-8">
+    <section className="flex flex-col items-center select-none">
+      <div className="w-full max-w-lg bg-white rounded-lg shadow-lg p-8 transition-all duration-500 ease-in-out min-h-[425px]">
         
         {/* ETAPA 1: Selección de Divisas y Monto */}
         {etapaActual === 1 && (
