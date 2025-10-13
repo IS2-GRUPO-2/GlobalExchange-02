@@ -43,7 +43,7 @@ export default function CotizacionesTabla() {
   if (err) return <p className="text-center text-red-600">{err}</p>;
 
   return (
-    <section id="rates" className="p-4">
+    <section id="rates">
       <div className="overflow-x-auto bg-white rounded-xl shadow p-6 w-full">
           <p className="text-base text-gray-500 text-center mb-4">
             Cotizaciones del dia {new Date().toLocaleDateString("es-PY")}
