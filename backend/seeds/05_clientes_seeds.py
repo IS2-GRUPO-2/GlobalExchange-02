@@ -20,6 +20,7 @@ def run():
     
     # Obtener usuarios existentes
     try:
+        usuario_admin = User.objects.get(email='admin@globalexchange.com')
         usuario_cliente = User.objects.get(email='cliente@globalexchange.com')
         usuario_ana = User.objects.get(email='ana.garcia@email.com')
         usuario_carlos = User.objects.get(email='carlos.lopez@email.com')
@@ -32,6 +33,17 @@ def run():
     
     # Datos de clientes
     clientes_data = [
+        {
+            'nombre': 'Super Admin',
+            'is_persona_fisica': True,
+            'id_categoria': categoria_premium,
+            'cedula': '11111111',
+            'correo': 'admin@globalexchange.com',
+            'telefono': '+595981000000',
+            'direccion': 'Av. España 1000, Asunción, Paraguay',
+            'is_active': True,
+            'ruc': None
+        },
         {
             'nombre': 'María Elena Cliente González',
             'is_persona_fisica': True,
@@ -111,6 +123,7 @@ def run():
     
     # Asignar usuarios a clientes (relación ManyToMany)
     try:
+        cliente_admin = Cliente.objects.get(correo='admin@globalexchange.com')
         cliente_maria = Cliente.objects.get(correo='cliente@globalexchange.com')
         cliente_ana = Cliente.objects.get(correo='ana.garcia@email.com')
         cliente_carlos = Cliente.objects.get(correo='carlos.lopez@email.com')
@@ -119,6 +132,7 @@ def run():
         cliente_laura = Cliente.objects.get(correo='laura.rodriguez@email.com')
         
         # Asignar usuarios a clientes
+        usuario_admin.clientes.add(cliente_admin)
         usuario_cliente.clientes.add(cliente_maria)
         usuario_ana.clientes.add(cliente_ana)
         usuario_carlos.clientes.add(cliente_carlos)
