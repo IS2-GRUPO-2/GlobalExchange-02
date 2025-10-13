@@ -56,7 +56,7 @@ class MovimientoStockSerializer(serializers.ModelSerializer):
                 })
 
         if 'estado' not in attrs:
-            estado = EstadoMovimiento.objects.get_or_create(codigo="EN_PROCESO", descripcion="Movimiento de stock en proceso.")
+            estado, _ = EstadoMovimiento.objects.get_or_create(codigo="EN_PROCESO", descripcion="Movimiento de stock en proceso.")
             attrs["estado"] = estado
 
         # Si no se proporciona monto, pero hay detalles, calculamos el monto total
