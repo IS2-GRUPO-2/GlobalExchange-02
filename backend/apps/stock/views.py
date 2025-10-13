@@ -1,4 +1,4 @@
-from rest_framework import viewsets, status
+from rest_framework import viewsets, status, permissions
 from rest_framework.response import Response
 from rest_framework.decorators import action
 from . import serializers
@@ -12,6 +12,7 @@ class MovimientoStockViewset(viewsets.ModelViewSet):
         'tipo_movimiento', 'tauser', 'transaccion', 'estado'
     )
     serializer_class = serializers.MovimientoStockSerializer
+    permission_classes = [permissions.IsAuthenticated, permissions.DjangoModelPermissions]
 
     def create(self, request, *args, **kwargs):
         """

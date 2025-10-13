@@ -13,11 +13,12 @@ class StockDivisaTauser(models.Model):
     denominacion = models.ForeignKey(Denominacion, on_delete=models.PROTECT)
 
 class TipoMovimiento(models.Model):
-    codigo = models.CharField(max_length=10, unique=True)
+    codigo = models.CharField(max_length=10, unique=True, primary_key=True)
     descripcion = models.CharField(max_length=100)
     
 class EstadoMovimiento(models.Model):
-    estado = models.CharField(max_length=15, unique=True)
+    codigo = models.CharField(max_length=15, unique=True, primary_key=True)
+    descripcion= models.CharField(max_length=100)
     
 class MovimientoStock(models.Model):
     tipo_movimiento = models.ForeignKey(TipoMovimiento, on_delete=models.PROTECT)

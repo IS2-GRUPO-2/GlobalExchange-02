@@ -13,10 +13,22 @@ from apps.stock.models import (
 from apps.divisas.models import Denominacion, Divisa
 from apps.tauser.models import Tauser
 
-# TODO: Agregar una transaccion para probar
+from apps.usuarios.models import User
+from apps.clientes.models import Cliente, CategoriaCliente
+from apps.operaciones.models import Transaccion
+
 @pytest.fixture
 def setup_data(db):
     # Crear objetos base
+    user = User.objects.create_user(username="test", password="test")
+    categoria = CategoriaCliente.objects.create(nombre="Test")
+    cliente = Cliente.objects.create(
+        nombre="Cliente Test",
+        cedula="1234567",
+        is_active=True,
+        id_categoria=categoria
+    )
+    
     tauser = Tauser.objects.create(
         codigo="CASA",
         nombre="Casa Central",
@@ -48,7 +60,7 @@ def setup_data(db):
     sal_clt = TipoMovimiento.objects.create(codigo="SALCLT", descripcion="Salida cliente")
     sal_cs = TipoMovimiento.objects.create(codigo="SALCS", descripcion="Salida casa")
 
-    estado_inicial = EstadoMovimiento.objects.create(estado="EN_PROCESO")
+    estado_inicial = EstadoMovimiento.objects.create(codigo="EN_PROCESO", descripcion="")
 
     # Crear stock inicial
     StockDivisaCasa.objects.create(denominacion=denom_100, stock=50)
@@ -59,12 +71,28 @@ def setup_data(db):
     StockDivisaTauser.objects.create(tauser=tauser, denominacion=denom_50, stock=10)
     StockDivisaTauser.objects.create(tauser=tauser, denominacion=denom_20, stock=10)
 
+    # Crear una transacción
+    transaccion = Transaccion.objects.create(
+        id_user=user,
+        cliente=cliente,
+        operacion='venta',
+        tasa_aplicada=Decimal('1.0'),
+        tasa_inicial=Decimal('1.0'),
+        divisa_origen=divisa,
+        divisa_destino=divisa,
+        monto_origen=Decimal('170.00'),
+        monto_destino=Decimal('170.00'),
+        tauser=tauser,
+        estado='en_proceso'
+    )
+
     return {
         "tauser": tauser,
         "denominaciones": [denom_100, denom_50, denom_20],
         "tipos": {"ENTCLT": ent_clt, "ENTCS": ent_cs, "SALCLT": sal_clt, "SALCS": sal_cs},
         "estado": estado_inicial,
-        "divisa": divisa
+        "divisa": divisa,
+        "transaccion": transaccion
     }
 
 def test_create_movimiento_entclt(db, setup_data):
@@ -75,11 +103,11 @@ def test_create_movimiento_entclt(db, setup_data):
     divisa = setup_data["divisa"]
 
     data = {
-        "tipo_movimiento": tipo.id,
+        "tipo_movimiento": tipo.codigo,
         "tauser": tauser.id,
         "monto": "100.00",
         "divisa": divisa.id,
-        "estado": estado.id,
+        "estado": estado.codigo,
         "detalles": [
             {"denominacion": denom_100.id, "cantidad": 1}
         ],
@@ -103,11 +131,11 @@ def test_create_movimiento_entcs(db, setup_data):
     estado = setup_data["estado"]
     divisa = setup_data["divisa"]
     data = {
-        "tipo_movimiento": tipo.id,
+        "tipo_movimiento": tipo.codigo,
         "tauser": tauser.id,
         "monto": "50.00",
         "divisa": divisa.id,
-        "estado": estado.id,
+        "estado": estado.codigo,
         "detalles": [
             {"denominacion": denom_50.id, "cantidad": 1}
         ],
@@ -123,18 +151,18 @@ def test_create_movimiento_entcs(db, setup_data):
     assert casa_stock.stock == 49  # se descontó de la casa
     assert tauser_stock.stock == 11  # se incrementó en tauser
 
-# TODO: Usar transaccion en vez de monto
 def test_create_movimiento_salclt(db, setup_data):
     tauser = setup_data["tauser"]
     tipo = setup_data["tipos"]["SALCLT"]
     estado = setup_data["estado"]
     divisa = setup_data["divisa"]
+    transaccion = setup_data["transaccion"]
 
     data = {
-        "tipo_movimiento": tipo.id,
+        "tipo_movimiento": tipo.codigo,
         "tauser": tauser.id,
-        "monto": "170.00",
-        "estado": estado.id,
+        "transaccion": transaccion.id,
+        "estado": estado.codigo,
         "divisa": divisa.id,
     }
 
@@ -145,9 +173,18 @@ def test_create_movimiento_salclt(db, setup_data):
     detalles = MovimientoStockDetalle.objects.filter(movimiento_stock=movimiento)
     total = sum(d.cantidad * d.denominacion.denominacion for d in detalles)
 
-    assert total == Decimal("170.00")
+    # Verificar que el total del movimiento coincide con el monto de la transacción
+    assert total == transaccion.monto_origen
+    
+    # Verificar que se descontó del stock del tauser
     for stock in StockDivisaTauser.objects.filter(tauser=tauser):
         assert stock.stock <= 10  # Se descontó algo
+        
+    # Verificar que no se puede crear otro movimiento con la misma transacción
+    data_duplicada = data.copy()
+    serializer_duplicado = MovimientoStockSerializer(data=data_duplicada)
+    assert not serializer_duplicado.is_valid()
+    assert 'transaccion' in serializer_duplicado.errors
 
 
 def test_create_movimiento_salcs(db, setup_data):
@@ -158,11 +195,11 @@ def test_create_movimiento_salcs(db, setup_data):
     divisa = setup_data["divisa"]
 
     data = {
-        "tipo_movimiento": tipo.id,
+        "tipo_movimiento": tipo.codigo,
         "tauser": tauser.id,
         "monto": "40.00",
         "divisa": divisa.id,
-        "estado": estado.id,
+        "estado": estado.codigo,
         "detalles": [
             {"denominacion": denom_20.id, "cantidad": 2}
         ],

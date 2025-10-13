@@ -23,13 +23,16 @@ def run():
 
     estados_data = [
         {
-            "estado": "EN_PROCESO"
+            "codigo": "EN_PROCESO",
+            "descripcion": "Movimiento de stock en proceso."
         },
         {
-            "estado": "FINALIZADO"
+            "codigo": "FINALIZADO",
+            "descripcion": "Movimiento de stock finalizado."
         },
         {
-            "estado": "CANCELADO"
+            "codigo": "CANCELADO",
+            "descripcion": "Movimiento de stock cancelado."
         }
     ]
 
@@ -41,6 +44,6 @@ def run():
 
     print ("🔧 Creando estados de movimientos de stock...")
     for estado in estados_data:
-        EstadoMovimiento.objects.get_or_create(estado=estado["estado"])
+        EstadoMovimiento.objects.get_or_create(codigo=estado["codigo"], descripcion=estado["descripcion"])
 
     print(f"✅ Tipos de movimiento de stock creados")  

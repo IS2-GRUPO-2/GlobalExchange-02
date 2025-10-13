@@ -1,9 +1,9 @@
 from rest_framework import serializers
-from .models import TipoMovimiento, MovimientoStock, MovimientoStockDetalle, StockDivisaCasa, StockDivisaTauser
+from .models import TipoMovimiento, MovimientoStock, MovimientoStockDetalle, StockDivisaCasa, StockDivisaTauser, EstadoMovimiento
 from django.db import transaction
 from apps.divisas.models import Denominacion
 from decimal import Decimal
-
+from apps.operaciones.models import Transaccion
 class TipoMovimientoSerializer(serializers.ModelSerializer):
     class Meta:
         model = TipoMovimiento
@@ -41,20 +41,49 @@ class MovimientoStockSerializer(serializers.ModelSerializer):
     class Meta:
         model = MovimientoStock
         fields = '__all__'
+        extra_kwargs = {
+            'transaccion': {'required': False, 'allow_null': True},
+            'monto': {'required': False, 'allow_null': True},
+            'estado': {'required': False, 'allow_null': True}
+        }
         
+    def validate(self, attrs):
+        # Validar si ya existe un movimiento con esta transacción
+        if 'transaccion' in attrs and attrs['transaccion'] is not None:
+            if MovimientoStock.objects.filter(transaccion=attrs['transaccion']).exists():
+                raise serializers.ValidationError({
+                    'transaccion': 'Ya existe un movimiento de stock para esta transacción'
+                })
+
+        if 'estado' not in attrs:
+            estado = EstadoMovimiento.objects.get_or_create(codigo="EN_PROCESO", descripcion="Movimiento de stock en proceso.")
+
+        # Si no se proporciona monto, pero hay detalles, calculamos el monto total
+        if 'monto' not in attrs and 'detalles' in attrs:
+            monto_total = Decimal('0')
+            for detalle in attrs['detalles']:
+                denominacion = detalle['denominacion']
+                cantidad = detalle['cantidad']
+                monto_total += Decimal(str(denominacion.denominacion)) * Decimal(str(cantidad))
+            attrs['monto'] = monto_total
+        elif 'monto' not in attrs:
+            # Si no hay monto ni detalles, establecemos 0 como valor por defecto
+            attrs['monto'] = Decimal('0')
+        return attrs
+
     @transaction.atomic
     def create(self, validated_data):
         detalles_data = validated_data.pop("detalles", [])
         tipo_mov = validated_data["tipo_movimiento"]
         codigo_tipo = tipo_mov.codigo.upper()
         tauser = validated_data["tauser"]
-        monto = validated_data["monto"]
 
         movimiento = MovimientoStock.objects.create(**validated_data)
         regla = self._get_regla_stock(codigo_tipo, tauser)
 
         if codigo_tipo == "SALCLT":
-            self._procesar_salida_cliente(movimiento, tauser, monto)
+            transaccion = validated_data["transaccion"]
+            self._procesar_salida_cliente(movimiento, tauser, transaccion)
         else:
             self._procesar_detalles(movimiento, regla, detalles_data)
 
@@ -128,15 +157,22 @@ class MovimientoStockSerializer(serializers.ModelSerializer):
                 stock_destino.stock += cantidad
                 stock_destino.save(update_fields=["stock"])
 
-    def _procesar_salida_cliente(self, movimiento, tauser, monto):
+    def _procesar_salida_cliente(self, movimiento, tauser, transaccion):
         """Calcula las denominaciones automáticamente para una salida al cliente."""
-        monto_restante = Decimal(monto)
         denominaciones = (
             StockDivisaTauser.objects
             .filter(tauser=tauser, stock__gt=0)
             .select_related("denominacion")
             .order_by("-denominacion__denominacion")
         )
+
+        try:
+            monto_restante = Decimal(transaccion.monto_destino)
+            monto = monto_restante
+            movimiento.monto = monto
+            movimiento.save(update_fields=["monto"])
+        except Transaccion.DoesNotExist:
+            raise serializers.ValidationError(f"No existe la transacción {transaccion}")
 
         for stock_item in denominaciones:
             valor = stock_item.denominacion.denominacion
