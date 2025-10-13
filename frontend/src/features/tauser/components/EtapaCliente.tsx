@@ -5,7 +5,11 @@ import type { Cliente } from "../../clientes/types/Cliente";
 import { useAuth } from "../../../context/useAuth";
 import { toast } from "react-toastify";
 
-export default function EtapaCliente() {
+interface EtapaClienteProps {
+  onSelectCliente: (cliente: Cliente) => void;
+}
+
+export default function EtapaCliente({ onSelectCliente }: EtapaClienteProps) {
   const { user } = useAuth();
   const [clientes, setClientes] = useState<Cliente[]>([]);
   const [loading, setLoading] = useState(true);
@@ -67,11 +71,8 @@ export default function EtapaCliente() {
   const clientesActuales = getCurrentPageClientes();
 
   const handleSelectCliente = (cliente: Cliente) => {
-    // Por ahora solo mostramos un mensaje, pero aquí se implementará la lógica 
-    // para seleccionar el cliente y avanzar a la siguiente etapa
     toast.info(`Cliente seleccionado: ${cliente.nombre}`);
-    
-    // TODO: Implementar setClienteActual del usuario y avanzar a la siguiente etapa
+    onSelectCliente(cliente); // Llamar a la función proporcionada desde el componente padre
   };
 
   return (

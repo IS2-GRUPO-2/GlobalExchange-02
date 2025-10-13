@@ -1,47 +1,51 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import logo from "../../../assets/logo-black.png";
 import EtapaLogin from "./EtapaLogin";
 import EtapaCliente from "./EtapaCliente";
-import { getFormattedDateTime } from "../../../utils/date";
+import EtapaOperacionesPendientes from "./EtapaOperacionesPendientes";
 import { useAuth } from "../../../context/useAuth";
+import type { Cliente } from "../../clientes/types/Cliente";
+import LogoutButton from "./LogoutButton";
+import DateTimeDisplay from "./DateTimeDisplay";
 
-type EtapaActual = "inicio" | "login" | "clientes" | "transacciones"; // Preparado para la siguiente etapa
+type EtapaActual = "inicio" | "login" | "clientes" | "operaciones_pendientes";
 
 export default function TauserInicio() {
   const [etapaActual, setEtapaActual] = useState<EtapaActual>("inicio");
-  const [fechaHora, setFechaHora] = useState(new Date());
-  const { logoutTauser} = useAuth();
-
-  // Actualizar fecha y hora cada minuto
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setFechaHora(new Date());
-    }, 1000*60);
-
-    return () => clearInterval(interval);
-  }, []);
+  const [clienteActual, setClienteActual] = useState<Cliente | null>(null);
+  const { logoutTauser } = useAuth();
 
   const iniciarOperacion = () => setEtapaActual("login");
   const volverInicio = () => setEtapaActual("inicio");
-  const avanzarAClientes = () => setEtapaActual("clientes"); // Para la siguiente etapa
+  const avanzarAClientes = () => setEtapaActual("clientes");
+  const avanzarAOperacionesPendientes = (cliente: Cliente) => {
+    setClienteActual(cliente);
+    setEtapaActual("operaciones_pendientes");
+  };
+  
   // Función para cerrar sesión
   const handleLogout = () => {
     logoutTauser();
     volverInicio();
   };
+  
+  // Componente reutilizable para el logo superior izquierdo
+  const LogoHeader = () => (
+    <div className="absolute top-4 left-4">
+      <img
+        src={logo}
+        alt="Global Exchange"
+        className="w-40 object-contain"
+      />
+    </div>
+  );
+  
   const renderEtapaActual = () => {
     switch (etapaActual) {
       case "inicio":
         return (
           <div className="flex flex-col items-center justify-center h-full relative overflow-hidden select-none">
-            {/* Logo superior izquierdo */}
-            <div className="absolute top-4 left-4">
-              <img
-                src={logo}
-                alt="Global Exchange"
-                className="w-40 object-contain"
-              />
-            </div>
+            <LogoHeader />
 
             {/* Título principal */}
             <h1 className="text-3xl md:text-4xl font-bold text-center text-gray-900 mb-16">
@@ -56,65 +60,46 @@ export default function TauserInicio() {
               TOQUE PARA EMPEZAR
             </button>
 
-            {/* Fecha y hora */}
-            <div className="absolute bottom-8 text-sm text-gray-600">
-              {getFormattedDateTime(fechaHora).formattedDate},{" "}
-              {getFormattedDateTime(fechaHora).formattedTime}
-            </div>
+            <DateTimeDisplay />
           </div>
         );
 
       case "login":
         return (
           <div className="flex flex-col items-center justify-center h-full px-6">
-            {/* Logo superior izquierdo */}
-            <div className="absolute top-4 left-4">
-              <img
-                src={logo}
-                alt="Global Exchange"
-                className="w-40 object-contain"
-              />
-            </div>
+            <LogoHeader />
             <EtapaLogin
               onVolverInicio={volverInicio}
               onAutenticacionExitosa={avanzarAClientes}
             />
-            {/* Fecha y hora */}
-            <div className="absolute bottom-8 text-sm text-gray-600">
-              {getFormattedDateTime(fechaHora).formattedDate},{" "}
-              {getFormattedDateTime(fechaHora).formattedTime}
-            </div>
+            <DateTimeDisplay />
           </div>
         );
 
       case "clientes":
         return (
           <div className="flex flex-col items-center justify-center h-full px-6">
-            {/* Logo superior izquierdo */}
-            <div className="absolute top-4 left-4">
-              <img
-                src={logo}
-                alt="Global Exchange"
-                className="w-40 object-contain"
+            <LogoHeader />
+            <LogoutButton onLogout={handleLogout} />
+            <div className="w-full flex justify-center mt-8">
+              <EtapaCliente onSelectCliente={avanzarAOperacionesPendientes} />
+            </div>
+            <DateTimeDisplay />
+          </div>
+        );
+
+      case "operaciones_pendientes":
+        return (
+          <div className="flex flex-col items-center justify-center h-full px-6">
+            <LogoHeader />
+            <LogoutButton onLogout={handleLogout} />
+            <div className="w-full flex justify-center mt-8">
+              <EtapaOperacionesPendientes 
+                cliente={clienteActual} 
+                onVolver={() => setEtapaActual("clientes")} 
               />
             </div>
-            {/* Botón de cerrar sesión en la esquina superior derecha */}
-            <div className="absolute top-4 right-4">
-              <button 
-                onClick={handleLogout}
-                className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg text-sm font-medium shadow-sm transition-colors"
-              >
-                Cerrar Sesión
-              </button>
-            </div>
-            <div className="w-full flex justify-center mt-8">
-              <EtapaCliente />
-            </div>
-            {/* Fecha y hora */}
-            <div className="absolute bottom-8 text-sm text-gray-600">
-              {getFormattedDateTime(fechaHora).formattedDate},{" "}
-              {getFormattedDateTime(fechaHora).formattedTime}
-            </div>
+            <DateTimeDisplay />
           </div>
         );
 
