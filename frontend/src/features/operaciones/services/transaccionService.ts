@@ -13,9 +13,9 @@ export const crearTransaccion = async (data: TransaccionRequest): Promise<Transa
   try {
     const response = await axios.post(`${API_URL}transacciones/`, data, getAuthHeaders());
     return response.data;
-  } catch (error: any) {
-    if (error.response) {
-      throw new Error(error.response.data.detail || "Error al crear la transacción");
+  } catch (error: unknown) {
+    if (axios.isAxiosError(error) && error.response) {
+      throw new Error((error.response.data as { detail?: string })?.detail || "Error al crear la transacción");
     } else {
       throw new Error("Error de red o del servidor");
     }
