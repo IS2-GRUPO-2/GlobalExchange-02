@@ -1,12 +1,12 @@
 import { useEffect, useMemo, useState } from "react";
-import type { User } from "../features/usuario/types/User";
-import { getUserRoles, assignUserRoles } from "../features/usuario/services/usuarioService";
-import type { Role } from "../features/roles/types/Role";
-import { getRoles } from "../features/roles/services/rolesService";
+import type { User } from "../types/User";
+import { getUserRoles, assignUserRoles } from "../services/usuarioService";
+import type { Role } from "../../roles/types/Role";
+import { getRoles } from "../../roles/services/rolesService";
 import { toast } from "react-toastify";
 import { Search } from "lucide-react";
-import Can from "./Can";
-import { USUARIOS } from "../types/perms";
+import Can from "../../../components/Can";
+import { USUARIOS } from "../../../types/perms";
 
 type Props = {
   user: User;
@@ -109,7 +109,6 @@ export default function AssignedRoles({ user, onClose }: Props) {
 
       {/* Username */}
       <div className="mb-4">
-        <div className="text-sm text-gray-500">Usuario</div>
         <div className="text-base font-medium text-gray-900">
           {user.username}
         </div>
@@ -148,7 +147,7 @@ export default function AssignedRoles({ user, onClose }: Props) {
                 {selected.map((r) => (
                   <li
                     key={r.id}
-                    className="inline-flex items-center rounded-full bg-indigo-50 px-3 py-1 text-xs font-medium text-indigo-700 ring-1 ring-indigo-200"
+                    className="inline-flex items-center rounded-full bg-gray-50 px-3 py-1 text-xs font-medium text-gray-700 ring-1 ring-gray-200"
                   >
                     {r.name}
                   </li>
@@ -236,7 +235,7 @@ export default function AssignedRoles({ user, onClose }: Props) {
             <button
               type="button"
               onClick={() => setReadOnly(false)}
-              className="rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-500"
+              className="rounded-md bg-gray-900 px-4 py-2 text-sm font-semibold text-white hover:bg-gray-500"
             >
               Editar
             </button>
@@ -246,7 +245,7 @@ export default function AssignedRoles({ user, onClose }: Props) {
             type="button"
             disabled={!hasChanges || saving}
             onClick={onSave}
-            className="rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-500 disabled:opacity-60 disabled:cursor-not-allowed"
+            className="rounded-md bg-gray-600 px-4 py-2 text-sm font-semibold text-white hover:bg-gray-500 disabled:opacity-60 disabled:cursor-not-allowed"
           >
             {saving ? "Guardando…" : "Guardar"}
           </button>

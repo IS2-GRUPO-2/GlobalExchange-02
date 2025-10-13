@@ -11,6 +11,7 @@ export type UserFormData = {
   email: string;
   password: string;
   is_active: boolean;
+  email_verified: boolean;
   clientes: string[];
 };
 
@@ -41,6 +42,7 @@ const userSchema = yup.object().shape({
     .required("Este campo es requerido.")
     .min(6, "La contraseña debe tener al menos 6 caracteres"),
   is_active: yup.boolean(),
+  email_verified: yup.boolean(),
 });
 
 const UserForm = ({ onSubmit, onCancel }: Props) => {
@@ -61,6 +63,8 @@ const UserForm = ({ onSubmit, onCancel }: Props) => {
       email: "",
       password: "", 
       is_active: true,
+      email_verified: true, // Los usuarios creados por admin ya están verificados
+      clientes: [], // Array vacío para evitar undefined
     },
   });
 
@@ -216,6 +220,9 @@ const UserForm = ({ onSubmit, onCancel }: Props) => {
             <input type="hidden" {...register("is_active")} />
           </div>
         </div>
+
+        {/* Campo oculto para email_verified - los usuarios creados por admin están verificados */}
+        <input type="hidden" {...register("email_verified")} />
 
         <div className="flex space-x-3 pt-4">
           <button

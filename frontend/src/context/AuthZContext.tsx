@@ -12,6 +12,8 @@ import { getMyPerms } from "../services/authzService";
  * @property {Function} has - Verifica si el usuario tiene un permiso específico
  * @property {Function} any - Verifica si el usuario tiene cualquiera de los permisos dados
  * @property {Function} all - Verifica si el usuario tiene todos los permisos dados
+ * @property {Function} reload - Recarga los permisos del usuario desde el servidor
+ * @property {Function} clear - Limpia todos los permisos (útil para logout)
  */
 type AuthZ = {
   ready: boolean;
@@ -19,6 +21,8 @@ type AuthZ = {
   has: (p: string) => boolean;
   any: (...ps: string[]) => boolean;
   all: (...ps: string[]) => boolean;
+  reload: () => Promise<void>;
+  clear: () => void;
 };
 
 const Ctx = createContext<AuthZ | null>(null);
@@ -44,19 +48,79 @@ const Ctx = createContext<AuthZ | null>(null);
 export const AuthZProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [ready, setReady] = useState(false);
   const [perms, setPerms] = useState<Set<string>>(new Set());
+  const [tokenVersion, setTokenVersion] = useState(0); // Para forzar recarga
 
+  // Función para cargar permisos
+  const loadPerms = async () => {
+    const token = localStorage.getItem("token");
+    
+    // Si no hay token, limpiar permisos
+    if (!token) {
+      setPerms(new Set());
+      setReady(true);
+      return;
+    }
+
+    // Si hay token, cargar permisos
+    setReady(false);
+    try {
+      const r = await getMyPerms();
+      setPerms(new Set(r.data.perms));
+    } catch {
+      setPerms(new Set());
+    } finally {
+      setReady(true);
+    }
+  };
+
+  // Cargar permisos al montar y cuando cambie tokenVersion
   useEffect(() => {
-    (async () => {
-      try {
-        const r = await getMyPerms();
-        setPerms(new Set(r.data.perms));
-      } catch {
-        setPerms(new Set());
-      } finally {
-        setReady(true);
-      }
-    })();
+    loadPerms();
+  }, [tokenVersion]);
+
+  // Escuchar evento personalizado de cambio de autenticación
+  useEffect(() => {
+    const handleAuthChange = () => {
+      setTokenVersion(v => v + 1); // Incrementar para forzar recarga
+    };
+
+    window.addEventListener('auth-changed', handleAuthChange);
+    return () => window.removeEventListener('auth-changed', handleAuthChange);
   }, []);
+
+  /**
+   * Recarga los permisos del usuario desde el servidor
+   * @async
+   * @function reload
+   */
+  const reload = async () => {
+    const token = localStorage.getItem("token");
+    
+    if (!token) {
+      setPerms(new Set());
+      setReady(true);
+      return;
+    }
+
+    setReady(false);
+    try {
+      const r = await getMyPerms();
+      setPerms(new Set(r.data.perms));
+    } catch {
+      setPerms(new Set());
+    } finally {
+      setReady(true);
+    }
+  };
+
+  /**
+   * Limpia todos los permisos (útil para logout)
+   * @function clear
+   */
+  const clear = () => {
+    setPerms(new Set());
+    setReady(true);
+  };
 
   const value = useMemo<AuthZ>(() => ({
     ready,
@@ -82,6 +146,8 @@ export const AuthZProvider: React.FC<{ children: React.ReactNode }> = ({ childre
      * @returns {boolean} true si el usuario tiene todos los permisos
      */
     all: (...ps) => ps.every((p) => perms.has(p)),
+    reload,
+    clear,
   }), [ready, perms]);
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
