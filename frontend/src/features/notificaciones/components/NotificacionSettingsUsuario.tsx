@@ -9,7 +9,7 @@ import { type PreferenciaNotificacionUsuario } from '../types/Notificacion';
 import { type Divisa } from '../../divisas/types/Divisa';
 
 const NotificationSettingsUsuario = () => {
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [preferencias, setPreferencias] = useState<PreferenciaNotificacionUsuario | null>(null);
   const [divisasDisponibles, setDivisasDisponibles] = useState<Divisa[]>([]);
@@ -41,6 +41,8 @@ const NotificationSettingsUsuario = () => {
 
       // Cargar preferencias
       const prefs = await getPreferenciasUsuario();
+      setPreferencias(prefs);
+      setDivisasDisponibles(allDivisas);
       setNotificacionesActivas(prefs.notificaciones_activas);
       setDivisasSeleccionadas(prefs.divisas_suscritas);
     } catch (error: any) {
@@ -82,13 +84,22 @@ const NotificationSettingsUsuario = () => {
       toast.error("Error al guardar las preferencias");
     } finally {
       setSaving(false);
+      await loadData(); // refrescar estado real
     }
   };
+
+  // ===============================
+  // Detectar si hubo cambios
+  // ===============================
+  const hasChanges =
+    notificacionesActivas !== preferencias?.notificaciones_activas ||
+    JSON.stringify([...divisasSeleccionadas].sort()) !==
+    JSON.stringify([...preferencias?.divisas_suscritas ?? []].sort());
 
   if (loading) {
     return (
       <div className="flex justify-center items-center p-8">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600"></div>
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-600"></div>
       </div>
     );
   }
@@ -96,28 +107,23 @@ const NotificationSettingsUsuario = () => {
    return (
     <div className="space-y-6">
       {/* Toggle Principal */}
-      <div className="p-4 bg-purple-50 rounded-lg border border-purple-200">
-        <label className="flex items-center justify-between cursor-pointer">
+      <div className="mb-6 p-4 bg-indigo-50 rounded-lg border border-indigo-200">
+        <label className="flex items-center justify-between">
           <div>
-            <div className="font-semibold text-gray-900">
-              Recibir notificaciones personales
-            </div>
-            <div className="text-sm text-gray-600 mt-1">
-              {notificacionesActivas
-                ? "Recibirás emails cuando cambien las tasas seleccionadas"
-                : "No recibirás notificaciones de cambio de tasa"}
+            <div className="text-sm text-gray-600">
+                Recibir notificaciones de cambio de tasa
             </div>
           </div>
           <button
             type="button"
             onClick={() => setNotificacionesActivas(!notificacionesActivas)}
             className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-              notificacionesActivas ? "bg-purple-600" : "bg-gray-300"
+              notificacionesActivas ? 'bg-indigo-600' : 'bg-gray-300'
             }`}
           >
-            <span
+             <span
               className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                notificacionesActivas ? "translate-x-6" : "translate-x-1"
+                notificacionesActivas ? 'translate-x-6' : 'translate-x-1'
               }`}
             />
           </button>
@@ -136,7 +142,7 @@ const NotificationSettingsUsuario = () => {
               <button
                 type="button"
                 onClick={handleSelectAll}
-                className="text-purple-600 hover:text-purple-800 font-medium"
+                className="text-sm text-gray-800 hover:text-gray-900 font-medium"
               >
                 Seleccionar todas
               </button>
@@ -144,7 +150,7 @@ const NotificationSettingsUsuario = () => {
               <button
                 type="button"
                 onClick={handleDeselectAll}
-                className="text-purple-600 hover:text-purple-800 font-medium"
+                className="text-sm text-gray-800 hover:text-gray-900 font-medium"
               >
                 Deseleccionar todas
               </button>
@@ -160,7 +166,7 @@ const NotificationSettingsUsuario = () => {
                   key={divisa.id}
                   className={`flex items-center p-3 rounded-lg border-2 cursor-pointer transition-all ${
                     seleccionada
-                      ? "border-purple-500 bg-purple-50"
+                      ? "border-gray-500 bg-gray-50"
                       : "border-gray-200 hover:border-gray-300"
                   }`}
                 >
@@ -168,7 +174,7 @@ const NotificationSettingsUsuario = () => {
                     type="checkbox"
                     checked={seleccionada}
                     onChange={() => handleToggleDivisa(divisa.id!)}
-                    className="w-4 h-4 text-purple-600 rounded focus:ring-purple-500"
+                    className="w-4 h-4 text-gray-600 rounded focus:ring-gray-500"
                   />
                   <span className="ml-2 text-sm font-medium text-gray-900">
                     {divisa.simbolo} {divisa.codigo}
@@ -186,15 +192,22 @@ const NotificationSettingsUsuario = () => {
         </div>
       )}
 
-      {/* Botón Guardar */}
-      <div className="flex justify-end pt-4 border-t">
+      {/* Botones de Acción */}
+      <div className="flex justify-end pt-4 space-x-3 border-t">
+        <button
+          onClick={loadData}
+          disabled={loading | !hasChanges}
+          className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors disabled:opacity-50"
+        >
+          Cancelar
+        </button>
         <button
           type="button"
           onClick={handleSave}
-          disabled={saving}
-          className="px-6 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+          disabled={loading | !hasChanges}
+          className="bg-gray-900 text-white py-2 px-4 rounded-md hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          {saving ? (
+          {loading ? (
             <>
               <svg
                 className="animate-spin h-4 w-4 text-white"

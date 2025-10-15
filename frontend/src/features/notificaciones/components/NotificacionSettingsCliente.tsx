@@ -50,7 +50,7 @@ const NotificationSettingsCliente = () => {
        // Cargar preferencias del cliente
       const prefsData = await getPreferenciasCliente();
       setPreferencias(prefsData);
-      setDivisasDisponibles(divisas);
+      setDivisasDisponibles(allDivisas);
       setNotificacionesActivas(prefsData.notificaciones_activas);
       setDivisasSeleccionadas(prefsData.divisas_suscritas);
       
@@ -66,6 +66,32 @@ const NotificationSettingsCliente = () => {
       setLoading(false);
     }
   };
+
+  // ===================================================
+  // Escuchar cambios del cliente desde ClientPicker
+  // ===================================================
+  useEffect(() => {
+    const handleClienteChangeEvent = (event: Event) => {
+      const custom = event as CustomEvent;
+      const { cliente } = custom.detail || {};
+
+      // Si no hay cliente, mostrar mensaje de advertencia
+      if (!cliente) {
+        setNoClienteActual(true);
+        setPreferencias(null);
+        setDivisasSeleccionadas([]);
+        return;
+      }
+
+      // Volver a cargar las preferencias para el nuevo cliente
+      loadData();
+    };
+
+    window.addEventListener('clienteActualChanged', handleClienteChangeEvent as EventListener);
+    return () => {
+      window.removeEventListener('clienteActualChanged', handleClienteChangeEvent as EventListener);
+    };
+  }, [loadData]);
 
   const handleToggleDivisa = (divisaId: number) => {
     setDivisasSeleccionadas(prev => {
@@ -95,15 +121,26 @@ const NotificationSettingsCliente = () => {
       });
       
       toast.success('Preferencias del cliente guardadas');
-      // await loadData();
       
     } catch (error: any) {
       console.error('Error guardando preferencias:', error);
       toast.error('Error al guardar las preferencias');
     } finally {
      setSaving(false);
+     await loadData(); // refrescar estado real
     }
   };
+
+  // ===============================
+  // Detectar si hubo cambios
+  // ===============================
+  const hasChanges =
+    notificacionesActivas !== preferencias?.notificaciones_activas ||
+    JSON.stringify([...divisasSeleccionadas].sort()) !==
+    JSON.stringify([...preferencias?.divisas_suscritas ?? []].sort());
+
+
+
 
   if (noClienteActual) {
     return (
@@ -130,18 +167,15 @@ const NotificationSettingsCliente = () => {
   if (loading) {
     return (
       <div className="flex justify-center items-center p-8">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-600"></div>
       </div>
     );
   }
 
   return (
-    <div className="bg-white rounded-lg shadow-md p-6">
+    <div className="space-y-6">
       {/* Header */}
       <div className="mb-6">
-        <h3 className="text-2xl font-bold text-gray-900 mb-2">
-          Notificaciones del Cliente
-        </h3>
         {preferencias && (
           <p className="text-gray-600 text-sm">
             Configura las notificaciones para <strong>{preferencias.cliente_nombre}</strong>. 
@@ -153,14 +187,9 @@ const NotificationSettingsCliente = () => {
       <div className="mb-6 p-4 bg-indigo-50 rounded-lg border border-indigo-200">
         <div className="flex items-center justify-between">
           <div>
-            <h4 className="font-semibold text-gray-900">
-              Notificaciones del cliente
-            </h4>
             <p className="text-sm text-gray-600">
-              {notificacionesActivas 
-                ? 'El cliente recibirá notificaciones de cambio de tasa'
-                : 'El cliente no recibirá notificaciones'
-              }
+
+              Recibir notificaciones de cambio de tasa
             </p>
           </div>
           <button
@@ -188,14 +217,14 @@ const NotificationSettingsCliente = () => {
             <div className="space-x-2">
               <button
                 onClick={handleSelectAll}
-                className="text-sm text-indigo-600 hover:text-indigo-800 font-medium"
+                className="text-sm text-gray-800 hover:text-gray-900 font-medium"
               >
                 Seleccionar todas
               </button>
               <span className="text-gray-400">|</span>
               <button
                 onClick={handleDeselectAll}
-                className="text-sm text-indigo-600 hover:text-indigo-800 font-medium"
+                className="text-sm text-gray-800 hover:text-gray-900 font-medium"
               >
                 Deseleccionar todas
               </button>
@@ -208,7 +237,7 @@ const NotificationSettingsCliente = () => {
                 key={divisa.id}
                 className={`flex items-center p-3 rounded-lg border-2 cursor-pointer transition-all ${
                   divisasSeleccionadas.includes(divisa.id)
-                    ? 'border-indigo-500 bg-indigo-50'
+                    ? 'border-gray-500 bg-gray-50'
                     : 'border-gray-200 hover:border-gray-300'
                 }`}
               >
@@ -216,7 +245,7 @@ const NotificationSettingsCliente = () => {
                   type="checkbox"
                   checked={divisasSeleccionadas.includes(divisa.id)}
                   onChange={() => handleToggleDivisa(divisa.id)}
-                  className="w-4 h-4 text-indigo-600 rounded focus:ring-indigo-500"
+                  className="w-4 h-4 text-gray-600 rounded focus:ring-gray-500"
                 />
                 <span className="ml-2 text-sm font-medium text-gray-900">
                   {divisa.simbolo} {divisa.codigo}
@@ -237,15 +266,15 @@ const NotificationSettingsCliente = () => {
       <div className="flex justify-end space-x-3 pt-4 border-t">
         <button
           onClick={loadData}
-          disabled={loading}
+          disabled={loading | !hasChanges}
           className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors disabled:opacity-50"
         >
           Cancelar
         </button>
         <button
           onClick={handleSave}
-          disabled={loading}
-          className="px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2"
+          disabled={loading | !hasChanges}
+          className="bg-gray-900 text-white py-2 px-4 rounded-md hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {loading ? (
             <>

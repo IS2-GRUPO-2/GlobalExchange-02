@@ -32,6 +32,19 @@ class PreferenciaNotificacionUsuarioSerializer(serializers.ModelSerializer):
         ]
         read_only_fields = ['id', 'fecha_creacion', 'fecha_actualizacion']
 
+    def update(self, instance, validated_data):
+        divisas = validated_data.pop('divisas_suscritas', None)
+        instance = super().update(instance, validated_data)
+        if divisas is not None:
+            instance.divisas_suscritas.set(divisas)
+        return instance
+
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        data['divisas_suscritas'] = data.get('divisas_suscritas') or []
+        data['divisas_detalle'] = data.get('divisas_detalle') or []
+        return data
+
     def get_divisas_detalle(self, obj):
         """Retorna información detallada de las divisas suscritas"""
         return [
@@ -76,6 +89,19 @@ class PreferenciaNotificacionClienteSerializer(serializers.ModelSerializer):
         ]
         read_only_fields = ['id', 'cliente',
                             'fecha_creacion', 'fecha_actualizacion']
+
+    def update(self, instance, validated_data):
+        divisas = validated_data.pop('divisas_suscritas', None)
+        instance = super().update(instance, validated_data)
+        if divisas is not None:
+            instance.divisas_suscritas.set(divisas)
+        return instance
+
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        data['divisas_suscritas'] = data.get('divisas_suscritas') or []
+        data['divisas_detalle'] = data.get('divisas_detalle') or []
+        return data
 
     def get_divisas_detalle(self, obj):
         """Retorna información detallada de las divisas suscritas"""

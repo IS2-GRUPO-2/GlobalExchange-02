@@ -166,9 +166,9 @@ export const router = createBrowserRouter([
         ),
       },
       {
-        path: "configuraciones/notificaciones",
+        path: "configuraciones-notificaciones",
         element: (
-          <RequireAuth>
+          <RequireAuth anyOf={[NOTIFICACIONES.VIEW, NOTIFICACIONES.VIEW_CLIENTE]}>
             <NotificacionesPage />
           </RequireAuth>
         ),

@@ -6,7 +6,7 @@ import NotificationSettingsCliente from "../components/NotificacionSettingsClien
 import type { Tab } from "../../../types/Tab";
 
 export default function NotificacionesPage() {
-  const tabs: Tab[] = [
+  const items: Tab[] = [
     {
       key: "usuario",
       icon: "fal fa-user",
@@ -19,24 +19,18 @@ export default function NotificacionesPage() {
     },
   ];
 
-  const [selectedTab, setSelectedTab] = useState<Tab>(tabs[0]);
+  const [selectedTab, onSelectTab] = useState<Tab>(items[0]);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
 
   return (
     <div className="bg-gray-50 min-h-screen flex">
       <Sidebar
-        header={
-          <div className="flex items-center gap-2">
-            <Bell className="w-5 h-5" />
-            <span>Configuración de Notificaciones</span>
-          </div>
-        }
-        // header="Configuración de Notificaciones"
+        header="Notificaciones"
         isLeftSidebarCollapsed={isSidebarCollapsed}
-        setIsLeftSidebarCollapsed={setIsSidebarCollapsed}
-        tabs={tabs}
+        changeIsLeftSidebarCollapsed={setIsSidebarCollapsed} 
+        items={items}
         selectedTab={selectedTab}
-        setSelectedTab={setSelectedTab}
+        onSelectTab={onSelectTab}
       />
 
       <div className="flex-1 p-6 overflow-y-auto">
@@ -49,8 +43,8 @@ export default function NotificacionesPage() {
             </h1>
             <p className="text-gray-600 mt-2">
               {selectedTab.key === "usuario"
-                ? "Configura las notificaciones que recibirás en tu email personal cuando cambien las tasas de divisas."
-                : "Configura las notificaciones que recibirán todos los usuarios asociados al cliente actual."}
+                ? "Configura las notificaciones que recibirás en tu email personal"
+                : "Configura las notificaciones que recibirá el cliente actual."}
             </p>
           </div>
 

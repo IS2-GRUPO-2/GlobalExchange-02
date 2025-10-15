@@ -41,6 +41,7 @@ class PreferenciaNotificacionUsuario(models.Model):
         verbose_name = "Preferencia de Notificación de Usuario"
         verbose_name_plural = "Preferencias de Notificación de Usuarios"
         db_table = "notificaciones_preferencia_usuario"
+        default_permissions = ('view', 'change',)
 
     def __str__(self):
         estado = "Activas" if self.notificaciones_activas else "Inactivas"
@@ -85,6 +86,7 @@ class PreferenciaNotificacionCliente(models.Model):
         verbose_name = "Preferencia de Notificación de Cliente"
         verbose_name_plural = "Preferencias de Notificación de Clientes"
         db_table = "notificaciones_preferencia_cliente"
+        default_permissions = ('view', 'change',)
 
     def __str__(self):
         estado = "Activas" if self.notificaciones_activas else "Inactivas"

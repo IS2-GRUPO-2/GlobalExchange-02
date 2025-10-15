@@ -113,12 +113,12 @@ const ConfiguracionesPage = () => {
     },
     {
       id: "notificaciones",
-      nombre: "Notificaciones de Tasas",
-      descripcion: "Configurar preferencias de notificaciones de cambio de tasa",
+      nombre: "Notificaciones",
+      descripcion: "Configurar preferencias de notificaciones",
       icon: <Bell className="w-6 h-6 text-amber-600" />,
-      path: "/configuraciones/notificaciones",
+      path: "/configuraciones-notificaciones",
       habilitado: true,
-      permisos: [], // Cualquier usuario autenticado puede ver sus preferencias
+      permisos: [NOTIFICACIONES.VIEW, NOTIFICACIONES.VIEW_CLIENTE],
     },
     {
       id: "documentos",

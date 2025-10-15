@@ -16,6 +16,7 @@ from apps.notificaciones.models import (
     PreferenciaNotificacionUsuario,
     PreferenciaNotificacionCliente
 )
+import logging
 
 notification_service = NotificationService()
 
@@ -162,17 +163,21 @@ class TasaSerializer(serializers.ModelSerializer):
 
         if Decimal(instance.precioBase) != old_precio or Decimal(instance.comisionBaseCompra) != old_comision_compra or Decimal(instance.comisionBaseVenta) != old_comision_venta:
             TasaService.crear_historial(instance)
+            try:
+                new_tasa_venta = TasaService.calcular_tasa_venta(instance)
+                new_tasa_compra = TasaService.calcular_tasa_compra(instance)
 
-            new_tasa_venta = TasaService.calcular_tasa_venta(instance)
-            new_tasa_compra = TasaService.calcular_tasa_compra(instance)
-
-            self._notificar_cambio_tasa(
-                divisa=divisa,
-                new_tasa_venta=new_tasa_venta,
-                old_tasa_venta=old_tasa_venta,
-                new_tasa_compra=new_tasa_compra,
-                old_tasa_compra=old_tasa_compra
-            )
+                self._notificar_cambio_tasa(
+                    divisa=divisa,
+                    new_tasa_venta=new_tasa_venta,
+                    old_tasa_venta=old_tasa_venta,
+                    new_tasa_compra=new_tasa_compra,
+                    old_tasa_compra=old_tasa_compra
+                )
+            except Exception as e:
+                logger = logging.getLogger(__name__)
+                logger.error(
+                    f"Error enviando notificación de tasa: {e}", exc_info=True)
 
         return instance
 
@@ -186,72 +191,6 @@ class TasaSerializer(serializers.ModelSerializer):
         3. Recopila emails de usuarios de esos clientes
         4. Elimina duplicados y envía notificaciones
         """
-        # # Obtener todos los clientes activos con usuarios activos y verificados
-        # clientes = Cliente.objects.filter(
-        #     is_active=True,
-        #     usuarios__email_verified=True,
-        #     usuarios__is_active=True
-        # ).distinct().prefetch_related('usuarios')
-
-        # # Listas de correos
-        # email_clientes = []
-        # email_usuarios = []
-
-        # for cliente in clientes:
-        #     # Agregar el correo del cliente si existe
-        #     if cliente.correo:
-        #         email_clientes.append(cliente.correo)
-
-        #     # Recorrer usuarios relacionados
-        #     for usuario in cliente.usuarios.all():
-        #         if usuario.email:
-        #             email_usuarios.append(usuario.email)
-
-        # # Unir ambas listas sin duplicados
-        # recipient_list = list(dict.fromkeys(email_clientes + email_usuarios))
-
-        # if not recipient_list:
-        #     return
-
-        # print(f"Se enviarán notificaciones a: {recipient_list}")
-
-        # # Calcular variación
-        # variacion_compra = new_tasa_compra - old_tasa_compra
-        # variacion_venta = new_tasa_venta - old_tasa_venta
-        # porcentaje_variacion_compra = (variacion_compra / old_tasa_compra) * \
-        #     100 if old_tasa_compra > 0 else 0
-        # porcentaje_variacion_venta = (variacion_venta / old_tasa_venta) * \
-        #     100 if old_tasa_venta > 0 else 0
-
-        # # Contexto para la plantilla
-        # context = {
-        #     'divisa': divisa.nombre,
-        #     'codigo_divisa': divisa.codigo,
-        #     'tasa_anterior_compra': f"{old_tasa_compra:.2f}",
-        #     'tasa_nueva_compra': f"{new_tasa_compra:.2f}",
-        #     'variacion_compra': f"{variacion_compra:+.2f}",
-        #     'porcentaje_variacion_compra': f"{porcentaje_variacion_compra:+.2f}",
-        #     'tasa_anterior_venta': f"{old_tasa_venta:.2f}",
-        #     'tasa_nueva_venta': f"{new_tasa_venta:.2f}",
-        #     'variacion_venta': f"{variacion_venta:+.2f}",
-        #     'porcentaje_variacion_venta': f"{porcentaje_variacion_venta:+.2f}",
-        #     'fecha_actualizacion': timezone.now().strftime("%d/%m/%Y %H:%M"),
-        # }
-
-        # # Enviar notificación
-        # try:
-        #     notification_service.send_notification(
-        #         channel="email",
-        #         subject=f"Cambio en la tasa de {divisa.codigo}",
-        #         template_name="emails/cambio_tasa.html",
-        #         context=context,
-        #         recipient_list=recipient_list,
-        #     )
-        # except Exception as e:
-        #     # Log del error sin interrumpir el flujo
-        #     import logging
-        #     logger = logging.getLogger(__name__)
-        #     logger.error(f"Error enviando notificación de cambio de tasa: {e}")
 
         recipient_list = set()  # Usar set para evitar duplicados
 
