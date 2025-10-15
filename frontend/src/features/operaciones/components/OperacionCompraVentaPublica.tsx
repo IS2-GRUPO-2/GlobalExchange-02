@@ -559,35 +559,35 @@ function EtapaResultadoPublica({
       </div>
 
       {/* Conversión principal con etiquetas */}
-      <div className="relative overflow-hidden rounded-lg border-2 border-zinc-300 bg-gradient-to-br from-zinc-50 to-white p-6">
-        <div className="flex items-center justify-center gap-8">
+      <div className="relative overflow-hidden rounded-lg border-2 border-zinc-300 bg-gradient-to-br from-zinc-50 to-white p-4 sm:p-6">
+        <div className="flex items-center justify-center gap-4 sm:gap-6">
           {/* Monto Origen */}
-          <div className="text-center flex-1">
+          <div className="text-center flex-1 min-w-0">
             <div className="text-xs font-semibold text-zinc-500 uppercase tracking-wide mb-2">
               {operacionCliente === "compra" ? "Entrega" : "Entrega"}
             </div>
-            <div className="text-4xl font-bold text-zinc-900">
+            <div className="text-lg sm:text-xl lg:text-2xl font-bold text-zinc-900 whitespace-nowrap overflow-hidden text-ellipsis">
               {formatNumber(resultado.monto_origen, 2)}
             </div>
-            <div className="text-base font-semibold text-zinc-600 mt-2">
+            <div className="text-sm font-semibold text-zinc-600 mt-2">
               {resultado.divisa_origen}
             </div>
           </div>
           
           {/* Flecha separadora */}
-          <div className="flex flex-col items-center">
-            <div className="text-4xl text-zinc-400">→</div>
+          <div className="flex flex-col items-center flex-shrink-0">
+            <div className="text-xl sm:text-2xl text-zinc-400">→</div>
           </div>
           
           {/* Monto Destino */}
-          <div className="text-center flex-1">
+          <div className="text-center flex-1 min-w-0">
             <div className="text-xs font-semibold text-zinc-500 uppercase tracking-wide mb-2">
               {operacionCliente === "compra" ? "Recibe" : "Recibe"}
             </div>
-            <div className="text-4xl font-bold text-zinc-900">
+            <div className="text-lg sm:text-xl lg:text-2xl font-bold text-zinc-900 whitespace-nowrap overflow-hidden text-ellipsis">
               {formatNumber(resultado.monto_destino, 2)}
             </div>
-            <div className="text-base font-semibold text-zinc-600 mt-2">
+            <div className="text-sm font-semibold text-zinc-600 mt-2">
               {resultado.divisa_destino}
             </div>
           </div>
