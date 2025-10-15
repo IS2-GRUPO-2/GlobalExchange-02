@@ -35,6 +35,22 @@ export const reconfirmarTasa = async (id: number) => {
   };
 };
 
+export const actualizarTransaccion = async (
+  id: number,
+  payload: {
+    tasa_actual?: number;
+    monto_destino_actual?: number;
+    monto_origen?: number;
+  }
+): Promise<Transaccion> => {
+  const response = await axios.patch(
+    `${API_URL}transacciones/${id}/actualizar-reconfirmacion/`,
+    payload,
+    getAuthHeaders()
+  );
+  return response.data;
+};
+
 export const confirmarPago = async (
   id: number,
   payload: { terminos_aceptados: boolean; acepta_cambio?: boolean }

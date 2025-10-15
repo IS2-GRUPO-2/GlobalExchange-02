@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import SeleccionMetodoFinanciero from "./SeleccionMetodoFinanciero";
 import SeleccionInstanciaMetodo from "./SeleccionInstanciaMetodo";
 import type { MetodoFinanciero } from "../../metodos_financieros/types/MetodoFinanciero";
@@ -7,8 +7,10 @@ interface EtapaSeleccionMetodoProps {
   opPerspectivaCasa: "compra" | "venta";
   detalleMetodoSeleccionado: number | null;
   metodoGenericoSeleccionado: number | null;
+  metodoSeleccionadoInfo: MetodoFinanciero | null;
   onDetalleMetodoChange: (detalleId: number | null) => void;
   onMetodoGenericoChange: (metodoId: number | null) => void;
+  onMetodoSeleccionadoChange: (metodo: MetodoFinanciero | null) => void;
   onRetroceder: () => void;
   onContinuar: () => void;
 }
@@ -17,70 +19,74 @@ export default function EtapaSeleccionMetodo({
   opPerspectivaCasa,
   detalleMetodoSeleccionado,
   metodoGenericoSeleccionado,
+  metodoSeleccionadoInfo,
   onDetalleMetodoChange,
   onMetodoGenericoChange,
+  onMetodoSeleccionadoChange,
   onRetroceder,
-  onContinuar
+  onContinuar,
 }: EtapaSeleccionMetodoProps) {
-  const [metodoSeleccionado, setMetodoSeleccionado] = useState<MetodoFinanciero | null>(null);
   const [mostrandoInstancias, setMostrandoInstancias] = useState(false);
 
-  // Manejar selección de método financiero
   const handleMetodoChange = (metodo: MetodoFinanciero | null) => {
-    setMetodoSeleccionado(metodo);
-    
+    onMetodoSeleccionadoChange(metodo);
+
     if (!metodo) {
-      // Si se deselecciona el método, limpiar todo
       onDetalleMetodoChange(null);
       onMetodoGenericoChange(null);
       setMostrandoInstancias(false);
       return;
     }
 
-    // Si es efectivo o cheque, seleccionar directamente el método genérico
     if (metodo.nombre === "EFECTIVO" || metodo.nombre === "CHEQUE") {
-      onMetodoGenericoChange(metodo.id!);
+      onMetodoGenericoChange(metodo.id ?? null);
       onDetalleMetodoChange(null);
       setMostrandoInstancias(false);
     } else {
-      // Para otros métodos, mostrar instancias específicas
       onMetodoGenericoChange(null);
       onDetalleMetodoChange(null);
       setMostrandoInstancias(true);
     }
   };
 
-  // Manejar selección de instancia específica
+  useEffect(() => {
+    if (!metodoSeleccionadoInfo) {
+      setMostrandoInstancias(false);
+      return;
+    }
+    const requiereInstancias = !["EFECTIVO", "CHEQUE"].includes(metodoSeleccionadoInfo.nombre);
+    setMostrandoInstancias(requiereInstancias);
+  }, [metodoSeleccionadoInfo]);
+
   const handleInstanciaChange = useCallback(
     (instanciaId: number | null) => {
       onDetalleMetodoChange(instanciaId);
       if (instanciaId) {
-        onMetodoGenericoChange(null); // Limpiar método genérico si hay instancia específica
+        onMetodoGenericoChange(null);
       }
     },
-    [onDetalleMetodoChange, onMetodoGenericoChange]
+    [onDetalleMetodoChange, onMetodoGenericoChange],
   );
 
-  // Volver a selección de métodos
   const volverASeleccionMetodos = () => {
     setMostrandoInstancias(false);
     onDetalleMetodoChange(null);
     onMetodoGenericoChange(null);
+    onMetodoSeleccionadoChange(null);
   };
 
-  // Función para inferir operación desde perspectiva del cliente
   const getOperacionCliente = (opCasa: "compra" | "venta"): "compra" | "venta" => {
     return opCasa === "compra" ? "venta" : "compra";
   };
 
   const operacionCliente = getOperacionCliente(opPerspectivaCasa);
-  
+
   const getTituloMetodo = () => {
     return operacionCliente === "compra" ? "Método de Pago" : "Método de Cobro";
   };
 
   const getDescripcionMetodo = () => {
-    return operacionCliente === "compra" 
+    return operacionCliente === "compra"
       ? "Selecciona cómo vas a pagar por la divisa que quieres comprar"
       : "Selecciona cómo quieres recibir el pago por la divisa que vas a vender";
   };
@@ -89,21 +95,16 @@ export default function EtapaSeleccionMetodo({
     return detalleMetodoSeleccionado !== null || metodoGenericoSeleccionado !== null;
   };
 
-  // Si estamos mostrando instancias específicas
-  if (mostrandoInstancias && metodoSeleccionado) {
+  if (mostrandoInstancias && metodoSeleccionadoInfo) {
     return (
       <div className="space-y-6 select-none">
         <div className="text-center">
-          <h3 className="text-lg font-semibold text-gray-800 mb-2">
-            {getTituloMetodo()}
-          </h3>
-          <p className="text-sm text-gray-600 mb-4">
-            {getDescripcionMetodo()}
-          </p>
+          <h3 className="text-lg font-semibold text-gray-800 mb-2">{getTituloMetodo()}</h3>
+          <p className="text-sm text-gray-600 mb-4">{getDescripcionMetodo()}</p>
         </div>
 
         <SeleccionInstanciaMetodo
-          metodoFinanciero={metodoSeleccionado}
+          metodoFinanciero={metodoSeleccionadoInfo}
           instanciaSeleccionada={detalleMetodoSeleccionado}
           onInstanciaChange={handleInstanciaChange}
           onVolver={volverASeleccionMetodos}
@@ -120,9 +121,7 @@ export default function EtapaSeleccionMetodo({
             onClick={onContinuar}
             disabled={!puedeAvanzar()}
             className={`flex-1 px-4 py-2 rounded-md transition-colors ${
-              puedeAvanzar()
-                ? "bg-blue-600 text-white hover:bg-blue-700"
-                : "bg-gray-300 text-gray-500 cursor-not-allowed"
+              puedeAvanzar() ? "bg-blue-600 text-white hover:bg-blue-700" : "bg-gray-300 text-gray-500 cursor-not-allowed"
             }`}
           >
             Continuar
@@ -132,21 +131,16 @@ export default function EtapaSeleccionMetodo({
     );
   }
 
-  // Vista principal de selección de métodos
   return (
     <div className="space-y-6 select-none">
       <div className="text-center">
-        <h3 className="text-lg font-semibold text-gray-800 mb-2">
-          {getTituloMetodo()}
-        </h3>
-        <p className="text-sm text-gray-600 mb-4">
-          {getDescripcionMetodo()}
-        </p>
+        <h3 className="text-lg font-semibold text-gray-800 mb-2">{getTituloMetodo()}</h3>
+        <p className="text-sm text-gray-600 mb-4">{getDescripcionMetodo()}</p>
       </div>
 
       <SeleccionMetodoFinanciero
         opPerspectivaCasa={opPerspectivaCasa}
-        metodoSeleccionado={metodoSeleccionado}
+        metodoSeleccionado={metodoSeleccionadoInfo}
         onMetodoChange={handleMetodoChange}
       />
 
@@ -161,9 +155,7 @@ export default function EtapaSeleccionMetodo({
           onClick={onContinuar}
           disabled={!puedeAvanzar()}
           className={`flex-1 px-4 py-2 rounded-md transition-colors ${
-            puedeAvanzar()
-              ? "bg-blue-600 text-white hover:bg-blue-700"
-              : "bg-gray-300 text-gray-500 cursor-not-allowed"
+            puedeAvanzar() ? "bg-blue-600 text-white hover:bg-blue-700" : "bg-gray-300 text-gray-500 cursor-not-allowed"
           }`}
         >
           Continuar

@@ -6,10 +6,12 @@ import type { TransaccionRequest } from "../types/Transaccion";
 import { jwtDecode } from "jwt-decode";
 import type { Cliente } from "../../clientes/types/Cliente";
 import type { DecodedToken } from "../../usuario/types/User";
+import type { MetodoFinanciero } from "../../metodos_financieros/types/MetodoFinanciero";
 import { getClienteActual } from "../../usuario/services/usuarioService";
 import {
   crearTransaccion,
   reconfirmarTasa,
+  actualizarTransaccion,
   confirmarPago,
   cancelarTransaccion,
 } from "../services/transaccionService";   
@@ -33,6 +35,9 @@ type ReconfirmPayload = {
   monto_destino_actual: string;
 };
 
+const SIMULADOR_MESSAGE_KIND = "simulador-transferencia-bancaria";
+const SIMULADOR_POPUP_NAME = "simulador-transferencia-bancaria-popup";
+
 export default function OperacionCompraVenta() {
   // Estado de navegación
   const [etapaActual, setEtapaActual] = useState<EtapaActual>(1);
@@ -43,6 +48,7 @@ export default function OperacionCompraVenta() {
   const [monto, setMonto] = useState<number>(0);
   const [detalleMetodoSeleccionado, setDetalleMetodoSeleccionado] = useState<number | null>(null);
   const [metodoGenericoSeleccionado, setMetodoGenericoSeleccionado] = useState<number | null>(null);
+  const [metodoSeleccionadoInfo, setMetodoSeleccionadoInfo] = useState<MetodoFinanciero | null>(null);
 
   // Estados para el resultado de la simulación (etapa 3)
   const [resultado, setResultado] = useState<CalcularOperacionResponse | null>(null);
@@ -70,6 +76,7 @@ export default function OperacionCompraVenta() {
     setMonto(0);
     setDetalleMetodoSeleccionado(null);
     setMetodoGenericoSeleccionado(null);
+    setMetodoSeleccionadoInfo(null);
     setTauserSeleccionado("");
     setResultado(null);
     setProcesandoTransaccion(false);
@@ -154,6 +161,7 @@ export default function OperacionCompraVenta() {
     setEtapaActual(1);
     setDetalleMetodoSeleccionado(null);
     setMetodoGenericoSeleccionado(null);
+    setMetodoSeleccionadoInfo(null);
   };
 
   // Navegación Etapa 2 -> 3 (calcular simulación)
@@ -289,17 +297,104 @@ export default function OperacionCompraVenta() {
     setEtapaActual(5);
   };
 
+  const requiereSimuladorTransferencia = () => {
+    if (!resultado) return false;
+    if (resultado.op_perspectiva_casa !== "venta") return false;
+    if (metodoSeleccionadoInfo?.nombre !== "TRANSFERENCIA_BANCARIA") return false;
+    return detalleMetodoSeleccionado !== null;
+  };
+
+  const abrirSimuladorTransferencia = async (): Promise<"success" | "cancel" | "rate-change"> => {
+    if (!resultado || !transaccionId) {
+      return "cancel";
+    }
+
+    const url = new URL("/simulador-transaccion-bancaria", window.location.origin);
+    url.searchParams.set("transaccionId", String(transaccionId));
+    url.searchParams.set("cliente", clienteActual?.nombre ?? "Cliente");
+    url.searchParams.set("monto", String(resultado.monto_origen));
+    if (resultado.divisa_origen) {
+      url.searchParams.set("divisa", resultado.divisa_origen);
+    }
+
+    return new Promise<"success" | "cancel" | "rate-change">((resolve) => {
+      const features = "width=420,height=720,menubar=no,toolbar=no,location=no,status=no,resizable=yes,scrollbars=yes";
+      const popup = window.open(url.toString(), SIMULADOR_POPUP_NAME, features);
+      if (!popup) {
+        toast.error("No se pudo abrir el simulador de transferencia bancaria. Revisa los bloqueadores de ventanas emergentes.");
+        resolve("cancel");
+        return;
+      }
+      popup.focus();
+
+      let settled = false;
+
+      const finalize = (result: "success" | "cancel" | "rate-change") => {
+        if (settled) return;
+        settled = true;
+        window.removeEventListener("message", handleMessage);
+        window.clearInterval(closeWatcher);
+        resolve(result);
+        if (!popup.closed) {
+          popup.close();
+        }
+      };
+
+      const handleMessage = (event: MessageEvent) => {
+        if (event.origin !== window.location.origin) return;
+        const { data } = event;
+        if (!data || data.kind !== SIMULADOR_MESSAGE_KIND) return;
+        if (data.status === "success") {
+          finalize("success");
+          return;
+        }
+        if (data.status === "rate-change") {
+          finalize("rate-change");
+          return;
+        }
+        finalize("cancel");
+      };
+
+      const closeWatcher = window.setInterval(() => {
+        if (popup.closed) {
+          finalize("cancel");
+        }
+      }, 400);
+
+      window.addEventListener("message", handleMessage);
+    });
+  };
+
   // === Funciones de pago con reconfirmación ===
   const pagarConReconfirmacion = async () => {
     if (!transaccionId) {
       toast.error("No hay transacción creada");
       return;
     }
+
+    if (requiereSimuladorTransferencia()) {
+      const resultadoSimulador = await abrirSimuladorTransferencia();
+      if (resultadoSimulador === "rate-change") {
+        try {
+          const r = await reconfirmarTasa(transaccionId);
+          setReconfirm(r);
+          setModalCambioOpen(true);
+        } catch (error) {
+          console.error(error);
+          toast.error("No se pudo reconfirmar la tasa");
+        }
+        return;
+      }
+      if (resultadoSimulador !== "success") {
+        return;
+      }
+    }
     try {
       const r = await reconfirmarTasa(transaccionId);
       if (!r.cambio) {
         await confirmarPago(transaccionId, { terminos_aceptados: true });
         toast.success("Pago confirmado. Transacción en proceso.");
+        setReconfirm(null);
         setProcesandoTransaccion(true);
         setTimeout(() => resetOperacion(), 2000);
       } else {
@@ -314,18 +409,77 @@ export default function OperacionCompraVenta() {
 
   const aceptarCambioYConfirmar = async () => {
     if (!transaccionId) return;
+
+    setModalCambioOpen(false);
+
+    if (requiereSimuladorTransferencia()) {
+      if (reconfirm) {
+        const tasaNueva = Number(reconfirm.tasa_actual);
+        const montoDestinoNuevo = Number(reconfirm.monto_destino_actual);
+        const payload: {
+          tasa_actual?: number;
+          monto_destino_actual?: number;
+        } = {};
+
+        if (!Number.isNaN(tasaNueva)) {
+          payload.tasa_actual = tasaNueva;
+        }
+        if (!Number.isNaN(montoDestinoNuevo)) {
+          payload.monto_destino_actual = montoDestinoNuevo;
+        }
+
+        try {
+          if (Object.keys(payload).length > 0) {
+            await actualizarTransaccion(transaccionId, payload);
+            setResultado((prev) =>
+              prev
+                ? {
+                    ...prev,
+                    tc_final: payload.tasa_actual ?? prev.tc_final,
+                    monto_destino: payload.monto_destino_actual ?? prev.monto_destino,
+                  }
+                : prev
+            );
+          }
+          setReconfirm(null);
+        } catch (error) {
+          console.error(error);
+          toast.error("No se pudo actualizar la transacción con la nueva tasa");
+          setModalCambioOpen(true);
+          return;
+        }
+      }
+
+      const resultadoSimulador = await abrirSimuladorTransferencia();
+      if (resultadoSimulador === "rate-change") {
+        try {
+          const r = await reconfirmarTasa(transaccionId);
+          setReconfirm(r);
+        } catch (error) {
+          console.error(error);
+          toast.error("No se pudo reconfirmar la tasa");
+        }
+        setModalCambioOpen(true);
+        return;
+      }
+      if (resultadoSimulador !== "success") {
+        setModalCambioOpen(true);
+        return;
+      }
+    }
+
     try {
       await confirmarPago(transaccionId, {
         terminos_aceptados: true,
         acepta_cambio: true,
       });
       toast.success("Pago confirmado. Transacción en proceso.");
-      setModalCambioOpen(false);
       setProcesandoTransaccion(true);
       setTimeout(() => resetOperacion(), 2000);
     } catch (e) {
       console.error(e);
       toast.error("Error al confirmar el pago");
+      setModalCambioOpen(true);
     }
   };
 
@@ -374,8 +528,10 @@ export default function OperacionCompraVenta() {
             opPerspectivaCasa={opPerspectivaCasa}
             detalleMetodoSeleccionado={detalleMetodoSeleccionado}
             metodoGenericoSeleccionado={metodoGenericoSeleccionado}
+            metodoSeleccionadoInfo={metodoSeleccionadoInfo}
             onDetalleMetodoChange={setDetalleMetodoSeleccionado}
             onMetodoGenericoChange={setMetodoGenericoSeleccionado}
+            onMetodoSeleccionadoChange={setMetodoSeleccionadoInfo}
             onRetroceder={retrocederEtapa1}
             onContinuar={avanzarEtapa3}
           />
