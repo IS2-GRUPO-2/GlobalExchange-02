@@ -30,6 +30,7 @@ import RequireAuth from "./RequiereAuth";
 import OperacionPage from "../features/operaciones/pages/OperacionPage";
 import ConfiguracionTauserPage from "../features/tauser/pages/ConfiguracionTauserPage";
 import HistorialPage from "../pages/HistorialPage";
+import SimuladorTransaccionBancariaPage from "../features/operaciones/pages/SimuladorTransaccionBancariaPage";
 
 export const router = createBrowserRouter([
   {
@@ -159,6 +160,14 @@ export const router = createBrowserRouter([
         element: (
           <RequireAuth anyOf={[TAUSER.VIEW]}>
             <ConfiguracionTauserPage />
+          </RequireAuth>
+        ),
+      },
+      {
+        path: "simulador-transaccion-bancaria",
+        element: (
+          <RequireAuth anyOf={[OPERACION.USE]}>
+            <SimuladorTransaccionBancariaPage />
           </RequireAuth>
         ),
       },
