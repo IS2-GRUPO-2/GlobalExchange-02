@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import SeleccionMetodoFinanciero from "./SeleccionMetodoFinanciero";
 import SeleccionInstanciaMetodo from "./SeleccionInstanciaMetodo";
 import type { MetodoFinanciero } from "../../metodos_financieros/types/MetodoFinanciero";
@@ -51,12 +51,15 @@ export default function EtapaSeleccionMetodo({
   };
 
   // Manejar selección de instancia específica
-  const handleInstanciaChange = (instanciaId: number | null) => {
-    onDetalleMetodoChange(instanciaId);
-    if (instanciaId) {
-      onMetodoGenericoChange(null); // Limpiar método genérico si hay instancia específica
-    }
-  };
+  const handleInstanciaChange = useCallback(
+    (instanciaId: number | null) => {
+      onDetalleMetodoChange(instanciaId);
+      if (instanciaId) {
+        onMetodoGenericoChange(null); // Limpiar método genérico si hay instancia específica
+      }
+    },
+    [onDetalleMetodoChange, onMetodoGenericoChange]
+  );
 
   // Volver a selección de métodos
   const volverASeleccionMetodos = () => {

@@ -22,49 +22,99 @@ export default function SeleccionInstanciaMetodo({
   const [tarjetas, setTarjetas] = useState<Tarjeta[]>([]);
   const [loading, setLoading] = useState(false);
 
+  const getDetalleId = (instancia: any): number | null => {
+    if (!instancia) return null;
+    const detalle = instancia.metodo_financiero_detalle;
+    if (typeof detalle === "number") {
+      return detalle;
+    }
+    if (detalle && typeof detalle === "object" && detalle.id !== undefined) {
+      const parsed = Number(detalle.id);
+      return Number.isNaN(parsed) ? null : parsed;
+    }
+    if (instancia.id !== undefined) {
+      const parsed = Number(instancia.id);
+      return Number.isNaN(parsed) ? null : parsed;
+    }
+    return null;
+  };
+
   // Cargar instancias específicas del cliente
   useEffect(() => {
+    if (!metodoFinanciero) return;
+
+    let isActive = true;
+
     const fetchInstancias = async () => {
       setLoading(true);
       try {
         let instancias: any[] = [];
-        
+
         switch (metodoFinanciero.nombre) {
-          case "TRANSFERENCIA_BANCARIA":
-            instancias = await getMisCuentasBancarias();
-            setCuentasBancarias(instancias);
+          case "TRANSFERENCIA_BANCARIA": {
+            const data = await getMisCuentasBancarias();
+            if (!isActive) return;
+            instancias = data;
+            setCuentasBancarias(data);
+            setBilleterasDigitales([]);
+            setTarjetas([]);
             break;
-          case "BILLETERA_DIGITAL":
-            instancias = await getMisBilleterasDigitales();
-            setBilleterasDigitales(instancias);
+          }
+          case "BILLETERA_DIGITAL": {
+            const data = await getMisBilleterasDigitales();
+            if (!isActive) return;
+            instancias = data;
+            setBilleterasDigitales(data);
+            setCuentasBancarias([]);
+            setTarjetas([]);
             break;
-          case "TARJETA":
-            instancias = await getMisTarjetas();
-            setTarjetas(instancias);
+          }
+          case "TARJETA": {
+            const data = await getMisTarjetas();
+            if (!isActive) return;
+            instancias = data;
+            setTarjetas(data);
+            setCuentasBancarias([]);
+            setBilleterasDigitales([]);
             break;
+          }
+          default: {
+            setCuentasBancarias([]);
+            setBilleterasDigitales([]);
+            setTarjetas([]);
+          }
         }
-        
-        // Seleccionar automáticamente la primera instancia si existe
-        if (instancias.length > 0) {
-          onInstanciaChange(instancias[0].metodo_financiero_detalle);
-        } else {
-          onInstanciaChange(null);
-        }
-        
+
+        if (!isActive) return;
+
+        const defaultDetalleId =
+          instancias.length > 0 ? getDetalleId(instancias[0]) : null;
+        onInstanciaChange(defaultDetalleId);
       } catch (error: any) {
+        if (!isActive) return;
         toast.error(`Error al cargar ${getMetodoLabel(metodoFinanciero.nombre)}: ${error.message}`);
         onInstanciaChange(null);
+        setCuentasBancarias([]);
+        setBilleterasDigitales([]);
+        setTarjetas([]);
       } finally {
-        setLoading(false);
+        if (isActive) {
+          setLoading(false);
+        }
       }
     };
 
     fetchInstancias();
-  }, [metodoFinanciero, onInstanciaChange]);
+
+    return () => {
+      isActive = false;
+    };
+  }, [metodoFinanciero?.nombre, onInstanciaChange]);
 
   // Manejar selección de instancia específica
-  const handleInstanciaSelection = (instanciaId: number) => {
-    onInstanciaChange(instanciaId);
+  const handleInstanciaSelection = (instancia: any) => {
+    const detalleId = getDetalleId(instancia);
+    onInstanciaChange(detalleId);
   };
 
   // Funciones auxiliares
@@ -108,15 +158,16 @@ export default function SeleccionInstanciaMetodo({
         </div>
       ) : instancias.length > 0 ? (
         <div className="space-y-2">
-          {instancias.map((instancia: any) => (
+          {instancias.map((instancia: any) => {
+            const detalleId = getDetalleId(instancia);
+            const isSelected = detalleId !== null && instanciaSeleccionada === detalleId;
+            return (
             <div
               key={instancia.id}
               className={`p-3 border-2 rounded-lg cursor-pointer transition-all ${
-                instanciaSeleccionada === instancia.metodo_financiero_detalle
-                  ? "border-blue-500 bg-blue-50"
-                  : "border-gray-200 hover:border-gray-300 hover:bg-gray-50"
+                isSelected ? "border-blue-500 bg-blue-50" : "border-gray-200 hover:border-gray-300 hover:bg-gray-50"
               }`}
-              onClick={() => handleInstanciaSelection(instancia.metodo_financiero_detalle)}
+              onClick={() => handleInstanciaSelection(instancia)}
             >
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-3">
@@ -151,18 +202,14 @@ export default function SeleccionInstanciaMetodo({
                     </div>
                   </div>
                 </div>
-                <div className={`w-4 h-4 rounded-full border-2 ${
-                  instanciaSeleccionada === instancia.id
-                    ? "bg-blue-500 border-blue-500"
-                    : "border-gray-300"
-                }`}>
-                  {instanciaSeleccionada === instancia.id && (
+                <div className={`w-4 h-4 rounded-full border-2 ${isSelected ? "bg-blue-500 border-blue-500" : "border-gray-300"}`}>
+                  {isSelected && (
                     <div className="w-2 h-2 bg-white rounded-full m-auto mt-0.5"></div>
                   )}
                 </div>
               </div>
             </div>
-          ))}
+          )})}
         </div>
       ) : (
         <div className="text-center py-6">
