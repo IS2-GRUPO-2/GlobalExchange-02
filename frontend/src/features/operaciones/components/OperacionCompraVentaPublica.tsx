@@ -6,6 +6,7 @@ import { type CalcularOperacionResponse } from "../types/Operacion";
 import { type Divisa } from "../../divisas/types/Divisa";
 import { type MetodoFinanciero } from "../../metodos_financieros/types/MetodoFinanciero";
 import { getDivisasConTasa } from "../../divisas/services/divisaService";
+import { formatInputNumber, unformatInputNumber } from "../utils/formatNumber";
 
 type EtapaActual = 1 | 2 | 3;
 
@@ -183,6 +184,17 @@ function EtapaSeleccionDivisasPublica({
   setMonto,
   onContinuar
 }: EtapaSeleccionDivisasPublicaProps) {
+  // Estado para el input formateado
+  const [montoDisplay, setMontoDisplay] = useState<string>("");
+
+  // Sincronizar monto con display formateado cuando cambia externamente
+  useEffect(() => {
+    if (monto === 0) {
+      setMontoDisplay("");
+    } else if (monto > 0) {
+      setMontoDisplay(formatInputNumber(monto.toString()));
+    }
+  }, [monto]);
 
   const handleSwapDivisas = () => {
     const temp = divisaOrigen;
@@ -297,22 +309,27 @@ function EtapaSeleccionDivisasPublica({
         </label>
         <input
           id="monto"
-          type="number"
-          min={0}
-          value={monto === 0 ? "" : monto}
+          type="text"
+          value={montoDisplay}
           onChange={(e) => {
-            const value = Number(e.target.value);
-            if (value >= 0 || e.target.value === "") {
-              setMonto(value);
+            const inputValue = e.target.value;
+            // Desformatear para obtener el número puro
+            const unformatted = unformatInputNumber(inputValue);
+            
+            // Validar que sea un número válido
+            if (unformatted === "" || /^\d+$/.test(unformatted)) {
+              setMontoDisplay(formatInputNumber(unformatted));
+              setMonto(unformatted === "" ? 0 : Number(unformatted));
             }
           }}
           onKeyDown={(e) => {
-            if (e.key === '-' || e.key === 'e' || e.key === 'E') {
+            // Prevenir caracteres no deseados
+            if (e.key === "-" || e.key === "e" || e.key === "E" || e.key === "," || e.key === "+") {
               e.preventDefault();
             }
           }}
           placeholder="Ingrese el monto"
-          className="w-full text-2xl font-semibold text-gray-900 text-center bg-transparent focus:outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+          className="w-full text-2xl font-semibold text-gray-900 text-center bg-transparent focus:outline-none focus:ring-2 focus:ring-blue-500 rounded-md py-2"
         />
         <span className="text-sm text-gray-500">
           {divisas.find((d) => d.id?.toString() === divisaOrigen)?.codigo || ""}

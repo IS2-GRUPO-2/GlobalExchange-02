@@ -152,8 +152,10 @@ export default function OperacionCompraVenta() {
   // Navegación retroceder desde etapa 2 a 1
   const retrocederEtapa1 = () => {
     setEtapaActual(1);
+    // Mantener divisas y monto, solo limpiar método
     setDetalleMetodoSeleccionado(null);
     setMetodoGenericoSeleccionado(null);
+    setOpPerspectivaCasa(null);
   };
 
   // Navegación Etapa 2 -> 3 (calcular simulación)
@@ -190,12 +192,19 @@ export default function OperacionCompraVenta() {
   // Navegación retroceder desde etapa 3 a 2
   const retrocederEtapa2 = () => {
     setEtapaActual(2);
+    // Mantener todos los datos, solo limpiar resultado
     setResultado(null);
   };
 
-  // Navegación cancelar (volver a etapa 1)
+  // Navegación cancelar (reiniciar todo desde etapa 1)
   const cancelarOperacion = () => {
+    // Si hay transacción pendiente, cancelarla en el backend
+    if (transaccionId) {
+      cancelarTransaccion(transaccionId).catch(console.error);
+    }
+    // Resetear todo y volver a la etapa 1
     resetOperacion();
+    toast.info("Operación cancelada");
   };
 
   // Navegación Etapa 3 -> 4 (selección de tauser)
@@ -206,6 +215,7 @@ export default function OperacionCompraVenta() {
   // Navegación retroceder desde etapa 4 a 3
   const retrocederEtapa3 = () => {
     setEtapaActual(3);
+    // Mantener todo excepto tauser seleccionado
     setTauserSeleccionado("");
   };
 
@@ -224,11 +234,8 @@ export default function OperacionCompraVenta() {
   // Navegación retroceder desde etapa 5 a 4
   const retrocederEtapa4 = () => {
     setEtapaActual(4);
-    // Opcional: cancelar transacción pendiente
-    if (transaccionId) {
-      cancelarTransaccion(transaccionId).catch(console.error);
-      setTransaccionId(null);
-    }
+    // Mantener todos los datos, solo volver a selección de tauser
+    // No cancelar transacción aquí porque aún no se creó
   };
 
   // Navegación Etapa 5 -> 6 (términos y condiciones)
@@ -378,6 +385,7 @@ export default function OperacionCompraVenta() {
             onMetodoGenericoChange={setMetodoGenericoSeleccionado}
             onRetroceder={retrocederEtapa1}
             onContinuar={avanzarEtapa3}
+            onCancelar={cancelarOperacion}
           />
         ) : null;
       case 3:
@@ -397,6 +405,7 @@ export default function OperacionCompraVenta() {
             setTauserSeleccionado={setTauserSeleccionado}
             onRetroceder={retrocederEtapa3}
             onAvanzar={avanzarEtapa5}
+            onCancelar={cancelarOperacion}
           />
         );
       case 5:
@@ -406,6 +415,8 @@ export default function OperacionCompraVenta() {
             tauserSeleccionado={tauserSeleccionado}
             onRetroceder={retrocederEtapa4}
             onAvanzar={avanzarEtapa6}
+            onCancelar={cancelarOperacion}
+            mostrarBotonCancelar={true}
           />
         );
       case 6:

@@ -160,19 +160,19 @@ export default function EtapaResultado({
       )}
 
       {/* Botones navegación */}
-      <div className="flex justify-between items-center">
+      <div className="flex justify-between items-center gap-3">
         <button
           onClick={onRetroceder}
-          className="px-6 py-2 border border-gray-300 text-gray-700 rounded-lg font-medium hover:bg-gray-50"
+          className="px-6 py-2 border border-gray-300 text-gray-700 rounded-lg font-medium hover:bg-gray-50 transition-colors"
         >
-          {getBotonSecundario()}
+          Atrás
         </button>
         
         <div className="flex gap-3">
           {mostrarBotonCancelar && onCancelar && (
             <button
               onClick={onCancelar}
-              className="px-6 py-2 border border-red-300 text-red-700 rounded-lg font-medium hover:bg-red-50"
+              className="px-6 py-2 border border-gray-300 text-gray-700 rounded-lg font-medium hover:bg-gray-50 transition-colors"
             >
               Cancelar
             </button>
@@ -180,7 +180,7 @@ export default function EtapaResultado({
           
           <button
             onClick={onAvanzar}
-            className="px-6 py-2 bg-zinc-900 text-white rounded-lg font-medium hover:bg-zinc-700"
+            className="px-6 py-2 bg-zinc-900 text-white rounded-lg font-medium hover:bg-zinc-700 transition-colors"
           >
             {getBotonPrimario()}
           </button>

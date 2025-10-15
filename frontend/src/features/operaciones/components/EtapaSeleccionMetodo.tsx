@@ -11,6 +11,7 @@ interface EtapaSeleccionMetodoProps {
   onMetodoGenericoChange: (metodoId: number | null) => void;
   onRetroceder: () => void;
   onContinuar: () => void;
+  onCancelar: () => void;
 }
 
 export default function EtapaSeleccionMetodo({
@@ -20,7 +21,8 @@ export default function EtapaSeleccionMetodo({
   onDetalleMetodoChange,
   onMetodoGenericoChange,
   onRetroceder,
-  onContinuar
+  onContinuar,
+  onCancelar
 }: EtapaSeleccionMetodoProps) {
   const [metodoSeleccionado, setMetodoSeleccionado] = useState<MetodoFinanciero | null>(null);
   const [mostrandoInstancias, setMostrandoInstancias] = useState(false);
@@ -107,26 +109,37 @@ export default function EtapaSeleccionMetodo({
           instanciaSeleccionada={detalleMetodoSeleccionado}
           onInstanciaChange={handleInstanciaChange}
           onVolver={volverASeleccionMetodos}
+          onCancelar={onCancelar}
         />
 
-        <div className="flex flex-col sm:flex-row gap-3 pt-4">
+        {/* Botones de navegación */}
+        <div className="flex justify-between items-center gap-3 pt-4">
           <button
             onClick={onRetroceder}
-            className="flex-1 px-4 py-2 text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200 transition-colors"
+            className="px-6 py-2 border border-gray-300 text-gray-700 rounded-lg font-medium hover:bg-gray-50 transition-colors"
           >
             Atrás
           </button>
-          <button
-            onClick={onContinuar}
-            disabled={!puedeAvanzar()}
-            className={`flex-1 px-4 py-2 rounded-md transition-colors ${
-              puedeAvanzar()
-                ? "bg-blue-600 text-white hover:bg-blue-700"
-                : "bg-gray-300 text-gray-500 cursor-not-allowed"
-            }`}
-          >
-            Continuar
-          </button>
+          
+          <div className="flex gap-3">
+            <button
+              onClick={onCancelar}
+              className="px-6 py-2 border border-gray-300 text-gray-700 rounded-lg font-medium hover:bg-gray-50 transition-colors"
+            >
+              Cancelar
+            </button>
+            <button
+              onClick={onContinuar}
+              disabled={!puedeAvanzar()}
+              className={`px-6 py-2 rounded-lg font-medium transition-colors ${
+                puedeAvanzar()
+                  ? "bg-zinc-900 text-white hover:bg-zinc-700"
+                  : "bg-gray-300 text-gray-500 cursor-not-allowed"
+              }`}
+            >
+              Continuar
+            </button>
+          </div>
         </div>
       </div>
     );
@@ -150,24 +163,34 @@ export default function EtapaSeleccionMetodo({
         onMetodoChange={handleMetodoChange}
       />
 
-      <div className="flex flex-col sm:flex-row gap-3 pt-4">
+      {/* Botones de navegación */}
+      <div className="flex justify-between items-center gap-3 pt-4">
         <button
           onClick={onRetroceder}
-          className="flex-1 px-4 py-2 text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200 transition-colors"
+          className="px-6 py-2 border border-gray-300 text-gray-700 rounded-lg font-medium hover:bg-gray-50 transition-colors"
         >
           Atrás
         </button>
-        <button
-          onClick={onContinuar}
-          disabled={!puedeAvanzar()}
-          className={`flex-1 px-4 py-2 rounded-md transition-colors ${
-            puedeAvanzar()
-              ? "bg-blue-600 text-white hover:bg-blue-700"
-              : "bg-gray-300 text-gray-500 cursor-not-allowed"
-          }`}
-        >
-          Continuar
-        </button>
+        
+        <div className="flex gap-3">
+          <button
+            onClick={onCancelar}
+            className="px-6 py-2 border border-gray-300 text-gray-700 rounded-lg font-medium hover:bg-gray-50 transition-colors"
+          >
+            Cancelar
+          </button>
+          <button
+            onClick={onContinuar}
+            disabled={!puedeAvanzar()}
+            className={`px-6 py-2 rounded-lg font-medium transition-colors ${
+              puedeAvanzar()
+                ? "bg-zinc-900 text-white hover:bg-zinc-700"
+                : "bg-gray-300 text-gray-500 cursor-not-allowed"
+            }`}
+          >
+            Continuar
+          </button>
+        </div>
       </div>
     </div>
   );

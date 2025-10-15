@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import type { Divisa } from "../../divisas/types/Divisa";
 import { getDivisasConTasa, getLimiteConfig } from "../../divisas/services/divisaService";
+import { formatInputNumber, unformatInputNumber } from "../utils/formatNumber";
 
 interface Props {
   divisaOrigen: string;
@@ -32,10 +33,22 @@ export default function EtapaSeleccionDivisas({
   const [divisas, setDivisas] = useState<Divisa[]>([]);
   const [divisaBase, setDivisaBase] = useState<Divisa | null>(null);
 
+  // Estado para el input formateado
+  const [montoDisplay, setMontoDisplay] = useState<string>("");
+
   // --- límites (simple) ---
   const [limites, setLimites] = useState<LimiteCfg | null>(null);
   const [loadingLimites, setLoadingLimites] = useState(true);
   const [limiteMsg, setLimiteMsg] = useState<string>("");
+
+  // Sincronizar monto con display formateado cuando cambia externamente
+  useEffect(() => {
+    if (monto === 0) {
+      setMontoDisplay("");
+    } else if (monto > 0) {
+      setMontoDisplay(formatInputNumber(monto.toString()));
+    }
+  }, [monto]);
 
   // Cargar divisas
   useEffect(() => {
@@ -261,31 +274,33 @@ export default function EtapaSeleccionDivisas({
           </label>
           <input
             id="monto"
-            type="number"
-            min={0}
-            value={monto === 0 ? "" : monto}
+            type="text"
+            value={montoDisplay}
             onChange={(e) => {
-              const value = Number(e.target.value);
-              if (value >= 0 || e.target.value === "") {
-                setLimiteMsg(""); // hasta revalidar
-                setMonto(value);
+              const inputValue = e.target.value;
+              // Desformatear para obtener el número puro
+              const unformatted = unformatInputNumber(inputValue);
+              
+              // Validar que sea un número válido
+              if (unformatted === "" || /^\d+$/.test(unformatted)) {
+                setLimiteMsg(""); // limpiar mensaje de límite
+                setMontoDisplay(formatInputNumber(unformatted));
+                setMonto(unformatted === "" ? 0 : Number(unformatted));
               }
             }}
             onKeyDown={(e) => {
-              if (e.key === "-" || e.key === "e" || e.key === "E") {
+              // Prevenir caracteres no deseados
+              if (e.key === "-" || e.key === "e" || e.key === "E" || e.key === "," || e.key === "+") {
                 e.preventDefault();
               }
             }}
             placeholder="Ingrese el monto"
-            className="w-full text-3xl font-semibold text-gray-900 text-center bg-transparent focus:outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+            className="w-full text-3xl font-semibold text-gray-900 text-center bg-transparent focus:outline-none focus:ring-2 focus:ring-zinc-500 rounded-md py-2"
           />
 
           {codigoDivisaOrigen && monto > 0 && (
-            <div className="mt-3 p-2 bg-blue-50 border border-blue-200 rounded-lg">
-              <div className="text-xs text-blue-600 mb-1 select-none">Monto formateado:</div>
-              <span className="text-lg font-bold text-blue-800 select-none">
-                {monto.toLocaleString("es-PY")} {codigoDivisaOrigen}
-              </span>
+            <div className="mt-3 text-sm text-gray-600 select-none">
+              {codigoDivisaOrigen}
             </div>
           )}
         </div>
@@ -330,18 +345,18 @@ export default function EtapaSeleccionDivisas({
         </div>
       )}
 
-      {/* Botón avanzar */}
-      <div className="flex justify-end">
+      {/* Botones de navegación */}
+      <div className="flex justify-end gap-3">
         <button
           onClick={onContinuar}
           disabled={!puedeAvanzar}
-          className={`px-8 py-3 rounded-lg font-medium select-none ${
+          className={`px-6 py-2 rounded-lg font-medium transition-colors ${
             puedeAvanzar
               ? "bg-zinc-900 text-white hover:bg-zinc-700"
               : "bg-gray-300 text-gray-500 cursor-not-allowed"
           }`}
         >
-          {loadingLimites ? "Cargando límites..." : "Continuar"}
+          {loadingLimites ? "Cargando..." : "Continuar"}
         </button>
       </div>
     </div>

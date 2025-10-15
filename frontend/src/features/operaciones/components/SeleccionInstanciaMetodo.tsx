@@ -9,13 +9,15 @@ interface SeleccionInstanciaMetodoProps {
   instanciaSeleccionada: number | null;
   onInstanciaChange: (instanciaId: number | null) => void;
   onVolver: () => void;
+  onCancelar: () => void;
 }
 
 export default function SeleccionInstanciaMetodo({
   metodoFinanciero,
   instanciaSeleccionada,
   onInstanciaChange,
-  onVolver
+  onVolver,
+  onCancelar
 }: SeleccionInstanciaMetodoProps) {
   const [cuentasBancarias, setCuentasBancarias] = useState<CuentaBancaria[]>([]);
   const [billeterasDigitales, setBilleterasDigitales] = useState<BilleteraDigital[]>([]);
@@ -173,9 +175,6 @@ export default function SeleccionInstanciaMetodo({
                 <div className="flex items-center space-x-3">
                   {getMetodoIcon(metodoFinanciero.nombre)}
                   <div>
-                    <h4 className="font-medium text-gray-800 text-sm">
-                      {instancia.alias || 'Sin alias'}
-                    </h4>
                     <div className="text-xs text-gray-600 space-y-0.5">
                       {/* Mostrar detalles específicos según el tipo */}
                       {metodoFinanciero.nombre === "TRANSFERENCIA_BANCARIA" && (
@@ -222,12 +221,13 @@ export default function SeleccionInstanciaMetodo({
         </div>
       )}
 
+      {/* Botón de cancelar */}
       <div className="flex justify-center pt-2">
         <button
-          onClick={onVolver}
-          className="px-4 py-2 text-sm text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200 transition-colors"
+          onClick={onCancelar}
+          className="px-6 py-2 border border-gray-300 text-gray-700 rounded-lg font-medium hover:bg-gray-50 transition-colors"
         >
-          Cambiar Método
+          Cancelar
         </button>
       </div>
     </div>
