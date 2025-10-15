@@ -6,7 +6,7 @@ import { type CalcularOperacionResponse } from "../types/Operacion";
 import { type Divisa } from "../../divisas/types/Divisa";
 import { type MetodoFinanciero } from "../../metodos_financieros/types/MetodoFinanciero";
 import { getDivisasConTasa } from "../../divisas/services/divisaService";
-import { formatInputNumber, unformatInputNumber } from "../utils/formatNumber";
+import { formatInputNumber, unformatInputNumber, formatNumber } from "../utils/formatNumber";
 
 type EtapaActual = 1 | 2 | 3;
 
@@ -341,10 +341,10 @@ function EtapaSeleccionDivisasPublica({
         <button
           onClick={onContinuar}
           disabled={!puedeAvanzar}
-          className={`w-full px-6 py-2 rounded-md font-medium transition-colors ${
+          className={`w-full px-6 py-2 rounded-lg font-medium transition-colors ${
             puedeAvanzar
-              ? "bg-blue-600 text-white hover:bg-blue-700"
-              : "bg-gray-300 text-gray-500 cursor-not-allowed"
+              ? "bg-zinc-900 text-white hover:bg-zinc-700"
+              : "bg-zinc-300 text-zinc-500 cursor-not-allowed"
           }`}
         >
           Continuar
@@ -474,17 +474,17 @@ function EtapaSeleccionMetodoPublica({
       <div className="flex flex-col sm:flex-row gap-3 pt-4">
         <button
           onClick={onRetroceder}
-          className="flex-1 px-4 py-2 text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200 transition-colors"
+          className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors font-medium"
         >
           Atrás
         </button>
         <button
           onClick={onContinuar}
           disabled={!puedeAvanzar}
-          className={`flex-1 px-4 py-2 rounded-md transition-colors ${
+          className={`flex-1 px-4 py-2 rounded-lg font-medium transition-colors ${
             puedeAvanzar
-              ? "bg-blue-600 text-white hover:bg-blue-700"
-              : "bg-gray-300 text-gray-500 cursor-not-allowed"
+              ? "bg-zinc-900 text-white hover:bg-zinc-700"
+              : "bg-zinc-300 text-zinc-500 cursor-not-allowed"
           }`}
         >
           Continuar
@@ -515,47 +515,74 @@ function EtapaResultadoPublica({
 
   return (
     <div className="space-y-6 select-none">
-      <div className="text-center">
-        <h3 className="text-lg font-semibold text-gray-800 mb-2">
+      <div className="text-center mb-6">
+        <h2 className="text-2xl font-bold text-zinc-900">
           Resultado de tu Simulación
-        </h3>
-        <p className="text-sm text-gray-600">
-          Aquí tienes los detalles de tu operación
-        </p>
+        </h2>
       </div>
 
-      {/* Tipo de operación */}
-      <div className="bg-gray-100 border border-gray-300 text-gray-800 rounded-lg p-4 text-center font-semibold text-lg">
-        Operación: {operacionCliente.toUpperCase()}
-      </div>
-
-      {/* Operación visual */}
-      <div className="text-center text-2xl font-bold text-gray-900 py-4 bg-green-50 rounded-lg border border-green-200">
-        {resultado.monto_origen.toLocaleString()} {resultado.divisa_origen}
-        <span className="mx-4 text-green-600">→</span>
-        {resultado.monto_destino.toLocaleString()} {resultado.divisa_destino}
+      {/* Conversión principal con etiquetas */}
+      <div className="relative overflow-hidden rounded-lg border-2 border-zinc-300 bg-gradient-to-br from-zinc-50 to-white p-6">
+        <div className="flex items-center justify-center gap-8">
+          {/* Monto Origen */}
+          <div className="text-center flex-1">
+            <div className="text-xs font-semibold text-zinc-500 uppercase tracking-wide mb-2">
+              {operacionCliente === "compra" ? "Entrega" : "Entrega"}
+            </div>
+            <div className="text-4xl font-bold text-zinc-900">
+              {formatNumber(resultado.monto_origen, 2)}
+            </div>
+            <div className="text-base font-semibold text-zinc-600 mt-2">
+              {resultado.divisa_origen}
+            </div>
+          </div>
+          
+          {/* Flecha separadora */}
+          <div className="flex flex-col items-center">
+            <div className="text-4xl text-zinc-400">→</div>
+          </div>
+          
+          {/* Monto Destino */}
+          <div className="text-center flex-1">
+            <div className="text-xs font-semibold text-zinc-500 uppercase tracking-wide mb-2">
+              {operacionCliente === "compra" ? "Recibe" : "Recibe"}
+            </div>
+            <div className="text-4xl font-bold text-zinc-900">
+              {formatNumber(resultado.monto_destino, 2)}
+            </div>
+            <div className="text-base font-semibold text-zinc-600 mt-2">
+              {resultado.divisa_destino}
+            </div>
+          </div>
+        </div>
       </div>
 
       {/* Detalles de la operación */}
-      <div className="bg-white border border-gray-200 rounded-lg p-4 space-y-3">
-        <h4 className="font-semibold text-gray-800 border-b pb-2">Detalles de la Operación</h4>
+      <div className="bg-white border border-zinc-200 rounded-lg p-5 space-y-4">
+        <h4 className="font-semibold text-zinc-900 border-b border-zinc-200 pb-2">
+          Detalles de la Operación
+        </h4>
         
-        <div className="grid grid-cols-1 gap-3 text-sm">
-          <div className="flex justify-between">
-            <span className="font-medium text-gray-700">
+        <div className="grid grid-cols-1 gap-4">
+          <div>
+            <span className="text-sm font-medium text-zinc-500 block mb-1">
               {opPerspectivaCasa === "venta" ? "Método de Pago:" : "Método de Cobro:"}
             </span>
-            <span className="text-gray-900">{resultado.parametros.nombre_metodo}</span>
+            <p className="text-zinc-900 font-medium">{resultado.parametros.nombre_metodo}</p>
           </div>
           
-          <div className="flex justify-between">
-            <span className="font-medium text-gray-700">Comisión método:</span>
-            <span className="text-gray-900">{resultado.parametros.comision_metodo}%</span>
+          <div>
+            <span className="text-sm font-medium text-zinc-500 block mb-1">Comisión método:</span>
+            <p className="text-zinc-900 font-medium">
+              {formatNumber(resultado.parametros.comision_metodo ?? 0, 2)}%
+            </p>
           </div>
           
-          <div className="flex justify-between">
-            <span className="font-medium text-gray-700">Tasa final aplicada:</span>
-            <span className="text-gray-900">{resultado.tc_final}</span>
+          <div className="pt-2 border-t border-zinc-200">
+            <span className="text-sm font-medium text-zinc-500 block mb-1">Tasa final aplicada:</span>
+            <p className="text-zinc-900 text-xl font-bold">
+              {formatNumber(resultado.tc_final, 4)}
+            </p>
           </div>
         </div>
       </div>
@@ -564,7 +591,7 @@ function EtapaResultadoPublica({
       <div className="flex justify-center pt-4">
         <button
           onClick={onNuevaOperacion}
-          className="w-full px-6 py-3 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors"
+          className="w-full px-6 py-3 bg-zinc-900 text-white rounded-lg font-medium hover:bg-zinc-700 transition-colors"
         >
           Realizar Nueva Operación
         </button>

@@ -132,7 +132,7 @@ export default function EtapaSeleccionDivisas({
       {/* Sección de divisas centralizada */}
       <div className="flex flex-col items-center space-y-4 max-w-4xl mx-auto">
         {/* Selección de divisas */}
-        <div className="flex items-center justify-center space-x-4 w-full">
+        <div className="flex items-center justify-center space-x-4 w-full max-w-[736px]">
           <div className="w-80">
           <label className="block text-sm font-medium text-gray-700 mb-2 select-none">
             Divisa de origen (Entregas)
@@ -148,6 +148,7 @@ export default function EtapaSeleccionDivisas({
                 setDivisaDestino("");
               }
             }}
+            autoComplete="off"
             className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-zinc-700 focus:outline-none"
           >
             <option value="">Seleccionar divisa...</option>
@@ -197,6 +198,7 @@ export default function EtapaSeleccionDivisas({
               setLimiteMsg(""); // limpiar feedback viejo
               setDivisaDestino(e.target.value);
             }}
+            autoComplete="off"
             className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-zinc-700 focus:outline-none"
           >
             <option value="">Seleccionar divisa...</option>
@@ -264,7 +266,7 @@ export default function EtapaSeleccionDivisas({
         </div>
       </div> */}
 
-      <div className="w-full max-w-[672px]">
+      <div className="w-full max-w-[712px]">
         <div className="bg-gray-50 border border-gray-300 rounded-lg p-6 text-center">
           <label
             htmlFor="monto"
@@ -294,6 +296,7 @@ export default function EtapaSeleccionDivisas({
                 e.preventDefault();
               }
             }}
+            autoComplete="off"
             placeholder="Ingrese el monto"
             className="w-full text-3xl font-semibold text-gray-900 text-center bg-transparent focus:outline-none focus:ring-2 focus:ring-zinc-500 rounded-md py-2"
           />

@@ -5,10 +5,23 @@
  * @returns String formateado con punto para miles y coma para decimales
  */
 export const formatNumber = (num: number, decimales: number = 2): string => {
-  return num.toLocaleString('es-ES', { 
+  // Intentar primero con toLocaleString
+  const formatted = num.toLocaleString('es-ES', { 
     minimumFractionDigits: decimales, 
     maximumFractionDigits: decimales 
   });
+  
+  // Si toLocaleString no funciona correctamente (solo muestra coma sin puntos)
+  // usar formateo manual
+  if (!formatted.includes('.') && Math.abs(num) >= 1000) {
+    // Formateo manual para garantizar puntos de miles
+    const parts = num.toFixed(decimales).split('.');
+    const integerPart = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+    const decimalPart = parts[1];
+    return `${integerPart},${decimalPart}`;
+  }
+  
+  return formatted;
 };
 
 /**

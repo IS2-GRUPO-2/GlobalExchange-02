@@ -10,6 +10,9 @@ interface SeleccionInstanciaMetodoProps {
   onInstanciaChange: (instanciaId: number | null) => void;
   onVolver: () => void;
   onCancelar: () => void;
+  onRetroceder: () => void;
+  onContinuar: () => void;
+  puedeAvanzar: boolean;
 }
 
 export default function SeleccionInstanciaMetodo({
@@ -17,7 +20,10 @@ export default function SeleccionInstanciaMetodo({
   instanciaSeleccionada,
   onInstanciaChange,
   onVolver,
-  onCancelar
+  onCancelar,
+  onRetroceder,
+  onContinuar,
+  puedeAvanzar
 }: SeleccionInstanciaMetodoProps) {
   const [cuentasBancarias, setCuentasBancarias] = useState<CuentaBancaria[]>([]);
   const [billeterasDigitales, setBilleterasDigitales] = useState<BilleteraDigital[]>([]);
@@ -221,14 +227,34 @@ export default function SeleccionInstanciaMetodo({
         </div>
       )}
 
-      {/* Botón de cancelar */}
-      <div className="flex justify-center pt-2">
+      {/* Botones de navegación */}
+      <div className="flex justify-between items-center gap-3 pt-4">
         <button
-          onClick={onCancelar}
+          onClick={onVolver}
           className="px-6 py-2 border border-gray-300 text-gray-700 rounded-lg font-medium hover:bg-gray-50 transition-colors"
         >
-          Cancelar
+          Atrás
         </button>
+        
+        <div className="flex gap-3">
+          <button
+            onClick={onCancelar}
+            className="px-6 py-2 border border-gray-300 text-gray-700 rounded-lg font-medium hover:bg-gray-50 transition-colors"
+          >
+            Cancelar
+          </button>
+          <button
+            onClick={onContinuar}
+            disabled={!puedeAvanzar}
+            className={`px-6 py-2 rounded-lg font-medium transition-colors ${
+              puedeAvanzar
+                ? "bg-zinc-900 text-white hover:bg-zinc-700"
+                : "bg-gray-300 text-gray-500 cursor-not-allowed"
+            }`}
+          >
+            Continuar
+          </button>
+        </div>
       </div>
     </div>
   );
