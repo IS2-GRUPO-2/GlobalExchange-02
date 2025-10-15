@@ -30,6 +30,9 @@ import RequireAuth from "./RequiereAuth";
 import OperacionPage from "../features/operaciones/pages/OperacionPage";
 import ConfiguracionTauserPage from "../features/tauser/pages/ConfiguracionTauserPage";
 import HistorialPage from "../pages/HistorialPage";
+import NotificacionesPage from "../features/notificaciones/pages/NotificacionesPage";
+import { NOTIFICACIONES } from "../types/perms"; 
+
 
 export const router = createBrowserRouter([
   {
@@ -159,6 +162,14 @@ export const router = createBrowserRouter([
         element: (
           <RequireAuth anyOf={[TAUSER.VIEW]}>
             <ConfiguracionTauserPage />
+          </RequireAuth>
+        ),
+      },
+      {
+        path: "configuraciones/notificaciones",
+        element: (
+          <RequireAuth>
+            <NotificacionesPage />
           </RequireAuth>
         ),
       },

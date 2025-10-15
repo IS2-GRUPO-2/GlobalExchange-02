@@ -10,9 +10,10 @@ import {
   Tag,
   Users,
   User,
-  Monitor
+  Monitor,
+  Bell
 } from "lucide-react";
-import { CATEGORIAS_CLIENTE, CLIENTES, DIVISAS, METODOS_FINANCIEROS, ROLES, TASAS, USUARIOS, TAUSER , METODOS_FINANCIEROS_DETALLE} from "../types/perms";
+import { CATEGORIAS_CLIENTE, CLIENTES, DIVISAS, METODOS_FINANCIEROS, ROLES, TASAS, USUARIOS, TAUSER , METODOS_FINANCIEROS_DETALLE, NOTIFICACIONES} from "../types/perms";
 import Can from "../components/Can";
 
 type ConfigItem = {
@@ -109,6 +110,15 @@ const ConfiguracionesPage = () => {
       path: "/configuracion-tausers",
       habilitado: true,
       permisos: [TAUSER.VIEW],
+    },
+    {
+      id: "notificaciones",
+      nombre: "Notificaciones de Tasas",
+      descripcion: "Configurar preferencias de notificaciones de cambio de tasa",
+      icon: <Bell className="w-6 h-6 text-amber-600" />,
+      path: "/configuraciones/notificaciones",
+      habilitado: true,
+      permisos: [], // Cualquier usuario autenticado puede ver sus preferencias
     },
     {
       id: "documentos",
