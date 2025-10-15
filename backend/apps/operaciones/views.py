@@ -16,6 +16,7 @@ from rest_framework import viewsets, status, filters, permissions
 from rest_framework.response import Response
 from rest_framework.decorators import action, api_view, permission_classes
 from django.utils import timezone
+from globalexchange.configuration import config
 from .models import (
     Transaccion
 )
@@ -30,6 +31,10 @@ from .service import (
     inferir_op_perspectiva_casa,
     _get_tasa_activa,
 )
+
+import stripe
+
+stripe.api_key = config.STRIPE_KEY
 
 
 #=============================================================
@@ -376,3 +381,64 @@ class TransaccionViewSet(viewsets.ModelViewSet):
         data['pago_mensaje'] = pago.mensaje
         data['pago_referencia'] = pago.referencia
         return Response(data, status=status.HTTP_200_OK)
+
+    @action(methods=['POST'], detail=True)
+    def crear_checkout_stripe(self, request, pk=None):
+        transaccion = self.get_object()  # <-- IMPORTANTE: definir t en el scope
+
+        if transaccion.estado not in ('pendiente', 'en_proceso'):
+            return Response({'error': 'La transacción no está en un estado confirmable.'},
+                            status=status.HTTP_400_BAD_REQUEST)
+
+        terminos_aceptados = bool(request.data.get('terminos_aceptados', False))
+        if not terminos_aceptados:
+            return Response({'error': 'Debe aceptar los términos y condiciones.'},
+                            status=status.HTTP_400_BAD_REQUEST)
+
+        acepta_cambio = bool(request.data.get('acepta_cambio', False))
+
+        tc_actual, monto_destino_actual = self._recalcular_tc_y_monto(transaccion)
+        cambio = (tc_actual != Decimal(transaccion.tasa_aplicada))
+
+        # Si la tasa cambió y NO acepta el cambio → devolvemos conflicto (409)
+        if cambio and not acepta_cambio:
+            return Response({
+                'error': 'rate_changed',
+                'mensaje': 'La cotización cambió',
+                'tasa_anterior': str(transaccion.tasa_aplicada),
+                'tasa_actual': str(tc_actual),
+                'monto_destino_actual': str(monto_destino_actual)
+            }, status=status.HTTP_409_CONFLICT)
+
+        # Si no cambió, o cambió y el cliente acepta, aplicamos posible nueva tasa
+        if cambio and acepta_cambio:
+            transaccion.tasa_aplicada = tc_actual              
+            transaccion.monto_destino = monto_destino_actual
+
+        transaccion.save()
+        DOMAIN = config.DEV_URL if config.DJANGO_DEBUG else config.PROD_URL
+
+        try:
+            checkout_session = stripe.checkout.Session.create(
+                line_items=[
+                    {
+                        "price_data": {
+                            "currency": "pyg",
+                            "product_data": {
+                                "name": transaccion.divisa_destino.nombre
+                            },
+                            "unit_amount_decimal": transaccion.monto_origen
+                        },
+                        "quantity": 1
+                    }
+                ],
+                mode="payment",
+                success_url=DOMAIN + "",
+                cancel_url=DOMAIN + ""
+            )
+        except Exception as e:
+            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+        return Response({"url": checkout_session.url}, status=status.HTTP_303_SEE_OTHER)
+        
+
