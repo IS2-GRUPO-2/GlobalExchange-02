@@ -328,6 +328,7 @@ function EtapaSeleccionDivisasPublica({
               e.preventDefault();
             }
           }}
+          autoComplete="off"
           placeholder="Ingrese el monto"
           className="w-full text-2xl font-semibold text-gray-900 text-center bg-transparent focus:outline-none focus:ring-2 focus:ring-blue-500 rounded-md py-2"
         />
@@ -375,6 +376,24 @@ function EtapaSeleccionMetodoPublica({
   // Inferir operación desde perspectiva del cliente
   const getOperacionCliente = (opCasa: "compra" | "venta"): "compra" | "venta" => {
     return opCasa === "compra" ? "venta" : "compra";
+  };
+
+  // Función para formatear nombres de métodos
+  const formatearNombreMetodo = (nombreBD: string): string => {
+    switch (nombreBD) {
+      case 'TRANSFERENCIA_BANCARIA':
+        return 'Transferencia Bancaria';
+      case 'BILLETERA_DIGITAL':
+        return 'Billetera Digital';
+      case 'TARJETA':
+        return 'Tarjeta';
+      case 'EFECTIVO':
+        return 'Efectivo';
+      case 'CHEQUE':
+        return 'Cheque';
+      default:
+        return nombreBD;
+    }
   };
 
   // Cargar métodos disponibles
@@ -443,7 +462,7 @@ function EtapaSeleccionMetodoPublica({
               <div className="flex items-center justify-between">
                 <div>
                   <h4 className="font-medium text-gray-800">
-                    {metodo.nombre_display || metodo.nombre}
+                    {formatearNombreMetodo(metodo.nombre)}
                   </h4>
                   <p className="text-sm text-gray-600">
                     {operacionCliente === "compra" 
@@ -511,6 +530,24 @@ function EtapaResultadoPublica({
     return opCasa === "compra" ? "venta" : "compra";
   };
 
+  // Función para formatear nombres de métodos
+  const formatearNombreMetodo = (nombreBD: string): string => {
+    switch (nombreBD) {
+      case 'TRANSFERENCIA_BANCARIA':
+        return 'Transferencia Bancaria';
+      case 'BILLETERA_DIGITAL':
+        return 'Billetera Digital';
+      case 'TARJETA':
+        return 'Tarjeta';
+      case 'EFECTIVO':
+        return 'Efectivo';
+      case 'CHEQUE':
+        return 'Cheque';
+      default:
+        return nombreBD;
+    }
+  };
+
   const operacionCliente = getOperacionCliente(opPerspectivaCasa);
 
   return (
@@ -568,7 +605,7 @@ function EtapaResultadoPublica({
             <span className="text-sm font-medium text-zinc-500 block mb-1">
               {opPerspectivaCasa === "venta" ? "Método de Pago:" : "Método de Cobro:"}
             </span>
-            <p className="text-zinc-900 font-medium">{resultado.parametros.nombre_metodo}</p>
+            <p className="text-zinc-900 font-medium">{formatearNombreMetodo(resultado.parametros.nombre_metodo)}</p>
           </div>
           
           <div>
