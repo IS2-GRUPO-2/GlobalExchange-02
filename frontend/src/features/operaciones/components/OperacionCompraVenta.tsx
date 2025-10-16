@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { toast } from "react-toastify";
 import { operacionPrivada, getOpPerspectivaCasa } from "../services/operacionService";
 import { type CalcularOperacionResponse } from "../types/Operacion";
@@ -60,7 +60,8 @@ export default function OperacionCompraVenta() {
   // Estados para la operación completa (etapas 4-6)
   const [tauserSeleccionado, setTauserSeleccionado] = useState<string>("");
   const [procesandoTransaccion, setProcesandoTransaccion] = useState(false);
-  
+  const creandoTransaccionRef = useRef(false);
+
   // Nuevo estado para operación desde perspectiva de la casa
   const [opPerspectivaCasa, setOpPerspectivaCasa] = useState<"compra" | "venta" | null>(null);
   
@@ -84,6 +85,7 @@ export default function OperacionCompraVenta() {
     setTauserSeleccionado("");
     setResultado(null);
     setProcesandoTransaccion(false);
+    creandoTransaccionRef.current = false;
     setTransaccionId(null);
     setModalCambioOpen(false);
     setReconfirm(null);
@@ -242,6 +244,17 @@ export default function OperacionCompraVenta() {
   // Navegación Etapa 4 (detalle) -> Confirmar y Pagar (crear transacción)
   const confirmarYPagar = async () => {
     try {
+      if (creandoTransaccionRef.current) {
+        return;
+      }
+
+      if (transaccionId) {
+        creandoTransaccionRef.current = true;
+        await pagarConReconfirmacion(transaccionId);
+        creandoTransaccionRef.current = false;
+        return;
+      }
+
       // Obtener el usuario actual para el operador
       const token = localStorage.getItem("token");
       const userId = jwtDecode<DecodedToken>(token!).user_id;
@@ -277,6 +290,8 @@ export default function OperacionCompraVenta() {
       };
       console.log(transaccionData);
 
+      creandoTransaccionRef.current = true;
+
       const transaccion = await crearTransaccion(transaccionData);
       console.log(transaccion);
 
@@ -284,7 +299,9 @@ export default function OperacionCompraVenta() {
       setTransaccionId(transaccionCreadaId);
 
       await pagarConReconfirmacion(transaccionCreadaId);
+      creandoTransaccionRef.current = false;
     } catch (error: any) {
+      creandoTransaccionRef.current = false;
       toast.error(error.message || "Error al crear la transacción");
     }
   };
@@ -303,13 +320,14 @@ export default function OperacionCompraVenta() {
 
   const abrirSimuladorPago = async (
     metodo: SimuladorMetodo,
+    idTransaccion: number,
   ): Promise<"success" | "cancel" | "rate-change"> => {
-    if (!resultado || !transaccionId) {
+    if (!resultado) {
       return "cancel";
     }
 
     const url = new URL("/simulador-transaccion-bancaria", window.location.origin);
-    url.searchParams.set("transaccionId", String(transaccionId));
+    url.searchParams.set("transaccionId", String(idTransaccion));
     url.searchParams.set("cliente", clienteActual?.nombre ?? "Cliente");
     url.searchParams.set("monto", String(resultado.monto_origen));
     if (resultado.divisa_origen) {
@@ -381,7 +399,7 @@ export default function OperacionCompraVenta() {
 
     const metodoSimulador = getMetodoSimulador();
     if (metodoSimulador) {
-      const resultadoSimulador = await abrirSimuladorPago(metodoSimulador);
+      const resultadoSimulador = await abrirSimuladorPago(metodoSimulador, idTransaccion);
       if (resultadoSimulador === "rate-change") {
         try {
           const r = await reconfirmarTasa(idTransaccion);
@@ -460,7 +478,7 @@ export default function OperacionCompraVenta() {
         }
       }
 
-      const resultadoSimulador = await abrirSimuladorPago(metodoSimulador);
+      const resultadoSimulador = await abrirSimuladorPago(metodoSimulador, transaccionId);
       if (resultadoSimulador === "rate-change") {
         try {
           const r = await reconfirmarTasa(transaccionId);
@@ -663,4 +681,3 @@ export default function OperacionCompraVenta() {
     </section>
   );
 }
-
