@@ -5,14 +5,14 @@ from apps.notificaciones.views import (
 )
 
 urlpatterns = [
-    # Preferencia de usuario
+    # Notificaciones de usuario
     path(
         'tasa/usuario/',
         NotificacionTasaUsuarioView.as_view(),
         name='tasa-usuario'
     ),
 
-    # Preferencias de cliente
+    # Notificaciones de cliente
     path(
         'tasa/cliente/',
         NotificacionTasaClienteView.as_view(),

@@ -333,12 +333,12 @@ class TestUserAPI:
         user_instance.refresh_from_db()
         assert user_instance.clientes.count() == 0
     
-    def test_obtener_clientes_asignados(self, api_client, user_instance, cliente_test, cliente_corporativo):
+    def test_obtener_clientes_asignados(self, authenticated_client, user_instance, cliente_test, cliente_corporativo):
         """Prueba el endpoint para obtener clientes asignados a un usuario"""
         # Asignar clientes al usuario
         user_instance.clientes.add(cliente_test, cliente_corporativo)
         
-        response = api_client.get(f'/api/usuarios/{user_instance.id}/get_clientes_asignados/')
+        response = authenticated_client.get(f'/api/usuarios/{user_instance.id}/get_clientes_asignados/')
         
         assert response.status_code == status.HTTP_200_OK
         assert len(response.data) == 2
@@ -348,9 +348,9 @@ class TestUserAPI:
         assert 'Cliente Test' in cliente_nombres
         assert 'Cliente Corporativo' in cliente_nombres
     
-    def test_obtener_clientes_usuario_sin_clientes(self, api_client, user_instance):
+    def test_obtener_clientes_usuario_sin_clientes(self, authenticated_client, user_instance):
         """Prueba obtener clientes de un usuario sin clientes asignados"""
-        response = api_client.get(f'/api/usuarios/{user_instance.id}/get_clientes_asignados/')
+        response = authenticated_client.get(f'/api/usuarios/{user_instance.id}/get_clientes_asignados/')
         
         assert response.status_code == status.HTTP_200_OK
         assert len(response.data) == 0

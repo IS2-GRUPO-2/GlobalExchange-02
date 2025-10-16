@@ -186,8 +186,8 @@ class TasaSerializer(serializers.ModelSerializer):
         Envía notificaciones de cambio de tasa filtrando por preferencias.
 
         Lógica:
-        1. Obtiene usuarios con preferencias activas Y divisa suscrita
-        2. Obtiene clientes con preferencias activas Y divisa suscrita
+        1. Obtiene usuarios con notificaciones de tasa activas Y divisa suscrita
+        2. Obtiene clientes con notificaciones de tasa activas Y divisa suscrita
         3. Recopila emails de usuarios de esos clientes
         4. Elimina duplicados y envía notificaciones
         """
@@ -195,7 +195,7 @@ class TasaSerializer(serializers.ModelSerializer):
         recipient_list = set()  # Usar set para evitar duplicados
 
         # ===================================================
-        # 1. NOTIFICACIONES POR PREFERENCIAS DE USUARIO
+        # 1. NOTIFICACIONES DE TASA DE USUARIO
         # ===================================================
         preferencias_usuario = NotificacionTasaUsuario.objects.filter(
             is_active=True,
@@ -209,7 +209,7 @@ class TasaSerializer(serializers.ModelSerializer):
                 recipient_list.add(pref.usuario.email)
 
         # ===================================================
-        # 2. NOTIFICACIONES POR PREFERENCIAS DE CLIENTE
+        # 2. NOTIFICACIONES DE TASA DE CLIENTE
         # ===================================================
         preferencias_cliente = NotificacionTasaCliente.objects.filter(
             is_active=True,
@@ -226,11 +226,6 @@ class TasaSerializer(serializers.ModelSerializer):
         recipient_list = list(recipient_list)
 
         if not recipient_list:
-            import logging
-            logger = logging.getLogger(__name__)
-            logger.info(
-                f"No hay destinatarios con preferencias activas para {divisa.codigo}"
-            )
             return
 
          # ===================================================

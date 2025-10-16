@@ -41,8 +41,15 @@ class UserViewSet(viewsets.ModelViewSet):
         Returns:
             list: Lista de clases de permisos aplicables.
         """
+        # Endpoints personalizados que solo requieren autenticación
+        if self.action in ["get_roles", "get_clientes", "get_cliente_actual"]:
+            return [permissions.IsAuthenticated()]
+        
+        # Creación de usuarios permite acceso público (registro)
         if self.action == "create":
             return [permissions.AllowAny()]
+        
+        # Todos los demás endpoints usan los permisos por defecto
         return [permissions.AllowAny()]
     
     def perform_update(self, serializer):
@@ -105,7 +112,7 @@ class UserViewSet(viewsets.ModelViewSet):
             status=status.HTTP_200_OK,
         )
     
-    @action(detail=True, methods=['get'], url_path="get_clientes_asignados")
+    @action(detail=True, methods=['get'], url_path="get_clientes_asignados", permission_classes=[IsAuthenticated])
     def get_clientes(self, request, pk=None):
         """
         Obtiene la lista de clientes asignados a un usuario específico.
@@ -156,7 +163,7 @@ class UserViewSet(viewsets.ModelViewSet):
             status=status.HTTP_200_OK,
         )
 
-    @action(detail=True, methods=["get"], url_path="roles")
+    @action(detail=True, methods=["get"], url_path="roles", permission_classes=[IsAuthenticated])
     def get_roles(self, request, pk=None):
         """
         Retorna los roles actuales del usuario con id y nombre.
