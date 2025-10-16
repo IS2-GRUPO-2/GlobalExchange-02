@@ -1,4 +1,5 @@
-from apps.divisas.models import Divisa, Denominacion
+from apps.divisas.models import Divisa, Denominacion, LimiteConfig
+from apps.stock.models import StockDivisaCasa
 
 def run():
     """Crear divisas base para el sistema"""
@@ -80,40 +81,58 @@ def run():
     ars = Divisa.objects.get(codigo='ARS')
     denominaciones_ars = [10, 20, 50, 100, 200, 500, 1000, 2000, 10000]
     
+    print("🔧 Creando denominaciones y stock para divisa ARS")
     for valor in denominaciones_ars:
-        Denominacion.objects.get_or_create(
+        denominacion, _ = Denominacion.objects.get_or_create(
             divisa=ars,
             denominacion=valor,
             defaults={
                 'is_active': True
             }
         )
+        StockDivisaCasa.objects.get_or_create(stock=10000, denominacion=denominacion)
     
     # Denominaciones para USD (Dólar)
     usd = Divisa.objects.get(codigo='USD')
     denominaciones_usd = [1, 5, 10, 20, 50, 100]
-    
+    print("🔧 Creando denominaciones y stock para divisa USD")
     for valor in denominaciones_usd:
-        Denominacion.objects.get_or_create(
+        denominacion, _ = Denominacion.objects.get_or_create(
             divisa=usd,
             denominacion=valor,
             defaults={
                 'is_active': True
             }
         )
+        StockDivisaCasa.objects.get_or_create(stock=10000, denominacion=denominacion)
     
     # Denominaciones para EUR (Euro)
     eur = Divisa.objects.get(codigo='EUR')
     denominaciones_eur = [5, 10, 20, 50, 100, 200, 500]
-    
+    print("🔧 Creando denominaciones y stock para divisa EUR")
     for valor in denominaciones_eur:
-        Denominacion.objects.get_or_create(
+        denominacion, _ = Denominacion.objects.get_or_create(
             divisa=eur,
             denominacion=valor,
             defaults={
                 'is_active': True
             }
         )
+        StockDivisaCasa.objects.get_or_create(stock=10000, denominacion=denominacion)
     
     print(f"✅ Divisas: {Divisa.objects.count()} total")
     print(f"✅ Denominaciones: {Denominacion.objects.count()} total")
+
+    print("🔧 Configurando límites singleton...")
+
+    limite_config, created = LimiteConfig.objects.get_or_create(
+        defaults={
+            'limite_diario': 10000000.00,  # Valor predeterminado para el límite diario
+            'limite_mensual': 300000000.00,  # Valor predeterminado para el límite mensual
+        }
+    )
+
+    if created:
+        print("✔ Límites singleton creados con valores predeterminados.")
+    else:
+        print("✔ Límites singleton ya existentes. No se realizaron cambios.")

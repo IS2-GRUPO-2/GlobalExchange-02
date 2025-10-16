@@ -16,10 +16,10 @@ def run():
         '03_divisas_seeds',
         '04_categorias_clientes_seeds',
         '05_clientes_seeds',
-        '06_operaciones_seeds',
+        '06_financiero_seeds',
         '07_cotizaciones_seeds',
         '08_tausers_seeds',
-        '09_tauser_divisas_seeds',
+        '09_stock_seeds'
     ]
     
     print("🌱 Iniciando carga de seeds...")

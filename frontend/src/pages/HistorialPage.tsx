@@ -1,14 +1,14 @@
 import { useEffect, useState } from "react";
 import { toast } from "react-toastify";
-import type { Cliente } from "../types/Cliente";
+import type { Cliente } from "../features/clientes/types/Cliente";
 import { useAuth } from "../context/useAuth";
-import { getClienteActual } from "../services/usuarioService";
-import { getHistorialTransacciones } from "../services/clienteService";
-import type { TransaccionDetalle } from "../types/Transaccion";
+import { getClienteActual } from "../features/usuario/services/usuarioService";
+import { getHistorialTransacciones } from "../features/clientes/services/clienteService";
+import type { TransaccionDetalle } from "../features/operaciones/types/Transaccion";
 import { formatNumberDecimals } from "../utils/format";
 
 const HistorialPage = () => {
-  const [clienteActual, setClienteActual] = useState<Cliente | null>();
+  const [clienteActual, setClienteActual] = useState<Cliente | null>(null);
   const [transacciones, setTransacciones] = useState<TransaccionDetalle[]>([]);
   const { user } = useAuth();
 
@@ -35,7 +35,7 @@ const HistorialPage = () => {
     if (!clienteActual) return;
     console.log("fetchHistorial llamado");
     try {
-      const res = await getHistorialTransacciones(clienteActual?.idCliente!);
+      const res = await getHistorialTransacciones(clienteActual?.id!);
       setTransacciones(res.data);
     } catch (err) {
       toast.error("Error cargando transacciones");
@@ -108,8 +108,8 @@ const HistorialPage = () => {
                 <td>{transaccion.tauser_detalle.codigo}</td>
                 <td>{transaccion.estado.toUpperCase()}</td>
                 <td>
-                  {transaccion.operador_detalle.first_name}{" "}
-                  {transaccion.operador_detalle.last_name}
+                  {transaccion.id_user_detalle.first_name}{" "}
+                  {transaccion.id_user_detalle.last_name}
                 </td>
                 <td>{transaccion.metodo_financiero_detalle.nombre}</td>
               </tr>

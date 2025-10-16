@@ -3,7 +3,7 @@ from rest_framework.response import Response
 from rest_framework.decorators import action
 from .models import Cliente, CategoriaCliente
 from apps.operaciones.models import Transaccion
-from apps.operaciones.serializers import TransaccionSerializer
+from apps.operaciones.serializers import TransaccionDetalleSerializer
 from django.contrib.auth import get_user_model
 from .serializers import ClienteSerializer, CategoriaClienteSerializer, CategoriaCliente, ClientePaginatedResponseSerializer
 from apps.usuarios.serializers import UserSerializer
@@ -31,48 +31,48 @@ class ClienteViewSet(viewsets.ModelViewSet):
     operation_summary="Listar clientes",
     operation_description="""Obtiene un listado paginado de todos los clientes registrados en el sistema.
     
-La respuesta está paginada con las siguientes características:
-- Tamaño de página predeterminado: 10 items
-- Tamaño máximo de página: 100 items
-- Se puede navegar usando los parámetros page y page_size
-""",
-    manual_parameters=[
-        openapi.Parameter(
-            "page",
-            openapi.IN_QUERY,
-            description="Número de página a retornar (1 para primera página).",
-            type=openapi.TYPE_INTEGER,
-            required=False
-        ),
-        openapi.Parameter(
-            "page_size",
-            openapi.IN_QUERY,
-            description="Cantidad de resultados por página (entre 1 y 100).",
-            type=openapi.TYPE_INTEGER,
-            required=False
-        ),
-        openapi.Parameter(
-            "search",
-            openapi.IN_QUERY,
-            description="Filtrar por nombre, cédula o RUC del cliente.",
-            type=openapi.TYPE_STRING,
-            required=False
-        ),
-        openapi.Parameter(
-            "all",
-            openapi.IN_QUERY,
-            description="Retornar todos los clientes sin paginar.",
-            type=openapi.TYPE_STRING,
-            required=False
-        ),
-    ],
-    responses={
-        200: openapi.Response(
-            description="Lista de clientes",
-            schema=ClientePaginatedResponseSerializer
-        )
-    },
-)
+    La respuesta está paginada con las siguientes características:
+    - Tamaño de página predeterminado: 10 items
+    - Tamaño máximo de página: 100 items
+    - Se puede navegar usando los parámetros page y page_size
+    """,
+        manual_parameters=[
+            openapi.Parameter(
+                "page",
+                openapi.IN_QUERY,
+                description="Número de página a retornar (1 para primera página).",
+                type=openapi.TYPE_INTEGER,
+                required=False
+            ),
+            openapi.Parameter(
+                "page_size",
+                openapi.IN_QUERY,
+                description="Cantidad de resultados por página (entre 1 y 100).",
+                type=openapi.TYPE_INTEGER,
+                required=False
+            ),
+            openapi.Parameter(
+                "search",
+                openapi.IN_QUERY,
+                description="Filtrar por nombre, cédula o RUC del cliente.",
+                type=openapi.TYPE_STRING,
+                required=False
+            ),
+            openapi.Parameter(
+                "all",
+                openapi.IN_QUERY,
+                description="Retornar todos los clientes sin paginar.",
+                type=openapi.TYPE_STRING,
+                required=False
+            ),
+        ],
+        responses={
+            200: openapi.Response(
+                description="Lista de clientes",
+                schema=ClientePaginatedResponseSerializer
+            )
+        },
+    )
     def list(self, request, *args, **kwargs):
     # Check for 'all' parameter
         if request.query_params.get('all', '').lower() == 'true':
@@ -85,9 +85,9 @@ La respuesta está paginada con las siguientes características:
 
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()
-        if (not instance.isActive):
+        if (not instance.is_active):
             return Response(status=status.HTTP_404_NOT_FOUND)
-        instance.isActive = False
+        instance.is_active = False
         instance.save()
         return Response(status=status.HTTP_200_OK)
 
@@ -103,7 +103,7 @@ La respuesta está paginada con las siguientes características:
     def get_transacciones(self, request, pk):
         _cliente = self.get_object()
         transacciones = Transaccion.objects.filter(cliente=_cliente)    
-        serializer = TransaccionSerializer(transacciones, many=True)
+        serializer = TransaccionDetalleSerializer(transacciones, many=True)
         return Response(serializer.data)
 
 class CategoriaClienteViewSet(viewsets.ModelViewSet):
@@ -125,15 +125,15 @@ class CategoriaClienteViewSet(viewsets.ModelViewSet):
         if request.query_params.get('all', '').lower() == 'true':
             queryset = self.filter_queryset(self.get_queryset())
         else:
-            queryset = self.filter_queryset(self.get_queryset().filter(isActive=True))
+            queryset = self.filter_queryset(self.get_queryset().filter(is_active=True))
             
         serializer = self.get_serializer(queryset, many=True)
         return Response(serializer.data)
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()
-        if (not instance.isActive):
+        if (not instance.is_active):
             return Response(status=status.HTTP_404_NOT_FOUND)
-        instance.isActive = False
+        instance.is_active = False
         instance.save()
         return Response(status=status.HTTP_200_OK)
     

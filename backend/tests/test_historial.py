@@ -29,8 +29,8 @@ def test_get_historial_transacciones_returns_transactions(api_client):
     categoria = CategoriaCliente.objects.create(nombre="VIP")
     cliente = Cliente.objects.create(
         nombre="Juan Pérez",
-        isPersonaFisica=True,
-        idCategoria=categoria,
+        is_persona_fisica=True,
+        id_categoria=categoria,
         cedula="1234567",
         correo="juan@example.com",
         telefono="123456",
@@ -54,7 +54,7 @@ def test_get_historial_transacciones_returns_transactions(api_client):
     )
 
     transaccion = Transaccion.objects.create(
-        operador=operador,
+        id_user=operador,
         cliente=cliente,
         operacion="compra",
         tasa_aplicada=Decimal("7100.123456"),
@@ -69,7 +69,7 @@ def test_get_historial_transacciones_returns_transactions(api_client):
     )
 
     # Act - llamar al endpoint
-    url = reverse("clientes-get-transacciones", args=[cliente.idCliente])
+    url = reverse("clientes-get-transacciones", args=[cliente.id])
     response = api_client.get(url)
 
     # Assert
@@ -80,4 +80,4 @@ def test_get_historial_transacciones_returns_transactions(api_client):
     assert data[0]["id"] == transaccion.id
     assert data[0]["operacion"] == "compra"
     assert data[0]["estado"] == "pendiente"
-    assert data[0]["cliente"] == str(cliente.idCliente)
+    assert data[0]["cliente"] == str(cliente.id)

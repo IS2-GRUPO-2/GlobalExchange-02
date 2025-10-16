@@ -56,7 +56,12 @@ INSTALLED_APPS = [
     'apps.cotizaciones',
     'apps.notificaciones',
     'apps.tauser',
-    'drf_yasg'
+    'apps.metodos_financieros',
+    'apps.stock',
+    'drf_yasg',
+    'django_otp',
+    'django_otp.plugins.otp_static',
+    'django_otp.plugins.otp_totp',
 ]
 
 MIDDLEWARE = [
@@ -68,6 +73,8 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'django.contrib.auth.middleware.AuthenticationMiddleware',
+    'django_otp.middleware.OTPMiddleware'
 ]
 
 ROOT_URLCONF = 'globalexchange.urls'
@@ -186,3 +193,6 @@ EMAIL_PORT = 587
 EMAIL_USE_TLS = True
 EMAIL_HOST_USER = config.EMAIL_HOST_USER
 EMAIL_HOST_PASSWORD = config.EMAIL_HOST_PASSWORD
+
+# OTP Configuration for MFA
+OTP_TOTP_ISSUER = 'GlobalExchange-PY'

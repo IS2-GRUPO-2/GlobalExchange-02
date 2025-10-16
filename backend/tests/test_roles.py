@@ -63,7 +63,10 @@ def test_roles_create_list_detail_update_delete(authenticated_client):
     # LIST
     resp = client.get("/api/roles/")
     assert resp.status_code == 200
-    assert any(r["id"] == role_id for r in resp.json())
+    data = resp.json()
+    results = data["results"] if isinstance(data, dict) and "results" in data else data
+    assert any(r["id"] == role_id for r in results)
+
 
     # DETAIL
     resp = client.get(f"/api/roles/{role_id}/")
@@ -199,7 +202,8 @@ def test_api_list_roles_contains_new_role(authenticated_client):
     resp = client.get("/api/roles/")
     assert resp.status_code == 200
     data = resp.json()
-    assert isinstance(data, list)
+    results = data["results"] if isinstance(data, dict) and "results" in data else data
+    assert isinstance(results, list)
 
 
 def test_api_permissions_catalog_returns_all(authenticated_client):

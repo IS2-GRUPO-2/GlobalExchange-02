@@ -41,7 +41,7 @@ class ClienteSerializer(serializers.ModelSerializer):
         - Agrega información de la categoría sin necesidad de consultas adicionales
         - Campo nombreCategoria es de solo lectura para evitar inconsistencias
     """
-    categoria= CategoriaClienteSerializer(source='idCategoria', read_only=True)
+    categoria= CategoriaClienteSerializer(source='id_categoria', read_only=True)
     class Meta:
         model = Cliente
         fields = "__all__"

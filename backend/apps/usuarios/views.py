@@ -41,8 +41,15 @@ class UserViewSet(viewsets.ModelViewSet):
         Returns:
             list: Lista de clases de permisos aplicables.
         """
+        # Endpoints personalizados que solo requieren autenticación
+        if self.action in ["get_roles", "get_clientes", "get_cliente_actual"]:
+            return [permissions.IsAuthenticated()]
+        
+        # Creación de usuarios permite acceso público (registro)
         if self.action == "create":
             return [permissions.AllowAny()]
+        
+        # Todos los demás endpoints usan los permisos por defecto
         return [permissions.AllowAny()]
     
     def perform_update(self, serializer):
@@ -92,7 +99,7 @@ class UserViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        clientes = Cliente.objects.filter(idCliente__in=clientes_ids)
+        clientes = Cliente.objects.filter(id__in=clientes_ids)
         user.clientes.set(clientes)  # reemplaza la relación actual con estos clientes
         user.save()
 
@@ -100,12 +107,12 @@ class UserViewSet(viewsets.ModelViewSet):
             {
                 "message": "Clientes asignados correctamente",
                 "user_id": user.id,
-                "clientes": [c.idCliente for c in clientes],
+                "clientes": [c.id for c in clientes],
             },
             status=status.HTTP_200_OK,
         )
     
-    @action(detail=True, methods=['get'], url_path="get_clientes_asignados")
+    @action(detail=True, methods=['get'], url_path="get_clientes_asignados", permission_classes=[IsAuthenticated])
     def get_clientes(self, request, pk=None):
         """
         Obtiene la lista de clientes asignados a un usuario específico.
@@ -118,7 +125,7 @@ class UserViewSet(viewsets.ModelViewSet):
             Response: Lista de clientes asignados al usuario.
         """
         usuario = self.get_object()
-        clientes = usuario.clientes.all()
+        clientes = usuario.clientes.filter(is_active=True)
         serializer = ClienteSerializer(clientes, many=True)
         return Response(serializer.data)
 
@@ -156,7 +163,7 @@ class UserViewSet(viewsets.ModelViewSet):
             status=status.HTTP_200_OK,
         )
 
-    @action(detail=True, methods=["get"], url_path="roles")
+    @action(detail=True, methods=["get"], url_path="roles", permission_classes=[IsAuthenticated])
     def get_roles(self, request, pk=None):
         """
         Retorna los roles actuales del usuario con id y nombre.
@@ -181,20 +188,20 @@ class UserViewSet(viewsets.ModelViewSet):
             )
 
         try:
-            cliente = user.clientes.get(pk=cliente_id, isActive=True)
+            cliente = user.clientes.get(pk=cliente_id, is_active=True)
         except Cliente.DoesNotExist:
             return Response(
                 {"error": "El cliente no está asignado al usuario o está inactivo"},
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        user.clienteActual = cliente
+        user.cliente_actual = cliente
         user.save()
 
         return Response(
             {
                 "message": f"Cliente actual actualizado a {cliente.nombre}",
-                "cliente_id": cliente.idCliente,
+                "cliente_id": cliente.id,
             },
             status=status.HTTP_200_OK,
         )
@@ -207,28 +214,28 @@ class UserViewSet(viewsets.ModelViewSet):
         - Si el actual es inválido (None, inactivo o no asignado), intenta
         seleccionar automáticamente otro cliente ASIGNADO y ACTIVO,
         lo persiste en DB y lo retorna.
-        - Solo retorna {"clienteActual": None} si el usuario no tiene clientes asignados.
+        - Solo retorna {"cliente_actual": None} si el usuario no tiene clientes asignados.
         """
         user = self.get_object()
 
-        activos_qs = user.clientes.filter(isActive=True)
+        activos_qs = user.clientes.filter(is_active=True)
 
         if not user.clientes.exists():
-            return Response({"clienteActual": None}, status=status.HTTP_200_OK)
+            return Response({"cliente_actual": None}, status=status.HTTP_200_OK)
 
-        actual = user.clienteActual
-        if actual and actual.isActive and activos_qs.filter(pk=actual.pk).exists():
-            return Response({"clienteActual": ClienteSerializer(actual).data},
+        actual = user.cliente_actual
+        if actual and actual.is_active and activos_qs.filter(pk=actual.pk).exists():
+            return Response({"cliente_actual": ClienteSerializer(actual).data},
                             status=status.HTTP_200_OK)
 
         alternativo = activos_qs.order_by("nombre").first()
         if alternativo:
-            user.clienteActual = alternativo
+            user.cliente_actual = alternativo
             user.save()
-            return Response({"clienteActual": ClienteSerializer(alternativo).data},
+            return Response({"cliente_actual": ClienteSerializer(alternativo).data},
                             status=status.HTTP_200_OK)
 
-        return Response({"clienteActual": None}, status=status.HTTP_200_OK)
+        return Response({"cliente_actual": None}, status=status.HTTP_200_OK)
 
 @api_view(["GET"])
 @permission_classes([permissions.AllowAny])

@@ -1,5 +1,6 @@
 from decimal import Decimal
 from apps.tauser.models import Tauser
+from apps.stock.models import StockDivisaTauser
 
 def run():
     """Crear Tausers base en ciudades principales de Paraguay"""
@@ -13,7 +14,7 @@ def run():
             'departamento': 'Central',
             'latitud': Decimal('-25.263739'),
             'longitud': Decimal('-57.575926'),
-            'isActive': True
+            'is_active': True
         },
         {
             'codigo': 'TAU-CDE-001',
@@ -23,7 +24,7 @@ def run():
             'departamento': 'Alto Paraná',
             'latitud': Decimal('-25.516336'),
             'longitud': Decimal('-54.611389'),
-            'isActive': True
+            'is_active': True
         },
         {
             'codigo': 'TAU-ITA-001',
@@ -33,7 +34,7 @@ def run():
             'departamento': 'Central',
             'latitud': Decimal('-25.484722'),
             'longitud': Decimal('-57.367222'),
-            'isActive': True
+            'is_active': True
         },
         {
             'codigo': 'TAU-ENC-001',
@@ -43,7 +44,7 @@ def run():
             'departamento': 'Itapúa',
             'latitud': Decimal('-27.330556'),
             'longitud': Decimal('-55.866667'),
-            'isActive': True
+            'is_active': True
         },
     ]
 
@@ -55,5 +56,5 @@ def run():
         if created:
             print(f"  → Tauser creado: {tauser.codigo} - {tauser.ciudad}")
         else:
-            print(f"  → Tauser ya existe: {tauser.codigo}")
+            print(f"  → Tauser ya existe: {tauser.codigo}")            
     print(f"✅ Tausers: {Tauser.objects.count()} total")

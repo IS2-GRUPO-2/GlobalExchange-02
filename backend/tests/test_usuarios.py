@@ -38,8 +38,8 @@ def cliente_test():
     categoria, _ = CategoriaCliente.objects.get_or_create(nombre='VIP', descuento=10)
     return Cliente.objects.create(
         nombre='Cliente Test',
-        isPersonaFisica=True,
-        idCategoria=categoria,
+        is_persona_fisica=True,
+        id_categoria=categoria,
         correo='cliente.test@example.com',
         telefono='123456789',
         direccion='Dirección de prueba',
@@ -53,8 +53,8 @@ def cliente_corporativo():
     categoria, _ = CategoriaCliente.objects.get_or_create(nombre='CORPORATIVO', descuento=5)
     return Cliente.objects.create(
         nombre='Cliente Corporativo',
-        isPersonaFisica=False,
-        idCategoria=categoria,
+        is_persona_fisica=False,
+        id_categoria=categoria,
         correo='corporativo@example.com',
         telefono='987654321',
         direccion='Dirección corporativa',
@@ -148,7 +148,7 @@ class TestUserSerializer:
     def test_crear_usuario_con_clientes(self, user_data, cliente_test):
         """Prueba la creación de usuario con clientes asignados"""
         data = user_data.copy()
-        data['clientes'] = [cliente_test.idCliente]
+        data['clientes'] = [cliente_test.id]
         
         serializer = UserSerializer(data=data)
         
@@ -296,7 +296,7 @@ class TestUserAPI:
     def test_asignar_clientes_endpoint(self, authenticated_client, user_instance, cliente_test, cliente_corporativo):
         """Prueba el endpoint personalizado para asignar clientes"""
         data = {
-            'clientes': [str(cliente_test.idCliente), str(cliente_corporativo.idCliente)]
+            'clientes': [str(cliente_test.id), str(cliente_corporativo.id)]
         }
         
         response = authenticated_client.post(f'/api/usuarios/{user_instance.id}/asignar_clientes/', data, format='json')
@@ -333,12 +333,12 @@ class TestUserAPI:
         user_instance.refresh_from_db()
         assert user_instance.clientes.count() == 0
     
-    def test_obtener_clientes_asignados(self, api_client, user_instance, cliente_test, cliente_corporativo):
+    def test_obtener_clientes_asignados(self, authenticated_client, user_instance, cliente_test, cliente_corporativo):
         """Prueba el endpoint para obtener clientes asignados a un usuario"""
         # Asignar clientes al usuario
         user_instance.clientes.add(cliente_test, cliente_corporativo)
         
-        response = api_client.get(f'/api/usuarios/{user_instance.id}/get_clientes_asignados/')
+        response = authenticated_client.get(f'/api/usuarios/{user_instance.id}/get_clientes_asignados/')
         
         assert response.status_code == status.HTTP_200_OK
         assert len(response.data) == 2
@@ -348,9 +348,9 @@ class TestUserAPI:
         assert 'Cliente Test' in cliente_nombres
         assert 'Cliente Corporativo' in cliente_nombres
     
-    def test_obtener_clientes_usuario_sin_clientes(self, api_client, user_instance):
+    def test_obtener_clientes_usuario_sin_clientes(self, authenticated_client, user_instance):
         """Prueba obtener clientes de un usuario sin clientes asignados"""
-        response = api_client.get(f'/api/usuarios/{user_instance.id}/get_clientes_asignados/')
+        response = authenticated_client.get(f'/api/usuarios/{user_instance.id}/get_clientes_asignados/')
         
         assert response.status_code == status.HTTP_200_OK
         assert len(response.data) == 0

@@ -1,16 +1,17 @@
 import { createBrowserRouter } from "react-router";
 import App from "../App";
-import UsuariosPage from "../pages/UsuariosPage";
-import ClientesPage from "../pages/ClientesPage";
+import UsuariosPage from "../features/usuario/pages/UsuariosPage";
+import ClientesPage from "../features/clientes/pages/ClientesPage";
 import LoginPage from "../pages/LoginPage";
 import RegisterPage from "../pages/RegisterPage";
-import RolesPage from "../pages/RolesPage";
+import RolesPage from "../features/roles/pages/RolesPage";
 import MainMenuPage from "../pages/MenuPage";
-import DivisasPage from "../pages/DivisasPage";
-import MetodosFinancierosPage from "../features/financiero/Pages/MetodosFinancierosPage";
-import MetodosFinancierosClientePage from "../features/financiero/Pages/MetodosFinancierosClientePage";
+import DivisasPage from "../features/divisas/pages/DivisasPage";
+import MetodosFinancierosPage from "../features/metodos_financieros/Pages/MetodosFinancierosPage";
+import MetodosFinancierosClientePage from "../features/metodos_financieros/Pages/MetodosFinancierosClientePage";
 import ConfiguracionesPage from "../pages/ConfiguracionesPage";
-import CategoriaClientePage from "../pages/CategoriaClientePage";
+import CategoriaClientePage from "../features/categoria_clientes/pages/CategoriaClientesPage";
+import SecuritySettingsPage from "../pages/SecuritySettingsPage";
 import {
   CATEGORIAS_CLIENTE,
   CLIENTES,
@@ -19,17 +20,18 @@ import {
   ROLES,
   TASAS,
   USUARIOS,
-  SIMULACION,
   METODOS_FINANCIEROS_DETALLE,
   TAUSER,
   OPERACION,
 } from "../types/perms";
-import CotizacionesPage from "../pages/CotizacionesPage";
+import CotizacionesPage from "../features/cotizaciones/pages/CotizacionesPage";
 import RequireAuth from "./RequiereAuth";
-import SimulacionOperacionPage from "../pages/SimulacionOperacionPage";
-import ConfiguracionTauserPage from "../pages/ConfiguracionTauserPage";
-import OperacionPage from "../pages/OperacionPage";
+
+import OperacionPage from "../features/operaciones/pages/OperacionPage";
+import ConfiguracionTauserPage from "../features/tauser/pages/ConfiguracionTauserPage";
 import HistorialPage from "../pages/HistorialPage";
+import { CheckoutSuccess } from "../pages/CheckoutSuccessPage";
+import CheckoutCancel from "../pages/CheckoutCancelPage";
 
 export const router = createBrowserRouter([
   {
@@ -60,6 +62,33 @@ export const router = createBrowserRouter([
         ),
       },
 
+      {
+        path: "settings/security",
+        element: (
+          <RequireAuth>
+            <SecuritySettingsPage />
+          </RequireAuth>
+        ),
+      },
+
+      {
+        path: "checkout/success",
+        element: (
+          <RequireAuth>
+            <CheckoutSuccess />
+          </RequireAuth>
+        ),
+      },
+
+      {
+        path: "checkout/cancel",
+        element: (
+          <RequireAuth>
+            <CheckoutCancel />
+          </RequireAuth>
+        ),
+      },
+
       // RUTAS QUE REQUIEREN LOGIN Y PERMISOS
       {
         path: "metodos-financieros",
@@ -77,16 +106,9 @@ export const router = createBrowserRouter([
           </RequireAuth>
         ),
       },
+
       {
-        path: "simulacion-operacion",
-        element: (
-          <RequireAuth anyOf={[SIMULACION.USE]}>
-            <SimulacionOperacionPage />
-          </RequireAuth>
-        ),
-      },
-      {
-        path: "operacion-compra-venta",
+        path: "operaciones",
         element: (
           <RequireAuth anyOf={[OPERACION.USE]}>
             <OperacionPage />

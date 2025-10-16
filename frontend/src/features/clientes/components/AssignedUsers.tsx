@@ -1,8 +1,8 @@
 import { useState, useEffect } from "react";
-import { type User } from "../../../types/User";
+import { type User } from "../../usuario/types/User";
 import { toast } from "react-toastify";
-import { getUsuariosAsignados } from "../../../services/clienteService";
-import { type Cliente } from "../../../types/Cliente";
+import { getUsuariosAsignados } from "../services/clienteService";
+import { type Cliente } from "../types/Cliente";
 
 type Props = {
   cliente: Cliente;
@@ -14,7 +14,7 @@ const AssignedUsers = ({ cliente }: Props) => {
 
   const fetchUsers = async () => {
     try {
-      const res = await getUsuariosAsignados(cliente.idCliente);
+      const res = await getUsuariosAsignados(cliente.id);
       setUsers(res.data);
       setPending(false);
     } catch (err) {

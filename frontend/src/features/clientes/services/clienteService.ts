@@ -1,6 +1,7 @@
 import axios from "axios";
-import type { PaginatedCliente, Cliente } from "../../../types/Cliente";
-import { type User } from "../../../types/User";
+import type { PaginatedCliente, Cliente } from "../types/Cliente";
+import { type User } from "../../usuario/types/User";
+import type { TransaccionDetalle } from "../../operaciones/types/Transaccion";
 
 // Usamos rutas relativas para que las peticiones pasen por el proxy de Nginx
 const API_URL = "/api/clientes/";
@@ -10,15 +11,6 @@ interface GetParams {
   page: number;
 }
 
-// 👇 función auxiliar para obtener headers con token
-const getAuthHeaders = () => {
-  const token = localStorage.getItem("token"); // el mismo que guardas en login
-  return {
-    headers: {
-      Authorization: token ? `Bearer ${token}` : "",
-    },
-  };
-};
 
 export const getClientes = async (params: GetParams) => {
   try {
@@ -29,17 +21,28 @@ export const getClientes = async (params: GetParams) => {
     throw err;
   }
 };
+
+export const getAllClientes = async () => {
+  try {
+    const res = await axios.get<Cliente[]>(`${API_URL}?all=true`);
+    return res;
+  } catch (err) {
+    console.error("Error en get all clientes");
+    throw err;
+  }
+};
+
 export const getCliente = (id: string) =>
-  axios.get<Cliente>(`${API_URL}${id}/`, getAuthHeaders());
+  axios.get<Cliente>(`${API_URL}${id}/`);
 
 export const createCliente = (data: Partial<Cliente>) =>
-  axios.post<Cliente>(API_URL, data, getAuthHeaders());
+  axios.post<Cliente>(API_URL, data);
 
 export const updateCliente = (id: string, data: Partial<Cliente>) =>
-  axios.put<Cliente>(`${API_URL}${id}/`, data, getAuthHeaders());
+  axios.put<Cliente>(`${API_URL}${id}/`, data);
 
 export const deleteCliente = (id: string) =>
-  axios.delete(`${API_URL}${id}/`, getAuthHeaders());
+  axios.delete(`${API_URL}${id}/`);
 
 export const getUsuariosAsignados = async (id_cliente: string) => {
   const res = await axios.get<User[]>(
@@ -47,8 +50,23 @@ export const getUsuariosAsignados = async (id_cliente: string) => {
   );
   return res;
 };
-
+export const getCategorias = async () => {
+  const res = await axios.get(`${API_URL}categorias/`);
+  return res;
+};
 export const getCategoriaCliente = async (id_cliente: string) => {
   const res = await axios.get(`${API_URL}${id_cliente}/categoria_cliente/`);
   return res;
+};
+
+export const getHistorialTransacciones = async (id_cliente: string) => {
+  try {
+    const res = await axios.get<TransaccionDetalle[]>(
+      `${API_URL}${id_cliente}/get_historial_transacciones/`
+    );
+    return res;
+  } catch (err) {
+    console.log(err);
+    throw err;
+  }
 };
