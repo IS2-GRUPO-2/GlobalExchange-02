@@ -63,16 +63,6 @@ export default function EtapaResultado({
     return "Resultado de Operación";
   };
 
-  const getBotonSecundario = () => {
-    if (esOperacionReal) return "Modificar Terminal";
-    return "Modificar Datos";
-  };
-
-  const getBotonPrimario = () => {
-    if (esOperacionReal) return "Revisar Términos";
-    return "Continuar";
-  };
-
   return (
     <div className="space-y-6 select-none">
       <div className="text-center mb-6">
@@ -255,7 +245,7 @@ export default function EtapaResultado({
                 : "bg-zinc-900 text-white hover:bg-zinc-700"
             }`}
           >
-            {esOperacionReal ? "Confirmar y Pagar" : getBotonPrimario()}
+            {esOperacionReal ? "Confirmar y Pagar" : "Continuar"}
           </button>
         </div>
       </div>

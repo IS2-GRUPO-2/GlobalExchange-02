@@ -110,7 +110,6 @@ export default function EtapaSeleccionMetodo({
           onInstanciaChange={handleInstanciaChange}
           onVolver={volverASeleccionMetodos}
           onCancelar={onCancelar}
-          onRetroceder={onRetroceder}
           onContinuar={onContinuar}
           puedeAvanzar={puedeAvanzar()}
         />

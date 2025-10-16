@@ -10,7 +10,6 @@ interface SeleccionInstanciaMetodoProps {
   onInstanciaChange: (instanciaId: number | null) => void;
   onVolver: () => void;
   onCancelar: () => void;
-  onRetroceder: () => void;
   onContinuar: () => void;
   puedeAvanzar: boolean;
 }
@@ -21,7 +20,6 @@ export default function SeleccionInstanciaMetodo({
   onInstanciaChange,
   onVolver,
   onCancelar,
-  onRetroceder,
   onContinuar,
   puedeAvanzar
 }: SeleccionInstanciaMetodoProps) {
