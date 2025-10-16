@@ -407,19 +407,33 @@ class MetodoFinancieroDetalleViewSet(viewsets.ModelViewSet):
 
     def perform_create(self, serializer):
         """
-        Asigna automáticamente el cliente cuando un usuario no-admin crea un método financiero.
+        Asigna automáticamente cliente o marca como cuenta casa según el contexto.
+        
+        Lógica:
+        - Si es_cuenta_casa=True → cliente=None (cuenta de la casa de cambio)
+        - Si es_cuenta_casa=False → cliente=cliente_actual (cuenta del cliente)
+        
+        Esto mantiene la consistencia con los endpoints de lectura:
+        - casa-cuentas filtra por es_cuenta_casa=True
+        - mis-cuentas filtra por cliente=cliente_actual AND es_cuenta_casa=False
         """
-        if not (self.request.user.has_perm('metodos_financieros.add_metodofinancierodetalle')):
-            # Para usuarios no-admin, asignar automáticamente el primer cliente asignado
-            cliente = self.request.user.cliente_actual
-            if cliente is not None:
-                serializer.save(cliente=cliente)
-            else:
-                # Si no tiene clientes asignados, devolver error
-                raise PermissionDenied("No tienes clientes asignados para crear métodos financieros.")
+        # Verificar si viene marcado explícitamente como cuenta de casa
+        es_cuenta_casa = serializer.validated_data.get('es_cuenta_casa', False)
+        
+        if es_cuenta_casa:
+            # Es cuenta de casa: cliente debe ser null
+            # Solo admins pueden crear cuentas de casa
+            if not self.request.user.is_superuser and not self.request.user.has_perm('metodos_financieros.change_metodofinancierodetalle'):
+                raise PermissionDenied("No tienes permisos para crear métodos financieros de la casa.")
+            serializer.save(cliente=None, es_cuenta_casa=True)
         else:
-            # Para admins, usar el cliente especificado en los datos
-            serializer.save()
+            # Es cuenta de cliente: asignar cliente_actual automáticamente
+            cliente = self.request.user.cliente_actual
+            if not cliente:
+                raise PermissionDenied(
+                    "No tienes un cliente actual asignado para crear métodos financieros."
+                )
+            serializer.save(cliente=cliente, es_cuenta_casa=False)
 
 
     @action(detail=True, methods=['post'])

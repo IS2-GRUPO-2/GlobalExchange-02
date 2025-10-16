@@ -14,3 +14,12 @@ class RoleViewSet(viewsets.ModelViewSet):
     filter_backends = [filters.SearchFilter]
     search_fields = ['name', 'permissions__name']
     pagination_class = RolePagination
+    
+    def get_permissions(self):
+        """
+        Permite a usuarios autenticados ver (list, retrieve) roles,
+        pero requiere DjangoModelPermissions para modificarlos.
+        """
+        if self.action in ['list', 'retrieve']:
+            return [permissions.IsAuthenticated()]
+        return [permissions.IsAuthenticated(), permissions.DjangoModelPermissions()]
