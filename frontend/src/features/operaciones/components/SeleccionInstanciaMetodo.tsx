@@ -9,13 +9,19 @@ interface SeleccionInstanciaMetodoProps {
   instanciaSeleccionada: number | null;
   onInstanciaChange: (instanciaId: number | null) => void;
   onVolver: () => void;
+  onCancelar: () => void;
+  onContinuar: () => void;
+  puedeAvanzar: boolean;
 }
 
 export default function SeleccionInstanciaMetodo({
   metodoFinanciero,
   instanciaSeleccionada,
   onInstanciaChange,
-  onVolver
+  onVolver,
+  onCancelar,
+  onContinuar,
+  puedeAvanzar
 }: SeleccionInstanciaMetodoProps) {
   const [cuentasBancarias, setCuentasBancarias] = useState<CuentaBancaria[]>([]);
   const [billeterasDigitales, setBilleterasDigitales] = useState<BilleteraDigital[]>([]);
@@ -173,9 +179,6 @@ export default function SeleccionInstanciaMetodo({
                 <div className="flex items-center space-x-3">
                   {getMetodoIcon(metodoFinanciero.nombre)}
                   <div>
-                    <h4 className="font-medium text-gray-800 text-sm">
-                      {instancia.alias || 'Sin alias'}
-                    </h4>
                     <div className="text-xs text-gray-600 space-y-0.5">
                       {/* Mostrar detalles específicos según el tipo */}
                       {metodoFinanciero.nombre === "TRANSFERENCIA_BANCARIA" && (
@@ -222,13 +225,34 @@ export default function SeleccionInstanciaMetodo({
         </div>
       )}
 
-      <div className="flex justify-center pt-2">
+      {/* Botones de navegación */}
+      <div className="flex justify-between items-center gap-3 pt-4">
         <button
           onClick={onVolver}
-          className="px-4 py-2 text-sm text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200 transition-colors"
+          className="px-6 py-2 border border-gray-300 text-gray-700 rounded-lg font-medium hover:bg-gray-50 transition-colors"
         >
-          Cambiar Método
+          Atrás
         </button>
+        
+        <div className="flex gap-3">
+          <button
+            onClick={onCancelar}
+            className="px-6 py-2 border border-gray-300 text-gray-700 rounded-lg font-medium hover:bg-gray-50 transition-colors"
+          >
+            Cancelar
+          </button>
+          <button
+            onClick={onContinuar}
+            disabled={!puedeAvanzar}
+            className={`px-6 py-2 rounded-lg font-medium transition-colors ${
+              puedeAvanzar
+                ? "bg-zinc-900 text-white hover:bg-zinc-700"
+                : "bg-gray-300 text-gray-500 cursor-not-allowed"
+            }`}
+          >
+            Continuar
+          </button>
+        </div>
       </div>
     </div>
   );

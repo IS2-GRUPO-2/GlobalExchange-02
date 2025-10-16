@@ -13,6 +13,7 @@ interface EtapaSeleccionMetodoProps {
   onMetodoSeleccionadoChange: (metodo: MetodoFinanciero | null) => void;
   onRetroceder: () => void;
   onContinuar: () => void;
+  onCancelar: () => void;
 }
 
 export default function EtapaSeleccionMetodo({
@@ -25,6 +26,7 @@ export default function EtapaSeleccionMetodo({
   onMetodoSeleccionadoChange,
   onRetroceder,
   onContinuar,
+  onCancelar
 }: EtapaSeleccionMetodoProps) {
   const [mostrandoInstancias, setMostrandoInstancias] = useState(false);
 
@@ -54,7 +56,7 @@ export default function EtapaSeleccionMetodo({
       setMostrandoInstancias(false);
       return;
     }
-    const requiereInstancias = !["EFECTIVO", "CHEQUE"].includes(metodoSeleccionadoInfo.nombre);
+    const requiereInstancias = ["EFECTIVO", "CHEQUE"].includes(metodoSeleccionadoInfo.nombre) === false;
     setMostrandoInstancias(requiereInstancias);
   }, [metodoSeleccionadoInfo]);
 
@@ -82,13 +84,13 @@ export default function EtapaSeleccionMetodo({
   const operacionCliente = getOperacionCliente(opPerspectivaCasa);
 
   const getTituloMetodo = () => {
-    return operacionCliente === "compra" ? "Método de Pago" : "Método de Cobro";
+    return operacionCliente === "compra" ? "MActodo de Pago" : "MActodo de Cobro";
   };
 
   const getDescripcionMetodo = () => {
     return operacionCliente === "compra"
-      ? "Selecciona cómo vas a pagar por la divisa que quieres comprar"
-      : "Selecciona cómo quieres recibir el pago por la divisa que vas a vender";
+      ? "Selecciona cA3mo vas a pagar por la divisa que quieres comprar"
+      : "Selecciona cA3mo quieres recibir el pago por la divisa que vas a vender";
   };
 
   const puedeAvanzar = () => {
@@ -108,25 +110,10 @@ export default function EtapaSeleccionMetodo({
           instanciaSeleccionada={detalleMetodoSeleccionado}
           onInstanciaChange={handleInstanciaChange}
           onVolver={volverASeleccionMetodos}
+          onCancelar={onCancelar}
+          onContinuar={onContinuar}
+          puedeAvanzar={puedeAvanzar()}
         />
-
-        <div className="flex flex-col sm:flex-row gap-3 pt-4">
-          <button
-            onClick={onRetroceder}
-            className="flex-1 px-4 py-2 text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200 transition-colors"
-          >
-            Atrás
-          </button>
-          <button
-            onClick={onContinuar}
-            disabled={!puedeAvanzar()}
-            className={`flex-1 px-4 py-2 rounded-md transition-colors ${
-              puedeAvanzar() ? "bg-blue-600 text-white hover:bg-blue-700" : "bg-gray-300 text-gray-500 cursor-not-allowed"
-            }`}
-          >
-            Continuar
-          </button>
-        </div>
       </div>
     );
   }
@@ -144,23 +131,36 @@ export default function EtapaSeleccionMetodo({
         onMetodoChange={handleMetodoChange}
       />
 
-      <div className="flex flex-col sm:flex-row gap-3 pt-4">
+      {/* Botones de navegaciA3n */}
+      <div className="flex justify-between items-center gap-3 pt-4">
         <button
           onClick={onRetroceder}
-          className="flex-1 px-4 py-2 text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200 transition-colors"
+          className="px-6 py-2 border border-gray-300 text-gray-700 rounded-lg font-medium hover:bg-gray-50 transition-colors"
         >
-          Atrás
+          AtrÁs
         </button>
-        <button
-          onClick={onContinuar}
-          disabled={!puedeAvanzar()}
-          className={`flex-1 px-4 py-2 rounded-md transition-colors ${
-            puedeAvanzar() ? "bg-blue-600 text-white hover:bg-blue-700" : "bg-gray-300 text-gray-500 cursor-not-allowed"
-          }`}
-        >
-          Continuar
-        </button>
+        
+        <div className="flex gap-3">
+          <button
+            onClick={onCancelar}
+            className="px-6 py-2 border border-gray-300 text-gray-700 rounded-lg font-medium hover:bg-gray-50 transition-colors"
+          >
+            Cancelar
+          </button>
+          <button
+            onClick={onContinuar}
+            disabled={!puedeAvanzar()}
+            className={`px-6 py-2 rounded-lg font-medium transition-colors ${
+              puedeAvanzar()
+                ? "bg-zinc-900 text-white hover:bg-zinc-700"
+                : "bg-gray-300 text-gray-500 cursor-not-allowed"
+            }`}
+          >
+            Continuar
+          </button>
+        </div>
       </div>
     </div>
   );
 }
+
