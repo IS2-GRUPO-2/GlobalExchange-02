@@ -17,6 +17,6 @@ class Configs:
     STRIPE_KEY = os.getenv('STRIPE_KEY')
     DEV_URL = os.getenv('DEV_URL')
     PROD_URL = os.getenv('PROD_URL')
-    STRIPE_WEBHOOK_SECRET = os.getenv('STRIPE_WEBHOOK_SECRET')
+    STRIPE_WEBHOOK_SECRET = os.getenv('STRIPE_WEBHOOK_SECRET') if DJANGO_DEBUG else os.getenv('STRIPE_WEBHOOK_SECRET_DEPLOY')
 
 config = Configs()
