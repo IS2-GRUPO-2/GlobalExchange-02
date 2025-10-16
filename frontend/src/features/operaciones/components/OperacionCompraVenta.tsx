@@ -289,15 +289,6 @@ export default function OperacionCompraVenta() {
     }
   };
 
-  // Navegación retroceder desde etapa 6 a 5
-  const retrocederEtapa5 = () => {
-    // Cancelar transacción pendiente al retroceder desde términos y condiciones
-    if (transaccionId) {
-      cancelarTransaccion(transaccionId).catch(console.error);
-      setTransaccionId(null);
-    }
-    setEtapaActual(5);
-  };
 
   const getMetodoSimulador = (): SimuladorMetodo | null => {
     if (!resultado) return null;
@@ -672,3 +663,4 @@ export default function OperacionCompraVenta() {
     </section>
   );
 }
+
