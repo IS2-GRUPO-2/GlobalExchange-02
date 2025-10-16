@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import SeleccionMetodoFinanciero from "./SeleccionMetodoFinanciero";
 import SeleccionInstanciaMetodo from "./SeleccionInstanciaMetodo";
 import type { MetodoFinanciero } from "../../metodos_financieros/types/MetodoFinanciero";
@@ -11,6 +11,7 @@ interface EtapaSeleccionMetodoProps {
   onMetodoGenericoChange: (metodoId: number | null) => void;
   onRetroceder: () => void;
   onContinuar: () => void;
+  onCancelar: () => void;
 }
 
 export default function EtapaSeleccionMetodo({
@@ -20,7 +21,8 @@ export default function EtapaSeleccionMetodo({
   onDetalleMetodoChange,
   onMetodoGenericoChange,
   onRetroceder,
-  onContinuar
+  onContinuar,
+  onCancelar
 }: EtapaSeleccionMetodoProps) {
   const [metodoSeleccionado, setMetodoSeleccionado] = useState<MetodoFinanciero | null>(null);
   const [mostrandoInstancias, setMostrandoInstancias] = useState(false);
@@ -51,12 +53,15 @@ export default function EtapaSeleccionMetodo({
   };
 
   // Manejar selección de instancia específica
-  const handleInstanciaChange = (instanciaId: number | null) => {
-    onDetalleMetodoChange(instanciaId);
-    if (instanciaId) {
-      onMetodoGenericoChange(null); // Limpiar método genérico si hay instancia específica
-    }
-  };
+  const handleInstanciaChange = useCallback(
+    (instanciaId: number | null) => {
+      onDetalleMetodoChange(instanciaId);
+      if (instanciaId) {
+        onMetodoGenericoChange(null); // Limpiar método genérico si hay instancia específica
+      }
+    },
+    [onDetalleMetodoChange, onMetodoGenericoChange]
+  );
 
   // Volver a selección de métodos
   const volverASeleccionMetodos = () => {
@@ -104,27 +109,10 @@ export default function EtapaSeleccionMetodo({
           instanciaSeleccionada={detalleMetodoSeleccionado}
           onInstanciaChange={handleInstanciaChange}
           onVolver={volverASeleccionMetodos}
+          onCancelar={onCancelar}
+          onContinuar={onContinuar}
+          puedeAvanzar={puedeAvanzar()}
         />
-
-        <div className="flex flex-col sm:flex-row gap-3 pt-4">
-          <button
-            onClick={onRetroceder}
-            className="flex-1 px-4 py-2 text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200 transition-colors"
-          >
-            Atrás
-          </button>
-          <button
-            onClick={onContinuar}
-            disabled={!puedeAvanzar()}
-            className={`flex-1 px-4 py-2 rounded-md transition-colors ${
-              puedeAvanzar()
-                ? "bg-blue-600 text-white hover:bg-blue-700"
-                : "bg-gray-300 text-gray-500 cursor-not-allowed"
-            }`}
-          >
-            Continuar
-          </button>
-        </div>
       </div>
     );
   }
@@ -147,24 +135,34 @@ export default function EtapaSeleccionMetodo({
         onMetodoChange={handleMetodoChange}
       />
 
-      <div className="flex flex-col sm:flex-row gap-3 pt-4">
+      {/* Botones de navegación */}
+      <div className="flex justify-between items-center gap-3 pt-4">
         <button
           onClick={onRetroceder}
-          className="flex-1 px-4 py-2 text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200 transition-colors"
+          className="px-6 py-2 border border-gray-300 text-gray-700 rounded-lg font-medium hover:bg-gray-50 transition-colors"
         >
           Atrás
         </button>
-        <button
-          onClick={onContinuar}
-          disabled={!puedeAvanzar()}
-          className={`flex-1 px-4 py-2 rounded-md transition-colors ${
-            puedeAvanzar()
-              ? "bg-blue-600 text-white hover:bg-blue-700"
-              : "bg-gray-300 text-gray-500 cursor-not-allowed"
-          }`}
-        >
-          Continuar
-        </button>
+        
+        <div className="flex gap-3">
+          <button
+            onClick={onCancelar}
+            className="px-6 py-2 border border-gray-300 text-gray-700 rounded-lg font-medium hover:bg-gray-50 transition-colors"
+          >
+            Cancelar
+          </button>
+          <button
+            onClick={onContinuar}
+            disabled={!puedeAvanzar()}
+            className={`px-6 py-2 rounded-lg font-medium transition-colors ${
+              puedeAvanzar()
+                ? "bg-zinc-900 text-white hover:bg-zinc-700"
+                : "bg-gray-300 text-gray-500 cursor-not-allowed"
+            }`}
+          >
+            Continuar
+          </button>
+        </div>
       </div>
     </div>
   );

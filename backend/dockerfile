@@ -7,18 +7,24 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 WORKDIR /app
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    build-essential && \
-    rm -rf /var/lib/apt/lists/*
+    build-essential \
+    curl \
+    gnupg && \
+    curl -s https://packages.stripe.dev/api/security/keypair/stripe-cli-gpg/public | gpg --dearmor | tee /usr/share/keyrings/stripe.gpg && \
+    echo "deb [signed-by=/usr/share/keyrings/stripe.gpg] https://packages.stripe.dev/stripe-cli-debian-local stable main" \
+    | tee -a /etc/apt/sources.list.d/stripe.list && \
+    apt-get update && apt-get install -y stripe && \
+    apt-get clean && rm -rf /var/lib/apt/lists/*
 
 RUN useradd -M -s /usr/sbin/nologin django
 
 COPY requirements.txt .
+
 RUN pip install -r requirements.txt
 
 COPY . /app
 
 RUN mkdir -p /app/static /app/media \
     && chown -R django:django /app
-    
+   
 USER django
-

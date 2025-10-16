@@ -9,62 +9,118 @@ interface SeleccionInstanciaMetodoProps {
   instanciaSeleccionada: number | null;
   onInstanciaChange: (instanciaId: number | null) => void;
   onVolver: () => void;
+  onCancelar: () => void;
+  onContinuar: () => void;
+  puedeAvanzar: boolean;
 }
 
 export default function SeleccionInstanciaMetodo({
   metodoFinanciero,
   instanciaSeleccionada,
   onInstanciaChange,
-  onVolver
+  onVolver,
+  onCancelar,
+  onContinuar,
+  puedeAvanzar
 }: SeleccionInstanciaMetodoProps) {
   const [cuentasBancarias, setCuentasBancarias] = useState<CuentaBancaria[]>([]);
   const [billeterasDigitales, setBilleterasDigitales] = useState<BilleteraDigital[]>([]);
   const [tarjetas, setTarjetas] = useState<Tarjeta[]>([]);
   const [loading, setLoading] = useState(false);
 
+  const getDetalleId = (instancia: any): number | null => {
+    if (!instancia) return null;
+    const detalle = instancia.metodo_financiero_detalle;
+    if (typeof detalle === "number") {
+      return detalle;
+    }
+    if (detalle && typeof detalle === "object" && detalle.id !== undefined) {
+      const parsed = Number(detalle.id);
+      return Number.isNaN(parsed) ? null : parsed;
+    }
+    if (instancia.id !== undefined) {
+      const parsed = Number(instancia.id);
+      return Number.isNaN(parsed) ? null : parsed;
+    }
+    return null;
+  };
+
   // Cargar instancias específicas del cliente
   useEffect(() => {
+    if (!metodoFinanciero) return;
+
+    let isActive = true;
+
     const fetchInstancias = async () => {
       setLoading(true);
       try {
         let instancias: any[] = [];
-        
+
         switch (metodoFinanciero.nombre) {
-          case "TRANSFERENCIA_BANCARIA":
-            instancias = await getMisCuentasBancarias();
-            setCuentasBancarias(instancias);
+          case "TRANSFERENCIA_BANCARIA": {
+            const data = await getMisCuentasBancarias();
+            if (!isActive) return;
+            instancias = data;
+            setCuentasBancarias(data);
+            setBilleterasDigitales([]);
+            setTarjetas([]);
             break;
-          case "BILLETERA_DIGITAL":
-            instancias = await getMisBilleterasDigitales();
-            setBilleterasDigitales(instancias);
+          }
+          case "BILLETERA_DIGITAL": {
+            const data = await getMisBilleterasDigitales();
+            if (!isActive) return;
+            instancias = data;
+            setBilleterasDigitales(data);
+            setCuentasBancarias([]);
+            setTarjetas([]);
             break;
-          case "TARJETA":
-            instancias = await getMisTarjetas();
-            setTarjetas(instancias);
+          }
+          case "TARJETA": {
+            const data = await getMisTarjetas();
+            if (!isActive) return;
+            instancias = data;
+            setTarjetas(data);
+            setCuentasBancarias([]);
+            setBilleterasDigitales([]);
             break;
+          }
+          default: {
+            setCuentasBancarias([]);
+            setBilleterasDigitales([]);
+            setTarjetas([]);
+          }
         }
-        
-        // Seleccionar automáticamente la primera instancia si existe
-        if (instancias.length > 0) {
-          onInstanciaChange(instancias[0].metodo_financiero_detalle);
-        } else {
-          onInstanciaChange(null);
-        }
-        
+
+        if (!isActive) return;
+
+        const defaultDetalleId =
+          instancias.length > 0 ? getDetalleId(instancias[0]) : null;
+        onInstanciaChange(defaultDetalleId);
       } catch (error: any) {
+        if (!isActive) return;
         toast.error(`Error al cargar ${getMetodoLabel(metodoFinanciero.nombre)}: ${error.message}`);
         onInstanciaChange(null);
+        setCuentasBancarias([]);
+        setBilleterasDigitales([]);
+        setTarjetas([]);
       } finally {
-        setLoading(false);
+        if (isActive) {
+          setLoading(false);
+        }
       }
     };
 
     fetchInstancias();
-  }, [metodoFinanciero, onInstanciaChange]);
+
+    return () => {
+      isActive = false;
+    };
+  }, [metodoFinanciero?.nombre, onInstanciaChange]);
 
   // Manejar selección de instancia específica
-  const handleInstanciaSelection = (instanciaId: number) => {
-    onInstanciaChange(instanciaId);
+  const handleInstanciaSelection = (instancia: any) => {
+    const detalleId = getDetalleId(instancia);
+    onInstanciaChange(detalleId);
   };
 
   // Funciones auxiliares
@@ -108,23 +164,21 @@ export default function SeleccionInstanciaMetodo({
         </div>
       ) : instancias.length > 0 ? (
         <div className="space-y-2">
-          {instancias.map((instancia: any) => (
+          {instancias.map((instancia: any) => {
+            const detalleId = getDetalleId(instancia);
+            const isSelected = detalleId !== null && instanciaSeleccionada === detalleId;
+            return (
             <div
               key={instancia.id}
               className={`p-3 border-2 rounded-lg cursor-pointer transition-all ${
-                instanciaSeleccionada === instancia.metodo_financiero_detalle
-                  ? "border-blue-500 bg-blue-50"
-                  : "border-gray-200 hover:border-gray-300 hover:bg-gray-50"
+                isSelected ? "border-blue-500 bg-blue-50" : "border-gray-200 hover:border-gray-300 hover:bg-gray-50"
               }`}
-              onClick={() => handleInstanciaSelection(instancia.metodo_financiero_detalle)}
+              onClick={() => handleInstanciaSelection(instancia)}
             >
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-3">
                   {getMetodoIcon(metodoFinanciero.nombre)}
                   <div>
-                    <h4 className="font-medium text-gray-800 text-sm">
-                      {instancia.alias || 'Sin alias'}
-                    </h4>
                     <div className="text-xs text-gray-600 space-y-0.5">
                       {/* Mostrar detalles específicos según el tipo */}
                       {metodoFinanciero.nombre === "TRANSFERENCIA_BANCARIA" && (
@@ -151,18 +205,14 @@ export default function SeleccionInstanciaMetodo({
                     </div>
                   </div>
                 </div>
-                <div className={`w-4 h-4 rounded-full border-2 ${
-                  instanciaSeleccionada === instancia.id
-                    ? "bg-blue-500 border-blue-500"
-                    : "border-gray-300"
-                }`}>
-                  {instanciaSeleccionada === instancia.id && (
+                <div className={`w-4 h-4 rounded-full border-2 ${isSelected ? "bg-blue-500 border-blue-500" : "border-gray-300"}`}>
+                  {isSelected && (
                     <div className="w-2 h-2 bg-white rounded-full m-auto mt-0.5"></div>
                   )}
                 </div>
               </div>
             </div>
-          ))}
+          )})}
         </div>
       ) : (
         <div className="text-center py-6">
@@ -175,13 +225,34 @@ export default function SeleccionInstanciaMetodo({
         </div>
       )}
 
-      <div className="flex justify-center pt-2">
+      {/* Botones de navegación */}
+      <div className="flex justify-between items-center gap-3 pt-4">
         <button
           onClick={onVolver}
-          className="px-4 py-2 text-sm text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200 transition-colors"
+          className="px-6 py-2 border border-gray-300 text-gray-700 rounded-lg font-medium hover:bg-gray-50 transition-colors"
         >
-          Cambiar Método
+          Atrás
         </button>
+        
+        <div className="flex gap-3">
+          <button
+            onClick={onCancelar}
+            className="px-6 py-2 border border-gray-300 text-gray-700 rounded-lg font-medium hover:bg-gray-50 transition-colors"
+          >
+            Cancelar
+          </button>
+          <button
+            onClick={onContinuar}
+            disabled={!puedeAvanzar}
+            className={`px-6 py-2 rounded-lg font-medium transition-colors ${
+              puedeAvanzar
+                ? "bg-zinc-900 text-white hover:bg-zinc-700"
+                : "bg-gray-300 text-gray-500 cursor-not-allowed"
+            }`}
+          >
+            Continuar
+          </button>
+        </div>
       </div>
     </div>
   );

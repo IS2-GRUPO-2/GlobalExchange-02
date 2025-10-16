@@ -30,7 +30,7 @@ export type User = {
   first_name: string;
   last_name: string;
   email: string;
-  roles: string[];
+  roles: number[]; // IDs de los roles asignados
   permissions: string[];
   is_active: boolean;
   email_verified: boolean; // Coincide con el campo del backend
