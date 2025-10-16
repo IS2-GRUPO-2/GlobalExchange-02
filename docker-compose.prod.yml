@@ -23,6 +23,18 @@ services:
       db:
         condition: service_healthy
 
+  simuladorpagos:
+    image: ghcr.io/is2-grupo-2/globalexchange-02/simuladorpagos:latest
+    container_name: simulador_pagos_prod
+    hostname: simuladorpagos
+    environment:
+      - BACKEND_URL=http://backend:8000
+    ports:
+      - "8080:8000"
+    restart: unless-stopped
+    depends_on:
+      - backend
+
   nginx_prod:
     image: ghcr.io/is2-grupo-2/globalexchange-02/frontend:latest
     container_name: nginx_prod
