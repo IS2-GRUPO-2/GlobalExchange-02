@@ -30,6 +30,8 @@ import RequireAuth from "./RequiereAuth";
 import OperacionPage from "../features/operaciones/pages/OperacionPage";
 import ConfiguracionTauserPage from "../features/tauser/pages/ConfiguracionTauserPage";
 import HistorialPage from "../pages/HistorialPage";
+import { CheckoutSuccess } from "../pages/CheckoutSuccessPage";
+import CheckoutCancel from "../pages/CheckoutCancelPage";
 
 export const router = createBrowserRouter([
   {
@@ -65,6 +67,24 @@ export const router = createBrowserRouter([
         element: (
           <RequireAuth>
             <SecuritySettingsPage />
+          </RequireAuth>
+        ),
+      },
+
+      {
+        path: "checkout/success",
+        element: (
+          <RequireAuth>
+            <CheckoutSuccess />
+          </RequireAuth>
+        ),
+      },
+
+      {
+        path: "checkout/cancel",
+        element: (
+          <RequireAuth>
+            <CheckoutCancel />
           </RequireAuth>
         ),
       },
