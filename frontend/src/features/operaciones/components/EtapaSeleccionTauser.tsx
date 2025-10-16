@@ -8,13 +8,15 @@ interface EtapaSeleccionTauserProps {
   setTauserSeleccionado: (tauserId: string) => void;
   onRetroceder: () => void;
   onAvanzar: () => void;
+  onCancelar: () => void;
 }
 
 export default function EtapaSeleccionTauser({
   tauserSeleccionado,
   setTauserSeleccionado,
   onRetroceder,
-  onAvanzar
+  onAvanzar,
+  onCancelar
 }: EtapaSeleccionTauserProps) {
   const [tausers, setTausers] = useState<Tauser[]>([]);
   const [loading, setLoading] = useState(false);
@@ -123,24 +125,33 @@ export default function EtapaSeleccionTauser({
       )}
 
       {/* Botones de navegación */}
-      <div className="flex justify-between">
+      <div className="flex justify-between items-center gap-3">
         <button
           onClick={onRetroceder}
-          className="px-6 py-2 border border-gray-300 text-gray-700 rounded-lg font-medium hover:bg-gray-50"
+          className="px-6 py-2 border border-gray-300 text-gray-700 rounded-lg font-medium hover:bg-gray-50 transition-colors"
         >
-          Anterior
+          Atrás
         </button>
-        <button
-          onClick={onAvanzar}
-          disabled={!puedeAvanzar}
-          className={`px-6 py-2 rounded-lg font-medium ${
-            puedeAvanzar
-              ? "bg-zinc-900 text-white hover:bg-zinc-700"
-              : "bg-gray-300 text-gray-500 cursor-not-allowed"
-          }`}
-        >
-          Continuar
-        </button>
+        
+        <div className="flex gap-3">
+          <button
+            onClick={onCancelar}
+            className="px-6 py-2 border border-gray-300 text-gray-700 rounded-lg font-medium hover:bg-gray-50 transition-colors"
+          >
+            Cancelar
+          </button>
+          <button
+            onClick={onAvanzar}
+            disabled={!puedeAvanzar}
+            className={`px-6 py-2 rounded-lg font-medium transition-colors ${
+              puedeAvanzar
+                ? "bg-zinc-900 text-white hover:bg-zinc-700"
+                : "bg-gray-300 text-gray-500 cursor-not-allowed"
+            }`}
+          >
+            Continuar
+          </button>
+        </div>
       </div>
     </div>
   );
