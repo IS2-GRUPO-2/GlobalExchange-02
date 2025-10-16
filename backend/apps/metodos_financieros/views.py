@@ -322,6 +322,7 @@ class MetodoFinancieroViewSet(viewsets.ModelViewSet):
 
     Nota sobre permisos:
         Permite a usuarios autenticados ver la lista pero requiere admin para modificar.
+        El endpoint 'metodos-operacion' es público para ser usado en el landing.
     """
     queryset = MetodoFinanciero.objects.all()
     serializer_class = MetodoFinancieroSerializer
@@ -329,6 +330,17 @@ class MetodoFinancieroViewSet(viewsets.ModelViewSet):
     filter_backends = [filters.SearchFilter]
     search_fields = ['nombre']
     pagination_class = OperacionesPagination
+
+    def get_permissions(self):
+        """
+        Configuración de permisos por acción.
+        
+        - 'metodos-operacion': Acceso público (AllowAny) para el landing
+        - Otros: Requieren autenticación y permisos de modelo
+        """
+        if self.action == 'list_metodos_operacion':
+            return [permissions.AllowAny()]
+        return super().get_permissions()
 
     def destroy(self, request, *args, **kwargs):
         """
