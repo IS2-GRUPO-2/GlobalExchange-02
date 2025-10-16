@@ -36,7 +36,12 @@ type ReconfirmPayload = {
 };
 
 const SIMULADOR_MESSAGE_KIND = "simulador-transferencia-bancaria";
-const SIMULADOR_POPUP_NAME = "simulador-transferencia-bancaria-popup";
+const SIMULADOR_POPUP_NAMES = {
+  transferencia: "simulador-transferencia-bancaria-popup",
+  billetera: "simulador-billetera-digital-popup",
+} as const;
+
+type SimuladorMetodo = keyof typeof SIMULADOR_POPUP_NAMES;
 
 export default function OperacionCompraVenta() {
   // Estado de navegación
@@ -297,14 +302,20 @@ export default function OperacionCompraVenta() {
     setEtapaActual(5);
   };
 
-  const requiereSimuladorTransferencia = () => {
-    if (!resultado) return false;
-    if (resultado.op_perspectiva_casa !== "venta") return false;
-    if (metodoSeleccionadoInfo?.nombre !== "TRANSFERENCIA_BANCARIA") return false;
-    return detalleMetodoSeleccionado !== null;
+  const getMetodoSimulador = (): SimuladorMetodo | null => {
+    if (!resultado) return null;
+    if (resultado.op_perspectiva_casa !== "venta") return null;
+    if (detalleMetodoSeleccionado === null) return null;
+
+    const metodoNombre = metodoSeleccionadoInfo?.nombre;
+    if (metodoNombre === "TRANSFERENCIA_BANCARIA") return "transferencia";
+    if (metodoNombre === "BILLETERA_DIGITAL") return "billetera";
+    return null;
   };
 
-  const abrirSimuladorTransferencia = async (): Promise<"success" | "cancel" | "rate-change"> => {
+  const abrirSimuladorPago = async (
+    metodo: SimuladorMetodo,
+  ): Promise<"success" | "cancel" | "rate-change"> => {
     if (!resultado || !transaccionId) {
       return "cancel";
     }
@@ -316,12 +327,19 @@ export default function OperacionCompraVenta() {
     if (resultado.divisa_origen) {
       url.searchParams.set("divisa", resultado.divisa_origen);
     }
+    url.searchParams.set("metodo", metodo);
 
     return new Promise<"success" | "cancel" | "rate-change">((resolve) => {
-      const features = "width=420,height=720,menubar=no,toolbar=no,location=no,status=no,resizable=yes,scrollbars=yes";
-      const popup = window.open(url.toString(), SIMULADOR_POPUP_NAME, features);
+      const features =
+        "width=420,height=720,menubar=no,toolbar=no,location=no,status=no,resizable=yes,scrollbars=yes";
+      const popupName = SIMULADOR_POPUP_NAMES[metodo];
+      const popup = window.open(url.toString(), popupName, features);
       if (!popup) {
-        toast.error("No se pudo abrir el simulador de transferencia bancaria. Revisa los bloqueadores de ventanas emergentes.");
+        const metodoLabel =
+          metodo === "transferencia" ? "transferencia bancaria" : "billetera digital";
+        toast.error(
+          `No se pudo abrir el simulador de ${metodoLabel}. Revisa los bloqueadores de ventanas emergentes.`,
+        );
         resolve("cancel");
         return;
       }
@@ -372,8 +390,9 @@ export default function OperacionCompraVenta() {
       return;
     }
 
-    if (requiereSimuladorTransferencia()) {
-      const resultadoSimulador = await abrirSimuladorTransferencia();
+    const metodoSimulador = getMetodoSimulador();
+    if (metodoSimulador) {
+      const resultadoSimulador = await abrirSimuladorPago(metodoSimulador);
       if (resultadoSimulador === "rate-change") {
         try {
           const r = await reconfirmarTasa(transaccionId);
@@ -412,7 +431,9 @@ export default function OperacionCompraVenta() {
 
     setModalCambioOpen(false);
 
-    if (requiereSimuladorTransferencia()) {
+    const metodoSimulador = getMetodoSimulador();
+
+    if (metodoSimulador) {
       if (reconfirm) {
         const tasaNueva = Number(reconfirm.tasa_actual);
         const montoDestinoNuevo = Number(reconfirm.monto_destino_actual);
@@ -450,7 +471,7 @@ export default function OperacionCompraVenta() {
         }
       }
 
-      const resultadoSimulador = await abrirSimuladorTransferencia();
+      const resultadoSimulador = await abrirSimuladorPago(metodoSimulador);
       if (resultadoSimulador === "rate-change") {
         try {
           const r = await reconfirmarTasa(transaccionId);

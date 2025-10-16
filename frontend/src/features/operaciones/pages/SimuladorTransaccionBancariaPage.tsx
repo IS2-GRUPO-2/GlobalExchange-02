@@ -15,6 +15,7 @@ type SimuladorVista =
   | { step: "error"; mensaje: string };
 
 const MESSAGE_CHANNEL = "simulador-transferencia-bancaria";
+type SimuladorMetodo = "transferencia" | "billetera";
 
 const closeAndNotify = (status: "success" | "cancel" | "rate-change", payload?: unknown) => {
   try {
@@ -35,14 +36,17 @@ export default function SimuladorTransaccionBancariaPage() {
     const clienteNombre = searchParams.get("cliente") ?? "";
     const montoParam = searchParams.get("monto");
     const divisaOrigen = searchParams.get("divisa") ?? "";
+    const metodoParam = searchParams.get("metodo") ?? "";
 
     const monto = montoParam ? Number(montoParam) : NaN;
+    const metodo: SimuladorMetodo = metodoParam === "billetera" ? "billetera" : "transferencia";
 
     return {
       transaccionId,
       clienteNombre,
       monto,
       divisaOrigen,
+      metodo,
     };
   }, [searchParams]);
 
@@ -57,8 +61,14 @@ export default function SimuladorTransaccionBancariaPage() {
   );
 
   useEffect(() => {
-    document.title = "Simulador Transferencia Bancaria";
-  }, []);
+    const titulo =
+      payload.metodo === "billetera"
+        ? "Simulador Billetera Digital"
+        : "Simulador Transferencia Bancaria";
+    document.title = titulo;
+  }, [payload.metodo]);
+
+  const metodoChipLabel = payload.metodo === "billetera" ? "Billetera Digital" : "Cuenta Bancaria";
 
   if (!datosValidos) {
     return (
@@ -153,7 +163,7 @@ export default function SimuladorTransaccionBancariaPage() {
             <header className="px-6 pt-8 pb-6 text-center space-y-2">
               <div className="inline-flex items-center gap-2 px-4 py-1 rounded-full bg-slate-800/80 border border-slate-700 text-xs uppercase tracking-wider text-slate-300">
                 <Building2 className="w-3.5 h-3.5" />
-                Cuenta Bancaria
+                {metodoChipLabel}
               </div>
               <h1 className="text-3xl font-bold tracking-tight text-white">Transferir</h1>
               <p className="text-sm text-slate-300">
