@@ -503,7 +503,7 @@ class TransaccionViewSet(viewsets.ModelViewSet):
                 mode="payment",
                 success_url=DOMAIN + "/checkout/success?session_id={CHECKOUT_SESSION_ID}",
                 cancel_url=DOMAIN + "/checkout/cancel?session_id={CHECKOUT_SESSION_ID}",
-                customer_email=transaccion.id_user.email,
+                customer_email=transaccion.cliente.correo,
                 locale="es",
                 metadata={
                     "transaccion_id": str(transaccion.id)
