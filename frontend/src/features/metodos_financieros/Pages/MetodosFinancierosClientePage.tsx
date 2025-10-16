@@ -490,11 +490,6 @@ const MetodosFinancierosClientePage = () => {
     }
   };
 
-  useEffect(() => {
-    fetchAllData();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []); // Solo cargar UNA vez, sin dependencia de searchQuery
-
   // Recargar datos cuando cambie el cliente
   useEffect(() => {
     if (clienteActual) {
@@ -503,6 +498,30 @@ const MetodosFinancierosClientePage = () => {
   }, [clienteActual]);
 
   const currentItems = getCurrentItems();
+
+  // Si no hay cliente seleccionado, mostrar mensaje
+  if (!clienteActual) {
+    return (
+      <div className="bg-gray-50 min-h-screen flex-1 overflow-y-auto p-6">
+        <div className="mb-6">
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">Mis Métodos Financieros</h1>
+        </div>
+        <div className="card">
+          <div className="text-center py-12">
+            <div className="text-gray-400 mb-4">
+              <CreditCard size={64} className="mx-auto" />
+            </div>
+            <h3 className="text-xl font-medium text-gray-900 mb-2">
+              No hay cliente seleccionado
+            </h3>
+            <p className="text-gray-600">
+              Por favor, selecciona un cliente para ver sus métodos financieros
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="bg-gray-50 min-h-screen flex-1 overflow-y-auto p-6">

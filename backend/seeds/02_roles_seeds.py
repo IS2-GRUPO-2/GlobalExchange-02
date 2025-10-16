@@ -27,13 +27,31 @@ def run():
                 'clientes.add_cliente',
                 'clientes.change_cliente',
                 
-                # Operaciones completas
+                # Métodos financieros - Gestión completa
                 'metodos_financieros.add_metodofinancierodetalle',
                 'metodos_financieros.change_metodofinancierodetalle',
                 'metodos_financieros.view_metodofinancierodetalle',
+                
+                # Permisos para gestionar métodos financieros específicos
+                'metodos_financieros.add_cuentabancaria',
+                'metodos_financieros.change_cuentabancaria',
+                'metodos_financieros.view_cuentabancaria',
+                'metodos_financieros.delete_cuentabancaria',
+                'metodos_financieros.add_billeteradigital',
+                'metodos_financieros.change_billeteradigital',
+                'metodos_financieros.view_billeteradigital',
+                'metodos_financieros.delete_billeteradigital',
+                'metodos_financieros.add_tarjeta',
+                'metodos_financieros.change_tarjeta',
+                'metodos_financieros.view_tarjeta',
+                'metodos_financieros.delete_tarjeta',
+                
+                # Ver catálogos
                 'metodos_financieros.view_banco',
                 'metodos_financieros.view_billeteradigitalcatalogo',
-                # 'metodos_financieros.view_metodofinanciero',  # QUITADO
+                'metodos_financieros.view_tarjetacatalogo',
+                
+                # Operaciones completas
                 'operaciones.can_use_operacion',
                 
                 # Cotizaciones
@@ -78,10 +96,33 @@ def run():
         {
             'name': 'Cliente Premium',
             'permissions': [
-                # Solo ver sus propios datos
-                'clientes.view_cliente',
+                # Métodos financieros - Gestión completa
                 'metodos_financieros.view_metodofinancierodetalle',
                 'metodos_financieros.add_metodofinancierodetalle',
+                'metodos_financieros.change_metodofinancierodetalle',
+                'metodos_financieros.delete_metodofinancierodetalle',
+                
+                # Permisos para gestionar sus métodos financieros específicos
+                'metodos_financieros.add_cuentabancaria',
+                'metodos_financieros.change_cuentabancaria',
+                'metodos_financieros.view_cuentabancaria',
+                'metodos_financieros.delete_cuentabancaria',
+                'metodos_financieros.add_billeteradigital',
+                'metodos_financieros.change_billeteradigital',
+                'metodos_financieros.view_billeteradigital',
+                'metodos_financieros.delete_billeteradigital',
+                'metodos_financieros.add_tarjeta',
+                'metodos_financieros.change_tarjeta',
+                'metodos_financieros.view_tarjeta',
+                'metodos_financieros.delete_tarjeta',
+                
+                # Ver catálogos
+                'metodos_financieros.view_banco',
+                'metodos_financieros.view_billeteradigitalcatalogo',
+                'metodos_financieros.view_tarjetacatalogo',
+                
+                # Solo ver sus propios datos
+                'clientes.view_cliente',
                 'divisas.view_divisa',
                 'cotizaciones.view_tasa',
                 'cotizaciones.view_historialtasa',

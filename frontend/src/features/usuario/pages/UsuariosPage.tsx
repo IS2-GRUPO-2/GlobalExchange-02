@@ -252,6 +252,7 @@ const UsuariosPage = () => {
                 <th>Nombre</th>
                 <th>Email</th>
                 <th>Estado</th>
+                <th>Roles</th>
                 <th>Clientes</th>
                 <th>Acciones</th>
               </tr>
@@ -271,6 +272,11 @@ const UsuariosPage = () => {
                       }`}
                     >
                       {user.is_active ? "Activo" : "Inactivo"}
+                    </span>
+                  </td>
+                  <td>
+                    <span className="text-sm text-gray-500">
+                      {user.roles?.length || 0} rol(es)
                     </span>
                   </td>
                   <td>
