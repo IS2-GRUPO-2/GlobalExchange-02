@@ -8,7 +8,7 @@ export default function Footer() {
           <div className="mb-2 md:mb-0">
             <span className="text-white font-semibold">Global Exchange PY</span>
             <span className="mx-2">|</span>
-            <span>© {currentYear} Studen Proyect</span>
+            <span>© {currentYear} Student Project</span>
           </div>
           <div className="flex gap-4">
             <a href="#" className="hover:text-white transition-colors">

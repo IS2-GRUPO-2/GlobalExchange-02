@@ -172,21 +172,23 @@ export default function EtapaTerminosCondiciones({
       </div>
 
       {/* Botones navegación */}
-      <div className="flex justify-between">
+      <div className="flex justify-between gap-3">
         <button
           onClick={onRetroceder}
-          className="px-6 py-2 border border-gray-300 text-gray-700 rounded-lg font-medium hover:bg-gray-50"
+          className="px-6 py-2 border border-gray-300 text-gray-700 rounded-lg font-medium hover:bg-gray-50 transition-colors"
         >
-          Anterior
+          Atrás
         </button>
         <button
           onClick={handleAceptar}
           disabled={!terminosAceptados}
-          className={`px-6 py-3 rounded-lg font-medium ${
-            terminosAceptados ? "bg-green-600 text-white hover:bg-green-700" : "bg-gray-300 text-gray-500 cursor-not-allowed"
+          className={`px-6 py-2 rounded-lg font-medium transition-colors ${
+            terminosAceptados 
+              ? "bg-zinc-900 text-white hover:bg-zinc-700" 
+              : "bg-gray-300 text-gray-500 cursor-not-allowed"
           }`}
         >
-          {terminosAceptados ? "Pagar" : "Acepta los Términos"}
+          {terminosAceptados ? "Confirmar y Pagar" : "Acepta los Términos"}
         </button>
       </div>
     </div>
