@@ -9,6 +9,7 @@ interface EtapaSeleccionMetodoProps {
   metodoGenericoSeleccionado: number | null;
   metodoSeleccionadoInfo: MetodoFinanciero | null;
   onDetalleMetodoChange: (detalleId: number | null) => void;
+  onDetalleMetodoInfoChange: (instancia: any | null) => void;
   onMetodoGenericoChange: (metodoId: number | null) => void;
   onMetodoSeleccionadoChange: (metodo: MetodoFinanciero | null) => void;
   onRetroceder: () => void;
@@ -22,6 +23,7 @@ export default function EtapaSeleccionMetodo({
   metodoGenericoSeleccionado,
   metodoSeleccionadoInfo,
   onDetalleMetodoChange,
+  onDetalleMetodoInfoChange,
   onMetodoGenericoChange,
   onMetodoSeleccionadoChange,
   onRetroceder,
@@ -35,6 +37,7 @@ export default function EtapaSeleccionMetodo({
 
     if (!metodo) {
       onDetalleMetodoChange(null);
+      onDetalleMetodoInfoChange(null);
       onMetodoGenericoChange(null);
       setMostrandoInstancias(false);
       return;
@@ -43,10 +46,12 @@ export default function EtapaSeleccionMetodo({
     if (metodo.nombre === "EFECTIVO" || metodo.nombre === "CHEQUE") {
       onMetodoGenericoChange(metodo.id ?? null);
       onDetalleMetodoChange(null);
+      onDetalleMetodoInfoChange(null);
       setMostrandoInstancias(false);
     } else {
       onMetodoGenericoChange(null);
       onDetalleMetodoChange(null);
+      onDetalleMetodoInfoChange(null);
       setMostrandoInstancias(true);
     }
   };
@@ -61,18 +66,20 @@ export default function EtapaSeleccionMetodo({
   }, [metodoSeleccionadoInfo]);
 
   const handleInstanciaChange = useCallback(
-    (instanciaId: number | null) => {
+    (instanciaId: number | null, instancia?: any) => {
       onDetalleMetodoChange(instanciaId);
+      onDetalleMetodoInfoChange(instancia ?? null);
       if (instanciaId) {
         onMetodoGenericoChange(null);
       }
     },
-    [onDetalleMetodoChange, onMetodoGenericoChange],
+    [onDetalleMetodoChange, onDetalleMetodoInfoChange, onMetodoGenericoChange],
   );
 
   const volverASeleccionMetodos = () => {
     setMostrandoInstancias(false);
     onDetalleMetodoChange(null);
+    onDetalleMetodoInfoChange(null);
     onMetodoGenericoChange(null);
     onMetodoSeleccionadoChange(null);
   };
@@ -84,13 +91,13 @@ export default function EtapaSeleccionMetodo({
   const operacionCliente = getOperacionCliente(opPerspectivaCasa);
 
   const getTituloMetodo = () => {
-    return operacionCliente === "compra" ? "MActodo de Pago" : "MActodo de Cobro";
+    return operacionCliente === "compra" ? "Metodo de Pago" : "Metodo de Cobro";
   };
 
   const getDescripcionMetodo = () => {
     return operacionCliente === "compra"
-      ? "Selecciona cA3mo vas a pagar por la divisa que quieres comprar"
-      : "Selecciona cA3mo quieres recibir el pago por la divisa que vas a vender";
+      ? "Selecciona como vas a pagar por la divisa que quieres comprar"
+      : "Selecciona como quieres recibir el pago por la divisa que vas a vender";
   };
 
   const puedeAvanzar = () => {
@@ -163,4 +170,3 @@ export default function EtapaSeleccionMetodo({
     </div>
   );
 }
-

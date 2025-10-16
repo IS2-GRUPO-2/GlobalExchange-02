@@ -554,7 +554,7 @@ export const getMisTarjetas = async (params: GetParams = {}): Promise<Tarjeta[]>
 // ======================== MÉTODOS CASA DE CAMBIO ========================
 
 /**
- * Obtiene las cuentas bancarias de la casa de cambio (solo admins)
+ * Obtiene las cuentas bancarias de la casa de cambio (requiere autenticación)
  */
 export const getCasaCuentasBancarias = async (params: GetParams = {}): Promise<CuentaBancaria[]> => {
   try {
@@ -570,7 +570,7 @@ export const getCasaCuentasBancarias = async (params: GetParams = {}): Promise<C
 };
 
 /**
- * Obtiene las billeteras digitales de la casa de cambio (solo admins)
+ * Obtiene las billeteras digitales de la casa de cambio (requiere autenticación)
  */
 export const getCasaBilleterasDigitales = async (params: GetParams = {}): Promise<BilleteraDigital[]> => {
   try {
