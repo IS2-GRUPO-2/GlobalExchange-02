@@ -1,7 +1,7 @@
 import axios from 'axios';
 import {
-  type PreferenciaNotificacionUsuario,
-  type PreferenciaNotificacionCliente,
+  type NotificacionTasaUsuario,
+  type NotificacionTasaCliente,
 } from '../types/Notificacion';
 
 const API_URL = '/api/notificaciones'
@@ -16,7 +16,7 @@ const getAuthHeader = () => {
   };
 };
 
-const normalizePreferencias = (data: any) => ({
+const normalizeNotificacionTasa = (data: any) => ({
   ...data,
   divisas_suscritas: Array.isArray(data.divisas_suscritas)
     ? data.divisas_suscritas
@@ -27,47 +27,47 @@ const normalizePreferencias = (data: any) => ({
 });
 
 // ===================================================
-// PREFERENCIAS DE USUARIO
+// NOTIFICACIONES TASA DE USUARIO
 // ===================================================
 
-export const getPreferenciasUsuario = async (): Promise<PreferenciaNotificacionUsuario> => {
+export const getNotificacionTasaUsuario = async (): Promise<NotificacionTasaUsuario> => {
   const response = await axios.get(
-    `${API_URL}/preferencias/usuario/`,
+    `${API_URL}/tasa/usuario/`,
     getAuthHeader()
   );
-  return normalizePreferencias(response.data);
+  return normalizeNotificacionTasa(response.data);
 };
 
-export const updatePreferenciasUsuario = async (
-  data: Partial<PreferenciaNotificacionUsuario>
-): Promise<PreferenciaNotificacionUsuario> => {
+export const updateNotificacionTasaUsuario = async (
+  data: Partial<NotificacionTasaUsuario>
+): Promise<NotificacionTasaUsuario> => {
   const response = await axios.patch(
-    `${API_URL}/preferencias/usuario/`,
+    `${API_URL}/tasa/usuario/`,
     data,
     getAuthHeader()
   );
-  return normalizePreferencias(response.data);
+  return normalizeNotificacionTasa(response.data);
 };
 
 // ===================================================
-// PREFERENCIAS DE CLIENTE
+// NOTIFICACIONES TASA DE CLIENTE
 // ===================================================
 
-export const getPreferenciasCliente = async (): Promise<PreferenciaNotificacionCliente> => {
+export const getNotificacionTasaCliente = async (): Promise<NotificacionTasaCliente> => {
   const response = await axios.get(
-    `${API_URL}/preferencias/cliente/`,
+    `${API_URL}/tasa/cliente/`,
     getAuthHeader()
   );
-  return normalizePreferencias(response.data);
+  return normalizeNotificacionTasa(response.data);
 };
 
-export const updatePreferenciasCliente = async (
-  data: Partial<PreferenciaNotificacionCliente>
-): Promise<PreferenciaNotificacionCliente> => {
+export const updateNotificacionTasaCliente = async (
+  data: Partial<NotificacionTasaCliente>
+): Promise<NotificacionTasaCliente> => {
   const response = await axios.patch(
-    `${API_URL}/preferencias/cliente/`,
+    `${API_URL}/tasa/cliente/`,
     data,
     getAuthHeader()
   );
-  return normalizePreferencias(response.data);
+  return normalizeNotificacionTasa(response.data);
 };

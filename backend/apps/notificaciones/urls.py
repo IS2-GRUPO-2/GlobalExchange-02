@@ -1,21 +1,21 @@
 from django.urls import path
 from apps.notificaciones.views import (
-    PreferenciaNotificacionUsuarioView,
-    PreferenciaNotificacionClienteView
+    NotificacionTasaUsuarioView,
+    NotificacionTasaClienteView
 )
 
 urlpatterns = [
-    # Preferencias de usuario
+    # Preferencia de usuario
     path(
-        'preferencias/usuario/',
-        PreferenciaNotificacionUsuarioView.as_view(),
-        name='preferencias-usuario'
+        'tasa/usuario/',
+        NotificacionTasaUsuarioView.as_view(),
+        name='tasa-usuario'
     ),
 
     # Preferencias de cliente
     path(
-        'preferencias/cliente/',
-        PreferenciaNotificacionClienteView.as_view(),
-        name='preferencias-cliente'
+        'tasa/cliente/',
+        NotificacionTasaClienteView.as_view(),
+        name='tasa-cliente'
     )
 ]

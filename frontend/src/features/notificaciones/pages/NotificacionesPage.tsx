@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Bell, User, Building2 } from "lucide-react";
+import { Bell } from "lucide-react";
 import Sidebar from "../../../components/Sidebar";
 import NotificationSettingsUsuario from "../components/NotificacionSettingsUsuario";
 import NotificationSettingsCliente from "../components/NotificacionSettingsCliente";

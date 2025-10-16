@@ -50,10 +50,10 @@ def run():
                 'divisas.view_denominacion',
 
                 # Permisos de notificacion de tasa
-                'notificaciones.view_preferencianotificacionusuario',
-                'notificaciones.change_preferencianotificacionusuario',
-                'notificaciones.view_preferencianotificacioncliente',
-                'notificaciones.change_preferencianotificacioncliente'
+                'notificaciones.view_notificaciontasausuario',
+                'notificaciones.change_notificaciontasausuario',
+                'notificaciones.view_notificaciontasacliente',
+                'notificaciones.change_notificaciontasacliente'
 
             ]
         },
@@ -98,10 +98,10 @@ def run():
                 'operaciones.can_use_operacion',
 
                 # Permisos de notificacion de tasa
-                'notificaciones.view_preferencianotificacionusuario',
-                'notificaciones.change_preferencianotificacionusuario',
-                'notificaciones.view_preferencianotificacioncliente',
-                'notificaciones.change_preferencianotificacioncliente'
+                'notificaciones.view_notificaciontasausuario',
+                'notificaciones.change_notificaciontasausuario',
+                'notificaciones.view_notificaciontasacliente',
+                'notificaciones.change_notificaciontasacliente'
             ]
         },
         {
@@ -135,10 +135,10 @@ def run():
                 'operaciones.can_use_operacion',
 
                 # Permisos de notificacion de tasa
-                'notificaciones.view_preferencianotificacionusuario',
-                'notificaciones.change_preferencianotificacionusuario',
-                'notificaciones.view_preferencianotificacioncliente',
-                'notificaciones.change_preferencianotificacioncliente'
+                'notificaciones.view_notificaciontasausuario',
+                'notificaciones.change_notificaciontasausuario',
+                'notificaciones.view_notificaciontasacliente',
+                'notificaciones.change_notificaciontasacliente'
             ]
         },
         {

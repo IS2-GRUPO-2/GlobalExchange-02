@@ -13,8 +13,8 @@ from apps.cotizaciones.service import TasaService
 from apps.clientes.models import Cliente
 from apps.notificaciones.notification_service import NotificationService
 from apps.notificaciones.models import (
-    PreferenciaNotificacionUsuario,
-    PreferenciaNotificacionCliente
+    NotificacionTasaUsuario,
+    NotificacionTasaCliente
 )
 import logging
 
@@ -197,8 +197,8 @@ class TasaSerializer(serializers.ModelSerializer):
         # ===================================================
         # 1. NOTIFICACIONES POR PREFERENCIAS DE USUARIO
         # ===================================================
-        preferencias_usuario = PreferenciaNotificacionUsuario.objects.filter(
-            notificaciones_activas=True,
+        preferencias_usuario = NotificacionTasaUsuario.objects.filter(
+            is_active=True,
             divisas_suscritas=divisa,
             usuario__is_active=True,
             usuario__email_verified=True
@@ -211,8 +211,8 @@ class TasaSerializer(serializers.ModelSerializer):
         # ===================================================
         # 2. NOTIFICACIONES POR PREFERENCIAS DE CLIENTE
         # ===================================================
-        preferencias_cliente = PreferenciaNotificacionCliente.objects.filter(
-            notificaciones_activas=True,
+        preferencias_cliente = NotificacionTasaCliente.objects.filter(
+            is_active=True,
             divisas_suscritas=divisa,
             cliente__is_active=True
         ).select_related('cliente').prefetch_related('cliente__usuarios')

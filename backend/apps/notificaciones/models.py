@@ -6,13 +6,13 @@ from apps.divisas.models import Divisa
 # Create your models here.
 
 
-class PreferenciaNotificacionUsuario(models.Model):
+class NotificacionTasaUsuario(models.Model):
     """
-    Preferencias de notificación personales del usuario.
+    Notificación de tasa del usuario.
 
     Atributos:
         usuario (OneToOne): Usuario asociado
-        notificaciones_activas (bool): Si desea recibir notificaciones
+        is_active (bool): Si desea recibir notificaciones
         divisas_suscritas (ManyToMany): Divisas de las que quiere recibir notificaciones
         fecha_creacion (DateTime): Fecha de creación del registro
         fecha_actualizacion (DateTime): Última actualización
@@ -23,7 +23,7 @@ class PreferenciaNotificacionUsuario(models.Model):
         related_name="preferencia_notificacion",
         verbose_name="Usuario"
     )
-    notificaciones_activas = models.BooleanField(
+    is_active = models.BooleanField(
         default=True,
         help_text="Indica si el usuario desea recibir notificaciones de cambio de tasa"
     )
@@ -38,26 +38,26 @@ class PreferenciaNotificacionUsuario(models.Model):
     fecha_actualizacion = models.DateTimeField(auto_now=True)
 
     class Meta:
-        verbose_name = "Preferencia de Notificación de Usuario"
-        verbose_name_plural = "Preferencias de Notificación de Usuarios"
-        db_table = "notificaciones_preferencia_usuario"
+        verbose_name = "Notificación de Tasa de Usuario"
+        verbose_name_plural = "Notificación de Tasa de Usuarios"
+        db_table = "notificaciones_tasa_usuario"
         default_permissions = ('view', 'change',)
 
     def __str__(self):
-        estado = "Activas" if self.notificaciones_activas else "Inactivas"
-        return f"Preferencias de {self.usuario.username} - {estado}"
+        estado = "Activas" if self.is_active else "Inactivas"
+        return f"Notificaciones de tasa de {self.usuario.username} - {estado}"
 
 
-class PreferenciaNotificacionCliente(models.Model):
+class NotificacionTasaCliente(models.Model):
     """
-    Preferencias de notificación del cliente (empresa/entidad).
+    Notificaciones de tasa del cliente.
 
-    Estas preferencias aplican a nivel de organización y pueden ser
-    configuradas por cualquier usuario con permisos sobre el cliente.
+    Estas notificaciones pueden ser configuradas por cualquier usuario
+    con permisos sobre el cliente.
 
     Atributos:
         cliente (OneToOne): Cliente asociado
-        notificaciones_activas (bool): Si el cliente desea recibir notificaciones
+        is_active (bool): Si el cliente desea recibir notificaciones
         divisas_suscritas (ManyToMany): Divisas de interés para el cliente
         fecha_creacion (DateTime): Fecha de creación del registro
         fecha_actualizacion (DateTime): Última actualización
@@ -68,7 +68,7 @@ class PreferenciaNotificacionCliente(models.Model):
         related_name="preferencia_notificacion",
         verbose_name="Cliente"
     )
-    notificaciones_activas = models.BooleanField(
+    is_active = models.BooleanField(
         default=True,
         help_text="Indica si el cliente desea recibir notificaciones de cambio de tasa"
     )
@@ -83,11 +83,11 @@ class PreferenciaNotificacionCliente(models.Model):
     fecha_actualizacion = models.DateTimeField(auto_now=True)
 
     class Meta:
-        verbose_name = "Preferencia de Notificación de Cliente"
-        verbose_name_plural = "Preferencias de Notificación de Clientes"
-        db_table = "notificaciones_preferencia_cliente"
+        verbose_name = "Notificación de tasa de Cliente"
+        verbose_name_plural = "Notificación de tasa de Clientes"
+        db_table = "notificaciones_tasa_cliente"
         default_permissions = ('view', 'change',)
 
     def __str__(self):
-        estado = "Activas" if self.notificaciones_activas else "Inactivas"
-        return f"Preferencias de {self.cliente.nombre} - {estado}"
+        estado = "Activas" if self.is_active else "Inactivas"
+        return f"Notificaciones de tasa de {self.cliente.nombre} - {estado}"

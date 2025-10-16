@@ -1,17 +1,16 @@
 import { useState, useEffect } from 'react';
 import { toast } from 'react-toastify';
 import {
-  getPreferenciasUsuario,
-  updatePreferenciasUsuario
+  getNotificacionTasaUsuario,
+  updateNotificacionTasaUsuario
 } from '../services/notificacionService';
 import { getDivisasConTasa } from '../../divisas/services/divisaService';
-import { type PreferenciaNotificacionUsuario } from '../types/Notificacion';
+import { type NotificacionTasaUsuario } from '../types/Notificacion';
 import { type Divisa } from '../../divisas/types/Divisa';
 
 const NotificationSettingsUsuario = () => {
   const [loading, setLoading] = useState(false);
-  const [saving, setSaving] = useState(false);
-  const [preferencias, setPreferencias] = useState<PreferenciaNotificacionUsuario | null>(null);
+  const [preferencias, setPreferencias] = useState<NotificacionTasaUsuario | null>(null);
   const [divisasDisponibles, setDivisasDisponibles] = useState<Divisa[]>([]);
   const [divisasSeleccionadas, setDivisasSeleccionadas] = useState<number[]>([]);
   const [notificacionesActivas, setNotificacionesActivas] = useState(true);
@@ -40,10 +39,10 @@ const NotificationSettingsUsuario = () => {
       setDivisasDisponibles(allDivisas);
 
       // Cargar preferencias
-      const prefs = await getPreferenciasUsuario();
+      const prefs = await getNotificacionTasaUsuario();
       setPreferencias(prefs);
       setDivisasDisponibles(allDivisas);
-      setNotificacionesActivas(prefs.notificaciones_activas);
+      setNotificacionesActivas(prefs.is_active);
       setDivisasSeleccionadas(prefs.divisas_suscritas);
     } catch (error: any) {
       console.error("Error cargando datos:", error);
@@ -64,7 +63,7 @@ const NotificationSettingsUsuario = () => {
   };
 
   const handleSelectAll = () => {
-    setDivisasSeleccionadas(divisasDisponibles.map(d => d.id));
+    setDivisasSeleccionadas(divisasDisponibles.map(d => d.id!));
   };
 
   const handleDeselectAll = () => {
@@ -73,9 +72,8 @@ const NotificationSettingsUsuario = () => {
 
   const handleSave = async () => {
     try {
-      setSaving(true);
-      await updatePreferenciasUsuario({
-        notificaciones_activas: notificacionesActivas,
+      await updateNotificacionTasaUsuario({
+        is_active: notificacionesActivas,
         divisas_suscritas: divisasSeleccionadas,
       });
       toast.success("Preferencias guardadas exitosamente");
@@ -83,7 +81,6 @@ const NotificationSettingsUsuario = () => {
       console.error("Error guardando preferencias:", error);
       toast.error("Error al guardar las preferencias");
     } finally {
-      setSaving(false);
       await loadData(); // refrescar estado real
     }
   };
@@ -92,7 +89,7 @@ const NotificationSettingsUsuario = () => {
   // Detectar si hubo cambios
   // ===============================
   const hasChanges =
-    notificacionesActivas !== preferencias?.notificaciones_activas ||
+    notificacionesActivas !== preferencias?.is_active ||
     JSON.stringify([...divisasSeleccionadas].sort()) !==
     JSON.stringify([...preferencias?.divisas_suscritas ?? []].sort());
 
@@ -196,7 +193,7 @@ const NotificationSettingsUsuario = () => {
       <div className="flex justify-end pt-4 space-x-3 border-t">
         <button
           onClick={loadData}
-          disabled={loading | !hasChanges}
+          disabled={loading || !hasChanges}
           className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors disabled:opacity-50"
         >
           Cancelar
@@ -204,7 +201,7 @@ const NotificationSettingsUsuario = () => {
         <button
           type="button"
           onClick={handleSave}
-          disabled={loading | !hasChanges}
+          disabled={loading || !hasChanges}
           className="bg-gray-900 text-white py-2 px-4 rounded-md hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {loading ? (

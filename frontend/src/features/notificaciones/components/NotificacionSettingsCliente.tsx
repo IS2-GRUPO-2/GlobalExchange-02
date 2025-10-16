@@ -5,19 +5,18 @@
 import { useState, useEffect } from 'react';
 import { toast } from 'react-toastify';
 import {
-  getPreferenciasCliente,
-  updatePreferenciasCliente
+  getNotificacionTasaCliente,
+  updateNotificacionTasaCliente
 } from '../services/notificacionService';
 import {
     getDivisasConTasa
 } from '../../divisas/services/divisaService';
-import { type PreferenciaNotificacionCliente } from '../types/Notificacion';
+import { type NotificacionTasaCliente } from '../types/Notificacion';
 import { type Divisa } from '../../divisas/types/Divisa';
 
 const NotificationSettingsCliente = () => {
   const [loading, setLoading] = useState(false);
-  const [saving, setSaving] = useState(false);
-  const [preferencias, setPreferencias] = useState<PreferenciaNotificacionCliente | null>(null);
+  const [preferencias, setPreferencias] = useState<NotificacionTasaCliente | null>(null);
   const [divisasDisponibles, setDivisasDisponibles] = useState<Divisa[]>([]);
   const [divisasSeleccionadas, setDivisasSeleccionadas] = useState<number[]>([]);
   const [notificacionesActivas, setNotificacionesActivas] = useState(true);
@@ -48,10 +47,10 @@ const NotificationSettingsCliente = () => {
       setDivisasDisponibles(allDivisas);
       
        // Cargar preferencias del cliente
-      const prefsData = await getPreferenciasCliente();
+      const prefsData = await getNotificacionTasaCliente();
       setPreferencias(prefsData);
       setDivisasDisponibles(allDivisas);
-      setNotificacionesActivas(prefsData.notificaciones_activas);
+      setNotificacionesActivas(prefsData.is_active);
       setDivisasSeleccionadas(prefsData.divisas_suscritas);
       
     } catch (error: any) {
@@ -104,7 +103,7 @@ const NotificationSettingsCliente = () => {
   };
 
   const handleSelectAll = () => {
-    setDivisasSeleccionadas(divisasDisponibles.map(d => d.id));
+    setDivisasSeleccionadas(divisasDisponibles.map(d => d.id!));
   };
 
   const handleDeselectAll = () => {
@@ -113,10 +112,9 @@ const NotificationSettingsCliente = () => {
 
   const handleSave = async () => {
     try {
-      setSaving(true);
       
-      await updatePreferenciasCliente({
-        notificaciones_activas: notificacionesActivas,
+      await updateNotificacionTasaCliente({
+        is_active: notificacionesActivas,
         divisas_suscritas: divisasSeleccionadas
       });
       
@@ -126,7 +124,6 @@ const NotificationSettingsCliente = () => {
       console.error('Error guardando preferencias:', error);
       toast.error('Error al guardar las preferencias');
     } finally {
-     setSaving(false);
      await loadData(); // refrescar estado real
     }
   };
@@ -135,7 +132,7 @@ const NotificationSettingsCliente = () => {
   // Detectar si hubo cambios
   // ===============================
   const hasChanges =
-    notificacionesActivas !== preferencias?.notificaciones_activas ||
+    notificacionesActivas !== preferencias?.is_active ||
     JSON.stringify([...divisasSeleccionadas].sort()) !==
     JSON.stringify([...preferencias?.divisas_suscritas ?? []].sort());
 
@@ -236,15 +233,15 @@ const NotificationSettingsCliente = () => {
               <label
                 key={divisa.id}
                 className={`flex items-center p-3 rounded-lg border-2 cursor-pointer transition-all ${
-                  divisasSeleccionadas.includes(divisa.id)
+                  divisasSeleccionadas.includes(divisa.id!)
                     ? 'border-gray-500 bg-gray-50'
                     : 'border-gray-200 hover:border-gray-300'
                 }`}
               >
                 <input
                   type="checkbox"
-                  checked={divisasSeleccionadas.includes(divisa.id)}
-                  onChange={() => handleToggleDivisa(divisa.id)}
+                  checked={divisasSeleccionadas.includes(divisa.id!)}
+                  onChange={() => handleToggleDivisa(divisa.id!)}
                   className="w-4 h-4 text-gray-600 rounded focus:ring-gray-500"
                 />
                 <span className="ml-2 text-sm font-medium text-gray-900">
@@ -266,14 +263,14 @@ const NotificationSettingsCliente = () => {
       <div className="flex justify-end space-x-3 pt-4 border-t">
         <button
           onClick={loadData}
-          disabled={loading | !hasChanges}
+          disabled={loading || !hasChanges}
           className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors disabled:opacity-50"
         >
           Cancelar
         </button>
         <button
           onClick={handleSave}
-          disabled={loading | !hasChanges}
+          disabled={loading || !hasChanges}
           className="bg-gray-900 text-white py-2 px-4 rounded-md hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {loading ? (

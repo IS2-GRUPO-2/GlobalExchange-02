@@ -9,37 +9,37 @@ from rest_framework.permissions import IsAuthenticated
 from django.shortcuts import get_object_or_404
 
 from apps.notificaciones.models import (
-    PreferenciaNotificacionUsuario,
-    PreferenciaNotificacionCliente
+    NotificacionTasaUsuario,
+    NotificacionTasaCliente
 )
 from apps.notificaciones.serializers import (
-    PreferenciaNotificacionUsuarioSerializer,
-    PreferenciaNotificacionClienteSerializer
+    NotificacionTasaUsuarioSerializer,
+    NotificacionTasaClienteSerializer
 )
 
 
-class PreferenciaNotificacionUsuarioView(APIView):
+class NotificacionTasaUsuarioView(APIView):
     """
-    Vista para gestionar las preferencias de notificación del usuario.
+    Vista para gestionar las notificacion de tasas del usuario.
 
-    GET: Obtiene las preferencias actuales (crea si no existen)
-    PUT/PATCH: Actualiza las preferencias
+    GET: Obtiene las notificaciones de tasa actuales configuradas por el usuario (crea si no existen)
+    PATCH: Actualiza las notificaciones de tasa
     """
     permission_classes = [IsAuthenticated]
 
     def get_object(self, user):
-        preferencia, _ = PreferenciaNotificacionUsuario.objects.get_or_create(
+        preferencia, _ = NotificacionTasaUsuario.objects.get_or_create(
             usuario=user)
         return preferencia
 
     def get(self, request):
         preferencia = self.get_object(request.user)
-        serializer = PreferenciaNotificacionUsuarioSerializer(preferencia)
+        serializer = NotificacionTasaUsuarioSerializer(preferencia)
         return Response(serializer.data)
 
     def patch(self, request):
         preferencia = self.get_object(request.user)
-        serializer = PreferenciaNotificacionUsuarioSerializer(
+        serializer = NotificacionTasaUsuarioSerializer(
             preferencia, data=request.data, partial=True
         )
         serializer.is_valid(raise_exception=True)
@@ -47,12 +47,12 @@ class PreferenciaNotificacionUsuarioView(APIView):
         return Response(serializer.data)
 
 
-class PreferenciaNotificacionClienteView(APIView):
+class NotificacionTasaClienteView(APIView):
     """
-    Vista para gestionar las preferencias de notificación del cliente actual.
+    Vista para gestionar las notificaciones de tasa del cliente actual.
 
-    GET: Obtiene las preferencias del cliente actual
-    PUT/PATCH: Actualiza las preferencias del cliente actual
+    GET: Obtiene las notificaciones de tasa del cliente actual
+    PATCH: Actualiza las notificaciones de tasa del cliente actual
     """
     permission_classes = [IsAuthenticated]
 
@@ -60,7 +60,7 @@ class PreferenciaNotificacionClienteView(APIView):
         return getattr(user, "cliente_actual", None)
 
     def get_object(self, cliente):
-        preferencia, _ = PreferenciaNotificacionCliente.objects.get_or_create(
+        preferencia, _ = NotificacionTasaCliente.objects.get_or_create(
             cliente=cliente)
         return preferencia
 
@@ -70,7 +70,7 @@ class PreferenciaNotificacionClienteView(APIView):
             return Response({"error": "No hay un cliente seleccionado"}, status=400)
 
         preferencia = self.get_object(cliente)
-        serializer = PreferenciaNotificacionClienteSerializer(preferencia)
+        serializer = NotificacionTasaClienteSerializer(preferencia)
         return Response(serializer.data)
 
     def patch(self, request):
@@ -79,7 +79,7 @@ class PreferenciaNotificacionClienteView(APIView):
             return Response({"error": "No hay un cliente seleccionado"}, status=400)
 
         preferencia = self.get_object(cliente)
-        serializer = PreferenciaNotificacionClienteSerializer(
+        serializer = NotificacionTasaClienteSerializer(
             preferencia, data=request.data, partial=True)
         serializer.is_valid(raise_exception=True)
         serializer.save()

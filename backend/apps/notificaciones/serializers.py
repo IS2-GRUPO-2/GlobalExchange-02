@@ -1,14 +1,14 @@
 from rest_framework import serializers
 from apps.notificaciones.models import (
-    PreferenciaNotificacionUsuario,
-    PreferenciaNotificacionCliente
+    NotificacionTasaUsuario,
+    NotificacionTasaCliente
 )
 from apps.divisas.models import Divisa
 
 
-class PreferenciaNotificacionUsuarioSerializer(serializers.ModelSerializer):
+class NotificacionTasaUsuarioSerializer(serializers.ModelSerializer):
     """
-    Serializer para las preferencias de notificación del usuario.
+    Serializer para las notificaciones de tasa del usuario.
     """
     divisas_suscritas = serializers.PrimaryKeyRelatedField(
         many=True,
@@ -21,10 +21,10 @@ class PreferenciaNotificacionUsuarioSerializer(serializers.ModelSerializer):
     divisas_detalle = serializers.SerializerMethodField()
 
     class Meta:
-        model = PreferenciaNotificacionUsuario
+        model = NotificacionTasaUsuario
         fields = [
             'id',
-            'notificaciones_activas',
+            'is_active',
             'divisas_suscritas',
             'divisas_detalle',
             'fecha_creacion',
@@ -58,9 +58,9 @@ class PreferenciaNotificacionUsuarioSerializer(serializers.ModelSerializer):
         ]
 
 
-class PreferenciaNotificacionClienteSerializer(serializers.ModelSerializer):
+class NotificacionTasaClienteSerializer(serializers.ModelSerializer):
     """
-    Serializer para las preferencias de notificación del cliente.
+    Serializer para las notificaciones de tasa del cliente.
     """
     divisas_suscritas = serializers.PrimaryKeyRelatedField(
         many=True,
@@ -76,12 +76,12 @@ class PreferenciaNotificacionClienteSerializer(serializers.ModelSerializer):
         source='cliente.nombre', read_only=True)
 
     class Meta:
-        model = PreferenciaNotificacionCliente
+        model = NotificacionTasaCliente
         fields = [
             'id',
             'cliente',
             'cliente_nombre',
-            'notificaciones_activas',
+            'is_active',
             'divisas_suscritas',
             'divisas_detalle',
             'fecha_creacion',

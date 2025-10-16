@@ -145,8 +145,8 @@ export const OPERACION = {
 
 
 export const NOTIFICACIONES = {
-  VIEW: "notificaciones.view_preferencianotificacionusuario",
-  CHANGE: "notificaciones.change_preferencianotificacionusuario",
-  VIEW_CLIENTE: "notificaciones.view_preferencianotificacioncliente",
-  CHANGE_CLIENTE: "notificaciones.change_preferencianotificacioncliente",
+  VIEW: "notificaciones.view_notificaciontasausuario",
+  CHANGE: "notificaciones.change_notificaciontasausuario",
+  VIEW_CLIENTE: "notificaciones.view_notificaciontasacliente",
+  CHANGE_CLIENTE: "notificaciones.change_notificaciontasacliente",
 } as const;
