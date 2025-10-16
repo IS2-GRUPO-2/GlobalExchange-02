@@ -4,7 +4,10 @@ services:
     container_name: backend_desrr
     hostname: backend
     command: >
-      bash -c "python manage.py migrate --noinput && python -m seeds.load_all_seeds && python manage.py runserver 0.0.0.0:8000"
+      bash -c "python manage.py migrate --noinput && 
+               python -m seeds.load_all_seeds && 
+               stripe listen --api-key ${STRIPE_KEY} --forward-to http://backend:8000/api/operaciones/stripe_webhook/ & 
+               python manage.py runserver 0.0.0.0:8000"
     volumes:
       - ./backend:/app:delegated
     ports:
