@@ -10,7 +10,8 @@ import {
   Tag,
   Users,
   User,
-  Monitor
+  Monitor,
+  Shield
 } from "lucide-react";
 import { CATEGORIAS_CLIENTE, CLIENTES, DIVISAS, METODOS_FINANCIEROS, ROLES, TASAS, USUARIOS, TAUSER , METODOS_FINANCIEROS_DETALLE} from "../types/perms";
 import Can from "../components/Can";
@@ -111,6 +112,15 @@ const ConfiguracionesPage = () => {
       permisos: [TAUSER.VIEW],
     },
     {
+      id: "mfa",
+      nombre: "Autenticación de Dos Factores (MFA)",
+      descripcion: "Configurar la seguridad de tu cuenta con MFA",
+      icon: <Shield className="w-6 h-6 text-red-600" />,
+      path: "/settings/security",
+      habilitado: true,
+      permisos: [], // Todos los usuarios pueden acceder a su propia configuración MFA
+    },
+    {
       id: "documentos",
       nombre: "Documentos electrónicos",
       descripcion: "Configurar facturación electrónica y reportes",
@@ -131,8 +141,34 @@ const ConfiguracionesPage = () => {
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
         {configItems.map((item) => (
-          <Can key={item.id} allOf={item.permisos}>
+          item.permisos.length > 0 ? (
+            <Can key={item.id} allOf={item.permisos}>
+              <div
+                onClick={() => item.habilitado && navigate(item.path)}
+                className={`relative p-6 bg-white rounded-xl shadow transition ${
+                  item.habilitado
+                    ? "cursor-pointer hover:shadow-lg"
+                    : "opacity-50 cursor-not-allowed"
+                }`}
+              >
+                <div className="flex items-center gap-4">
+                  {item.icon}
+                  <div>
+                    <h2 className="text-lg font-semibold">{item.nombre}</h2>
+                    <p className="text-sm text-gray-500">{item.descripcion}</p>
+                  </div>
+                </div>
+
+                {!item.habilitado && (
+                  <span className="absolute top-2 right-2 text-xs bg-gray-200 text-gray-600 px-2 py-1 rounded">
+                    Próximamente
+                  </span>
+                )}
+              </div>
+            </Can>
+          ) : (
             <div
+              key={item.id}
               onClick={() => item.habilitado && navigate(item.path)}
               className={`relative p-6 bg-white rounded-xl shadow transition ${
                 item.habilitado
@@ -154,7 +190,7 @@ const ConfiguracionesPage = () => {
                 </span>
               )}
             </div>
-          </Can>
+          )
         ))}
       </div>
     </div>
