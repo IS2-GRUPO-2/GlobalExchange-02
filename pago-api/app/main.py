@@ -60,7 +60,7 @@ def _formatear_decimal(valor: Decimal) -> str:
     return str(valor.quantize(Decimal("0.01"), rounding=ROUND_HALF_UP))
 
 
-@app.post("/pagar")
+@app.post("/simulador-pagos/pagar")
 def pagar(pago: PagoIn):
     snapshot = _obtener_snapshot_transaccion(pago.id_transaccion)
 
