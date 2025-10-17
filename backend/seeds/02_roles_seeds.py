@@ -23,6 +23,10 @@ def run():
             'permissions': admin_permissions  # TODOS los permisos disponibles en el sistema
         },
         {
+            'name': 'Gerente',
+            'permissions': admin_permissions
+        },
+        {
             'name': 'Operador',
             'permissions': [
                 # Ver usuarios y clientes
