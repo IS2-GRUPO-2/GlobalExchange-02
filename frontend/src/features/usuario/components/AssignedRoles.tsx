@@ -33,9 +33,11 @@ export default function AssignedRoles({ user, onClose }: Props) {
         getUserRoles(user.id),
       ]);
 
-      const rolesSorted = Array.isArray(rolesRes.data)
-        ? rolesRes.data
-            .slice() // Asegurarse de que rolesRes.data sea un array antes de usar slice
+      // getRoles() devuelve un objeto paginado: { count, next, previous, results }
+      const allRolesData = rolesRes.data.results || [];
+      const rolesSorted = Array.isArray(allRolesData)
+        ? allRolesData
+            .slice()
             .sort((a: Role, b: Role) => a.name.localeCompare(b.name))
         : [];
       const assignedIds = userRolesRes.data.map((r) => r.id);
@@ -44,6 +46,7 @@ export default function AssignedRoles({ user, onClose }: Props) {
       setSelectedIds(assignedIds);
       setOriginalSelected(assignedIds);
     } catch (e: any) {
+      console.error("Error loading roles:", e);
       setError(e?.message ?? "Error cargando roles");
     } finally {
       setLoading(false);

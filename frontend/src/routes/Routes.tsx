@@ -70,6 +70,24 @@ export const router = createBrowserRouter([
         ),
       },
 
+      {
+        path: "checkout/success",
+        element: (
+          <RequireAuth>
+            <CheckoutSuccess />
+          </RequireAuth>
+        ),
+      },
+
+      {
+        path: "checkout/cancel",
+        element: (
+          <RequireAuth>
+            <CheckoutCancel />
+          </RequireAuth>
+        ),
+      },
+
       // RUTAS QUE REQUIEREN LOGIN Y PERMISOS
       {
         path: "metodos-financieros",

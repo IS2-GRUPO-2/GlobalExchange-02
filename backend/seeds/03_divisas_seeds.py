@@ -127,8 +127,8 @@ def run():
 
     limite_config, created = LimiteConfig.objects.get_or_create(
         defaults={
-            'limite_diario': 10000.00,  # Valor predeterminado para el límite diario
-            'limite_mensual': 300000.00,  # Valor predeterminado para el límite mensual
+            'limite_diario': 10000000.00,  # Valor predeterminado para el límite diario
+            'limite_mensual': 300000000.00,  # Valor predeterminado para el límite mensual
         }
     )
 
