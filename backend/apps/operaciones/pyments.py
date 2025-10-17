@@ -2,6 +2,11 @@
 
 from dataclasses import dataclass
 from typing import Optional
+from globalexchange.configuration import config
+import stripe
+from apps.operaciones.models import Transaccion
+from django.db import transaction
+stripe.api_key = config.STRIPE_KEY
 
 # Códigos normalizados del “procesador”
 APROBADO = 1200
@@ -34,3 +39,38 @@ def componenteSimuladorPagosCobros(transaccion, *, force_code: Optional[int] = N
         mensaje=code_message(codigo),
         referencia=f"SIM-{transaccion.id}",
     )
+
+def completar_pago_stripe(session_id):
+    checkout_session = stripe.checkout.Session.retrieve(
+        session_id,
+        expand=['line_items'],
+    )
+    print("Completar pago stripe llamado, webhook se supone que funciona")
+
+    if checkout_session.payment_status != 'paid':
+        print("Pago no confirmado aún")
+        return
+
+    transaccion_id = checkout_session['metadata'].get('transaccion_id')
+    if not transaccion_id:
+        print("No se encontró transaccion_id en metadata")
+        return
+    
+    with transaction.atomic():
+        try:
+            transaccion = Transaccion.objects.select_for_update().get(id=transaccion_id)
+        except Transaccion.DoesNotExist:
+            print("La transacción no existe en la base de datos")
+            return
+        
+        if transaccion.stripe_session_id == session_id or transaccion.estado != "pendiente":
+            print("Esta sesión ya fue procesada previamente")
+            return
+        
+        # Actualizar información
+        transaccion.stripe_session_id = session_id
+        transaccion.estado = "en_proceso"
+        print("Actualizando informacion de transaccion")
+        transaccion.save()
+
+    print(f"Transacción {transaccion_id} completada con éxito (Stripe Session {session_id})")    

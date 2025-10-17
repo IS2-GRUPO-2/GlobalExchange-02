@@ -279,7 +279,15 @@ def run():
             'comision_cobro_porcentaje': 2.5,
             'comision_pago_porcentaje': 0.0,
             'is_active': True
-        }
+        },
+        {
+            'nombre': TipoMetodoFinanciero.STRIPE,
+            'permite_cobro': True,
+            'permite_pago': False,
+            'comision_cobro_porcentaje': 3.5,
+            'comision_pago_porcentaje': 0.0,
+            'is_active': True
+        },
     ]
     
     for metodo_data in metodos_financieros_data:

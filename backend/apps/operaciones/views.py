@@ -8,14 +8,15 @@ financieros (`MetodoFinanciero`) y sus implementaciones específicas
 """
 # imports (arriba, junto a los demás)
 # NUEVO: simulador de pagos
-from .pyments import APROBADO, componenteSimuladorPagosCobros   
-from decimal import Decimal, ROUND_HALF_UP  # ya lo tenías, asegúrate de tener Decimal importado aquí
-from decimal import ROUND_HALF_UP, Decimal
+from .pyments import APROBADO, componenteSimuladorPagosCobros, completar_pago_stripe
+from decimal import Decimal, ROUND_HALF_UP, InvalidOperation
 from apps.cotizaciones.service import TasaService
 from rest_framework import viewsets, status, filters, permissions
 from rest_framework.response import Response
 from rest_framework.decorators import action, api_view, permission_classes
 from django.utils import timezone
+from django.views.decorators.csrf import csrf_exempt
+from globalexchange.configuration import config
 from .models import (
     Transaccion
 )
@@ -31,6 +32,10 @@ from .service import (
     _get_tasa_activa,
 )
 
+import stripe
+
+stripe.api_key = config.STRIPE_KEY
+endpoint_secret = config.STRIPE_WEBHOOK_SECRET
 
 #=============================================================
 # Vistas de operaciones
@@ -118,6 +123,31 @@ def get_op_perspectiva_casa(request) -> str:
     except Exception as e:
         return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
+
+@csrf_exempt
+@api_view(["POST"])
+def stripe_webhook(request):
+    payload = request.body
+    sig_header = request.META["HTTP_STRIPE_SIGNATURE"]
+    event = None
+
+    try:
+        event = stripe.Webhook.construct_event(
+            payload, sig_header, endpoint_secret
+        )
+    except ValueError as e:
+        return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+    except stripe.SignatureVerificationError as e:
+        return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+    
+    if (
+        event['type'] == 'checkout.session.completed'
+        or event['type'] == 'checkout.session.async_payment_succeded'
+    ):
+        completar_pago_stripe(event['data']['object']['id'])
+
+    return Response(data=None, status=status.HTTP_200_OK)    
+        
 
 
 class TransaccionViewSet(viewsets.ModelViewSet):
@@ -285,29 +315,85 @@ class TransaccionViewSet(viewsets.ModelViewSet):
 
         return tc_final, monto_destino
 
-        
-
-    @action(detail=True, methods=['get'], url_path='reconfirmar-tasa')
-    def reconfirmar_tasa(self, request, pk=None):
-        transaccion = self.get_object()
-
+    def _build_reconfirm_payload(self, transaccion: Transaccion):
         tc_actual, monto_destino_actual = self._recalcular_tc_y_monto(transaccion)
 
-        # Diferencias
         delta_tc = (tc_actual - Decimal(transaccion.tasa_aplicada))
-        # Evitar div/0
         delta_pct = (delta_tc / Decimal(transaccion.tasa_aplicada) * Decimal('100')) if Decimal(transaccion.tasa_aplicada) != 0 else Decimal('0')
 
         payload = {
             'cambio': bool(delta_tc != 0),
             'tasa_anterior': str(transaccion.tasa_aplicada),
             'tasa_actual': str(tc_actual),
-            'delta_tc': str(delta_tc),              # absoluto
-            'delta_pct': str(delta_pct),           # %
+            'delta_tc': str(delta_tc),
+            'delta_pct': str(delta_pct),
             'monto_destino_anterior': str(transaccion.monto_destino),
             'monto_destino_actual': str(monto_destino_actual),
         }
+        return payload, tc_actual, monto_destino_actual
+
+        
+
+    @action(detail=True, methods=['get'], url_path='reconfirmar-tasa')
+    def reconfirmar_tasa(self, request, pk=None):
+        transaccion = self.get_object()
+
+        payload, _, _ = self._build_reconfirm_payload(transaccion)
         return Response(payload, status=status.HTTP_200_OK)
+
+    @action(
+        detail=True,
+        methods=['get'],
+        url_path='reconfirmar-tasa-simulador-pago',
+        permission_classes=[permissions.AllowAny],
+    )
+    def reconfirmar_tasa_simulador_pago(self, request, pk=None):
+        transaccion = self.get_object()
+        payload, tc_actual, monto_destino_actual = self._build_reconfirm_payload(transaccion)
+
+        payload['transaccion'] = {
+            'monto_origen': str(transaccion.monto_origen),
+            'monto_destino': str(transaccion.monto_destino),
+            'divisa_origen': getattr(transaccion.divisa_origen, 'codigo', None),
+            'divisa_destino': getattr(transaccion.divisa_destino, 'codigo', None),
+            'cliente_nombre': getattr(transaccion.cliente, 'nombre', None),
+            'operacion': transaccion.operacion,
+            'tasa_inicial': str(transaccion.tasa_inicial),
+        }
+        payload['tasa_actual'] = str(tc_actual)
+        payload['monto_destino_actual'] = str(monto_destino_actual)
+        return Response(payload, status=status.HTTP_200_OK)
+
+    @action(detail=True, methods=['patch'], url_path='actualizar-reconfirmacion')
+    def actualizar_reconfirmacion(self, request, pk=None):
+        transaccion = self.get_object()
+
+        tasa_actual = request.data.get('tasa_actual')
+        monto_destino_actual = request.data.get('monto_destino_actual')
+        monto_origen = request.data.get('monto_origen')
+
+        campos_actualizados = []
+
+        try:
+            if tasa_actual is not None:
+                transaccion.tasa_aplicada = Decimal(str(tasa_actual))
+                campos_actualizados.append('tasa_aplicada')
+            if monto_destino_actual is not None:
+                transaccion.monto_destino = Decimal(str(monto_destino_actual))
+                campos_actualizados.append('monto_destino')
+            if monto_origen is not None:
+                transaccion.monto_origen = Decimal(str(monto_origen))
+                campos_actualizados.append('monto_origen')
+        except (InvalidOperation, TypeError):
+            return Response({'error': 'Valores numericos invalidos.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        if not campos_actualizados:
+            return Response({'error': 'No se proporcionaron valores para actualizar.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        campos_actualizados.append('updated_at')
+        transaccion.save(update_fields=campos_actualizados)
+        serializer = self.get_serializer(transaccion)
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
     @action(detail=True, methods=['patch'], url_path='confirmar-pago')
     def confirmar_pago(self, request, pk=None):
@@ -376,3 +462,70 @@ class TransaccionViewSet(viewsets.ModelViewSet):
         data['pago_mensaje'] = pago.mensaje
         data['pago_referencia'] = pago.referencia
         return Response(data, status=status.HTTP_200_OK)
+
+    @action(methods=['POST'], detail=True)
+    def crear_checkout_stripe(self, request, pk=None):
+        transaccion = self.get_object()  # <-- IMPORTANTE: definir t en el scope
+
+        if transaccion.estado not in ('pendiente', 'en_proceso'):
+            return Response({'error': 'La transacción no está en un estado confirmable.'},
+                            status=status.HTTP_400_BAD_REQUEST)
+
+        terminos_aceptados = bool(request.data.get('terminos_aceptados', False))
+        if not terminos_aceptados:
+            return Response({'error': 'Debe aceptar los términos y condiciones.'},
+                            status=status.HTTP_400_BAD_REQUEST)
+
+        acepta_cambio = bool(request.data.get('acepta_cambio', False))
+
+        tc_actual, monto_destino_actual = self._recalcular_tc_y_monto(transaccion)
+        cambio = (tc_actual != Decimal(transaccion.tasa_aplicada))
+
+        # Si la tasa cambió y NO acepta el cambio → devolvemos conflicto (409)
+        if cambio and not acepta_cambio:
+            return Response({
+                'error': 'rate_changed',
+                'mensaje': 'La cotización cambió',
+                'tasa_anterior': str(transaccion.tasa_aplicada),
+                'tasa_actual': str(tc_actual),
+                'monto_destino_actual': str(monto_destino_actual)
+            }, status=status.HTTP_409_CONFLICT)
+
+        # Si no cambió, o cambió y el cliente acepta, aplicamos posible nueva tasa
+        if cambio and acepta_cambio:
+            transaccion.tasa_aplicada = tc_actual              
+            transaccion.monto_destino = monto_destino_actual
+
+        transaccion.save()
+        DOMAIN = config.DEV_URL if config.DJANGO_DEBUG else config.PROD_URL
+
+        try:
+            checkout_session = stripe.checkout.Session.create(
+                line_items=[
+                    {
+                        "price_data": {
+                            "currency": "pyg",
+                            "product_data": {
+                                "name": transaccion.divisa_destino.nombre
+                            },
+                            "unit_amount_decimal": transaccion.monto_origen
+                        },
+                        "quantity": 1
+                    }
+                ],
+                mode="payment",
+                success_url=DOMAIN + "/checkout/success?session_id={CHECKOUT_SESSION_ID}&transaccion_id="+str(transaccion.id),
+                cancel_url=DOMAIN + "/checkout/cancel?session_id={CHECKOUT_SESSION_ID}",
+                customer_email=transaccion.id_user.email,
+                locale="es",
+                metadata={
+                    "transaccion_id": str(transaccion.id)
+                }
+
+            )
+        except Exception as e:
+            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+        return Response({"url": checkout_session.url}, status=status.HTTP_200_OK)
+        
+

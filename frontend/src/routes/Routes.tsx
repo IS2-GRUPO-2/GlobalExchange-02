@@ -32,7 +32,8 @@ import ConfiguracionTauserPage from "../features/tauser/pages/ConfiguracionTause
 import HistorialPage from "../pages/HistorialPage";
 import NotificacionesPage from "../features/notificaciones/pages/NotificacionesPage";
 import { NOTIFICACIONES } from "../types/perms"; 
-
+import SimuladorTransaccionBancariaPage from "../features/operaciones/pages/SimuladorTransaccionBancariaPage";
+import ComprobantePage from "../features/operaciones/pages/ComprobantePage";
 
 export const router = createBrowserRouter([
   {
@@ -68,6 +69,15 @@ export const router = createBrowserRouter([
         element: (
           <RequireAuth>
             <SecuritySettingsPage />
+          </RequireAuth>
+        ),
+      },
+
+      {
+        path: "checkout/success",
+        element: (
+          <RequireAuth>
+            <ComprobantePage />
           </RequireAuth>
         ),
       },
@@ -170,6 +180,14 @@ export const router = createBrowserRouter([
         element: (
           <RequireAuth anyOf={[NOTIFICACIONES.VIEW, NOTIFICACIONES.VIEW_CLIENTE]}>
             <NotificacionesPage />
+          </RequireAuth>
+        ),
+      },
+      {
+        path: "simulador-transaccion-bancaria",
+        element: (
+          <RequireAuth anyOf={[OPERACION.USE]}>
+            <SimuladorTransaccionBancariaPage />
           </RequireAuth>
         ),
       },

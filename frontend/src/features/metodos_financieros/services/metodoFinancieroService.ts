@@ -30,12 +30,13 @@ interface GetParams {
 // ======================== CATÁLOGOS ========================
 
 // Bancos
-export const getBancos = async (params: GetParams = {}): Promise<PaginatedBanco> => {
+export const getBancos = async (
+  params: GetParams = {}
+): Promise<PaginatedBanco> => {
   try {
-    const res = await axios.get<PaginatedBanco>(
-      `${API_URL}bancos/`,
-      { params }
-    );
+    const res = await axios.get<PaginatedBanco>(`${API_URL}bancos/`, {
+      params,
+    });
     return res.data;
   } catch (err: any) {
     console.error("Error fetching bancos: ", err.response?.data || err.message);
@@ -94,7 +95,10 @@ export const getBilleterasDigitalesCatalogo = async (
     );
     return res.data;
   } catch (err: any) {
-    console.error("Error fetching billeteras digitales catálogo: ", err.response?.data || err.message);
+    console.error(
+      "Error fetching billeteras digitales catálogo: ",
+      err.response?.data || err.message
+    );
     throw err;
   }
 };
@@ -163,7 +167,10 @@ export const getTarjetasCatalogo = async (
     );
     return res.data;
   } catch (err: any) {
-    console.error("Error fetching tarjetas catálogo: ", err.response?.data || err.message);
+    console.error(
+      "Error fetching tarjetas catálogo: ",
+      err.response?.data || err.message
+    );
     throw err;
   }
 };
@@ -231,12 +238,17 @@ export const getMetodosFinancieros = async (
     );
     return res.data;
   } catch (err: any) {
-    console.error("Error fetching métodos financieros: ", err.response?.data || err.message);
+    console.error(
+      "Error fetching métodos financieros: ",
+      err.response?.data || err.message
+    );
     throw err;
   }
 };
 
-export const getMetodosFinancierosPorOperacion = async (op_perspectiva_casa: 'compra' | 'venta'): Promise<MetodoFinanciero[]> => {
+export const getMetodosFinancierosPorOperacion = async (
+  op_perspectiva_casa: "compra" | "venta"
+): Promise<MetodoFinanciero[]> => {
   try {
     const res = await axios.get<MetodoFinanciero[]>(
       `${API_URL}metodos/metodos-operacion/`,
@@ -244,7 +256,10 @@ export const getMetodosFinancierosPorOperacion = async (op_perspectiva_casa: 'co
     );
     return res.data;
   } catch (err: any) {
-    console.error("Error fetching métodos financieros por operación: ", err.response?.data || err.message);
+    console.error(
+      "Error fetching métodos financieros por operación: ",
+      err.response?.data || err.message
+    );
     throw err;
   }
 };
@@ -278,7 +293,6 @@ export const updateMetodoFinanciero = async (
   }
 };
 
-
 export const toggleActiveMetodoFinancieroDetalle = async (id: number) => {
   try {
     const res = await axios.post(`${API_URL}detalles/${id}/toggle_active/`);
@@ -301,7 +315,10 @@ export const getMetodosFinancierosDetalles = async (
     );
     return res.data;
   } catch (err: any) {
-    console.error("Error fetching detalles: ", err.response?.data || err.message);
+    console.error(
+      "Error fetching detalles: ",
+      err.response?.data || err.message
+    );
     throw err;
   }
 };
@@ -309,7 +326,9 @@ export const getMetodosFinancierosDetalles = async (
 // Alias para mantener compatibilidad
 export const getDetallesMetodosFinancieros = getMetodosFinancierosDetalles;
 
-export const createDetalleMetodoFinanciero = async (detalleData: MetodoFinancieroDetalle) => {
+export const createDetalleMetodoFinanciero = async (
+  detalleData: MetodoFinancieroDetalle
+) => {
   try {
     const res = await axios.post<MetodoFinancieroDetalle>(
       `${API_URL}detalles/`,
@@ -343,7 +362,10 @@ export const getMetodosFinancierosDetallesCasa = async (
     );
     return res.data;
   } catch (err: any) {
-    console.error("Error fetching detalles (casa): ", err.response?.data || err.message);
+    console.error(
+      "Error fetching detalles (casa): ",
+      err.response?.data || err.message
+    );
     throw err;
   }
 };
@@ -358,12 +380,13 @@ export const getMetodosFinancierosDetallesCliente = async (
     );
     return res.data;
   } catch (err: any) {
-    console.error("Error fetching detalles (cliente): ", err.response?.data || err.message);
+    console.error(
+      "Error fetching detalles (cliente): ",
+      err.response?.data || err.message
+    );
     throw err;
   }
 };
-
-
 
 // ======================== INSTANCIAS ========================
 
@@ -378,7 +401,10 @@ export const getCuentasBancarias = async (
     );
     return res.data;
   } catch (err: any) {
-    console.error("Error fetching cuentas bancarias: ", err.response?.data || err.message);
+    console.error(
+      "Error fetching cuentas bancarias: ",
+      err.response?.data || err.message
+    );
     throw err;
   }
 };
@@ -423,12 +449,17 @@ export const getBilleterasDigitales = async (
     );
     return res.data;
   } catch (err: any) {
-    console.error("Error fetching billeteras digitales: ", err.response?.data || err.message);
+    console.error(
+      "Error fetching billeteras digitales: ",
+      err.response?.data || err.message
+    );
     throw err;
   }
 };
 
-export const createBilleteraDigital = async (billeteraData: BilleteraDigital) => {
+export const createBilleteraDigital = async (
+  billeteraData: BilleteraDigital
+) => {
   try {
     const res = await axios.post<BilleteraDigital>(
       `${API_URL}billeteras-digitales/`,
@@ -457,29 +488,27 @@ export const updateBilleteraDigital = async (
   }
 };
 
-
 // Tarjetas
 export const getTarjetas = async (
   params: GetParams = {}
 ): Promise<PaginatedTarjeta> => {
   try {
-    const res = await axios.get<PaginatedTarjeta>(
-      `${API_URL}tarjetas/`,
-      { params }
-    );
+    const res = await axios.get<PaginatedTarjeta>(`${API_URL}tarjetas/`, {
+      params,
+    });
     return res.data;
   } catch (err: any) {
-    console.error("Error fetching tarjetas: ", err.response?.data || err.message);
+    console.error(
+      "Error fetching tarjetas: ",
+      err.response?.data || err.message
+    );
     throw err;
   }
 };
 
 export const createTarjeta = async (tarjetaData: Tarjeta) => {
   try {
-    const res = await axios.post<Tarjeta>(
-      `${API_URL}tarjetas/`,
-      tarjetaData
-    );
+    const res = await axios.post<Tarjeta>(`${API_URL}tarjetas/`, tarjetaData);
     return res;
   } catch (err) {
     console.error("Error creating tarjeta: ", err);
@@ -500,13 +529,14 @@ export const updateTarjeta = async (tarjetaData: Tarjeta, id: number) => {
   }
 };
 
-
 // ======================== MÉTODOS CLIENTE ESPECÍFICOS ========================
 
 /**
  * Obtiene las cuentas bancarias activas del cliente actual
  */
-export const getMisCuentasBancarias = async (params: GetParams = {}): Promise<CuentaBancaria[]> => {
+export const getMisCuentasBancarias = async (
+  params: GetParams = {}
+): Promise<CuentaBancaria[]> => {
   try {
     const res = await axios.get<CuentaBancaria[]>(
       `${API_URL}cuentas-bancarias/mis-cuentas/`,
@@ -522,7 +552,9 @@ export const getMisCuentasBancarias = async (params: GetParams = {}): Promise<Cu
 /**
  * Obtiene las billeteras digitales activas del cliente actual
  */
-export const getMisBilleterasDigitales = async (params: GetParams = {}): Promise<BilleteraDigital[]> => {
+export const getMisBilleterasDigitales = async (
+  params: GetParams = {}
+): Promise<BilleteraDigital[]> => {
   try {
     const res = await axios.get<BilleteraDigital[]>(
       `${API_URL}billeteras-digitales/mis-billeteras/`,
@@ -538,12 +570,13 @@ export const getMisBilleterasDigitales = async (params: GetParams = {}): Promise
 /**
  * Obtiene las tarjetas activas del cliente actual
  */
-export const getMisTarjetas = async (params: GetParams = {}): Promise<Tarjeta[]> => {
+export const getMisTarjetas = async (
+  params: GetParams = {}
+): Promise<Tarjeta[]> => {
   try {
-    const res = await axios.get<Tarjeta[]>(
-      `${API_URL}tarjetas/mis-tarjetas/`,
-      { params }
-    );
+    const res = await axios.get<Tarjeta[]>(`${API_URL}tarjetas/mis-tarjetas/`, {
+      params,
+    });
     return res.data;
   } catch (err) {
     console.error("Error obteniendo mis tarjetas: ", err);
@@ -554,9 +587,11 @@ export const getMisTarjetas = async (params: GetParams = {}): Promise<Tarjeta[]>
 // ======================== MÉTODOS CASA DE CAMBIO ========================
 
 /**
- * Obtiene las cuentas bancarias de la casa de cambio (solo admins)
+ * Obtiene las cuentas bancarias de la casa de cambio (requiere autenticación)
  */
-export const getCasaCuentasBancarias = async (params: GetParams = {}): Promise<CuentaBancaria[]> => {
+export const getCasaCuentasBancarias = async (
+  params: GetParams = {}
+): Promise<CuentaBancaria[]> => {
   try {
     const res = await axios.get<CuentaBancaria[]>(
       `${API_URL}cuentas-bancarias/casa-cuentas/`,
@@ -570,9 +605,11 @@ export const getCasaCuentasBancarias = async (params: GetParams = {}): Promise<C
 };
 
 /**
- * Obtiene las billeteras digitales de la casa de cambio (solo admins)
+ * Obtiene las billeteras digitales de la casa de cambio (requiere autenticación)
  */
-export const getCasaBilleterasDigitales = async (params: GetParams = {}): Promise<BilleteraDigital[]> => {
+export const getCasaBilleterasDigitales = async (
+  params: GetParams = {}
+): Promise<BilleteraDigital[]> => {
   try {
     const res = await axios.get<BilleteraDigital[]>(
       `${API_URL}billeteras-digitales/casa-billeteras/`,
@@ -590,9 +627,19 @@ export const getCasaBilleterasDigitales = async (params: GetParams = {}): Promis
  */
 export const getCasaTarjetas = async (): Promise<Tarjeta[]> => {
   try {
-    const res = await axios.get<Tarjeta[]>(
-      `${API_URL}tarjetas/casa-tarjetas/`
-    );
+    const res = await axios.get<Tarjeta[]>(`${API_URL}tarjetas/casa-tarjetas/`);
+    return res.data;
+  } catch (err) {
+    console.error("Error obteniendo tarjetas de la casa: ", err);
+    throw err;
+  }
+};
+
+export const getMetodoFinanciero = async (
+  id: number
+): Promise<MetodoFinanciero> => {
+  try {
+    const res = await axios.get<MetodoFinanciero>(`${API_URL}metodos/${id}/`);
     return res.data;
   } catch (err) {
     console.error("Error obteniendo tarjetas de la casa: ", err);
