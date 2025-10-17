@@ -34,9 +34,9 @@ export type SimuladorTransferenciaResult =
 const getDefaultBaseUrl = (): string => {
   if (typeof window !== "undefined" && window.location) {
     const { protocol, hostname } = window.location;
-    return `${protocol}//${hostname}:8080`;
+    return `${protocol}//${hostname}/simulador-pagos`;
   }
-  return "http://localhost:8080";
+  return "http://localhost:5173/simulador-pagos";
 };
 
 const buildBaseUrl = (): string => {

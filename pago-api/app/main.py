@@ -20,7 +20,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-BACKEND_BASE_URL = os.getenv("BACKEND_URL", "http://backend:8000").rstrip("/")
+BACKEND_BASE_URL = "http://backend:8000/"
 RECONFIRM_ENDPOINT_TEMPLATE = "/api/operaciones/transacciones/{transaccion_id}/reconfirmar-tasa-simulador-pago/"
 
 
