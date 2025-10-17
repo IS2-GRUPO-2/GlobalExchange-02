@@ -26,20 +26,24 @@ import {
 } from "../types/perms";
 import CotizacionesPage from "../features/cotizaciones/pages/CotizacionesPage";
 import RequireAuth from "./RequiereAuth";
-
+import TauserPage from "../features/tauser/pages/TauserPage";
 import OperacionPage from "../features/operaciones/pages/OperacionPage";
 import ConfiguracionTauserPage from "../features/tauser/pages/ConfiguracionTauserPage";
 import HistorialPage from "../pages/HistorialPage";
-import { CheckoutSuccess } from "../pages/CheckoutSuccessPage";
-import CheckoutCancel from "../pages/CheckoutCancelPage";
+import NotificacionesPage from "../features/notificaciones/pages/NotificacionesPage";
+import { NOTIFICACIONES } from "../types/perms"; 
+import SimuladorTransaccionBancariaPage from "../features/operaciones/pages/SimuladorTransaccionBancariaPage";
+import ComprobantePage from "../features/operaciones/pages/ComprobantePage";
 
 export const router = createBrowserRouter([
+ 
   {
     path: "/",
     element: <App />,
     children: [
       // RUTAS PÚBLICAS DE ESTA MANERA
       { path: "", element: <MainMenuPage /> },
+      { path: "/tauser", element: <TauserPage /> },
       { path: "login", element: <LoginPage /> },
       { path: "register", element: <RegisterPage /> },
 
@@ -75,16 +79,7 @@ export const router = createBrowserRouter([
         path: "checkout/success",
         element: (
           <RequireAuth>
-            <CheckoutSuccess />
-          </RequireAuth>
-        ),
-      },
-
-      {
-        path: "checkout/cancel",
-        element: (
-          <RequireAuth>
-            <CheckoutCancel />
+            <ComprobantePage />
           </RequireAuth>
         ),
       },
@@ -179,6 +174,22 @@ export const router = createBrowserRouter([
         element: (
           <RequireAuth anyOf={[TAUSER.VIEW]}>
             <ConfiguracionTauserPage />
+          </RequireAuth>
+        ),
+      },
+      {
+        path: "configuraciones-notificaciones",
+        element: (
+          <RequireAuth anyOf={[NOTIFICACIONES.VIEW, NOTIFICACIONES.VIEW_CLIENTE]}>
+            <NotificacionesPage />
+          </RequireAuth>
+        ),
+      },
+      {
+        path: "simulador-transaccion-bancaria",
+        element: (
+          <RequireAuth anyOf={[OPERACION.USE]}>
+            <SimuladorTransaccionBancariaPage />
           </RequireAuth>
         ),
       },

@@ -48,7 +48,7 @@ const DivisaSidebar = ({
 
       {/* Navigation */}
       <ul className="flex flex-col items-center list-none p-3 m-0 h-[calc(100%-3.65rem)] cursor-pointer">
-        {items.map((item) => (
+        {items?.map((item) => (
           <li key={item.key} className="w-full mb-2.5">
             <button
               onClick={() => onSelectTab(item)}

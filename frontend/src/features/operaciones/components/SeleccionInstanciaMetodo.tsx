@@ -7,7 +7,7 @@ import type { MetodoFinanciero, CuentaBancaria, BilleteraDigital, Tarjeta } from
 interface SeleccionInstanciaMetodoProps {
   metodoFinanciero: MetodoFinanciero;
   instanciaSeleccionada: number | null;
-  onInstanciaChange: (instanciaId: number | null) => void;
+  onInstanciaChange: (instanciaId: number | null, instancia?: any) => void;
   onVolver: () => void;
   onCancelar: () => void;
   onContinuar: () => void;
@@ -95,7 +95,9 @@ export default function SeleccionInstanciaMetodo({
 
         const defaultDetalleId =
           instancias.length > 0 ? getDetalleId(instancias[0]) : null;
-        onInstanciaChange(defaultDetalleId);
+        if (instanciaSeleccionada == null) {
+          onInstanciaChange(defaultDetalleId, instancias[0]);
+        }
       } catch (error: any) {
         if (!isActive) return;
         toast.error(`Error al cargar ${getMetodoLabel(metodoFinanciero.nombre)}: ${error.message}`);
@@ -115,12 +117,12 @@ export default function SeleccionInstanciaMetodo({
     return () => {
       isActive = false;
     };
-  }, [metodoFinanciero?.nombre, onInstanciaChange]);
+  }, [metodoFinanciero?.nombre]);
 
   // Manejar selección de instancia específica
   const handleInstanciaSelection = (instancia: any) => {
     const detalleId = getDetalleId(instancia);
-    onInstanciaChange(detalleId);
+    onInstanciaChange(detalleId, instancia);
   };
 
   // Funciones auxiliares

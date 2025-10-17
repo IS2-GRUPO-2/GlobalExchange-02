@@ -60,7 +60,9 @@ type UserContextType = {
   mfaRequired: boolean;
   tempToken: string | null;
   loginUser: (username: string, password: string) => Promise<void>;
+  loginUserTauser: (username: string, password: string) => Promise<void>;
   verifyMfa: (code: string) => Promise<void>;
+  verifyMfaTauser: (code: string) => Promise<void>;
   registerUser: (
     username: string,
     email: string,
@@ -68,6 +70,7 @@ type UserContextType = {
     password: string
   ) => Promise<boolean>;
   logout: () => void;
+  logoutTauser: () => void;
   isLoggedIn: () => boolean;
 };
 
@@ -207,10 +210,8 @@ export const UserProvider = ({ children }: Props) => {
 
       // Verificar si se requiere MFA
       if (res.data.mfa_required) {
-        // Usuario tiene MFA habilitado - guardar token temporal
         setMfaRequired(true);
         setTempToken(res.data.temp_token || null);
-        // No navegar ni guardar tokens aún
         return;
       }
 
@@ -218,7 +219,6 @@ export const UserProvider = ({ children }: Props) => {
       if (res.data.access && res.data.refresh) {
         localStorage.setItem("token", res.data.access);
         localStorage.setItem("refresh", res.data.refresh);
-        
         const userObj = jwtDecode<DecodedToken>(res.data.access);
         const headers = {
           headers: {
@@ -226,7 +226,6 @@ export const UserProvider = ({ children }: Props) => {
           },
         };
         const user = await getUsuario(userObj.user_id, headers);
-
         localStorage.setItem("user", JSON.stringify(user.data));
         setToken(res.data.access);
         setRefresh(res.data.refresh);
@@ -246,6 +245,63 @@ export const UserProvider = ({ children }: Props) => {
     }
   };
 
+
+  /**
+   * Login especial para terminal TAUSER: SOLO permite login si el usuario tiene MFA habilitado
+   * Si el usuario no tiene MFA, lanza un error y no navega ni guarda tokens
+   * Si el usuario tiene MFA, actualiza el contexto y permite avanzar de etapa
+   */
+  const loginUserTauser = async (username: string, password: string) => {
+    try {
+      // NO reseteamos mfaRequired aquí - dejamos que el estado actual persista
+      // Solo lo actualizaremos basado en la respuesta del servidor
+      
+      const res = await loginAPI(username, password, "tauser");
+      if (!res) {
+        throw new Error("No se recibió respuesta del servidor");
+      }
+
+      // Caso 1: Usuario con MFA habilitado
+      if (res.data.mfa_required) {
+        setMfaRequired(true);
+        setTempToken(res.data.temp_token || null);
+        return; // Salir exitosamente, el componente mostrará el form MFA
+      }
+
+      // Caso 2: Usuario sin MFA (no permitido en terminal TAUSER)
+      // Limpiar cualquier estado residual antes de lanzar error
+      setMfaRequired(false);
+      setTempToken(null);
+      throw new Error("Este terminal requiere autenticación de dos factores (MFA). Solicite al administrador que habilite MFA en su cuenta.");
+      
+    } catch (e: any) {
+      console.error("Error en loginUserTauser:", e);
+      
+      // Limpiar estado de MFA solo en caso de error real
+      // (no cuando se está esperando el código MFA)
+      setMfaRequired(false);
+      setTempToken(null);
+      
+      // Construir mensaje de error apropiado
+      let errorMessage = "Error de autenticación. Verifique sus credenciales.";
+      
+      if (e.response?.data?.error) {
+        errorMessage = e.response.data.error;
+      } else if (e.response?.data?.detail) {
+        errorMessage = e.response.data.detail;
+      } else if (e.message) {
+        errorMessage = e.message;
+      }
+      
+      // Re-lanzar el error con el mensaje apropiado
+      const error = new Error(errorMessage);
+      // Preservar información adicional del error original si existe
+      if (e.response) {
+        (error as any).response = e.response;
+      }
+      throw error;
+    }
+  };
   /**
    * Verifica el código TOTP y completa el login
    * @async
@@ -301,7 +357,83 @@ export const UserProvider = ({ children }: Props) => {
       throw e;
     }
   };
+  /**
+   * Verifica el código TOTP y completa el login para terminal TAUSER
+   * NO redirecciona automáticamente, permite que el componente maneje el flujo
+   */
+  const verifyMfaTauser = async (code: string) => {
+    if (!tempToken) {
+      throw new Error("Sesión expirada. Por favor, inicie sesión nuevamente.");
+    }
 
+    try {
+      const res = await verifyMfaLoginAPI(tempToken, code);
+      
+      if (!res || !res.data.access || !res.data.refresh) {
+        throw new Error("Respuesta inválida del servidor");
+      }
+
+      // Guardar tokens
+      localStorage.setItem("token", res.data.access);
+      localStorage.setItem("refresh", res.data.refresh);
+      
+      // Obtener datos del usuario
+      const userObj = jwtDecode<DecodedToken>(res.data.access);
+      const headers = {
+        headers: {
+          Authorization: `Bearer ${res.data.access}`,
+        },
+      };
+      const user = await getUsuario(userObj.user_id, headers);
+
+      // Actualizar estado global
+      localStorage.setItem("user", JSON.stringify(user.data));
+      setToken(res.data.access);
+      setRefresh(res.data.refresh);
+      setUser(user.data);
+      
+      // Limpiar estado de MFA - autenticación completada
+      setMfaRequired(false);
+      setTempToken(null);
+      
+      // NO navegamos aquí - dejamos que el componente llame a onAutenticacionExitosa()
+      
+    } catch (e: any) {
+      console.error("Error en verifyMfaTauser:", e);
+      
+      // Construir mensaje de error
+      let errorMessage = "Código MFA inválido. Intente nuevamente.";
+      
+      if (e.response?.data?.error) {
+        errorMessage = e.response.data.error;
+      } else if (e.response?.data?.detail) {
+        errorMessage = e.response.data.detail;
+      } else if (e.message && !e.message.includes("Respuesta inválida")) {
+        errorMessage = e.message;
+      }
+      
+      // Si el error es 401 o indica token expirado, limpiar el estado
+      if (
+        e.response?.status === 401 ||
+        errorMessage.toLowerCase().includes("expirad") ||
+        errorMessage.toLowerCase().includes("inválido")
+      ) {
+        // Solo limpiar tempToken si es un error de token
+        if (errorMessage.toLowerCase().includes("expirad") || 
+            errorMessage.toLowerCase().includes("token")) {
+          setTempToken(null);
+          setMfaRequired(false);
+        }
+      }
+      
+      // Re-lanzar el error
+      const error = new Error(errorMessage);
+      if (e.response) {
+        (error as any).response = e.response;
+      }
+      throw error;
+    }
+  };
   /**
    * Registra un nuevo usuario en el sistema
    * @async
@@ -390,12 +522,36 @@ export const UserProvider = ({ children }: Props) => {
     
     navigate("/");
   };
+   /**
+   * Cierra la sesión del usuario actual en el terminal TAUSER
+   * NO redirecciona - permite que el componente maneje la navegación
+   */
+  const logoutTauser = () => {
+    // Limpiar localStorage
+    localStorage.removeItem("token");
+    localStorage.removeItem("user");
+    localStorage.removeItem("refresh");
+    
+    // Reiniciar estados de autenticación
+    setMfaRequired(false);
+    setTempToken(null);
+    setUser(null);
+    setToken("");
+    setRefresh("");
+    
+    // Limpiar headers de autorización
+    delete axios.defaults.headers.common["Authorization"];
+    
+    // NO redireccionamos aquí - el componente maneja su propio estado
+  };
 
   return (
     <UserContext.Provider
       value={{
         loginUser,
+        loginUserTauser,
         verifyMfa,
+        verifyMfaTauser,
         registerUser,
         user,
         token,
@@ -403,6 +559,7 @@ export const UserProvider = ({ children }: Props) => {
         mfaRequired,
         tempToken,
         logout,
+        logoutTauser,
         isLoggedIn,
       }}
     >

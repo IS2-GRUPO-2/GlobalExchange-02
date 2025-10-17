@@ -503,17 +503,15 @@ class CuentaBancariaViewSet(viewsets.ModelViewSet):
     search_fields = ['banco__nombre', 'numero_cuenta', 'titular', 'cbu_cvu']
     pagination_class = OperacionesPagination
 
-    @action(detail=False, methods=['get'], url_path='casa-cuentas')
+    @action(detail=False, methods=['get'], url_path='casa-cuentas', permission_classes=[permissions.IsAuthenticated])
     def casa_cuentas_bancarias(self, request):
         """
         Retorna las cuentas bancarias de la casa de cambio.
-        Solo accesible para administradores.
+        Requiere autenticación.
         """
-        if not request.user.has_perm('metodos_financieros.view_metodofinanciero'):
-            raise PermissionDenied("No tienes permisos para ver las cuentas bancarias de la casa.")
-        
         cuentas = CuentaBancaria.objects.select_related('metodo_financiero_detalle', 'banco').filter(
-            metodo_financiero_detalle__es_cuenta_casa=True
+            metodo_financiero_detalle__es_cuenta_casa=True,
+            metodo_financiero_detalle__is_active=True
         )
         
         serializer = self.get_serializer(cuentas, many=True)
@@ -553,17 +551,15 @@ class BilleteraDigitalViewSet(viewsets.ModelViewSet):
     pagination_class = OperacionesPagination
 
     
-    @action(detail=False, methods=['get'], url_path='casa-billeteras')
+    @action(detail=False, methods=['get'], url_path='casa-billeteras', permission_classes=[permissions.IsAuthenticated])
     def casa_billeteras_digitales(self, request):
         """
         Retorna las billeteras digitales de la casa de cambio.
-        Solo accesible para administradores.
+        Requiere autenticación.
         """
-        if not request.user.has_perm('metodos_financieros.view_metodofinanciero'):
-            raise PermissionDenied("No tienes permisos para ver las billeteras digitales de la casa.")
-        
         billeteras = BilleteraDigital.objects.select_related('metodo_financiero_detalle', 'plataforma').filter(
-            metodo_financiero_detalle__es_cuenta_casa=True
+            metodo_financiero_detalle__es_cuenta_casa=True,
+            metodo_financiero_detalle__is_active=True
         )
         
         serializer = self.get_serializer(billeteras, many=True)

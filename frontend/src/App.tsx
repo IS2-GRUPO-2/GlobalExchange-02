@@ -11,7 +11,7 @@ import { ToastContainer } from "react-toastify";
 import { AuthZProvider } from "./context/AuthZContext";
 
 /** Rutas donde se oculta la barra de navegación */
-const HIDE_NAV_ROUTES = ["/login", "/register","/Register","/Login"];
+const HIDE_NAV_ROUTES = ["/login", "/register","/Register","/Login", "/tauser","/simulador-transaccion-bancaria"];
 
 /**
  * Componente principal de la aplicación

@@ -1,0 +1,12 @@
+IS2-179 * Tauser
+Modelado Tauser
+https://chatgpt.com/share/68d4839c-4bd4-8007-9787-4fb8429bb824
+
+Autenticación MFA para tauser
+https://chatgpt.com/share/68f18371-2e98-8007-afc9-c7d28a4af06f
+
+Login con MFA tauser
+https://chatgpt.com/share/68f1838b-7954-8007-8c85-e04b6778ca26
+
+Estilo de componente tauser
+https://chatgpt.com/share/68f1839d-ffe0-8007-aa4a-d8c50c64e1b1

@@ -50,6 +50,22 @@ export const reconfirmarTasa = async (id: number) => {
   };
 };
 
+export const actualizarTransaccion = async (
+  id: number,
+  payload: {
+    tasa_actual?: number;
+    monto_destino_actual?: number;
+    monto_origen?: number;
+  }
+): Promise<Transaccion> => {
+  const response = await axios.patch(
+    `${API_URL}transacciones/${id}/actualizar-reconfirmacion/`,
+    payload,
+    getAuthHeaders()
+  );
+  return response.data;
+};
+
 export const confirmarPago = async (
   id: number,
   payload: { terminos_aceptados: boolean; acepta_cambio?: boolean }
@@ -86,4 +102,11 @@ export const stripeCheckout = async (
   );
   console.log(res);
   return res.data;
+};
+
+export const obtenerTransaccion = async (
+  id: string
+): Promise<TransaccionDetalle> => {
+  const response = await axios.get(`${API_URL}transacciones/${id}/`);
+  return response.data;
 };
