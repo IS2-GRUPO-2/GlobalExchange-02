@@ -28,7 +28,7 @@ export default function EtapaSeleccionMetodo({
   onMetodoSeleccionadoChange,
   onRetroceder,
   onContinuar,
-  onCancelar
+  onCancelar,
 }: EtapaSeleccionMetodoProps) {
   const [mostrandoInstancias, setMostrandoInstancias] = useState(false);
 
@@ -43,7 +43,11 @@ export default function EtapaSeleccionMetodo({
       return;
     }
 
-    if (metodo.nombre === "EFECTIVO" || metodo.nombre === "CHEQUE") {
+    if (
+      metodo.nombre === "EFECTIVO" ||
+      metodo.nombre === "CHEQUE" ||
+      metodo.nombre === "STRIPE"
+    ) {
       onMetodoGenericoChange(metodo.id ?? null);
       onDetalleMetodoChange(null);
       onDetalleMetodoInfoChange(null);
@@ -61,7 +65,10 @@ export default function EtapaSeleccionMetodo({
       setMostrandoInstancias(false);
       return;
     }
-    const requiereInstancias = ["EFECTIVO", "CHEQUE"].includes(metodoSeleccionadoInfo.nombre) === false;
+    const requiereInstancias =
+      ["EFECTIVO", "CHEQUE", "STRIPE"].includes(
+        metodoSeleccionadoInfo.nombre
+      ) === false;
     setMostrandoInstancias(requiereInstancias);
   }, [metodoSeleccionadoInfo]);
 
@@ -73,7 +80,7 @@ export default function EtapaSeleccionMetodo({
         onMetodoGenericoChange(null);
       }
     },
-    [onDetalleMetodoChange, onDetalleMetodoInfoChange, onMetodoGenericoChange],
+    [onDetalleMetodoChange, onDetalleMetodoInfoChange, onMetodoGenericoChange]
   );
 
   const volverASeleccionMetodos = () => {
@@ -84,7 +91,9 @@ export default function EtapaSeleccionMetodo({
     onMetodoSeleccionadoChange(null);
   };
 
-  const getOperacionCliente = (opCasa: "compra" | "venta"): "compra" | "venta" => {
+  const getOperacionCliente = (
+    opCasa: "compra" | "venta"
+  ): "compra" | "venta" => {
     return opCasa === "compra" ? "venta" : "compra";
   };
 
@@ -101,14 +110,18 @@ export default function EtapaSeleccionMetodo({
   };
 
   const puedeAvanzar = () => {
-    return detalleMetodoSeleccionado !== null || metodoGenericoSeleccionado !== null;
+    return (
+      detalleMetodoSeleccionado !== null || metodoGenericoSeleccionado !== null
+    );
   };
 
   if (mostrandoInstancias && metodoSeleccionadoInfo) {
     return (
       <div className="space-y-6 select-none">
         <div className="text-center">
-          <h3 className="text-lg font-semibold text-gray-800 mb-2">{getTituloMetodo()}</h3>
+          <h3 className="text-lg font-semibold text-gray-800 mb-2">
+            {getTituloMetodo()}
+          </h3>
           <p className="text-sm text-gray-600 mb-4">{getDescripcionMetodo()}</p>
         </div>
 
@@ -128,7 +141,9 @@ export default function EtapaSeleccionMetodo({
   return (
     <div className="space-y-6 select-none">
       <div className="text-center">
-        <h3 className="text-lg font-semibold text-gray-800 mb-2">{getTituloMetodo()}</h3>
+        <h3 className="text-lg font-semibold text-gray-800 mb-2">
+          {getTituloMetodo()}
+        </h3>
         <p className="text-sm text-gray-600 mb-4">{getDescripcionMetodo()}</p>
       </div>
 
@@ -146,7 +161,7 @@ export default function EtapaSeleccionMetodo({
         >
           AtrÁs
         </button>
-        
+
         <div className="flex gap-3">
           <button
             onClick={onCancelar}

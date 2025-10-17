@@ -31,6 +31,7 @@ import OperacionPage from "../features/operaciones/pages/OperacionPage";
 import ConfiguracionTauserPage from "../features/tauser/pages/ConfiguracionTauserPage";
 import HistorialPage from "../pages/HistorialPage";
 import SimuladorTransaccionBancariaPage from "../features/operaciones/pages/SimuladorTransaccionBancariaPage";
+import ComprobantePage from "../features/operaciones/pages/ComprobantePage";
 
 export const router = createBrowserRouter([
   {
@@ -74,16 +75,7 @@ export const router = createBrowserRouter([
         path: "checkout/success",
         element: (
           <RequireAuth>
-            <CheckoutSuccess />
-          </RequireAuth>
-        ),
-      },
-
-      {
-        path: "checkout/cancel",
-        element: (
-          <RequireAuth>
-            <CheckoutCancel />
+            <ComprobantePage />
           </RequireAuth>
         ),
       },

@@ -1,9 +1,10 @@
-export type TipoMetodoFinanciero = 
-  | 'TRANSFERENCIA_BANCARIA' 
-  | 'BILLETERA_DIGITAL' 
-  | 'TARJETA' 
-  | 'EFECTIVO' 
-  | 'CHEQUE';
+export type TipoMetodoFinanciero =
+  | "TRANSFERENCIA_BANCARIA"
+  | "BILLETERA_DIGITAL"
+  | "TARJETA"
+  | "EFECTIVO"
+  | "CHEQUE"
+  | "STRIPE";
 
 export type MainTabType = "catalogo" | "instancias" | "catalogos";
 export type InstanceTabType = "cuentas" | "billeteras digitales";
@@ -99,7 +100,7 @@ export type BilleteraDigital = {
 export type Tarjeta = {
   id?: number;
   metodo_financiero_detalle: number;
-  tipo: 'LOCAL' | 'STRIPE';
+  tipo: "LOCAL" | "STRIPE";
   payment_method_id: string;
   // Campos para tarjetas STRIPE
   brand?: string; // Visa, Mastercard, etc. (para Stripe)

@@ -514,7 +514,7 @@ class TransaccionViewSet(viewsets.ModelViewSet):
                     }
                 ],
                 mode="payment",
-                success_url=DOMAIN + "/checkout/success?session_id={CHECKOUT_SESSION_ID}",
+                success_url=DOMAIN + "/checkout/success?session_id={CHECKOUT_SESSION_ID}&transaccion_id="+str(transaccion.id),
                 cancel_url=DOMAIN + "/checkout/cancel?session_id={CHECKOUT_SESSION_ID}",
                 customer_email=transaccion.id_user.email,
                 locale="es",

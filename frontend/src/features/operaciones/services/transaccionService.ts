@@ -103,3 +103,10 @@ export const stripeCheckout = async (
   console.log(res);
   return res.data;
 };
+
+export const obtenerTransaccion = async (
+  id: string
+): Promise<TransaccionDetalle> => {
+  const response = await axios.get(`${API_URL}transacciones/${id}/`);
+  return response.data;
+};

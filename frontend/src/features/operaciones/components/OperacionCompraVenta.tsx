@@ -307,11 +307,13 @@ export default function OperacionCompraVenta() {
     | "transferencia"
     | "billetera"
     | "tarjeta"
+    | "stripe"
     | null => {
     const metodoNombre = metodoSeleccionadoInfo?.nombre;
     if (metodoNombre === "TRANSFERENCIA_BANCARIA") return "transferencia";
     if (metodoNombre === "BILLETERA_DIGITAL") return "billetera";
     if (metodoNombre === "TARJETA") return "tarjeta";
+    if (metodoNombre === "STRIPE") return "stripe";
     return null;
   };
 
@@ -386,7 +388,7 @@ export default function OperacionCompraVenta() {
         metodo_financiero: metodoGenericoSeleccionado ?? undefined,
         metodo_financiero_detalle: detalleMetodoSeleccionado ?? undefined,
         tauser: tauserSeleccionado,
-        estado: "en_proceso",
+        estado: "pendiente",
       };
 
       creandoTransaccionRef.current = true;
@@ -520,6 +522,14 @@ export default function OperacionCompraVenta() {
       const r = await reconfirmarTasa(idTransaccion);
 
       if (!r.cambio) {
+        if (metodoSeleccionadoInfo?.nombre === "STRIPE") {
+          console.log("Metodo seleccionado stripe");
+          const res = await stripeCheckout(idTransaccion, {
+            terminos_aceptados: true,
+          });
+          window.location.href = res.url;
+          return null;
+        }
         const detalle = await confirmarPago(idTransaccion, {
           terminos_aceptados: true,
         });
