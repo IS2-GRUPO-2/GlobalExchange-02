@@ -9,8 +9,7 @@ financieros (`MetodoFinanciero`) y sus implementaciones específicas
 # imports (arriba, junto a los demás)
 # NUEVO: simulador de pagos
 from .pyments import APROBADO, componenteSimuladorPagosCobros, completar_pago_stripe
-from decimal import Decimal, ROUND_HALF_UP  # ya lo tenías, asegúrate de tener Decimal importado aquí
-from decimal import ROUND_HALF_UP, Decimal
+from decimal import Decimal, ROUND_HALF_UP, InvalidOperation
 from apps.cotizaciones.service import TasaService
 from rest_framework import viewsets, status, filters, permissions
 from rest_framework.response import Response
@@ -316,29 +315,85 @@ class TransaccionViewSet(viewsets.ModelViewSet):
 
         return tc_final, monto_destino
 
-        
-
-    @action(detail=True, methods=['get'], url_path='reconfirmar-tasa')
-    def reconfirmar_tasa(self, request, pk=None):
-        transaccion = self.get_object()
-
+    def _build_reconfirm_payload(self, transaccion: Transaccion):
         tc_actual, monto_destino_actual = self._recalcular_tc_y_monto(transaccion)
 
-        # Diferencias
         delta_tc = (tc_actual - Decimal(transaccion.tasa_aplicada))
-        # Evitar div/0
         delta_pct = (delta_tc / Decimal(transaccion.tasa_aplicada) * Decimal('100')) if Decimal(transaccion.tasa_aplicada) != 0 else Decimal('0')
 
         payload = {
             'cambio': bool(delta_tc != 0),
             'tasa_anterior': str(transaccion.tasa_aplicada),
             'tasa_actual': str(tc_actual),
-            'delta_tc': str(delta_tc),              # absoluto
-            'delta_pct': str(delta_pct),           # %
+            'delta_tc': str(delta_tc),
+            'delta_pct': str(delta_pct),
             'monto_destino_anterior': str(transaccion.monto_destino),
             'monto_destino_actual': str(monto_destino_actual),
         }
+        return payload, tc_actual, monto_destino_actual
+
+        
+
+    @action(detail=True, methods=['get'], url_path='reconfirmar-tasa')
+    def reconfirmar_tasa(self, request, pk=None):
+        transaccion = self.get_object()
+
+        payload, _, _ = self._build_reconfirm_payload(transaccion)
         return Response(payload, status=status.HTTP_200_OK)
+
+    @action(
+        detail=True,
+        methods=['get'],
+        url_path='reconfirmar-tasa-simulador-pago',
+        permission_classes=[permissions.AllowAny],
+    )
+    def reconfirmar_tasa_simulador_pago(self, request, pk=None):
+        transaccion = self.get_object()
+        payload, tc_actual, monto_destino_actual = self._build_reconfirm_payload(transaccion)
+
+        payload['transaccion'] = {
+            'monto_origen': str(transaccion.monto_origen),
+            'monto_destino': str(transaccion.monto_destino),
+            'divisa_origen': getattr(transaccion.divisa_origen, 'codigo', None),
+            'divisa_destino': getattr(transaccion.divisa_destino, 'codigo', None),
+            'cliente_nombre': getattr(transaccion.cliente, 'nombre', None),
+            'operacion': transaccion.operacion,
+            'tasa_inicial': str(transaccion.tasa_inicial),
+        }
+        payload['tasa_actual'] = str(tc_actual)
+        payload['monto_destino_actual'] = str(monto_destino_actual)
+        return Response(payload, status=status.HTTP_200_OK)
+
+    @action(detail=True, methods=['patch'], url_path='actualizar-reconfirmacion')
+    def actualizar_reconfirmacion(self, request, pk=None):
+        transaccion = self.get_object()
+
+        tasa_actual = request.data.get('tasa_actual')
+        monto_destino_actual = request.data.get('monto_destino_actual')
+        monto_origen = request.data.get('monto_origen')
+
+        campos_actualizados = []
+
+        try:
+            if tasa_actual is not None:
+                transaccion.tasa_aplicada = Decimal(str(tasa_actual))
+                campos_actualizados.append('tasa_aplicada')
+            if monto_destino_actual is not None:
+                transaccion.monto_destino = Decimal(str(monto_destino_actual))
+                campos_actualizados.append('monto_destino')
+            if monto_origen is not None:
+                transaccion.monto_origen = Decimal(str(monto_origen))
+                campos_actualizados.append('monto_origen')
+        except (InvalidOperation, TypeError):
+            return Response({'error': 'Valores numericos invalidos.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        if not campos_actualizados:
+            return Response({'error': 'No se proporcionaron valores para actualizar.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        campos_actualizados.append('updated_at')
+        transaccion.save(update_fields=campos_actualizados)
+        serializer = self.get_serializer(transaccion)
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
     @action(detail=True, methods=['patch'], url_path='confirmar-pago')
     def confirmar_pago(self, request, pk=None):
@@ -459,7 +514,7 @@ class TransaccionViewSet(viewsets.ModelViewSet):
                     }
                 ],
                 mode="payment",
-                success_url=DOMAIN + "/checkout/success?session_id={CHECKOUT_SESSION_ID}",
+                success_url=DOMAIN + "/checkout/success?session_id={CHECKOUT_SESSION_ID}&transaccion_id="+str(transaccion.id),
                 cancel_url=DOMAIN + "/checkout/cancel?session_id={CHECKOUT_SESSION_ID}",
                 customer_email=transaccion.id_user.email,
                 locale="es",

@@ -30,8 +30,8 @@ import RequireAuth from "./RequiereAuth";
 import OperacionPage from "../features/operaciones/pages/OperacionPage";
 import ConfiguracionTauserPage from "../features/tauser/pages/ConfiguracionTauserPage";
 import HistorialPage from "../pages/HistorialPage";
-import { CheckoutSuccess } from "../pages/CheckoutSuccessPage";
-import CheckoutCancel from "../pages/CheckoutCancelPage";
+import SimuladorTransaccionBancariaPage from "../features/operaciones/pages/SimuladorTransaccionBancariaPage";
+import ComprobantePage from "../features/operaciones/pages/ComprobantePage";
 
 export const router = createBrowserRouter([
   {
@@ -75,16 +75,7 @@ export const router = createBrowserRouter([
         path: "checkout/success",
         element: (
           <RequireAuth>
-            <CheckoutSuccess />
-          </RequireAuth>
-        ),
-      },
-
-      {
-        path: "checkout/cancel",
-        element: (
-          <RequireAuth>
-            <CheckoutCancel />
+            <ComprobantePage />
           </RequireAuth>
         ),
       },
@@ -179,6 +170,14 @@ export const router = createBrowserRouter([
         element: (
           <RequireAuth anyOf={[TAUSER.VIEW]}>
             <ConfiguracionTauserPage />
+          </RequireAuth>
+        ),
+      },
+      {
+        path: "simulador-transaccion-bancaria",
+        element: (
+          <RequireAuth anyOf={[OPERACION.USE]}>
+            <SimuladorTransaccionBancariaPage />
           </RequireAuth>
         ),
       },

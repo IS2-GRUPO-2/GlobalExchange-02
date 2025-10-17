@@ -47,6 +47,7 @@ def completar_pago_stripe(session_id):
         session_id,
         expand=['line_items'],
     )
+    print("Completar pago stripe llamado, webhook se supone que funciona")
 
     if checkout_session.payment_status != 'paid':
         print("Pago no confirmado aún")
@@ -64,14 +65,14 @@ def completar_pago_stripe(session_id):
             print("La transacción no existe en la base de datos")
             return
         
-        if transaccion.stripe_session_id == session_id or transaccion.estado != "en_proceso":
+        if transaccion.stripe_session_id == session_id or transaccion.estado != "pendiente":
             print("Esta sesión ya fue procesada previamente")
             return
         
         # Actualizar información
         transaccion.stripe_session_id = session_id
-        transaccion.estado = "pendiente"
-        
+        transaccion.estado = "en_proceso"
+        print("Actualizando informacion de transaccion")
         transaccion.save()
         cliente = transaccion.cliente
         

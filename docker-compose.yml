@@ -33,14 +33,12 @@ services:
     depends_on:
       - backend
 
-  SimuladorPagos:
+  simulador_pagos:
     build: ./pago-api
-    image: globalexchange-02/simuladorpagos
     container_name: simulador_pagos_desrr
-    hostname: simuladorpagos
-    ports:
-      - "8080:8000"
-    restart: unless-stopped
+    hostname: simulador_pagos
+    depends_on:
+      - backend
 
   db:
     image: postgres:17-alpine

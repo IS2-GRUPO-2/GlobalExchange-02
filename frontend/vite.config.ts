@@ -17,6 +17,12 @@ export default defineConfig({
         target: 'http://backend:8000',
         changeOrigin: true,
       },
+      // Redirecciona al simulador de pagos
+      '/simulador-pagos': {
+        target: 'http://localhost:8080',
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/simulador-pagos/, ''),
+      },
     },
   },
 });

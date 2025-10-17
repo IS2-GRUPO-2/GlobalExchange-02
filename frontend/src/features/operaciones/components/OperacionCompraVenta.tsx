@@ -1,18 +1,30 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
+import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import {
   operacionPrivada,
   getOpPerspectivaCasa,
 } from "../services/operacionService";
 import { type CalcularOperacionResponse } from "../types/Operacion";
-import type { TransaccionRequest } from "../types/Transaccion";
+import type {
+  TransaccionRequest,
+  Transaccion,
+  TransaccionDetalle,
+} from "../types/Transaccion";
 import { jwtDecode } from "jwt-decode";
 import type { Cliente } from "../../clientes/types/Cliente";
 import type { DecodedToken } from "../../usuario/types/User";
+import type {
+  MetodoFinanciero,
+  CuentaBancaria,
+  BilleteraDigital,
+  Tarjeta,
+} from "../../metodos_financieros/types/MetodoFinanciero";
 import { getClienteActual } from "../../usuario/services/usuarioService";
 import {
   crearTransaccion,
   reconfirmarTasa,
+  actualizarTransaccion,
   confirmarPago,
   cancelarTransaccion,
   stripeCheckout,
@@ -23,9 +35,10 @@ import EtapaSeleccionDivisas from "./EtapaSeleccionDivisas";
 import EtapaSeleccionMetodo from "./EtapaSeleccionMetodo";
 import EtapaSeleccionTauser from "./EtapaSeleccionTauser";
 import EtapaResultado from "./EtapaResultado";
-import { getMetodoFinanciero } from "../../metodos_financieros/services/metodoFinancieroService";
+import EtapaPago from "./EtapaPago";
+import EtapaComprobante from "./EtapaComprobante";
 
-type EtapaActual = 1 | 2 | 3 | 4;
+type EtapaActual = 1 | 2 | 3 | 4 | 5 | 6;
 
 type ReconfirmPayload = {
   cambio: boolean;
@@ -37,7 +50,16 @@ type ReconfirmPayload = {
   monto_destino_actual: string;
 };
 
+const SIMULADOR_MESSAGE_KIND = "simulador-transferencia-bancaria";
+const SIMULADOR_POPUP_NAMES = {
+  transferencia: "simulador-transferencia-bancaria-popup",
+  billetera: "simulador-billetera-digital-popup",
+} as const;
+
+type SimuladorMetodo = keyof typeof SIMULADOR_POPUP_NAMES;
+
 export default function OperacionCompraVenta() {
+  const navigate = useNavigate();
   // Estado de navegación
   const [etapaActual, setEtapaActual] = useState<EtapaActual>(1);
 
@@ -51,6 +73,10 @@ export default function OperacionCompraVenta() {
   const [metodoGenericoSeleccionado, setMetodoGenericoSeleccionado] = useState<
     number | null
   >(null);
+  const [metodoSeleccionadoInfo, setMetodoSeleccionadoInfo] =
+    useState<MetodoFinanciero | null>(null);
+  const [detalleMetodoSeleccionadoInfo, setDetalleMetodoSeleccionadoInfo] =
+    useState<CuentaBancaria | BilleteraDigital | Tarjeta | null>(null);
 
   // Estados para el resultado de la simulación
   const [resultado, setResultado] = useState<CalcularOperacionResponse | null>(
@@ -60,6 +86,9 @@ export default function OperacionCompraVenta() {
   // Estados para la operación completa (etapas 4-6)
   const [tauserSeleccionado, setTauserSeleccionado] = useState<string>("");
   const [procesandoTransaccion, setProcesandoTransaccion] = useState(false);
+  const [pagando, setPagando] = useState(false);
+  const creandoTransaccionRef = useRef(false);
+  const procesamientoTimeoutRef = useRef<number | null>(null);
 
   // Nuevo estado para operación desde perspectiva de la casa
   const [opPerspectivaCasa, setOpPerspectivaCasa] = useState<
@@ -75,23 +104,43 @@ export default function OperacionCompraVenta() {
   const [transaccionId, setTransaccionId] = useState<number | null>(null);
   const [modalCambioOpen, setModalCambioOpen] = useState(false);
   const [reconfirm, setReconfirm] = useState<ReconfirmPayload | null>(null);
+  const [transaccionResumen, setTransaccionResumen] = useState<
+    Transaccion | TransaccionDetalle | null
+  >(null);
 
   // Función para resetear la operación completa
   const resetOperacion = () => {
+    if (procesamientoTimeoutRef.current !== null) {
+      window.clearTimeout(procesamientoTimeoutRef.current);
+      procesamientoTimeoutRef.current = null;
+    }
     setEtapaActual(1);
     setDivisaOrigen("");
     setDivisaDestino("");
     setMonto(0);
     setDetalleMetodoSeleccionado(null);
+    setDetalleMetodoSeleccionadoInfo(null);
     setMetodoGenericoSeleccionado(null);
+    setMetodoSeleccionadoInfo(null);
     setTauserSeleccionado("");
     setResultado(null);
     setProcesandoTransaccion(false);
+    setPagando(false);
+    setTransaccionResumen(null);
+    creandoTransaccionRef.current = false;
     setTransaccionId(null);
     setModalCambioOpen(false);
     setReconfirm(null);
     setOpPerspectivaCasa(null);
   };
+
+  useEffect(() => {
+    return () => {
+      if (procesamientoTimeoutRef.current !== null) {
+        window.clearTimeout(procesamientoTimeoutRef.current);
+      }
+    };
+  }, []);
 
   // Función para manejar cambio de cliente
   const handleClienteChange = (
@@ -184,6 +233,7 @@ export default function OperacionCompraVenta() {
     setEtapaActual(1);
     // Mantener divisas y monto, solo limpiar método
     setDetalleMetodoSeleccionado(null);
+    setDetalleMetodoSeleccionadoInfo(null);
     setMetodoGenericoSeleccionado(null);
     setOpPerspectivaCasa(null);
   };
@@ -253,17 +303,50 @@ export default function OperacionCompraVenta() {
   };
 
   // Navegación Etapa 4 (detalle) -> Confirmar y Pagar (crear transacción)
-  const confirmarYPagar = async () => {
-    try {
-      // Obtener el usuario actual para el operador
-      const token = localStorage.getItem("token");
-      const userId = jwtDecode<DecodedToken>(token!).user_id;
+  const getMetodoPago = ():
+    | "transferencia"
+    | "billetera"
+    | "tarjeta"
+    | "stripe"
+    | null => {
+    const metodoNombre = metodoSeleccionadoInfo?.nombre;
+    if (metodoNombre === "TRANSFERENCIA_BANCARIA") return "transferencia";
+    if (metodoNombre === "BILLETERA_DIGITAL") return "billetera";
+    if (metodoNombre === "TARJETA") return "tarjeta";
+    if (metodoNombre === "STRIPE") return "stripe";
+    return null;
+  };
 
-      if (
-        metodoGenericoSeleccionado === null &&
-        detalleMetodoSeleccionado === null
-      ) {
-        toast.error("Error: No hay método financiero seleccionado");
+  const requierePago = () => {
+    if (!resultado) return false;
+    if (resultado.op_perspectiva_casa !== "venta") return false;
+    return getMetodoPago() !== null;
+  };
+
+  const mostrarProcesandoYComprobante = () => {
+    if (procesamientoTimeoutRef.current !== null) {
+      window.clearTimeout(procesamientoTimeoutRef.current);
+    }
+    setProcesandoTransaccion(true);
+    procesamientoTimeoutRef.current = window.setTimeout(() => {
+      setProcesandoTransaccion(false);
+      procesamientoTimeoutRef.current = null;
+      setEtapaActual(6);
+    }, 1500);
+  };
+
+  const getMetodoSimulador = (): SimuladorMetodo | null => {
+    const metodo = getMetodoPago();
+    if (metodo === "transferencia" || metodo === "billetera") {
+      return metodo;
+    }
+    return null;
+  };
+
+  const confirmarYPagar = async () => {
+    const requierePagoOperacion = requierePago();
+    try {
+      if (creandoTransaccionRef.current) {
         return;
       }
 
@@ -272,15 +355,32 @@ export default function OperacionCompraVenta() {
         return;
       }
 
-      console.log(metodoGenericoSeleccionado);
+      if (
+        metodoGenericoSeleccionado === null &&
+        detalleMetodoSeleccionado === null
+      ) {
+        toast.error("Error: No hay metodo financiero seleccionado");
+        return;
+      }
 
-      // Crear transacción PENDIENTE al avanzar a términos y condiciones
+      if (transaccionId) {
+        if (requierePagoOperacion) {
+          setEtapaActual(5);
+        } else if (transaccionResumen) {
+          mostrarProcesandoYComprobante();
+        }
+        return;
+      }
+
+      const token = localStorage.getItem("token");
+      const userId = jwtDecode<DecodedToken>(token!).user_id;
+
       const transaccionData: TransaccionRequest = {
         id_user: Number(userId),
         cliente: String(clienteActual!.id),
         operacion: opPerspectivaCasa!,
         tasa_aplicada: resultado.tc_final,
-        tasa_inicial: resultado.tc_final, // Usar tc_final como tasa inicial también
+        tasa_inicial: resultado.tc_final,
         divisa_origen: Number(divisaOrigen),
         divisa_destino: Number(divisaDestino),
         monto_origen: resultado.monto_origen,
@@ -288,66 +388,250 @@ export default function OperacionCompraVenta() {
         metodo_financiero: metodoGenericoSeleccionado ?? undefined,
         metodo_financiero_detalle: detalleMetodoSeleccionado ?? undefined,
         tauser: tauserSeleccionado,
-        estado: "en_proceso",
+        estado: "pendiente",
       };
-      console.log(transaccionData);
 
+      creandoTransaccionRef.current = true;
       const transaccion = await crearTransaccion(transaccionData);
-      console.log(transaccion);
-
       setTransaccionId(transaccion.id);
+      setTransaccionResumen(transaccion);
 
-      const metodo = await getMetodoFinanciero(transaccion.metodo_financiero!);
-
-      // Procesar pago inmediatamente con reconfirmación
-      const r = await reconfirmarTasa(transaccion.id);
-      if (!r.cambio) {
-        if (metodo.nombre == "TARJETA") {
-          const res = await stripeCheckout(transaccion.id, {
-            terminos_aceptados: true,
-          });
-          console.log(res.url);
-          window.location.href = res.url;
-          return;
-        }
-
-        await confirmarPago(transaccion.id, { terminos_aceptados: true });
-        toast.success("Pago confirmado. Transacción en proceso.");
-        setProcesandoTransaccion(true);
-        setTimeout(() => resetOperacion(), 2000);
+      if (requierePagoOperacion) {
+        setEtapaActual(5);
       } else {
-        setReconfirm(r);
-        setModalCambioOpen(true);
+        toast.success("Transaccion creada correctamente");
+        mostrarProcesandoYComprobante();
       }
     } catch (error: any) {
-      toast.error(error.message || "Error al procesar la transacción");
+      toast.error(error.message || "Error al crear la transaccion");
+    } finally {
+      creandoTransaccionRef.current = false;
+    }
+  };
+
+  const abrirSimuladorPago = async (
+    metodo: SimuladorMetodo,
+    idTransaccion: number
+  ): Promise<"success" | "cancel" | "rate-change"> => {
+    if (!resultado) {
+      return "cancel";
+    }
+
+    const url = new URL(
+      "/simulador-transaccion-bancaria",
+      window.location.origin
+    );
+    url.searchParams.set("transaccionId", String(idTransaccion));
+    url.searchParams.set("cliente", clienteActual?.nombre ?? "Cliente");
+    url.searchParams.set("monto", String(resultado.monto_origen));
+    if (resultado.divisa_origen) {
+      url.searchParams.set("divisa", resultado.divisa_origen);
+    }
+    url.searchParams.set("metodo", metodo);
+
+    return new Promise<"success" | "cancel" | "rate-change">((resolve) => {
+      const features =
+        "width=420,height=720,menubar=no,toolbar=no,location=no,status=no,resizable=yes,scrollbars=yes";
+      const popupName = SIMULADOR_POPUP_NAMES[metodo];
+      const popup = window.open(url.toString(), popupName, features);
+      if (!popup) {
+        const metodoLabel =
+          metodo === "transferencia"
+            ? "transferencia bancaria"
+            : "billetera digital";
+        toast.error(
+          "No se pudo abrir el simulador de " +
+            metodoLabel +
+            ". Revisa los bloqueadores de ventanas emergentes."
+        );
+        resolve("cancel");
+        return;
+      }
+      popup.focus();
+
+      let settled = false;
+
+      const finalize = (result: "success" | "cancel" | "rate-change") => {
+        if (settled) return;
+        settled = true;
+        window.removeEventListener("message", handleMessage);
+        window.clearInterval(closeWatcher);
+        resolve(result);
+        if (!popup.closed) {
+          popup.close();
+        }
+      };
+
+      const handleMessage = (event: MessageEvent) => {
+        if (event.origin !== window.location.origin) return;
+        const { data } = event;
+        if (!data || data.kind !== SIMULADOR_MESSAGE_KIND) return;
+        if (data.status === "success") {
+          finalize("success");
+          return;
+        }
+        if (data.status === "rate-change") {
+          finalize("rate-change");
+          return;
+        }
+        finalize("cancel");
+      };
+
+      const closeWatcher = window.setInterval(() => {
+        if (popup.closed) {
+          finalize("cancel");
+        }
+      }, 400);
+
+      window.addEventListener("message", handleMessage);
+    });
+  };
+
+  const pagarConReconfirmacion = async (
+    transaccionIdOverride?: number
+  ): Promise<TransaccionDetalle | null> => {
+    const idTransaccion = transaccionIdOverride ?? transaccionId;
+    if (!idTransaccion) {
+      toast.error("No hay transaccion creada");
+      return null;
+    }
+
+    const metodoSimulador = getMetodoSimulador();
+    if (metodoSimulador) {
+      const resultadoSimulador = await abrirSimuladorPago(
+        metodoSimulador,
+        idTransaccion
+      );
+      if (resultadoSimulador === "rate-change") {
+        try {
+          const r = await reconfirmarTasa(idTransaccion);
+          setReconfirm(r);
+          setModalCambioOpen(true);
+        } catch (error) {
+          console.error(error);
+          toast.error("No se pudo reconfirmar la tasa");
+        }
+        return null;
+      }
+      if (resultadoSimulador !== "success") {
+        return null;
+      }
+    }
+
+    try {
+      const r = await reconfirmarTasa(idTransaccion);
+
+      if (!r.cambio) {
+        if (metodoSeleccionadoInfo?.nombre === "STRIPE") {
+          console.log("Metodo seleccionado stripe");
+          const res = await stripeCheckout(idTransaccion, {
+            terminos_aceptados: true,
+          });
+          window.location.href = res.url;
+          return null;
+        }
+        const detalle = await confirmarPago(idTransaccion, {
+          terminos_aceptados: true,
+        });
+        toast.success("Pago confirmado. Transaccion en proceso.");
+        setReconfirm(null);
+        return detalle;
+      }
+
+      setReconfirm(r);
+      setModalCambioOpen(true);
+      return null;
+    } catch (error: any) {
+      toast.error(error.message || "Error al procesar la transaccion");
+      return null;
     }
   };
 
   const aceptarCambioYConfirmar = async () => {
     if (!transaccionId) return;
-    try {
-      const metodo = await getMetodoFinanciero(metodoGenericoSeleccionado!);
 
-      if (metodo.nombre == "TARJETA") {
-        const url = await stripeCheckout(transaccionId, {
-          terminos_aceptados: true,
-        });
-        window.location.href = url;
-        return;
+    setModalCambioOpen(false);
+    setPagando(true);
+
+    try {
+      const metodoSimulador = getMetodoSimulador();
+
+      if (metodoSimulador) {
+        if (reconfirm) {
+          const tasaNueva = Number(reconfirm.tasa_actual);
+          const montoDestinoNuevo = Number(reconfirm.monto_destino_actual);
+          const payload: {
+            tasa_actual?: number;
+            monto_destino_actual?: number;
+          } = {};
+
+          if (!Number.isNaN(tasaNueva)) {
+            payload.tasa_actual = tasaNueva;
+          }
+          if (!Number.isNaN(montoDestinoNuevo)) {
+            payload.monto_destino_actual = montoDestinoNuevo;
+          }
+
+          try {
+            if (Object.keys(payload).length > 0) {
+              await actualizarTransaccion(transaccionId, payload);
+              setResultado((prev) =>
+                prev
+                  ? {
+                      ...prev,
+                      tc_final: payload.tasa_actual ?? prev.tc_final,
+                      monto_destino:
+                        payload.monto_destino_actual ?? prev.monto_destino,
+                    }
+                  : prev
+              );
+            }
+            setReconfirm(null);
+          } catch (error) {
+            console.error(error);
+            toast.error(
+              "No se pudo actualizar la transaccion con la nueva tasa"
+            );
+            setModalCambioOpen(true);
+            return;
+          }
+        }
+
+        const resultadoSimulador = await abrirSimuladorPago(
+          metodoSimulador,
+          transaccionId
+        );
+        if (resultadoSimulador === "rate-change") {
+          try {
+            const r = await reconfirmarTasa(transaccionId);
+            setReconfirm(r);
+          } catch (error) {
+            console.error(error);
+            toast.error("No se pudo reconfirmar la tasa");
+          }
+          setModalCambioOpen(true);
+          return;
+        }
+        if (resultadoSimulador !== "success") {
+          setModalCambioOpen(true);
+          return;
+        }
       }
 
-      await confirmarPago(transaccionId, {
+      const detalle = await confirmarPago(transaccionId, {
         terminos_aceptados: true,
         acepta_cambio: true,
       });
-      toast.success("Pago confirmado. Transacción en proceso.");
-      setModalCambioOpen(false);
-      setProcesandoTransaccion(true);
-      setTimeout(() => resetOperacion(), 2000);
-    } catch (e) {
-      console.error(e);
+      toast.success("Pago confirmado. Transaccion en proceso.");
+      setReconfirm(null);
+      setTransaccionResumen(detalle);
+      mostrarProcesandoYComprobante();
+    } catch (error) {
+      console.error(error);
       toast.error("Error al confirmar el pago");
+      setModalCambioOpen(true);
+    } finally {
+      setPagando(false);
     }
   };
 
@@ -356,12 +640,53 @@ export default function OperacionCompraVenta() {
     try {
       await cancelarTransaccion(transaccionId);
       setModalCambioOpen(false);
-      toast.info("Transacción cancelada debido al cambio de tasa");
+      setPagando(false);
+      toast.info("Transaccion cancelada debido al cambio de tasa");
       resetOperacion();
     } catch (e) {
       console.error(e);
-      toast.error("Error al cancelar la transacción");
+      toast.error("Error al cancelar la transaccion");
     }
+  };
+
+  const manejarPago = async () => {
+    if (!transaccionId || pagando) return;
+
+    setPagando(true);
+    try {
+      const detalle = await pagarConReconfirmacion(transaccionId);
+      if (detalle) {
+        setTransaccionResumen(detalle);
+        mostrarProcesandoYComprobante();
+      }
+    } finally {
+      setPagando(false);
+    }
+  };
+
+  const manejarCancelarPago = async () => {
+    if (!transaccionId) {
+      resetOperacion();
+      return;
+    }
+    try {
+      await cancelarTransaccion(transaccionId);
+      toast.info("Transaccion cancelada");
+      resetOperacion();
+    } catch (error) {
+      console.error(error);
+      toast.error("Error al cancelar la transaccion");
+    }
+  };
+
+  const irAlHistorial = () => {
+    resetOperacion();
+    navigate("/historial-transacciones");
+  };
+
+  const iniciarNuevaOperacion = () => {
+    resetOperacion();
+    navigate("/operaciones");
   };
 
   // ========== FUNCIONES DE UTILIDAD ==========
@@ -394,8 +719,16 @@ export default function OperacionCompraVenta() {
             opPerspectivaCasa={opPerspectivaCasa}
             detalleMetodoSeleccionado={detalleMetodoSeleccionado}
             metodoGenericoSeleccionado={metodoGenericoSeleccionado}
-            onDetalleMetodoChange={setDetalleMetodoSeleccionado}
+            metodoSeleccionadoInfo={metodoSeleccionadoInfo}
+            onDetalleMetodoChange={(detalleId) => {
+              setDetalleMetodoSeleccionado(detalleId);
+              if (detalleId === null) {
+                setDetalleMetodoSeleccionadoInfo(null);
+              }
+            }}
+            onDetalleMetodoInfoChange={setDetalleMetodoSeleccionadoInfo}
             onMetodoGenericoChange={setMetodoGenericoSeleccionado}
+            onMetodoSeleccionadoChange={setMetodoSeleccionadoInfo}
             onRetroceder={retrocederEtapa1}
             onContinuar={avanzarEtapa3}
             onCancelar={cancelarOperacion}
@@ -421,9 +754,43 @@ export default function OperacionCompraVenta() {
               onAvanzar={confirmarYPagar}
               onCancelar={cancelarOperacion}
               mostrarBotonCancelar={true}
+              botonAvanzarLabel={
+                tauserSeleccionado
+                  ? requierePago()
+                    ? "Ir a Pagar"
+                    : "Confirmar"
+                  : undefined
+              }
             />
           )
         );
+      case 5: {
+        const metodoPago = getMetodoPago();
+        if (!metodoPago || !resultado) return null;
+        return (
+          <EtapaPago
+            tipo={metodoPago}
+            montoOrigen={resultado.monto_origen}
+            divisaOrigen={resultado.divisa_origen}
+            detalleClienteSeleccionado={detalleMetodoSeleccionadoInfo}
+            onPagar={manejarPago}
+            onCancelar={manejarCancelarPago}
+            pagando={pagando}
+          />
+        );
+      }
+      case 6:
+        return resultado && transaccionResumen ? (
+          <EtapaComprobante
+            transaccion={transaccionResumen}
+            resultado={resultado}
+            metodoSeleccionado={metodoSeleccionadoInfo?.nombre ?? null}
+            detalleMetodoSeleccionado={detalleMetodoSeleccionadoInfo}
+            tauserSeleccionado={tauserSeleccionado}
+            onVerHistorial={irAlHistorial}
+            onNuevaOperacion={iniciarNuevaOperacion}
+          />
+        ) : null;
       default:
         return null;
     }

@@ -9,6 +9,7 @@ export { default as EtapaTerminosCondiciones } from './components/EtapaTerminosC
 export { default as OperacionCompraVenta } from './components/OperacionCompraVenta';
 export { default as OperacionCompraVentaPublica } from './components/OperacionCompraVentaPublica';
 export { default as OperacionPage } from './pages/OperacionPage';
+export { default as SimuladorTransaccionBancariaPage } from './pages/SimuladorTransaccionBancariaPage';
 
 // Exportar tipos
 export type { CalcularOperacionResponse, OperacionRequest } from './types/Operacion';
@@ -16,4 +17,4 @@ export type { Transaccion, TransaccionRequest } from './types/Transaccion';
 
 // Exportar servicios
 export { operacionPrivada, operacionPublica } from './services/operacionService';
-export { crearTransaccion, reconfirmarTasa, confirmarPago } from './services/transaccionService';
+export { crearTransaccion, reconfirmarTasa, actualizarTransaccion, confirmarPago } from './services/transaccionService';

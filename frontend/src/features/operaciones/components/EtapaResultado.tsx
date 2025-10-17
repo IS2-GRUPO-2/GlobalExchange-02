@@ -12,6 +12,7 @@ interface EtapaResultadoProps {
   onAvanzar: () => void;
   onCancelar?: () => void;
   mostrarBotonCancelar?: boolean;
+  botonAvanzarLabel?: string;
 }
 
 export default function EtapaResultado({
@@ -20,7 +21,8 @@ export default function EtapaResultado({
   onRetroceder,
   onAvanzar,
   onCancelar,
-  mostrarBotonCancelar = false
+  mostrarBotonCancelar = false,
+  botonAvanzarLabel,
 }: EtapaResultadoProps) {
   const [tauserInfo, setTauserInfo] = useState<Tauser | null>(null);
   const [loadingTauser, setLoadingTauser] = useState(false);
@@ -245,7 +247,7 @@ export default function EtapaResultado({
                 : "bg-zinc-900 text-white hover:bg-zinc-700"
             }`}
           >
-            {esOperacionReal ? "Confirmar y Pagar" : "Continuar"}
+            {esOperacionReal ? (botonAvanzarLabel ?? "Confirmar y Pagar") : "Continuar"}
           </button>
         </div>
       </div>
@@ -365,3 +367,4 @@ export default function EtapaResultado({
     </div>
   );
 }
+
