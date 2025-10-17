@@ -308,7 +308,8 @@ class TestLoginWithMFA:
         """Login de usuario sin MFA debe retornar JWT directamente"""
         response = api_client.post('/api/auth/login/', {
             'username': 'user_no_mfa',
-            'password': 'testpass123'
+            'password': 'testpass123',
+            'app_id': 'web'
         })
         
         assert response.status_code == status.HTTP_200_OK
@@ -320,7 +321,8 @@ class TestLoginWithMFA:
         """Login de usuario con MFA debe requerir verificación"""
         response = api_client.post('/api/auth/login/', {
             'username': 'user_mfa',
-            'password': 'testpass123'
+            'password': 'testpass123',
+            'app_id': 'web'
         })
         
         assert response.status_code == status.HTTP_200_OK
@@ -333,7 +335,8 @@ class TestLoginWithMFA:
         """Login con credenciales inválidas debe fallar"""
         response = api_client.post('/api/auth/login/', {
             'username': 'invalid_user',
-            'password': 'wrong_pass'
+            'password': 'wrong_pass',
+            'app_id': 'web'
         })
         
         assert response.status_code == status.HTTP_401_UNAUTHORIZED
@@ -344,7 +347,8 @@ class TestLoginWithMFA:
         # Primer paso: login
         login_response = api_client.post('/api/auth/login/', {
             'username': 'user_mfa',
-            'password': 'testpass123'
+            'password': 'testpass123',
+            'app_id': 'web'
         })
         
         assert login_response.status_code == status.HTTP_200_OK
@@ -369,7 +373,8 @@ class TestLoginWithMFA:
         # Primer paso: login
         login_response = api_client.post('/api/auth/login/', {
             'username': 'user_mfa',
-            'password': 'testpass123'
+            'password': 'testpass123',
+            'app_id': 'web'
         })
         
         assert login_response.status_code == status.HTTP_200_OK
