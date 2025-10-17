@@ -9,6 +9,7 @@ env:
   REGISTRY: ghcr.io
   IMAGE_NAME_FRONTEND: "frontend"
   IMAGE_NAME_BACKEND: "backend"
+  IMAGE_NAME_SIMULADOR: "simulador"
 
 
 jobs:
@@ -77,6 +78,16 @@ jobs:
           tags: |
             type=sha
             type=raw,value=latest
+      
+      # Metadata simulador
+      - name: Extract Docker metadata (simulador)
+        id: meta-simulador
+        uses: docker/metadata-action@v5.0.0
+        with:
+          images: ${{ env.REGISTRY }}/${{ github.repository }}/${{ env.IMAGE_NAME_SIMULADOR }}
+          tags: |
+            type=sha
+            type=raw,value=latest
 
       # Build backend
       - name: Build and push backend
@@ -104,6 +115,19 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
+      # Build simulador
+      - name: Build and push simulador
+        id: build-simulador
+        uses: docker/build-push-action@v5.0.0
+        with:
+          context: ./pago-api
+          file: ./pago-api/dockerfile
+          push: true
+          tags: ${{ steps.meta-simulador.outputs.tags }}
+          labels: ${{ steps.meta-simulador.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+        
       # Firmar backend
       - name: Sign backend image
         env:
@@ -117,6 +141,24 @@ jobs:
           TAGS: ${{ steps.meta-frontend.outputs.tags }}
           DIGEST: ${{ steps.build-frontend.outputs.digest }}
         run: echo "${TAGS}" | xargs -I {} cosign sign --yes {}@${DIGEST}
+      
+      # Firmar simulador
+      - name: Sign simulador image
+        env:
+          TAGS: ${{ steps.meta-simulador.outputs.tags }}
+          DIGEST: ${{ steps.build-simulador.outputs.digest }}
+        run: echo "${TAGS}" | xargs -I {} cosign sign --yes {}@${DIGEST}
+
+      
+      # Crear archivo docker-compose.production.yml
+      - name: Copiar docker-compose.production.yml al VPS
+        uses: appleboy/scp-action@v0.1.4
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          source: "docker-compose.production.yml"
+          target: "/srv/globalexchange/docker-compose.yml"
 
       # SSH al vps
       - name: Deploy en VPS
@@ -129,7 +171,8 @@ jobs:
             cd /srv/globalexchange
             echo "${{ secrets.PROD_ENV}}" > .env
             echo "${{ secrets.GHCR_PAT}}" | docker login ghcr.io -u "${{ secrets.GHCR_USER}}" --password-stdin
-            docker compose down --rmi all --remove-orphans
+            docker compose down -v --rmi all --remove-orphans
+            docker volume prune -f
             docker compose pull
             docker compose up -d
 
