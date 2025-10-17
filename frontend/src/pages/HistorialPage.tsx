@@ -6,6 +6,18 @@ import { getClienteActual } from "../features/usuario/services/usuarioService";
 import { getHistorialTransacciones } from "../features/clientes/services/clienteService";
 import type { TransaccionDetalle } from "../features/operaciones/types/Transaccion";
 import { formatNumberDecimals } from "../utils/format";
+import { estadosTransaccion } from "../types/EstadosTransaccion";
+import { tipoMetodoDisplay } from "../features/metodos_financieros/types/MetodoFinanciero";
+
+const getEstadoConfig = (estado: string) => {
+  return (
+    estadosTransaccion.find((e) => e.estado === estado) || estadosTransaccion[0]
+  );
+};
+
+const getTipoDisplay = (tipo: string) => {
+  return tipoMetodoDisplay.find((t) => t.tipo === tipo) || tipoMetodoDisplay[0];
+};
 
 const HistorialPage = () => {
   const [clienteActual, setClienteActual] = useState<Cliente | null>(null);
@@ -70,6 +82,11 @@ const HistorialPage = () => {
 
   return (
     <div className="bg-gray-50 min-h-screen flex-1 overflow-y-auto p-6">
+      <div className="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <h1 className="text-2xl font-bold text-gray-900">
+          Historial de Transacciones
+        </h1>
+      </div>
       <div className="card">
         <table className="table">
           <thead>
@@ -106,12 +123,25 @@ const HistorialPage = () => {
                   {transaccion.divisa_destino_detalle.codigo}
                 </td>
                 <td>{transaccion.tauser_detalle.codigo}</td>
-                <td>{transaccion.estado.toUpperCase()}</td>
+                <td>
+                  <span
+                    className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                      getEstadoConfig(transaccion.estado).bgColor
+                    } ${getEstadoConfig(transaccion.estado).textColor}`}
+                  >
+                    {getEstadoConfig(transaccion.estado).read}
+                  </span>
+                </td>
                 <td>
                   {transaccion.id_user_detalle.first_name}{" "}
                   {transaccion.id_user_detalle.last_name}
                 </td>
-                <td>{transaccion.metodo_financiero_detalle.nombre}</td>
+                <td>
+                  {
+                    getTipoDisplay(transaccion.metodo_financiero_detalle.nombre)
+                      .display
+                  }
+                </td>
               </tr>
             ))}
           </tbody>
