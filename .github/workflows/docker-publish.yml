@@ -157,7 +157,7 @@ jobs:
           host: ${{ secrets.VPS_HOST }}
           username: ${{ secrets.VPS_USER }}
           key: ${{ secrets.VPS_SSH_KEY }}
-          source: "docker-compose.production.yml"
+          source: "docker-compose.prod.yml"
           target: "/srv/globalexchange/docker-compose.yml"
 
       # SSH al vps
