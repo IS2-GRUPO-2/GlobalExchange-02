@@ -158,7 +158,9 @@ jobs:
           username: ${{ secrets.VPS_USER }}
           key: ${{ secrets.VPS_SSH_KEY }}
           source: "docker-compose.prod.yml"
-          target: "/srv/globalexchange/docker-compose.yml"
+          target: "/srv/globalexchange/"
+          overwrite: true   # cambia a false si no quieres reemplazarlo
+          debug: true
 
       # SSH al vps
       - name: Deploy en VPS
