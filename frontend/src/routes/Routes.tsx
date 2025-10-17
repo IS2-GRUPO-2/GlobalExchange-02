@@ -26,7 +26,7 @@ import {
 } from "../types/perms";
 import CotizacionesPage from "../features/cotizaciones/pages/CotizacionesPage";
 import RequireAuth from "./RequiereAuth";
-
+import TauserPage from "../features/tauser/pages/TauserPage";
 import OperacionPage from "../features/operaciones/pages/OperacionPage";
 import ConfiguracionTauserPage from "../features/tauser/pages/ConfiguracionTauserPage";
 import HistorialPage from "../pages/HistorialPage";
@@ -36,12 +36,14 @@ import SimuladorTransaccionBancariaPage from "../features/operaciones/pages/Simu
 import ComprobantePage from "../features/operaciones/pages/ComprobantePage";
 
 export const router = createBrowserRouter([
+ 
   {
     path: "/",
     element: <App />,
     children: [
       // RUTAS PÚBLICAS DE ESTA MANERA
       { path: "", element: <MainMenuPage /> },
+      { path: "/tauser", element: <TauserPage /> },
       { path: "login", element: <LoginPage /> },
       { path: "register", element: <RegisterPage /> },
 

@@ -102,7 +102,14 @@ class ClienteViewSet(viewsets.ModelViewSet):
     @action(detail=True, methods=['get'], url_path="get_historial_transacciones")
     def get_transacciones(self, request, pk):
         _cliente = self.get_object()
-        transacciones = Transaccion.objects.filter(cliente=_cliente)    
+        # Si se envia el estado, lo recuperamos
+        estado = request.query_params.get('estado', None)
+
+        # Filtramos las transacciones por cliente y estado si se proporciona
+        if estado:
+            transacciones = Transaccion.objects.filter(cliente=_cliente, estado=estado)
+        else:
+            transacciones = Transaccion.objects.filter(cliente=_cliente)    
         serializer = TransaccionDetalleSerializer(transacciones, many=True)
         return Response(serializer.data)
 

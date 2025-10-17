@@ -27,6 +27,7 @@ const api = "/api";
  * @function loginAPI
  * @param {string} username - Nombre de usuario
  * @param {string} password - Contraseña del usuario
+ * @param {string} [app_id="web"] - Identificador de la aplicación (por defecto: "web")
  * @returns {Promise<AxiosResponse<MFALoginResponse>|undefined>} Respuesta con tokens o solicitud de MFA
  * 
  * @description
@@ -34,6 +35,7 @@ const api = "/api";
  * - Si el usuario NO tiene MFA: Retorna access token y refresh token
  * - Si el usuario SÍ tiene MFA: Retorna temp_token y mfa_required: true
  * - Maneja errores de autenticación
+ * - Identifica la fuente de la petición con app_id
  * 
  * @example
  * const response = await loginAPI('usuario', 'password123');
@@ -43,11 +45,12 @@ const api = "/api";
  *   // Login exitoso, guardar tokens
  * }
  */
-export const loginAPI = async (username: string, password: string) => {
+export const loginAPI = async (username: string, password: string, app_id: string = "web") => {
   try {
     const data = await axios.post<MFALoginResponse>(api + "/auth/login/", {
       username: username,
       password: password,
+      app_id: app_id
     });
 
     return data;
