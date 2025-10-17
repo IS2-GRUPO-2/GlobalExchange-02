@@ -76,6 +76,7 @@ class TipoMetodoFinanciero(models.TextChoices):
     TARJETA = 'TARJETA', 'Tarjeta de Crédito/Débito'
     EFECTIVO = 'EFECTIVO', 'Efectivo'
     CHEQUE = 'CHEQUE', 'Cheque'
+    STRIPE = 'STRIPE', 'Stripe' 
 
 
 class MetodoFinanciero(models.Model):

@@ -1,12 +1,19 @@
 import { useState, useEffect } from "react";
 import { toast } from "react-toastify";
-import { operacionPublica, getOpPerspectivaCasa } from "../services/operacionService";
+import {
+  operacionPublica,
+  getOpPerspectivaCasa,
+} from "../services/operacionService";
 import { getMetodosFinancierosPorOperacion } from "../../metodos_financieros/services/metodoFinancieroService";
 import { type CalcularOperacionResponse } from "../types/Operacion";
 import { type Divisa } from "../../divisas/types/Divisa";
 import { type MetodoFinanciero } from "../../metodos_financieros/types/MetodoFinanciero";
 import { getDivisasConTasa } from "../../divisas/services/divisaService";
-import { formatInputNumber, unformatInputNumber, formatNumber } from "../utils/formatNumber";
+import {
+  formatInputNumber,
+  unformatInputNumber,
+  formatNumber,
+} from "../utils/formatNumber";
 
 type EtapaActual = 1 | 2 | 3;
 
@@ -23,12 +30,16 @@ export default function OperacionCompraVentaPublica() {
   // Estados para divisas y métodos
   const [divisas, setDivisas] = useState<Divisa[]>([]);
   const [divisaBase, setDivisaBase] = useState<Divisa | null>(null);
-  
+
   // Estado para operación desde perspectiva de la casa
-  const [opPerspectivaCasa, setOpPerspectivaCasa] = useState<"compra" | "venta" | null>(null);
-  
+  const [opPerspectivaCasa, setOpPerspectivaCasa] = useState<
+    "compra" | "venta" | null
+  >(null);
+
   // Estado para el resultado
-  const [resultado, setResultado] = useState<CalcularOperacionResponse | null>(null);
+  const [resultado, setResultado] = useState<CalcularOperacionResponse | null>(
+    null
+  );
 
   // Cargar divisas al inicio
   useEffect(() => {
@@ -66,7 +77,7 @@ export default function OperacionCompraVentaPublica() {
       toast.error("Completa todos los campos");
       return;
     }
-    
+
     try {
       // Obtener operación desde perspectiva de la casa
       const { op_perspectiva_casa } = await getOpPerspectivaCasa(
@@ -109,16 +120,15 @@ export default function OperacionCompraVentaPublica() {
     setOpPerspectivaCasa(null);
   };
 
-//   // Navegación retroceder desde etapa 3 a 2
-//   const retrocederEtapa2 = () => {
-//     setEtapaActual(2);
-//     setResultado(null);
-//   };
+  //   // Navegación retroceder desde etapa 3 a 2
+  //   const retrocederEtapa2 = () => {
+  //     setEtapaActual(2);
+  //     setResultado(null);
+  //   };
 
   return (
     <section className="flex flex-col items-center select-none">
       <div className="w-full max-w-lg bg-white rounded-lg shadow-lg p-8 transition-all duration-500 ease-in-out min-h-[425px]">
-        
         {/* ETAPA 1: Selección de Divisas y Monto */}
         {etapaActual === 1 && (
           <EtapaSeleccionDivisasPublica
@@ -153,7 +163,6 @@ export default function OperacionCompraVentaPublica() {
             onNuevaOperacion={resetOperacion}
           />
         )}
-
       </div>
     </section>
   );
@@ -182,7 +191,7 @@ function EtapaSeleccionDivisasPublica({
   setDivisaDestino,
   monto,
   setMonto,
-  onContinuar
+  onContinuar,
 }: EtapaSeleccionDivisasPublicaProps) {
   // Estado para el input formateado
   const [montoDisplay, setMontoDisplay] = useState<string>("");
@@ -225,9 +234,13 @@ function EtapaSeleccionDivisasPublica({
             value={divisaOrigen}
             onChange={(e) => {
               setDivisaOrigen(e.target.value);
-              
-              const origen = divisas.find((d) => d.id?.toString() === e.target.value);
-              const destino = divisas.find((d) => d.id?.toString() === divisaDestino);
+
+              const origen = divisas.find(
+                (d) => d.id?.toString() === e.target.value
+              );
+              const destino = divisas.find(
+                (d) => d.id?.toString() === divisaDestino
+              );
               if (origen && origen.es_base && divisaBase && destino?.es_base) {
                 setDivisaDestino("");
               }
@@ -237,7 +250,9 @@ function EtapaSeleccionDivisasPublica({
             <option value="">Seleccionar...</option>
             {(() => {
               // Si en destino hay extranjera, limitar origen solo a base
-              const destino = divisas.find((d) => d.id?.toString() === divisaDestino);
+              const destino = divisas.find(
+                (d) => d.id?.toString() === divisaDestino
+              );
               if (destino && !destino.es_base && divisaBase) {
                 return (
                   <option key={divisaBase.id} value={divisaBase.id}>
@@ -281,7 +296,9 @@ function EtapaSeleccionDivisasPublica({
             <option value="">Seleccionar...</option>
             {(() => {
               // Si en origen hay extranjera, limitar destino solo a base
-              const origen = divisas.find((d) => d.id?.toString() === divisaOrigen);
+              const origen = divisas.find(
+                (d) => d.id?.toString() === divisaOrigen
+              );
               if (origen && !origen.es_base && divisaBase) {
                 return (
                   <option key={divisaBase.id} value={divisaBase.id}>
@@ -304,8 +321,13 @@ function EtapaSeleccionDivisasPublica({
 
       {/* Input monto */}
       <div className="bg-gray-50 border border-gray-300 rounded-lg p-4 text-center">
-        <label htmlFor="monto" className="block text-sm font-medium text-gray-700 mb-2">
-          Cantidad en {divisas.find((d) => d.id?.toString() === divisaOrigen)?.nombre || "Divisa origen"}
+        <label
+          htmlFor="monto"
+          className="block text-sm font-medium text-gray-700 mb-2"
+        >
+          Cantidad en{" "}
+          {divisas.find((d) => d.id?.toString() === divisaOrigen)?.nombre ||
+            "Divisa origen"}
         </label>
         <input
           id="monto"
@@ -315,7 +337,7 @@ function EtapaSeleccionDivisasPublica({
             const inputValue = e.target.value;
             // Desformatear para obtener el número puro
             const unformatted = unformatInputNumber(inputValue);
-            
+
             // Validar que sea un número válido
             if (unformatted === "" || /^\d+$/.test(unformatted)) {
               setMontoDisplay(formatInputNumber(unformatted));
@@ -324,7 +346,13 @@ function EtapaSeleccionDivisasPublica({
           }}
           onKeyDown={(e) => {
             // Prevenir caracteres no deseados
-            if (e.key === "-" || e.key === "e" || e.key === "E" || e.key === "," || e.key === "+") {
+            if (
+              e.key === "-" ||
+              e.key === "e" ||
+              e.key === "E" ||
+              e.key === "," ||
+              e.key === "+"
+            ) {
               e.preventDefault();
             }
           }}
@@ -368,29 +396,31 @@ function EtapaSeleccionMetodoPublica({
   metodoSeleccionado,
   setMetodoSeleccionado,
   onRetroceder,
-  onContinuar
+  onContinuar,
 }: EtapaSeleccionMetodoPublicaProps) {
   const [metodos, setMetodos] = useState<MetodoFinanciero[]>([]);
   const [loading, setLoading] = useState(false);
 
   // Inferir operación desde perspectiva del cliente
-  const getOperacionCliente = (opCasa: "compra" | "venta"): "compra" | "venta" => {
+  const getOperacionCliente = (
+    opCasa: "compra" | "venta"
+  ): "compra" | "venta" => {
     return opCasa === "compra" ? "venta" : "compra";
   };
 
   // Función para formatear nombres de métodos
   const formatearNombreMetodo = (nombreBD: string): string => {
     switch (nombreBD) {
-      case 'TRANSFERENCIA_BANCARIA':
-        return 'Transferencia Bancaria';
-      case 'BILLETERA_DIGITAL':
-        return 'Billetera Digital';
-      case 'TARJETA':
-        return 'Tarjeta';
-      case 'EFECTIVO':
-        return 'Efectivo';
-      case 'CHEQUE':
-        return 'Cheque';
+      case "TRANSFERENCIA_BANCARIA":
+        return "Transferencia Bancaria";
+      case "BILLETERA_DIGITAL":
+        return "Billetera Digital";
+      case "TARJETA":
+        return "Tarjeta";
+      case "EFECTIVO":
+        return "Efectivo";
+      case "CHEQUE":
+        return "Cheque";
       default:
         return nombreBD;
     }
@@ -401,9 +431,11 @@ function EtapaSeleccionMetodoPublica({
     const fetchMetodos = async () => {
       setLoading(true);
       try {
-        const metodosData = await getMetodosFinancierosPorOperacion(opPerspectivaCasa);
+        const metodosData = await getMetodosFinancierosPorOperacion(
+          opPerspectivaCasa
+        );
         setMetodos(metodosData);
-        
+
         // Seleccionar automáticamente el primer método
         if (metodosData.length > 0) {
           setMetodoSeleccionado(metodosData[0].id!.toString());
@@ -419,13 +451,13 @@ function EtapaSeleccionMetodoPublica({
   }, [opPerspectivaCasa, setMetodoSeleccionado]);
 
   const operacionCliente = getOperacionCliente(opPerspectivaCasa);
-  
+
   const getTituloMetodo = () => {
     return operacionCliente === "compra" ? "Método de Pago" : "Método de Cobro";
   };
 
   const getDescripcionMetodo = () => {
-    return operacionCliente === "compra" 
+    return operacionCliente === "compra"
       ? "Selecciona cómo vas a pagar por la divisa que quieres comprar"
       : "Selecciona cómo quieres recibir el pago por la divisa que vas a vender";
   };
@@ -438,9 +470,7 @@ function EtapaSeleccionMetodoPublica({
         <h3 className="text-lg font-semibold text-gray-800 mb-2">
           {getTituloMetodo()}
         </h3>
-        <p className="text-sm text-gray-600 mb-4">
-          {getDescripcionMetodo()}
-        </p>
+        <p className="text-sm text-gray-600 mb-4">{getDescripcionMetodo()}</p>
       </div>
 
       {loading ? (
@@ -465,17 +495,18 @@ function EtapaSeleccionMetodoPublica({
                     {formatearNombreMetodo(metodo.nombre)}
                   </h4>
                   <p className="text-sm text-gray-600">
-                    {operacionCliente === "compra" 
+                    {operacionCliente === "compra"
                       ? `Comisión: ${metodo.comision_pago_porcentaje}%`
-                      : `Comisión: ${metodo.comision_cobro_porcentaje}%`
-                    }
+                      : `Comisión: ${metodo.comision_cobro_porcentaje}%`}
                   </p>
                 </div>
-                <div className={`w-4 h-4 rounded-full border-2 ${
-                  metodoSeleccionado === metodo.id!.toString()
-                    ? "bg-blue-500 border-blue-500"
-                    : "border-gray-300"
-                }`}>
+                <div
+                  className={`w-4 h-4 rounded-full border-2 ${
+                    metodoSeleccionado === metodo.id!.toString()
+                      ? "bg-blue-500 border-blue-500"
+                      : "border-gray-300"
+                  }`}
+                >
                   {metodoSeleccionado === metodo.id!.toString() && (
                     <div className="w-2 h-2 bg-white rounded-full m-auto mt-0.5"></div>
                   )}
@@ -486,7 +517,9 @@ function EtapaSeleccionMetodoPublica({
         </div>
       ) : (
         <div className="text-center py-8">
-          <p className="text-gray-600">No hay métodos disponibles para esta operación</p>
+          <p className="text-gray-600">
+            No hay métodos disponibles para esta operación
+          </p>
         </div>
       )}
 
@@ -522,27 +555,30 @@ interface EtapaResultadoPublicaProps {
 function EtapaResultadoPublica({
   resultado,
   opPerspectivaCasa,
-  onNuevaOperacion
+  onNuevaOperacion,
 }: EtapaResultadoPublicaProps) {
-  
   // Función para inferir operación desde perspectiva del cliente
-  const getOperacionCliente = (opCasa: "compra" | "venta"): "compra" | "venta" => {
+  const getOperacionCliente = (
+    opCasa: "compra" | "venta"
+  ): "compra" | "venta" => {
     return opCasa === "compra" ? "venta" : "compra";
   };
 
   // Función para formatear nombres de métodos
   const formatearNombreMetodo = (nombreBD: string): string => {
     switch (nombreBD) {
-      case 'TRANSFERENCIA_BANCARIA':
-        return 'Transferencia Bancaria';
-      case 'BILLETERA_DIGITAL':
-        return 'Billetera Digital';
-      case 'TARJETA':
-        return 'Tarjeta';
-      case 'EFECTIVO':
-        return 'Efectivo';
-      case 'CHEQUE':
-        return 'Cheque';
+      case "TRANSFERENCIA_BANCARIA":
+        return "Transferencia Bancaria";
+      case "BILLETERA_DIGITAL":
+        return "Billetera Digital";
+      case "TARJETA":
+        return "Tarjeta";
+      case "EFECTIVO":
+        return "Efectivo";
+      case "CHEQUE":
+        return "Cheque";
+      case "STRIPE":
+        return "Stripe";
       default:
         return nombreBD;
     }
@@ -573,12 +609,12 @@ function EtapaResultadoPublica({
               {resultado.divisa_origen}
             </div>
           </div>
-          
+
           {/* Flecha separadora */}
           <div className="flex flex-col items-center flex-shrink-0">
             <div className="text-xl sm:text-2xl text-zinc-400">→</div>
           </div>
-          
+
           {/* Monto Destino */}
           <div className="text-center flex-1 min-w-0">
             <div className="text-xs font-semibold text-zinc-500 uppercase tracking-wide mb-2">
@@ -599,24 +635,32 @@ function EtapaResultadoPublica({
         <h4 className="font-semibold text-zinc-900 border-b border-zinc-200 pb-2">
           Detalles de la Operación
         </h4>
-        
+
         <div className="grid grid-cols-1 gap-4">
           <div>
             <span className="text-sm font-medium text-zinc-500 block mb-1">
-              {opPerspectivaCasa === "venta" ? "Método de Pago:" : "Método de Cobro:"}
+              {opPerspectivaCasa === "venta"
+                ? "Método de Pago:"
+                : "Método de Cobro:"}
             </span>
-            <p className="text-zinc-900 font-medium">{formatearNombreMetodo(resultado.parametros.nombre_metodo)}</p>
+            <p className="text-zinc-900 font-medium">
+              {formatearNombreMetodo(resultado.parametros.nombre_metodo)}
+            </p>
           </div>
-          
+
           <div>
-            <span className="text-sm font-medium text-zinc-500 block mb-1">Comisión método:</span>
+            <span className="text-sm font-medium text-zinc-500 block mb-1">
+              Comisión método:
+            </span>
             <p className="text-zinc-900 font-medium">
               {formatNumber(resultado.parametros.comision_metodo ?? 0, 2)}%
             </p>
           </div>
-          
+
           <div className="pt-2 border-t border-zinc-200">
-            <span className="text-sm font-medium text-zinc-500 block mb-1">Tasa final aplicada:</span>
+            <span className="text-sm font-medium text-zinc-500 block mb-1">
+              Tasa final aplicada:
+            </span>
             <p className="text-zinc-900 text-xl font-bold">
               {formatNumber(resultado.tc_final, 4)}
             </p>

@@ -13,6 +13,7 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='user',
             name='mfa_enabled',
-            field=models.BooleanField(default=False, help_text='Indica si el usuario tiene autenticación de dos factores habilitada'),
+            field=models.BooleanField(
+                default=False, help_text='Indica si el usuario tiene autenticación de dos factores habilitada'),
         ),
     ]
