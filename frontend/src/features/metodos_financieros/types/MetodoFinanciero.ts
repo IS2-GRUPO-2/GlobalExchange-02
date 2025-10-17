@@ -6,6 +6,33 @@ export type TipoMetodoFinanciero =
   | "CHEQUE"
   | "STRIPE";
 
+export const tipoMetodoDisplay = [
+  {
+    tipo: "TRANSFERENCIA_BANCARIA",
+    display: "Transferencia bancaria",
+  },
+  {
+    tipo: "BILLETERA_DIGITAL",
+    display: "Billetera digital",
+  },
+  {
+    tipo: "TARJETA",
+    display: "Tarjeta",
+  },
+  {
+    tipo: "EFECTIVO",
+    display: "Efectivo",
+  },
+  {
+    tipo: "CHEQUE",
+    display: "Cheque",
+  },
+  {
+    tipo: "STRIPE",
+    display: "Stripe",
+  },
+];
+
 export type MainTabType = "catalogo" | "instancias" | "catalogos";
 export type InstanceTabType = "cuentas" | "billeteras digitales";
 export type ClienteTabType = "cuentas" | "billeteras digitales" | "tarjetas";

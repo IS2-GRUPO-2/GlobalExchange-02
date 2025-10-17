@@ -155,6 +155,15 @@ def run():
         # El operador puede gestionar algunos clientes
         usuario_operador = User.objects.get(email='operador@globalexchange.com')
         usuario_operador.clientes.add(cliente_jose, cliente_fernando, cliente_javier)
+
+        # Asignar los mismos clientes del operador al usuario gerente
+        try:
+            usuario_gerente = User.objects.get(email='gerente@globalexchange.com')
+            # Copiar exactamente los mismos clientes que tiene el operador
+            usuario_gerente.clientes.add(*usuario_operador.clientes.all())
+        except User.DoesNotExist:
+            # Si el usuario gerente no existe, se omite silenciosamente
+            pass
         
         print("  → Relaciones usuario-cliente asignadas")
         

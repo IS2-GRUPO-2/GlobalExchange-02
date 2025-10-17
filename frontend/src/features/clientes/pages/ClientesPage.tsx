@@ -74,7 +74,7 @@ const ClientesPage = () => {
             onSearch={onSearch}
           />
         </div>
-        <Can anyOf = {[CLIENTES.ADD]}>
+        <Can anyOf={[CLIENTES.ADD]}>
           <button
             onClick={modalHook.openCreateModal}
             className="btn-primary flex items-center justify-center"
@@ -125,7 +125,7 @@ const ClientesPage = () => {
                   </td>
                   <td>
                     <div className="flex items-center space-x-2">
-                      <Can anyOf = {[CLIENTES.CHANGE]}>
+                      <Can anyOf={[CLIENTES.CHANGE]}>
                         <button
                           onClick={() => modalHook.openEditModal(cliente)}
                           className="p-1 text-gray-500 hover:text-blue-600 rounded-full hover:bg-gray-100"
@@ -134,7 +134,13 @@ const ClientesPage = () => {
                           <Edit size={16} />
                         </button>
                       </Can>
-                      <Can anyOf = {cliente.is_active? [CLIENTES.DELETE] : [CLIENTES.CHANGE]}>
+                      <Can
+                        anyOf={
+                          cliente.is_active
+                            ? [CLIENTES.DELETE]
+                            : [CLIENTES.CHANGE]
+                        }
+                      >
                         <button
                           onClick={() => handleToggleClient(cliente)}
                           className="p-1 text-gray-500 hover:text-red-600 rounded-full hover:bg-gray-100"
