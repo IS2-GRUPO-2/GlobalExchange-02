@@ -31,24 +31,12 @@ export type SimuladorTransferenciaResult =
       detalles: Record<string, unknown>;
     };
 
-const getDefaultBaseUrl = (): string => {
-  if (typeof window !== "undefined" && window.location) {
-    const { protocol, hostname } = window.location;
-    return `${protocol}//${hostname}/simulador-pagos`;
-  }
-  return "http://localhost:5173/simulador-pagos";
-};
 
-const buildBaseUrl = (): string => {
-  const envUrl = import.meta.env?.VITE_SIMULADOR_TRANSFERENCIA_URL as string | undefined;
-  const url = envUrl && envUrl.trim().length > 0 ? envUrl.trim() : getDefaultBaseUrl();
-  return url.endsWith("/") ? url.slice(0, -1) : url;
-};
 
 export const simularTransferenciaBancaria = async (
   payload: SimuladorTransferenciaPayload
 ): Promise<SimuladorTransferenciaResult> => {
-  const baseUrl = buildBaseUrl();
+  const baseUrl = "/simulador-pagos";
   const response = await fetch(`${baseUrl}/pagar`, {
     method: "POST",
     headers: {

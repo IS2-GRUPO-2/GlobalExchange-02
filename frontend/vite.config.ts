@@ -17,7 +17,7 @@ export default defineConfig({
         target: 'http://backend:8000',
         changeOrigin: true,
       },
-      // Redirecciona al simulador de pagos en localhost:8080
+      // Redirecciona al simulador de pagos en localhost:8000
       '/simulador-pagos': {
         target: 'http://simulador_pagos:8000',
         changeOrigin: true,
