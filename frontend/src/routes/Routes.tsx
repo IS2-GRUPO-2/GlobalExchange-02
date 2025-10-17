@@ -30,6 +30,8 @@ import RequireAuth from "./RequiereAuth";
 import OperacionPage from "../features/operaciones/pages/OperacionPage";
 import ConfiguracionTauserPage from "../features/tauser/pages/ConfiguracionTauserPage";
 import HistorialPage from "../pages/HistorialPage";
+import NotificacionesPage from "../features/notificaciones/pages/NotificacionesPage";
+import { NOTIFICACIONES } from "../types/perms"; 
 import SimuladorTransaccionBancariaPage from "../features/operaciones/pages/SimuladorTransaccionBancariaPage";
 import ComprobantePage from "../features/operaciones/pages/ComprobantePage";
 
@@ -170,6 +172,14 @@ export const router = createBrowserRouter([
         element: (
           <RequireAuth anyOf={[TAUSER.VIEW]}>
             <ConfiguracionTauserPage />
+          </RequireAuth>
+        ),
+      },
+      {
+        path: "configuraciones-notificaciones",
+        element: (
+          <RequireAuth anyOf={[NOTIFICACIONES.VIEW, NOTIFICACIONES.VIEW_CLIENTE]}>
+            <NotificacionesPage />
           </RequireAuth>
         ),
       },
