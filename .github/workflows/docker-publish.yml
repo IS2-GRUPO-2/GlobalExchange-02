@@ -173,9 +173,9 @@ jobs:
             cd /srv/globalexchange
             echo "${{ secrets.PROD_ENV}}" > .env
             echo "${{ secrets.GHCR_PAT}}" | docker login ghcr.io -u "${{ secrets.GHCR_USER}}" --password-stdin
-            docker compose down -v --rmi all --remove-orphans
+            docker compose -f docker-compose.prod.yml down -v --rmi all --remove-orphans
             docker volume prune -f
-            docker compose pull
-            docker compose up -d
+            docker compose -f docker-compose.prod.yml pull
+            docker compose -f docker-compose.prod.yml up -d
 
       
