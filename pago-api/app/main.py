@@ -10,7 +10,10 @@ from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Field
 
 
-app = FastAPI(title="Simulador de Pagos")
+app = FastAPI(
+    title="Simulador de Pagos",
+    root_path="/simulador-pagos"  # Esto es clave
+)
 
 app.add_middleware(
     CORSMiddleware,
@@ -60,7 +63,7 @@ def _formatear_decimal(valor: Decimal) -> str:
     return str(valor.quantize(Decimal("0.01"), rounding=ROUND_HALF_UP))
 
 
-@app.post("/simulador-pagos/pagar")
+@app.post("/pagar")
 def pagar(pago: PagoIn):
     snapshot = _obtener_snapshot_transaccion(pago.id_transaccion)
 
