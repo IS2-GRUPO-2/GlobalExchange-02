@@ -5,7 +5,9 @@ from typing import Optional
 from globalexchange.configuration import config
 import stripe
 from apps.operaciones.models import Transaccion
+from apps.clientes.models import Cliente
 from django.db import transaction
+from django.db.models import F
 stripe.api_key = config.STRIPE_KEY
 
 # Códigos normalizados del “procesador”
@@ -57,7 +59,7 @@ def completar_pago_stripe(session_id):
     
     with transaction.atomic():
         try:
-            transaccion = Transaccion.objects.select_for_update().get(id=transaccion_id)
+            transaccion = Transaccion.objects.select_for_update().select_related('cliente').get(id=transaccion_id)
         except Transaccion.DoesNotExist:
             print("La transacción no existe en la base de datos")
             return
@@ -69,6 +71,18 @@ def completar_pago_stripe(session_id):
         # Actualizar información
         transaccion.stripe_session_id = session_id
         transaccion.estado = "pendiente"
+        
         transaccion.save()
+        cliente = transaccion.cliente
+        
+        monto = transaccion.monto_origen
+        
+        # Actualización segura en SQL usando F()
+        Cliente.objects.filter(pk=cliente.pk).update(
+            gasto_diario=F('gasto_diario') + monto,
+            gasto_mensual=F('gasto_mensual') + monto
+        )
+
+        cliente.refresh_from_db(fields=["gasto_diario", "gasto_mensual"])
 
     print(f"Transacción {transaccion_id} completada con éxito (Stripe Session {session_id})")    
