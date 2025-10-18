@@ -1,2 +1,9 @@
 IS2-148 * Endpoints de gestión de stock
 https://chatgpt.com/share/68ec404a-ce74-8010-9633-6e1304895a0d
+
+IS2-182 * Acumular gasto diario y mensual del cliente
+https://chatgpt.com/share/68f19076-0d44-8010-b7a7-c357072881df
+
+IS2-26 * Generar solicitud y redirigir a Stripe
+https://chatgpt.com/c/68ef20ea-df60-832d-8313-3ae8985bb82d
+https://chatgpt.com/c/68eefcb7-5dcc-832d-953e-65bac23eda82

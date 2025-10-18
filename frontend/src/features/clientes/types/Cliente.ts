@@ -28,6 +28,8 @@ export type Cliente = {
   direccion: string;
   is_active: boolean;
   ruc?: string;
+  gasto_diario: string;
+  gasto_mensual: string;
 };
 
 /**

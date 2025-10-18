@@ -1,7 +1,12 @@
 import { useState, useEffect } from "react";
 import type { Divisa } from "../../divisas/types/Divisa";
-import { getDivisasConTasa, getLimiteConfig } from "../../divisas/services/divisaService";
+import {
+  getDivisasConTasa,
+  getLimiteConfig,
+} from "../../divisas/services/divisaService";
 import { formatInputNumber, unformatInputNumber } from "../utils/formatNumber";
+import { getTasas } from "../../cotizaciones/services/tasaService";
+import type { Cliente } from "../../clientes/types/Cliente";
 
 interface Props {
   divisaOrigen: string;
@@ -10,7 +15,7 @@ interface Props {
   setDivisaDestino: (divisa: string) => void;
   monto: number;
   setMonto: (monto: number) => void;
-  clienteActual: any;
+  clienteActual: Cliente | undefined;
   onContinuar: () => void;
 }
 
@@ -40,6 +45,7 @@ export default function EtapaSeleccionDivisas({
   const [limites, setLimites] = useState<LimiteCfg | null>(null);
   const [loadingLimites, setLoadingLimites] = useState(true);
   const [limiteMsg, setLimiteMsg] = useState<string>("");
+  const [tasaBase, setTasaBase] = useState<string>("");
 
   // Sincronizar monto con display formateado cuando cambia externamente
   useEffect(() => {
@@ -73,8 +79,10 @@ export default function EtapaSeleccionDivisas({
         // Normalizo a number|null por si viene string
         setLimites({
           id: res.id! as any,
-          limite_diario: res.limite_diario !== null ? Number(res.limite_diario) : null,
-          limite_mensual: res.limite_mensual !== null ? Number(res.limite_mensual) : null,
+          limite_diario:
+            res.limite_diario !== null ? Number(res.limite_diario) : null,
+          limite_mensual:
+            res.limite_mensual !== null ? Number(res.limite_mensual) : null,
         });
       } catch (e) {
         console.error("Error obteniendo limite-config", e);
@@ -86,9 +94,38 @@ export default function EtapaSeleccionDivisas({
     fetchLimites();
   }, []);
 
+  // Cargar tasas en cada que se cambia la divisa origen
+  useEffect(() => {
+    if (!divisaOrigen) return;
+
+    const setTasaActual = async () => {
+      if (divisaBase?.id == Number(divisaOrigen)) {
+        setTasaBase("1");
+        return;
+      }
+
+      const tasas = await getTasas({ search: "" });
+      console.log(tasas);
+
+      const tasa = tasas.find((t) => t.divisa == Number(divisaOrigen));
+
+      console.log("Tasa encontrada: " + tasa);
+
+      setTasaBase(tasa ? String(tasa.precioBase) : "1");
+    };
+
+    setTasaActual();
+  }, [divisaOrigen]);
+
   // Validación simple: monto < límites (con prioridad mensual > diario)
   useEffect(() => {
-    if (!clienteActual || !monto || monto <= 0 || loadingLimites) {
+    if (
+      !clienteActual ||
+      !monto ||
+      monto <= 0 ||
+      loadingLimites ||
+      tasaBase == ""
+    ) {
       setLimiteMsg("");
       return;
     }
@@ -98,16 +135,24 @@ export default function EtapaSeleccionDivisas({
       return;
     }
     const { limite_mensual, limite_diario } = limites;
-
+    console.log("Tasa base utilizada para revisar limites: " + tasaBase);
     // Prioridad mensual primero
-    if (limite_mensual !== null && monto >= limite_mensual) {
+    const nuevoGastoDiario =
+      Number(clienteActual.gasto_diario) + monto * Number(tasaBase);
+    console.log("Nuevo gasto diario: " + nuevoGastoDiario);
+
+    const nuevoGastoMensual =
+      Number(clienteActual.gasto_mensual) + monto * Number(tasaBase);
+    console.log("Nuevo gasto mensual: " + nuevoGastoMensual);
+
+    if (limite_mensual !== null && nuevoGastoMensual >= limite_mensual) {
       setLimiteMsg("Límite mensual alcanzado");
-    } else if (limite_diario !== null && monto >= limite_diario) {
+    } else if (limite_diario !== null && nuevoGastoDiario >= limite_diario) {
       setLimiteMsg("Límite diario alcanzado");
     } else {
       setLimiteMsg("");
     }
-  }, [monto, clienteActual, limites, loadingLimites]);
+  }, [monto, clienteActual, limites, loadingLimites, divisaOrigen, tasaBase]);
 
   // Habilita avanzar solo si no hay mensaje de límite ni carga pendiente
   const puedeAvanzar =
@@ -120,13 +165,17 @@ export default function EtapaSeleccionDivisas({
     !loadingLimites;
 
   // Obtener información de la divisa origen para mostrar el código
-  const divisaOrigenInfo = divisas.find((d) => d.id?.toString() === divisaOrigen);
+  const divisaOrigenInfo = divisas.find(
+    (d) => d.id?.toString() === divisaOrigen
+  );
   const codigoDivisaOrigen = divisaOrigenInfo?.codigo || "";
 
   return (
     <div className="space-y-6">
       <div className="text-center mb-6">
-        <h2 className="text-2xl font-bold text-gray-800">Selección de Divisas</h2>
+        <h2 className="text-2xl font-bold text-gray-800">
+          Selección de Divisas
+        </h2>
       </div>
 
       {/* Sección de divisas centralizada */}
@@ -134,97 +183,110 @@ export default function EtapaSeleccionDivisas({
         {/* Selección de divisas */}
         <div className="flex items-center justify-center space-x-4 w-full max-w-[736px]">
           <div className="w-80">
-          <label className="block text-sm font-medium text-gray-700 mb-2 select-none">
-            Divisa de origen (Entregas)
-          </label>
-          <select
-            value={divisaOrigen}
-            onChange={(e) => {
-              setLimiteMsg(""); // limpiar feedback viejo
-              setDivisaOrigen(e.target.value);
-              const origen = divisas.find((d) => d.id?.toString() === e.target.value);
-              const destino = divisas.find((d) => d.id?.toString() === divisaDestino);
-              if (origen && origen.es_base && divisaBase && destino?.es_base) {
-                setDivisaDestino("");
-              }
-            }}
-            autoComplete="off"
-            className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-zinc-700 focus:outline-none"
-          >
-            <option value="">Seleccionar divisa...</option>
-            {(() => {
-              const destino = divisas.find((d) => d.id?.toString() === divisaDestino);
-              if (destino && !destino.es_base && divisaBase) {
-                return (
-                  <option key={divisaBase.id} value={divisaBase.id}>
-                    {divisaBase.codigo} - {divisaBase.nombre}
-                  </option>
+            <label className="block text-sm font-medium text-gray-700 mb-2 select-none">
+              Divisa de origen (Entregas)
+            </label>
+            <select
+              value={divisaOrigen}
+              onChange={(e) => {
+                setLimiteMsg(""); // limpiar feedback viejo
+                setDivisaOrigen(e.target.value);
+                const origen = divisas.find(
+                  (d) => d.id?.toString() === e.target.value
                 );
-              }
-              return divisas
-                .filter((divisa) => divisa.id?.toString() !== divisaDestino)
-                .map((divisa) => (
-                  <option key={divisa.id} value={divisa.id}>
-                    {divisa.codigo} - {divisa.nombre}
-                  </option>
-                ));
-            })()}
-          </select>
+                const destino = divisas.find(
+                  (d) => d.id?.toString() === divisaDestino
+                );
+                if (
+                  origen &&
+                  origen.es_base &&
+                  divisaBase &&
+                  destino?.es_base
+                ) {
+                  setDivisaDestino("");
+                }
+              }}
+              autoComplete="off"
+              className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-zinc-700 focus:outline-none"
+            >
+              <option value="">Seleccionar divisa...</option>
+              {(() => {
+                const destino = divisas.find(
+                  (d) => d.id?.toString() === divisaDestino
+                );
+                if (destino && !destino.es_base && divisaBase) {
+                  return (
+                    <option key={divisaBase.id} value={divisaBase.id}>
+                      {divisaBase.codigo} - {divisaBase.nombre}
+                    </option>
+                  );
+                }
+                return divisas
+                  .filter((divisa) => divisa.id?.toString() !== divisaDestino)
+                  .map((divisa) => (
+                    <option key={divisa.id} value={divisa.id}>
+                      {divisa.codigo} - {divisa.nombre}
+                    </option>
+                  ));
+              })()}
+            </select>
+          </div>
+
+          {/* Botón swap */}
+          <button
+            type="button"
+            onClick={() => {
+              setLimiteMsg(""); // limpiar feedback viejo
+              const temp = divisaOrigen;
+              setDivisaOrigen(divisaDestino);
+              setDivisaDestino(temp);
+            }}
+            className="bg-gray-700 text-white rounded-full p-3 hover:bg-gray-900 self-end mb-0 select-none"
+            disabled={!divisaOrigen || !divisaDestino}
+            aria-label="Intercambiar divisas"
+          >
+            ⇆
+          </button>
+
+          <div className="w-80">
+            <label className="block text-sm font-medium text-gray-700 mb-2 select-none">
+              Divisa de destino (Recibes)
+            </label>
+            <select
+              value={divisaDestino}
+              onChange={(e) => {
+                setLimiteMsg(""); // limpiar feedback viejo
+                setDivisaDestino(e.target.value);
+              }}
+              autoComplete="off"
+              className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-zinc-700 focus:outline-none"
+            >
+              <option value="">Seleccionar divisa...</option>
+              {(() => {
+                const origen = divisas.find(
+                  (d) => d.id?.toString() === divisaOrigen
+                );
+                if (origen && !origen.es_base && divisaBase) {
+                  return (
+                    <option key={divisaBase.id} value={divisaBase.id}>
+                      {divisaBase.codigo} - {divisaBase.nombre}
+                    </option>
+                  );
+                }
+                return divisas
+                  .filter((divisa) => divisa.id?.toString() !== divisaOrigen)
+                  .map((divisa) => (
+                    <option key={divisa.id} value={divisa.id}>
+                      {divisa.codigo} - {divisa.nombre}
+                    </option>
+                  ));
+              })()}
+            </select>
+          </div>
         </div>
 
-        {/* Botón swap */}
-        <button
-          type="button"
-          onClick={() => {
-            setLimiteMsg(""); // limpiar feedback viejo
-            const temp = divisaOrigen;
-            setDivisaOrigen(divisaDestino);
-            setDivisaDestino(temp);
-          }}
-          className="bg-gray-700 text-white rounded-full p-3 hover:bg-gray-900 self-end mb-0 select-none"
-          disabled={!divisaOrigen || !divisaDestino}
-          aria-label="Intercambiar divisas"
-        >
-          ⇆
-        </button>
-
-        <div className="w-80">
-          <label className="block text-sm font-medium text-gray-700 mb-2 select-none">
-            Divisa de destino (Recibes)
-          </label>
-          <select
-            value={divisaDestino}
-            onChange={(e) => {
-              setLimiteMsg(""); // limpiar feedback viejo
-              setDivisaDestino(e.target.value);
-            }}
-            autoComplete="off"
-            className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-zinc-700 focus:outline-none"
-          >
-            <option value="">Seleccionar divisa...</option>
-            {(() => {
-              const origen = divisas.find((d) => d.id?.toString() === divisaOrigen);
-              if (origen && !origen.es_base && divisaBase) {
-                return (
-                  <option key={divisaBase.id} value={divisaBase.id}>
-                    {divisaBase.codigo} - {divisaBase.nombre}
-                  </option>
-                );
-              }
-              return divisas
-                .filter((divisa) => divisa.id?.toString() !== divisaOrigen)
-                .map((divisa) => (
-                  <option key={divisa.id} value={divisa.id}>
-                    {divisa.codigo} - {divisa.nombre}
-                  </option>
-                ));
-            })()}
-          </select>
-        </div>
-      </div>
-
-      {/* Input monto */}
-      {/* <div className="w-full max-w-[672px]">
+        {/* Input monto */}
+        {/* <div className="w-full max-w-[672px]">
         <div className="bg-gray-50 border border-gray-300 rounded-lg p-6 text-center">
           <label
             htmlFor="monto"
@@ -266,58 +328,63 @@ export default function EtapaSeleccionDivisas({
         </div>
       </div> */}
 
-      <div className="w-full max-w-[712px]">
-        <div className="bg-gray-50 border border-gray-300 rounded-lg p-6 text-center">
-          <label
-            htmlFor="monto"
-            className="block text-sm font-medium text-gray-700 mb-3 select-none"
-          >
-            Monto que vas a entregar{codigoDivisaOrigen && ` (${codigoDivisaOrigen})`}
-          </label>
-          <input
-            id="monto"
-            type="text"
-            value={montoDisplay}
-            onChange={(e) => {
-              const inputValue = e.target.value;
-              // Desformatear para obtener el número puro
-              const unformatted = unformatInputNumber(inputValue);
-              
-              // Validar que sea un número válido
-              if (unformatted === "" || /^\d+$/.test(unformatted)) {
-                setLimiteMsg(""); // limpiar mensaje de límite
-                setMontoDisplay(formatInputNumber(unformatted));
-                setMonto(unformatted === "" ? 0 : Number(unformatted));
-              }
-            }}
-            onKeyDown={(e) => {
-              // Prevenir caracteres no deseados
-              if (e.key === "-" || e.key === "e" || e.key === "E" || e.key === "," || e.key === "+") {
-                e.preventDefault();
-              }
-            }}
-            autoComplete="off"
-            placeholder="Ingrese el monto"
-            className="w-full text-3xl font-semibold text-gray-900 text-center bg-transparent focus:outline-none focus:ring-2 focus:ring-zinc-500 rounded-md py-2"
-          />
+        <div className="w-full max-w-[712px]">
+          <div className="bg-gray-50 border border-gray-300 rounded-lg p-6 text-center">
+            <label
+              htmlFor="monto"
+              className="block text-sm font-medium text-gray-700 mb-3 select-none"
+            >
+              Monto que vas a entregar
+              {codigoDivisaOrigen && ` (${codigoDivisaOrigen})`}
+            </label>
+            <input
+              id="monto"
+              type="text"
+              value={montoDisplay}
+              onChange={(e) => {
+                const inputValue = e.target.value;
+                // Desformatear para obtener el número puro
+                const unformatted = unformatInputNumber(inputValue);
 
-          {codigoDivisaOrigen && monto > 0 && (
-            <div className="mt-3 text-sm text-gray-600 select-none">
-              {codigoDivisaOrigen}
-            </div>
-          )}
+                // Validar que sea un número válido
+                if (unformatted === "" || /^\d+$/.test(unformatted)) {
+                  setLimiteMsg(""); // limpiar mensaje de límite
+                  setMontoDisplay(formatInputNumber(unformatted));
+                  setMonto(unformatted === "" ? 0 : Number(unformatted));
+                }
+              }}
+              onKeyDown={(e) => {
+                // Prevenir caracteres no deseados
+                if (
+                  e.key === "-" ||
+                  e.key === "e" ||
+                  e.key === "E" ||
+                  e.key === "," ||
+                  e.key === "+"
+                ) {
+                  e.preventDefault();
+                }
+              }}
+              autoComplete="off"
+              placeholder="Ingrese el monto"
+              className="w-full text-3xl font-semibold text-gray-900 text-center bg-transparent focus:outline-none focus:ring-2 focus:ring-zinc-500 rounded-md py-2"
+            />
+
+            {codigoDivisaOrigen && monto > 0 && (
+              <div className="mt-3 text-sm text-gray-600 select-none">
+                {codigoDivisaOrigen}
+              </div>
+            )}
+          </div>
         </div>
-      </div>
-
-
-
-
-
       </div>
 
       {/* Mensaje de límite (simple) */}
       {!!limiteMsg && (
-        <div className="bg-red-50 border border-red-200 rounded-lg p-3 text-sm text-red-700" aria-live="polite">
+        <div
+          className="bg-red-50 border border-red-200 rounded-lg p-3 text-sm text-red-700"
+          aria-live="polite"
+        >
           {limiteMsg}
         </div>
       )}
@@ -327,7 +394,11 @@ export default function EtapaSeleccionDivisas({
         <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
           <div className="flex">
             <div className="flex-shrink-0">
-              <svg className="h-5 w-5 text-yellow-400" viewBox="0 0 20 20" fill="currentColor">
+              <svg
+                className="h-5 w-5 text-yellow-400"
+                viewBox="0 0 20 20"
+                fill="currentColor"
+              >
                 <path
                   fillRule="evenodd"
                   d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z"
@@ -336,11 +407,14 @@ export default function EtapaSeleccionDivisas({
               </svg>
             </div>
             <div className="ml-3">
-              <h3 className="text-sm font-medium text-yellow-800">Cliente requerido</h3>
+              <h3 className="text-sm font-medium text-yellow-800">
+                Cliente requerido
+              </h3>
               <div className="mt-2 text-sm text-yellow-700">
                 <p>
-                  Para continuar con la simulación necesitas tener un cliente asignado. 
-                  Selecciona uno en el menú superior derecho o contacta a soporte si no tienes clientes asignados.
+                  Para continuar con la simulación necesitas tener un cliente
+                  asignado. Selecciona uno en el menú superior derecho o
+                  contacta a soporte si no tienes clientes asignados.
                 </p>
               </div>
             </div>
