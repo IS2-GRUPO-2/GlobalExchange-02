@@ -118,7 +118,7 @@ export default function ComprobantePage() {
 
         <div className="flex justify-center gap-4 pt-6">
           <button
-            onClick={() => navigate("/historial")}
+            onClick={() => navigate("/historial-transacciones")}
             className="px-5 py-2 border border-gray-300 text-gray-700 rounded-lg font-medium hover:bg-gray-50 transition-colors"
           >
             Ver historial

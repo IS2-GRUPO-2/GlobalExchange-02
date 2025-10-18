@@ -1,22 +1,30 @@
 from django.contrib.auth.models import Group, Permission
 from django.contrib.contenttypes.models import ContentType
 
+
 def run():
     """Crear roles (Groups) base para el sistema"""
-    
+
     print("🔧 Creando roles base usando Groups de Django...")
-    
+
     # Obtener todos los permisos disponibles para el administrador
-    all_permissions = list(Permission.objects.all().values_list('content_type__app_label', 'codename'))
-    admin_permissions = [f"{app_label}.{codename}" for app_label, codename in all_permissions]
-    
-    print(f"  → Se encontraron {len(admin_permissions)} permisos en total para el administrador")
-    
+    all_permissions = list(Permission.objects.all().values_list(
+        'content_type__app_label', 'codename'))
+    admin_permissions = [
+        f"{app_label}.{codename}" for app_label, codename in all_permissions]
+
+    print(
+        f"  → Se encontraron {len(admin_permissions)} permisos en total para el administrador")
+
     # Roles básicos del sistema
     roles_data = [
         {
             'name': 'Administrador',
             'permissions': admin_permissions  # TODOS los permisos disponibles en el sistema
+        },
+        {
+            'name': 'Gerente',
+            'permissions': admin_permissions
         },
         {
             'name': 'Operador',
@@ -26,12 +34,12 @@ def run():
                 'clientes.view_cliente',
                 'clientes.add_cliente',
                 'clientes.change_cliente',
-                
+
                 # Métodos financieros - Gestión completa
                 'metodos_financieros.add_metodofinancierodetalle',
                 'metodos_financieros.change_metodofinancierodetalle',
                 'metodos_financieros.view_metodofinancierodetalle',
-                
+
                 # Permisos para gestionar métodos financieros específicos
                 'metodos_financieros.add_cuentabancaria',
                 'metodos_financieros.change_cuentabancaria',
@@ -45,24 +53,30 @@ def run():
                 'metodos_financieros.change_tarjeta',
                 'metodos_financieros.view_tarjeta',
                 'metodos_financieros.delete_tarjeta',
-                
+
                 # Ver catálogos
                 'metodos_financieros.view_banco',
                 'metodos_financieros.view_billeteradigitalcatalogo',
                 'metodos_financieros.view_tarjetacatalogo',
-                
+
                 # Operaciones completas
                 'operaciones.can_use_operacion',
-                
+
                 # Cotizaciones
                 'cotizaciones.view_tasa',
                 'cotizaciones.view_historialtasa',
                 'cotizaciones.change_tasa',  # Para actualizar precios
-                
+
                 # Divisas solo lectura
                 'divisas.view_divisa',
                 'divisas.view_denominacion',
-                
+
+                # Permisos de notificacion de tasa
+                'notificaciones.view_notificaciontasausuario',
+                'notificaciones.change_notificaciontasausuario',
+                'notificaciones.view_notificaciontasacliente',
+                'notificaciones.change_notificaciontasacliente'
+
             ]
         },
         {
@@ -75,22 +89,22 @@ def run():
                 'clientes.add_cliente',
                 'clientes.change_cliente',
                 'clientes.view_categoriacliente',
-                
+
                 # Operaciones y reportes
                 'metodos_financieros.view_metodofinancierodetalle',
                 'metodos_financieros.change_metodofinancierodetalle',
                 'metodos_financieros.view_banco',
                 'metodos_financieros.view_billeteradigitalcatalogo',
                 # 'metodos_financieros.view_metodofinanciero',  # QUITADO
-                
+
                 # Cotizaciones
                 'cotizaciones.view_tasa',
                 'cotizaciones.view_historialtasa',
-                
+
                 # Divisas solo lectura
                 'divisas.view_divisa',
                 'divisas.view_denominacion',
-                
+
             ]
         },
         {
@@ -101,7 +115,7 @@ def run():
                 'metodos_financieros.add_metodofinancierodetalle',
                 'metodos_financieros.change_metodofinancierodetalle',
                 'metodos_financieros.delete_metodofinancierodetalle',
-                
+
                 # Permisos para gestionar sus métodos financieros específicos
                 'metodos_financieros.add_cuentabancaria',
                 'metodos_financieros.change_cuentabancaria',
@@ -115,18 +129,24 @@ def run():
                 'metodos_financieros.change_tarjeta',
                 'metodos_financieros.view_tarjeta',
                 'metodos_financieros.delete_tarjeta',
-                
+
                 # Ver catálogos
                 'metodos_financieros.view_banco',
                 'metodos_financieros.view_billeteradigitalcatalogo',
                 'metodos_financieros.view_tarjetacatalogo',
-                
+
                 # Solo ver sus propios datos
                 'clientes.view_cliente',
                 'divisas.view_divisa',
                 'cotizaciones.view_tasa',
                 'cotizaciones.view_historialtasa',
-                'operaciones.can_use_operacion'
+                'operaciones.can_use_operacion',
+
+                # Permisos de notificacion de tasa
+                'notificaciones.view_notificaciontasausuario',
+                'notificaciones.change_notificaciontasausuario',
+                'notificaciones.view_notificaciontasacliente',
+                'notificaciones.change_notificaciontasacliente'
             ]
         },
         {
@@ -137,7 +157,7 @@ def run():
                 'metodos_financieros.add_metodofinancierodetalle',
                 'metodos_financieros.change_metodofinancierodetalle',
                 'metodos_financieros.delete_metodofinancierodetalle',
-                
+
                 # Permisos para gestionar sus métodos financieros específicos
                 'metodos_financieros.add_cuentabancaria',
                 'metodos_financieros.change_cuentabancaria',
@@ -151,13 +171,19 @@ def run():
                 'metodos_financieros.change_tarjeta',
                 'metodos_financieros.view_tarjeta',
                 'metodos_financieros.delete_tarjeta',
-                
+
                 # Permisos para ver catálogos (necesarios para formularios)
                 'metodos_financieros.view_banco',
                 'metodos_financieros.view_billeteradigitalcatalogo',
                 'metodos_financieros.view_tarjetacatalogo',
-                
+
                 'operaciones.can_use_operacion',
+
+                # Permisos de notificacion de tasa
+                'notificaciones.view_notificaciontasausuario',
+                'notificaciones.change_notificaciontasausuario',
+                'notificaciones.view_notificaciontasacliente',
+                'notificaciones.change_notificaciontasacliente'
             ]
         },
         {
@@ -178,16 +204,16 @@ def run():
             ]
         }
     ]
-    
+
     for rol_data in roles_data:
         # Crear o obtener el Group (Rol)
         group, created = Group.objects.get_or_create(name=rol_data['name'])
-        
+
         if created:
             print(f"  → Rol creado: {group.name}")
         else:
             print(f"  → Rol ya existe: {group.name}")
-        
+
         # Asignar permisos al rol
         permissions_to_add = []
         for perm_codename in rol_data['permissions']:
@@ -202,10 +228,11 @@ def run():
                 print(f"    ⚠️  Permiso no encontrado: {perm_codename}")
             except ValueError:
                 print(f"    ⚠️  Formato de permiso inválido: {perm_codename}")
-        
+
         # Asignar todos los permisos encontrados
         group.permissions.set(permissions_to_add)
-        print(f"    → {len(permissions_to_add)} permisos asignados a {group.name}")
-    
+        print(
+            f"    → {len(permissions_to_add)} permisos asignados a {group.name}")
+
     print(f"✅ Roles (Groups): {Group.objects.count()} total")
     print(f"✅ Permisos disponibles: {Permission.objects.count()} total")

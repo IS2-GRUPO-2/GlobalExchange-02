@@ -3,6 +3,8 @@ from django.core.mail import EmailMultiAlternatives
 from django.template.loader import render_to_string
 
 TEMPLATE_DIR = "backend/templates/"
+
+
 class NotificationService:
     """
     Servicio centralizado de notificaciones.
@@ -19,9 +21,11 @@ class NotificationService:
         Envía un correo HTML usando plantillas de Django.
         """
         html_content = render_to_string(template_name, context)
-        text_content = render_to_string(template_name, context)  # opcional como fallback
+        text_content = render_to_string(
+            template_name, context)  # opcional como fallback
 
-        msg = EmailMultiAlternatives(subject, text_content, self.from_email, recipient_list)
+        msg = EmailMultiAlternatives(
+            subject, text_content, self.from_email, recipient_list)
         msg.attach_alternative(html_content, "text/html")
         msg.send()
 

@@ -10,7 +10,10 @@ from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Field
 
 
-app = FastAPI(title="Simulador de Pagos")
+app = FastAPI(
+    title="Simulador de Pagos",
+    root_path="/simulador-pagos"  # Esto es clave
+)
 
 app.add_middleware(
     CORSMiddleware,

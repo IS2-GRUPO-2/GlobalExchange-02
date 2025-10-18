@@ -59,12 +59,28 @@ export const getCategoriaCliente = async (id_cliente: string) => {
   return res;
 };
 
-export const getHistorialTransacciones = async (id_cliente: string) => {
+export const getHistorialTransacciones = async (id_cliente: string , estado?: string | string[]) => {
   try {
+
+    let params = {};
+    if (estado) {
+      params = { estado };
+    }
     const res = await axios.get<TransaccionDetalle[]>(
-      `${API_URL}${id_cliente}/get_historial_transacciones/`
+      `${API_URL}${id_cliente}/get_historial_transacciones/`, { params }
     );
     return res;
+  } catch (err) {
+    console.log(err);
+    throw err;
+  }
+};
+
+
+export const getPendingTransaccionesCount = async (id_cliente: string) => {
+  try {
+    const res = await getHistorialTransacciones(id_cliente, ['pendiente', 'en_proceso']);
+    return res.data.length;
   } catch (err) {
     console.log(err);
     throw err;

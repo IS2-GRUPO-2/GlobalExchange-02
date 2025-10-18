@@ -142,3 +142,11 @@ export const TRANSACCIONES = {
 export const OPERACION = {
   USE: "operaciones.can_use_operacion",
 } as const;
+
+
+export const NOTIFICACIONES = {
+  VIEW: "notificaciones.view_notificaciontasausuario",
+  CHANGE: "notificaciones.change_notificaciontasausuario",
+  VIEW_CLIENTE: "notificaciones.view_notificaciontasacliente",
+  CHANGE_CLIENTE: "notificaciones.change_notificaciontasacliente",
+} as const;

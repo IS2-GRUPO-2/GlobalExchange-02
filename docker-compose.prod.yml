@@ -24,7 +24,7 @@ services:
         condition: service_healthy
 
   simulador_pagos:
-    image: ghcr.io/is2-grupo-2/globalexchange-02/simuladorpagos:latest
+    image: ghcr.io/is2-grupo-2/globalexchange-02/simulador:latest
     container_name: simulador_pagos_prod
     hostname: simulador_pagos
     depends_on:

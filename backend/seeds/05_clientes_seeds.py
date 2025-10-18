@@ -45,44 +45,55 @@ def run():
             'ruc': None
         },
         {
-            'nombre': 'María Elena Cliente González',
+            'nombre': 'Jose Gabriel Ramirez Dure',
+            'is_persona_fisica': True,
+            'id_categoria': categoria_minorista,
+            'cedula': '12324578',
+            'correo': 'joseramirezdure03@fpuna.edu.py',
+            'telefono': '+549412132434567',
+            'direccion': 'Av. Tulipanes 1234, Ciudad Autónoma de Buenos Aires, Argentina',
+            'is_active': True,
+            'ruc': None
+        },
+        {
+            'nombre': 'Fernando David Fleitas Cáceres',
             'is_persona_fisica': True,
             'id_categoria': categoria_minorista,
             'cedula': '12345678',
-            'correo': 'cliente@globalexchange.com',
+            'correo': 'fernanfleitas@fpuna.edu.py',
             'telefono': '+54911234567',
             'direccion': 'Av. Corrientes 1234, Ciudad Autónoma de Buenos Aires, Argentina',
             'is_active': True,
             'ruc': None
         },
         {
-            'nombre': 'Ana García Fernández',
+            'nombre': 'Javier Toshifumi Goto Dominguez',
             'is_persona_fisica': True,
             'id_categoria': categoria_premium,
             'cedula': '23456789',
-            'correo': 'ana.garcia@email.com',
+            'correo': 'gotojavier9@fpuna.edu.py',
             'telefono': '+54911234568',
             'direccion': 'Av. Santa Fe 5678, Ciudad Autónoma de Buenos Aires, Argentina',
             'is_active': True,
             'ruc': None
         },
         {
-            'nombre': 'Carlos López Martínez',
+            'nombre': 'Elias Jesus Figueredo Rosa',
             'is_persona_fisica': True,
             'id_categoria': categoria_vip,
             'cedula': '34567890',
-            'correo': 'carlos.lopez@email.com',
+            'correo': 'ejfr09@fpuna.edu.py',
             'telefono': '+54911234569',
             'direccion': 'Av. Rivadavia 9012, Ciudad Autónoma de Buenos Aires, Argentina',
             'is_active': True,
             'ruc': None
         },
         {
-            'nombre': 'Sofía Martínez Silva',
+            'nombre': 'Elias Marcelo Riveros Vera',
             'is_persona_fisica': True,
             'id_categoria': categoria_mayorista,
             'cedula': '45678901',
-            'correo': 'sofia.martinez@email.com',
+            'correo': 'elias4845@fpuna.edu.py',
             'telefono': '+54911234570',
             'direccion': 'Av. Callao 3456, Ciudad Autónoma de Buenos Aires, Argentina',
             'is_active': True,
@@ -124,25 +135,35 @@ def run():
     # Asignar usuarios a clientes (relación ManyToMany)
     try:
         cliente_admin = Cliente.objects.get(correo='admin@globalexchange.com')
-        cliente_maria = Cliente.objects.get(correo='cliente@globalexchange.com')
-        cliente_ana = Cliente.objects.get(correo='ana.garcia@email.com')
-        cliente_carlos = Cliente.objects.get(correo='carlos.lopez@email.com')
-        cliente_sofia = Cliente.objects.get(correo='sofia.martinez@email.com')
+        cliente_jose = Cliente.objects.get(correo='joseramirezdure03@fpuna.edu.py')
+        cliente_fernando = Cliente.objects.get(correo='fernanfleitas@fpuna.edu.py')
+        cliente_javier = Cliente.objects.get(correo='gotojavier9@fpuna.edu.py')
+        cliente_elias_f = Cliente.objects.get(correo='ejfr09@fpuna.edu.py')
+        cliente_elias_r = Cliente.objects.get(correo='elias4845@fpuna.edu.py')
         cliente_pedro = Cliente.objects.get(correo='pedro.gonzalez@email.com')
         cliente_laura = Cliente.objects.get(correo='laura.rodriguez@email.com')
         
         # Asignar usuarios a clientes
         usuario_admin.clientes.add(cliente_admin)
-        usuario_cliente.clientes.add(cliente_maria)
-        usuario_ana.clientes.add(cliente_ana)
-        usuario_carlos.clientes.add(cliente_carlos)
-        usuario_sofia.clientes.add(cliente_sofia)
+        usuario_cliente.clientes.add(cliente_jose)
+        usuario_ana.clientes.add(cliente_fernando)
+        usuario_carlos.clientes.add(cliente_javier)
+        usuario_sofia.clientes.add(cliente_elias_f)
         usuario_pedro.clientes.add(cliente_pedro)
         usuario_laura.clientes.add(cliente_laura)
         
         # El operador puede gestionar algunos clientes
         usuario_operador = User.objects.get(email='operador@globalexchange.com')
-        usuario_operador.clientes.add(cliente_maria, cliente_ana, cliente_carlos)
+        usuario_operador.clientes.add(cliente_jose, cliente_fernando, cliente_javier)
+
+        # Asignar los mismos clientes del operador al usuario gerente
+        try:
+            usuario_gerente = User.objects.get(email='gerente@globalexchange.com')
+            # Copiar exactamente los mismos clientes que tiene el operador
+            usuario_gerente.clientes.add(*usuario_operador.clientes.all())
+        except User.DoesNotExist:
+            # Si el usuario gerente no existe, se omite silenciosamente
+            pass
         
         print("  → Relaciones usuario-cliente asignadas")
         

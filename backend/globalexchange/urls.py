@@ -15,7 +15,7 @@ Including another URLconf
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
 from django.contrib import admin
-from globalexchange.views import api_root_404 
+from globalexchange.views import api_root_404
 from django.urls import path, include
 from globalexchange import settings
 from drf_yasg.views import get_schema_view
@@ -27,18 +27,17 @@ from rest_framework_simplejwt.views import (
 )
 
 
-
 # Configuración de la documentación
 schema_view = get_schema_view(
-   openapi.Info(
-      title="Global Exchange API",
-      default_version='v1',
-      description="Documentación de API",
-      terms_of_service="https://www.google.com/policies/terms/",
-      contact=openapi.Contact(email="is2-e02@gmail.com"),
-      license=openapi.License(name="BSD License"),
-   ),
-   public=True
+    openapi.Info(
+        title="Global Exchange API",
+        default_version='v1',
+        description="Documentación de API",
+        terms_of_service="https://www.google.com/policies/terms/",
+        contact=openapi.Contact(email="is2-e02@gmail.com"),
+        license=openapi.License(name="BSD License"),
+    ),
+    public=True
 )
 
 urlpatterns = [
@@ -53,21 +52,23 @@ urlpatterns = [
     path('api/operaciones/', include("apps.operaciones.urls")),
     path('api/metodos_financieros/', include("apps.metodos_financieros.urls")),
     path("api/", include("apps.cotizaciones.urls")),
-    path("api/auth/", include("apps.autenticacion.urls")),  
+    path("api/auth/", include("apps.autenticacion.urls")),
     path('api/', include("apps.tauser.urls")),
+    path("api/notificaciones/", include("apps.notificaciones.urls")),
     path('api/', include("apps.stock.urls"))
 ]
 
 if settings.DEBUG:
     urlpatterns += [
         path('admin/', admin.site.urls),
-        path('docs/', schema_view.with_ui('swagger', cache_timeout=0), name='schema-swagger-ui'),
-        path('redocs/', schema_view.with_ui('redoc', cache_timeout=0), name='schema-redoc'),
+        path('docs/', schema_view.with_ui('swagger',
+             cache_timeout=0), name='schema-swagger-ui'),
+        path('redocs/', schema_view.with_ui('redoc',
+             cache_timeout=0), name='schema-redoc'),
     ]
 
 
-
 if not settings.DEBUG:
-    urlpatterns += [ path('api/', api_root_404,  name='api-root-block'), ]
+    urlpatterns += [path('api/', api_root_404,  name='api-root-block'), ]
 
 handler404 = 'globalexchange.views.custom_404_handler'
