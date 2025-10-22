@@ -18,5 +18,5 @@ class Configs:
     DEV_URL = os.getenv('DEV_URL')
     PROD_URL = os.getenv('PROD_URL')
     STRIPE_WEBHOOK_SECRET = os.getenv('STRIPE_WEBHOOK_SECRET') if DJANGO_DEBUG else os.getenv('STRIPE_WEBHOOK_SECRET_DEPLOY')
-
+    FACTURASEGURA_API_KEY=os.getenv('FACTURASEGURA_API_KEY')
 config = Configs()
