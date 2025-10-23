@@ -605,7 +605,7 @@ class TransaccionViewSet(viewsets.ModelViewSet):
             pago.save()
             return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
-        pago.response = checkout_session.url
+        pago.response = "STRIPE_CHECKOUT_SESSION_CREATED"
         pago.save()
         return Response({"url": checkout_session.url}, status=status.HTTP_200_OK)
         
