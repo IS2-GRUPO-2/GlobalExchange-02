@@ -1,11 +1,9 @@
 import { useEffect, useState } from "react";
 import { toast } from "react-toastify";
-import type { Cliente } from "../features/clientes/types/Cliente";
-import { useAuth } from "../context/useAuth";
-import { getClienteActual } from "../features/usuario/services/usuarioService";
 import { getHistorialTransacciones } from "../features/clientes/services/clienteService";
 import type { TransaccionDetalle } from "../features/operaciones/types/Transaccion";
 import { formatNumberDecimals } from "../utils/format";
+import { useClientStore } from "../hooks/useClientStore";
 import { estadosTransaccion } from "../types/EstadosTransaccion";
 import { tipoMetodoDisplay } from "../features/metodos_financieros/types/MetodoFinanciero";
 
@@ -20,65 +18,23 @@ const getTipoDisplay = (tipo: string) => {
 };
 
 const HistorialPage = () => {
-  const [clienteActual, setClienteActual] = useState<Cliente | null>(null);
   const [transacciones, setTransacciones] = useState<TransaccionDetalle[]>([]);
-  const { user } = useAuth();
-
-  useEffect(() => {
-    const handleClienteChangeEvent = (event: CustomEvent) => {
-      const { cliente } = event.detail;
-      handleClienteChange(cliente);
-    };
-
-    window.addEventListener(
-      "clienteActualChanged",
-      handleClienteChangeEvent as EventListener
-    );
-
-    return () => {
-      window.removeEventListener(
-        "clienteActualChanged",
-        handleClienteChangeEvent as EventListener
-      );
-    };
-  }, []);
+  const { selectedClient } = useClientStore();
 
   const fetchHistorial = async () => {
-    if (!clienteActual) return;
+    if (!selectedClient) return;
     console.log("fetchHistorial llamado");
     try {
-      const res = await getHistorialTransacciones(clienteActual?.id!);
+      const res = await getHistorialTransacciones(selectedClient.id!);
       setTransacciones(res.data);
     } catch (err) {
       toast.error("Error cargando transacciones");
     }
   };
 
-  const handleClienteChange = (nuevoCliente: Cliente | null) => {
-    setClienteActual(nuevoCliente);
-
-    if (!nuevoCliente) {
-      toast.error("No tienes un cliente asignado. Contacta a soporte.");
-    }
-  };
-
-  useEffect(() => {
-    const fetchClienteActual = async () => {
-      try {
-        const res = await getClienteActual(user!.id);
-        const { clienteActual } = res.data;
-
-        handleClienteChange(clienteActual);
-      } catch (err) {
-        console.error("Error obteniendo cliente actual", err);
-      }
-    };
-    fetchClienteActual();
-  }, []);
-
   useEffect(() => {
     fetchHistorial();
-  }, [clienteActual]);
+  }, [selectedClient]);
 
   return (
     <div className="bg-gray-50 min-h-screen flex-1 overflow-y-auto p-6">

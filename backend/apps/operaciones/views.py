@@ -500,7 +500,12 @@ class TransaccionViewSet(viewsets.ModelViewSet):
             return Response(data, status=status.HTTP_402_PAYMENT_REQUIRED)
 
         # Aprobado → pasar a EN PROCESO
+        cliente = transaccion.cliente
         transaccion.estado = 'en_proceso'
+        monto = transaccion.monto_origen if transaccion.operacion == "venta" else transaccion.monto_destino
+        cliente.gasto_diario += monto
+        cliente.gasto_mensual += monto
+        cliente.save()
         transaccion.save()
 
         serializer = self.get_serializer(transaccion)

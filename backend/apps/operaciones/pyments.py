@@ -5,11 +5,13 @@ from typing import Optional
 from globalexchange.configuration import config
 import stripe
 from apps.operaciones.models import Transaccion
+from apps.clientes.models import Cliente
 from django.db import transaction
 from apps.metodos_financieros.models import Tarjeta, MetodoFinancieroDetalle, MetodoFinanciero
 from apps.clientes.models import Cliente
 from apps.pagos.models import Pagos
 
+from django.db.models import F
 stripe.api_key = config.STRIPE_KEY
 
 # Códigos normalizados del “procesador”
@@ -86,6 +88,17 @@ def completar_pago_stripe(session_id):
         transaccion.estado = "en_proceso"
         print("Actualizando informacion de transaccion")
         transaccion.save()
+        cliente = transaccion.cliente
+        
+        monto = transaccion.monto_origen
+        
+        # Actualización segura en SQL usando F()
+        Cliente.objects.filter(pk=cliente.pk).update(
+            gasto_diario=F('gasto_diario') + monto,
+            gasto_mensual=F('gasto_mensual') + monto
+        )
+
+        cliente.refresh_from_db(fields=["gasto_diario", "gasto_mensual"])
 
         pago.estado = "APROBADO"
         pago.response = "checkout.session.completed"
