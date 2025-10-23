@@ -1,7 +1,7 @@
 from django.db import models
 from apps.metodos_financieros.models import MetodoFinanciero
 from apps.operaciones.models import Transaccion
-
+from simple_history.models import HistoricalRecords
 # Create your models here.
 class Pagos(models.Model):
     ESTADO_CHOICES = [
@@ -17,6 +17,7 @@ class Pagos(models.Model):
     estado = models.CharField(max_length=30, choices=ESTADO_CHOICES, default="PENDIENTE")
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+    history = HistoricalRecords()
     
     def clean(self):
         """
