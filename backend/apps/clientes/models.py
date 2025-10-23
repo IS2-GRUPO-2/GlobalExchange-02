@@ -46,6 +46,7 @@ class Cliente(models.Model):
     direccion = models.TextField()
     is_active = models.BooleanField(default=True)
     ruc = models.CharField(max_length=20, unique=True, null=True, blank=True)
+    stripe_customer_id = models.CharField(max_length=100, null=True)
 
     def __str__(self):
         return self.nombre

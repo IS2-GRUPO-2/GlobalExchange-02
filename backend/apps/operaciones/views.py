@@ -8,9 +8,10 @@ financieros (`MetodoFinanciero`) y sus implementaciones específicas
 """
 # imports (arriba, junto a los demás)
 # NUEVO: simulador de pagos
-from .pyments import APROBADO, componenteSimuladorPagosCobros, completar_pago_stripe
+from .pyments import APROBADO, componenteSimuladorPagosCobros, completar_pago_stripe, guardar_tarjeta_stripe
 from decimal import Decimal, ROUND_HALF_UP, InvalidOperation
 from apps.cotizaciones.service import TasaService
+from apps.pagos.models import Pagos
 from rest_framework import viewsets, status, filters, permissions
 from rest_framework.response import Response
 from rest_framework.decorators import action, api_view, permission_classes
@@ -145,6 +146,10 @@ def stripe_webhook(request):
         or event['type'] == 'checkout.session.async_payment_succeded'
     ):
         completar_pago_stripe(event['data']['object']['id'])
+
+
+    if event['type'] == 'payment_method.attached':
+        guardar_tarjeta_stripe(event['data']['object']['id'])
 
     return Response(data=None, status=status.HTTP_200_OK)    
         
@@ -508,6 +513,7 @@ class TransaccionViewSet(viewsets.ModelViewSet):
     @action(methods=['POST'], detail=True)
     def crear_checkout_stripe(self, request, pk=None):
         transaccion = self.get_object()  # <-- IMPORTANTE: definir t en el scope
+        cliente = transaccion.cliente
 
         if transaccion.estado not in ('pendiente', 'en_proceso'):
             return Response({'error': 'La transacción no está en un estado confirmable.'},
@@ -542,7 +548,24 @@ class TransaccionViewSet(viewsets.ModelViewSet):
         DOMAIN = config.DEV_URL if config.DJANGO_DEBUG else config.PROD_URL
 
         try:
+            if not cliente.stripe_customer_id:
+                customer = stripe.Customer.create(
+                    email=cliente.correo,
+                    name=cliente.nombre
+                )
+                cliente.stripe_customer_id = customer.id
+                cliente.save()
+
+            pago = Pagos.objects.create(
+                transaccion=transaccion,
+                metodo_pago=transaccion.metodo_financiero,
+                request="CREAR_SESION_PAGO_STRIPE",
+            )
+
+            pago.save()
+
             checkout_session = stripe.checkout.Session.create(
+                customer=cliente.stripe_customer_id,
                 line_items=[
                     {
                         "price_data": {
@@ -558,16 +581,27 @@ class TransaccionViewSet(viewsets.ModelViewSet):
                 mode="payment",
                 success_url=DOMAIN + "/checkout/success?session_id={CHECKOUT_SESSION_ID}&transaccion_id="+str(transaccion.id),
                 cancel_url=DOMAIN + "/checkout/cancel?session_id={CHECKOUT_SESSION_ID}",
-                customer_email=transaccion.cliente.correo,
                 locale="es",
                 metadata={
-                    "transaccion_id": str(transaccion.id)
+                    "transaccion_id": str(transaccion.id),
+                    "pago_id": str(pago.id)
+                },
+                saved_payment_method_options={
+                    "payment_method_save": "enabled"
                 }
-
             )
+
+            pago.stripe_checkout_session_id = checkout_session.id
+
+            pago.save()
+
         except Exception as e:
+            pago.response = str(e)
+            pago.save()
             return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
+        pago.response = checkout_session.url
+        pago.save()
         return Response({"url": checkout_session.url}, status=status.HTTP_200_OK)
         
 
