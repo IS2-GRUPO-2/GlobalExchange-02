@@ -1,6 +1,6 @@
 from decimal import Decimal
 from apps.cotizaciones.models import Tasa, HistorialTasa
-from decimal import Decimal, ROUND_DOWN
+from decimal import Decimal, ROUND_FLOOR, ROUND_CEILING
 from apps.divisas.models import Divisa
 from apps.operaciones.models import MetodoFinanciero
 from apps.clientes.models import Cliente
@@ -40,7 +40,7 @@ class TasaService:
             com_metodo = com_metodo / Decimal('100')
             tasa_compra = tasa_compra - tasa_compra * com_metodo
 
-        return tasa_compra
+        return tasa_compra.to_integral_value(rounding=ROUND_FLOOR)
 
     @staticmethod
     def calcular_tasa_venta(tasa: Tasa, com_metodo: Decimal = None, cliente: Cliente = None) -> Decimal:
@@ -60,4 +60,4 @@ class TasaService:
             com_metodo = com_metodo / Decimal('100')
             tasa_venta = tasa_venta + tasa_venta * com_metodo
 
-        return tasa_venta
+        return tasa_venta.to_integral_value(rounding=ROUND_CEILING)
