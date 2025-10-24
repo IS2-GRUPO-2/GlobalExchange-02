@@ -1,7 +1,9 @@
 from rest_framework import serializers
+from decimal import Decimal
 from apps.notificaciones.models import (
     NotificacionTasaUsuario,
-    NotificacionTasaCliente
+    NotificacionTasaCliente,
+    NotificacionCambioTasa,
 )
 from apps.divisas.models import Divisa
 
@@ -114,3 +116,64 @@ class NotificacionTasaClienteSerializer(serializers.ModelSerializer):
             }
             for divisa in obj.divisas_suscritas.all()
         ]
+
+
+class NotificacionCambioTasaSerializer(serializers.ModelSerializer):
+    """Serializer para notificaciones toast generadas por cambios de tasa."""
+
+    divisa = serializers.SerializerMethodField()
+    par_divisa = serializers.SerializerMethodField()
+    tasa_compra = serializers.SerializerMethodField()
+    tasa_venta = serializers.SerializerMethodField()
+
+    class Meta:
+        model = NotificacionCambioTasa
+        fields = [
+            'id',
+            'tipo_evento',
+            'titulo',
+            'descripcion',
+            'divisa',
+            'par_divisa',
+            'tasa_compra',
+            'tasa_venta',
+            'created_at'
+        ]
+
+    def _format_decimal(self, value: Decimal) -> str:
+        return f"{value:.4f}".rstrip('0').rstrip('.') if value is not None else "0"
+
+    def _build_variacion(self, nueva: Decimal, anterior: Decimal):
+        variacion = nueva - anterior
+        porcentaje = Decimal('0')
+        if anterior and anterior != 0:
+            porcentaje = (variacion / anterior) * Decimal('100')
+        return {
+            'anterior': self._format_decimal(anterior),
+            'nueva': self._format_decimal(nueva),
+            'variacion': self._format_decimal(variacion),
+            'variacion_porcentaje': self._format_decimal(porcentaje),
+            'es_incremento': variacion > 0,
+            'es_decremento': variacion < 0
+        }
+
+    def get_divisa(self, obj):
+        divisa = obj.divisa
+        return {
+            'id': divisa.id,
+            'codigo': divisa.codigo,
+            'nombre': divisa.nombre,
+            'simbolo': divisa.simbolo
+        }
+
+    def get_par_divisa(self, obj):
+        base_codigo = Divisa.objects.filter(es_base=True).values_list('codigo', flat=True).first()
+        if not base_codigo:
+            base_codigo = 'BASE'
+        return f"{obj.divisa.codigo}/{base_codigo}"
+
+    def get_tasa_compra(self, obj):
+        return self._build_variacion(obj.tasa_compra_nueva, obj.tasa_compra_anterior)
+
+    def get_tasa_venta(self, obj):
+        return self._build_variacion(obj.tasa_venta_nueva, obj.tasa_venta_anterior)
