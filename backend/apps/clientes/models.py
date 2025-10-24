@@ -46,6 +46,7 @@ class Cliente(models.Model):
     direccion = models.TextField()
     is_active = models.BooleanField(default=True)
     ruc = models.CharField(max_length=20, unique=True, null=True, blank=True)
+    stripe_customer_id = models.CharField(max_length=100, null=True)
     gasto_diario = models.DecimalField(max_digits=30, decimal_places=10, default=0.00, help_text="Gasto diario acumulado en divisa base")
     gasto_mensual = models.DecimalField(max_digits=30, decimal_places=10, default=0.00, help_text="Gasto mensualacumulado en divisa base")
 
