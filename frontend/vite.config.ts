@@ -21,7 +21,6 @@ export default defineConfig({
       '/simulador-pagos': {
         target: 'http://simulador_pagos:8000',
         changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/simulador-pagos/, ''),
       },
     },
   },

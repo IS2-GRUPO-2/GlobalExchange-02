@@ -1,1 +1,10 @@
-.
+
+feature/IS2-172-Landing
+https://chatgpt.com/share/68f25e23-d18c-800a-8a5d-10a2a86b77a2
+
+feature/IS2-57-Segundo-factor-de-autenticación-itoken
+https://chatgpt.com/share/68f25b5e-1aa0-800a-8180-8ea6d29dde65
+
+hotfix/IS2-184-Git-actions
+https://chatgpt.com/share/68f25d69-cc34-800a-a762-acc55dd70ea6
+

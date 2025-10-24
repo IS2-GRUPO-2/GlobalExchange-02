@@ -157,8 +157,10 @@ jobs:
           host: ${{ secrets.VPS_HOST }}
           username: ${{ secrets.VPS_USER }}
           key: ${{ secrets.VPS_SSH_KEY }}
-          source: "docker-compose.production.yml"
-          target: "/srv/globalexchange/docker-compose.yml"
+          source: "docker-compose.prod.yml"
+          target: "/srv/globalexchange/"
+          overwrite: true   # cambia a false si no quieres reemplazarlo
+          debug: true
 
       # SSH al vps
       - name: Deploy en VPS
@@ -171,9 +173,9 @@ jobs:
             cd /srv/globalexchange
             echo "${{ secrets.PROD_ENV}}" > .env
             echo "${{ secrets.GHCR_PAT}}" | docker login ghcr.io -u "${{ secrets.GHCR_USER}}" --password-stdin
-            docker compose down -v --rmi all --remove-orphans
+            docker compose -f docker-compose.prod.yml down -v --rmi all --remove-orphans
             docker volume prune -f
-            docker compose pull
-            docker compose up -d
+            docker compose -f docker-compose.prod.yml pull
+            docker compose -f docker-compose.prod.yml up -d
 
       

@@ -28,7 +28,7 @@ SECRET_KEY = config.SECRET_KEY
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = config.DJANGO_DEBUG
 
-ALLOWED_HOSTS = [config.HOST_ALLOW_ORIGINS]
+ALLOWED_HOSTS = config.HOST_ALLOW_ORIGINS
 
 CORS_ALLOWED_ORIGINS = []
 

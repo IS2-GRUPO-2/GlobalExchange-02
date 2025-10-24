@@ -62,6 +62,23 @@ def run():
     if created:
         print(f"  → Usuario creado: {cliente.email}")
     
+    # Usuario gerente
+    gerente, created = User.objects.get_or_create(
+        email='gerente@globalexchange.com',
+        defaults={
+            'username': 'gerente',
+            'first_name': 'Gerente',
+            'last_name': 'General',
+            'is_staff': True,
+            'is_superuser': False,
+            'is_active': True,
+            'email_verified': True,
+            'password': make_password('gerente123'),
+        }
+    )
+    if created:
+        print(f"  �+' Usuario creado: {gerente.email}")
+    
     # Usuarios adicionales para pruebas
     usuarios_prueba = [
         {
@@ -122,12 +139,14 @@ def run():
         # Obtener roles
         admin_role = Group.objects.get(name='Administrador')
         operador_role = Group.objects.get(name='Operador')
+        gerente_role = Group.objects.get(name='Gerente')
         cliente_regular_role = Group.objects.get(name='Cliente Regular')
         cliente_premium_role = Group.objects.get(name='Cliente Premium')
         
         # Asignar roles
         admin.groups.add(admin_role)
         operador.groups.add(operador_role)
+        gerente.groups.add(gerente_role)
         cliente.groups.add(cliente_regular_role)
         
         # Asignar roles a usuarios de prueba

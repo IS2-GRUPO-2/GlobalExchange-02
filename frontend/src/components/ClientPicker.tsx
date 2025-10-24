@@ -1,145 +1,73 @@
-import React, { useEffect, useState } from "react";
-import type { Cliente } from "../features/clientes/types/Cliente";
-import { toast } from "react-toastify";
+import { useEffect, useState } from "react";
+import { useAuth } from "../context/useAuth";
 import {
-  getUserClients,
   getClienteActual,
+  getUserClients,
   setClienteActual,
 } from "../features/usuario/services/usuarioService";
+import type { Cliente } from "../features/clientes/types/Cliente";
+import { useClientStore } from "../hooks/useClientStore";
 
-type Props = {
-  userId: number;
-  className?: string;
-  onChange?: (c: Cliente | null) => void;
-};
+const ClientPicker = () => {
+  const [clientes, setClientes] = useState<Cliente[]>([]);
+  const { user } = useAuth();
+  const { selectedClient, setSelectedClient } = useClientStore();
 
-const ClientPicker: React.FC<Props> = ({
-  userId,
-  className = "",
-  onChange,
-}) => {
-  const [options, setOptions] = useState<Cliente[]>([]);
-  const [value, setValue] = useState<string>("");
-  const [loading, setLoading] = useState(true);
-
-  const errMsg = (e: any) => {
-    const d = e?.response?.data;
-    if (typeof d === "string") return d;
-    return d?.detail || d?.error || "Ocurrió un error";
-  };
-
-  useEffect(() => {
-    (async () => {
-      setLoading(true);
-      try {
-        const [listRes, currentRes] = await Promise.all([
-          getUserClients(userId),
-          getClienteActual(userId),
-        ]);
-        const list: Cliente[] = listRes.data ?? [];
-        setOptions(list);
-
-        if (list.length === 0) {
-          setValue("");
-          onChange?.(null);
-        } else {
-          const current: Cliente | null =
-            currentRes.data?.clienteActual ?? null;
-          setValue(current ? current.id : "");
-          onChange?.(current);
-        }
-      } catch (e) {
-        toast.error(errMsg(e));
-        setOptions([]);
-        setValue("");
-        onChange?.(null);
-      } finally {
-        setLoading(false);
-      }
-    })();
-  }, [userId, onChange]);
-
-  const handleChange = async (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const nextId = e.target.value;
-    if (!nextId || nextId === value) return;
-
-    const prevId = value;
-    const nextClient = options.find((c) => c.id === nextId) || null;
-
-    setValue(nextId);
-    onChange?.(nextClient);
-
+  const fetchClientes = async () => {
     try {
-      await setClienteActual(userId, nextId);
-
-      // Emitir evento personalizado cuando cambie el cliente
-      window.dispatchEvent(new CustomEvent('clienteActualChanged', {
-        detail: { cliente: nextClient, userId }
-      }));
-      
-    } catch (e) {
-      setValue(prevId);
-      onChange?.(options.find((c) => c.id === prevId) || null);
-      toast.error(errMsg(e));
+      const res = await getUserClients(user!.id);
+      setClientes(res.data);
+    } catch (err) {
+      console.error("Error cargando clientes", err);
     }
   };
 
-  if (loading) {
-    return (
-      <div className={`client-selector ${className}`}>
-        <select
-          disabled
-          className="block w-full rounded-md bg-gray-800 border border-gray-600 text-gray-400 text-sm px-3 py-1.5"
-        >
-          <option>Cargando clientes…</option>
-        </select>
-      </div>
-    );
-  }
+  useEffect(() => {
+    fetchClientes();
+  }, []);
 
-  if (options.length === 0) {
-    return (
-      <div className={`client-selector ${className}`}>
-        <select
-          disabled
-          className="block w-full rounded-md bg-gray-800 border border-gray-600 text-gray-400 text-sm px-3 py-1.5"
-        >
-          <option>No hay clientes asignados</option>
-        </select>
-      </div>
-    );
-  }
+  useEffect(() => {
+    const fetchClienteActual = async () => {
+      try {
+        const res = await getClienteActual(user!.id);
+        const { clienteActual } = res.data;
 
-  const currentClient = options.find((c) => c.id === value) || null;
-  const otherOptions = options.filter((c) => c.id !== value);
-  
+        if (clienteActual) {
+          setSelectedClient(clienteActual);
+        }
+      } catch (err) {
+        console.error("Error obteniendo cliente actual", err);
+      }
+    };
+
+    if (!selectedClient) {
+      fetchClienteActual();
+    }
+  }, [user, setSelectedClient]);
+
+  const handleClienteChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const clienteId = e.target.value;
+    const cliente = clientes.find((c) => c.id === clienteId);
+
+    if (cliente) {
+      setSelectedClient(cliente);
+      setClienteActual(user?.id!, clienteId);
+    }
+  };
+
   return (
-    <div className={`client-selector ${className}`}>
-
+    <div className="flex items-center space-x-4">
       <select
-        id="client-select"
-        className="block w-full  min-w-[150px] truncate rounded-md bg-gray-800 border border-gray-600 text-white text-sm px-3 py-1.5
-                   focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500
-                   hover:bg-gray-700 transition-colors"
-        value={value}
-        onChange={handleChange}
+        value={selectedClient?.id || ""}
+        onChange={handleClienteChange}
+        className="block w-full rounded-lg border-gray-300 shadow-sm text-white bg-zinc-900 focus:border-gray-500 focus:ring-gray-500 sm:text-sm"
       >
-        {value === "" ? (
-          <option value="">Seleccionar cliente…</option>
-        ) : (
-          // Oculta el cliente actual del desplegable, pero lo muestra como seleccionado
-          <option value={value} hidden>
-            {currentClient?.nombre ?? "Cliente actual"}
-          </option>
-        )}
-        {otherOptions.map((c) => (
-          <option
-            key={c.id}
-            value={c.id}
-            className="bg-gray-800 text-white"
-            title={c.nombre}
-          >
-            {c.nombre}
+        <option value="" disabled>
+          Seleccionar cliente
+        </option>
+        {clientes.map((cliente) => (
+          <option key={cliente.id} value={cliente.id}>
+            {cliente.nombre}
           </option>
         ))}
       </select>
