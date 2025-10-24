@@ -1,0 +1,2 @@
+Modificacion de formula de tasa de cambio y redondeo de tasa test_filtrado_notificaciones_tasa_por_cliente
+https://chatgpt.com/share/68fa8b43-4de4-8000-9f10-5411948991c2
