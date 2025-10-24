@@ -82,7 +82,7 @@ export default function EtapaResultado({
               {getOperacionCliente(resultado.op_perspectiva_casa) === "compra" ? "Entrega" : "Entrega"}
             </div>
             <div className="text-4xl font-bold text-zinc-900">
-              {formatNumber(resultado.monto_origen, 2)}
+              {formatNumber(resultado.monto_origen, 0)}
             </div>
             <div className="text-base font-semibold text-zinc-600 mt-2">
               {resultado.divisa_origen}
@@ -100,7 +100,7 @@ export default function EtapaResultado({
               {getOperacionCliente(resultado.op_perspectiva_casa) === "compra" ? "Recibe" : "Recibe"}
             </div>
             <div className="text-4xl font-bold text-zinc-900">
-              {formatNumber(resultado.monto_destino, 2)}
+              {formatNumber(resultado.monto_destino, 0)}
             </div>
             <div className="text-base font-semibold text-zinc-600 mt-2">
               {resultado.divisa_destino}
@@ -313,7 +313,7 @@ export default function EtapaResultado({
                   <ul className="list-disc list-inside space-y-1 ml-4 text-sm">
                     <li>
                       <strong>Si la cotización no cambió:</strong> Su transacción se procesará automáticamente
-                      con la tasa original ({formatNumber(resultado.tc_final, 4)})
+                      con la tasa original ({resultado.tc_final})
                     </li>
                     <li>
                       <strong>Si la cotización cambió:</strong> Se le informará sobre la nueva tasa y deberá

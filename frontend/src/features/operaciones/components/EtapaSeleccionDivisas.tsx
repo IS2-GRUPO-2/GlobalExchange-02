@@ -7,6 +7,7 @@ import {
 import { formatInputNumber, unformatInputNumber } from "../utils/formatNumber";
 import { getTasas } from "../../cotizaciones/services/tasaService";
 import type { Cliente } from "../../clientes/types/Cliente";
+import { getOpPerspectivaCasa } from "../services/operacionService";
 
 interface Props {
   divisaOrigen: string;
@@ -16,6 +17,8 @@ interface Props {
   monto: number;
   setMonto: (monto: number) => void;
   clienteActual: Cliente | null;
+  opPerspectivaCasa: "compra" | "venta" | null;
+  setOpPerspectivaCasa: (perspectiva: "compra" | "venta" | null) => void;
   onContinuar: () => void;
 }
 
@@ -33,6 +36,8 @@ export default function EtapaSeleccionDivisas({
   monto,
   setMonto,
   clienteActual,
+  opPerspectivaCasa,
+  setOpPerspectivaCasa,
   onContinuar,
 }: Props) {
   const [divisas, setDivisas] = useState<Divisa[]>([]);
@@ -113,6 +118,7 @@ export default function EtapaSeleccionDivisas({
 
       setTasaBase(tasa ? String(tasa.precioBase) : "1");
     };
+    
 
     setTasaActual();
   }, [divisaOrigen]);
@@ -164,11 +170,55 @@ export default function EtapaSeleccionDivisas({
     !limiteMsg &&
     !loadingLimites;
 
+  // Determinar perspectiva cuando cambian las divisas
+  useEffect(() => {
+    if (!divisaOrigen || !divisaDestino) {
+      setOpPerspectivaCasa(null);
+      setMonto(0);
+      return;
+    }
+
+    const determinarTipoOperacion = async () => {
+      try {
+        const { op_perspectiva_casa } = await getOpPerspectivaCasa(
+          Number(divisaOrigen),
+          Number(divisaDestino)
+        );
+        setOpPerspectivaCasa(op_perspectiva_casa);
+      } catch (error) {
+        console.error("Error determinando perspectiva de operación:", error);
+        setOpPerspectivaCasa(null);
+      }
+    };
+
+    determinarTipoOperacion();
+  }, [divisaOrigen, divisaDestino, setOpPerspectivaCasa]);
+
   // Obtener información de la divisa origen para mostrar el código
   const divisaOrigenInfo = divisas.find(
     (d) => d.id?.toString() === divisaOrigen
   );
+
+  // Obtener información de la divisa origen para mostrar el código
+  const divisaDestinoInfo = divisas.find(
+    (d) => d.id?.toString() === divisaDestino
+  );
   const codigoDivisaOrigen = divisaOrigenInfo?.codigo || "";
+  const codigoDivisaDestino = divisaDestinoInfo?.codigo || "";
+
+  // Determinar el label del monto según la perspectiva
+  const getLabelMonto = () => {
+    if (!divisaOrigen || !divisaDestino || !codigoDivisaOrigen || !codigoDivisaDestino) {
+      return "";
+    }
+
+    if (opPerspectivaCasa === "venta") {
+      return `Monto que quieres recibir ${`(${codigoDivisaDestino})`}`;
+    }
+
+    // Por defecto (compra o sin determinar aún)
+    return `Monto que vas a entregar ${`(${codigoDivisaOrigen})`}`;
+  };
 
   return (
     <div className="space-y-6">
@@ -286,56 +336,13 @@ export default function EtapaSeleccionDivisas({
         </div>
 
         {/* Input monto */}
-        {/* <div className="w-full max-w-[672px]">
-        <div className="bg-gray-50 border border-gray-300 rounded-lg p-6 text-center">
-          <label
-            htmlFor="monto"
-            className="block text-sm font-medium text-gray-700 mb-8 select-none"
-          >
-            Monto que vas a entregar{codigoDivisaOrigen && ` (${codigoDivisaOrigen})`}
-          </label>
-          <div className="relative">
-          
-
-            <div className="text-3xl font-semibold text-gray-900 text-center py-4">
-              {monto > 0 ? formatNumber(monto) : ''}
-              {monto > 0 && codigoDivisaOrigen && (
-                <span className="ml-2 text-xl text-gray-600">{codigoDivisaOrigen}</span>
-              )}
-            </div>
-            <input
-              id="monto"
-              type="number"
-              min={0}
-              value={monto === 0 ? "" : monto}
-              onChange={(e) => {
-                const value = Number(e.target.value);
-                if (value >= 0 || e.target.value === "") {
-                  setLimiteMsg(""); // hasta revalidar
-                  setMonto(value);
-                }
-              }}
-              onKeyDown={(e) => {
-                if (e.key === "-" || e.key === "e" || e.key === "E") {
-                  e.preventDefault();
-                }
-              }}
-              placeholder="Ingrese el monto"
-              className="absolute inset-0 opacity-10 w-full cursor-pointer"
-            />
-          </div>
-
-        </div>
-      </div> */}
-
         <div className="w-full max-w-[712px]">
           <div className="bg-gray-50 border border-gray-300 rounded-lg p-6 text-center">
             <label
               htmlFor="monto"
               className="block text-sm font-medium text-gray-700 mb-3 select-none"
             >
-              Monto que vas a entregar
-              {codigoDivisaOrigen && ` (${codigoDivisaOrigen})`}
+              {getLabelMonto()}
             </label>
             <input
               id="monto"
@@ -370,11 +377,11 @@ export default function EtapaSeleccionDivisas({
               className="w-full text-3xl font-semibold text-gray-900 text-center bg-transparent focus:outline-none focus:ring-2 focus:ring-zinc-500 rounded-md py-2"
             />
 
-            {codigoDivisaOrigen && monto > 0 && (
+            {/* {codigoDivisaOrigen && monto > 0 && (
               <div className="mt-3 text-sm text-gray-600 select-none">
                 {codigoDivisaOrigen}
               </div>
-            )}
+            )} */}
           </div>
         </div>
       </div>
