@@ -3,7 +3,7 @@ import logo from "../../../assets/logo-black.png";
 import EtapaLogin from "./EtapaLogin";
 import EtapaCliente from "./EtapaCliente";
 import EtapaOperacionesPendientes from "./EtapaOperacionesPendientes";
-import { useAuth } from "../../../context/useAuth";
+import { useTauserAuth } from "../context/useTauserAuth";
 import type { Cliente } from "../../clientes/types/Cliente";
 import LogoutButton from "./LogoutButton";
 import DateTimeDisplay from "./DateTimeDisplay";
@@ -13,7 +13,7 @@ type EtapaActual = "inicio" | "login" | "clientes" | "operaciones_pendientes";
 export default function TauserInicio() {
   const [etapaActual, setEtapaActual] = useState<EtapaActual>("inicio");
   const [clienteActual, setClienteActual] = useState<Cliente | null>(null);
-  const { logoutTauser } = useAuth();
+  const { logoutTauser } = useTauserAuth();
 
   const iniciarOperacion = () => setEtapaActual("login");
   const volverInicio = () => setEtapaActual("inicio");

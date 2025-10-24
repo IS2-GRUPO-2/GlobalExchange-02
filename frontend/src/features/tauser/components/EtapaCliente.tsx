@@ -1,16 +1,18 @@
 import { useEffect, useState } from "react";
-import { getUserClients } from "../../usuario/services/usuarioService";
-import { getPendingTransaccionesCount } from "../../clientes/services/clienteService";
 import type { Cliente } from "../../clientes/types/Cliente";
-import { useAuth } from "../../../context/useAuth";
 import { toast } from "react-toastify";
+import { useTauserAuth } from "../context/useTauserAuth";
+import {
+  fetchTauserAssignedClients,
+  fetchTauserPendingTransaccionesCount,
+} from "../services/tauserDataService";
 
 interface EtapaClienteProps {
   onSelectCliente: (cliente: Cliente) => void;
 }
 
 export default function EtapaCliente({ onSelectCliente }: EtapaClienteProps) {
-  const { user } = useAuth();
+  const { user } = useTauserAuth();
   const [clientes, setClientes] = useState<Cliente[]>([]);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
@@ -28,8 +30,7 @@ export default function EtapaCliente({ onSelectCliente }: EtapaClienteProps) {
 
       setLoading(true);
       try {
-        const response = await getUserClients(user.id);
-        const clientesList = response.data;
+  const clientesList = await fetchTauserAssignedClients(user.id);
         
         setClientes(clientesList);
         setTotalPages(Math.ceil(clientesList.length / itemsPerPage));
@@ -39,7 +40,9 @@ export default function EtapaCliente({ onSelectCliente }: EtapaClienteProps) {
         await Promise.all(
           clientesList.map(async (cliente) => {
             try {
-              const count = await getPendingTransaccionesCount(cliente.id.toString());
+              const count = await fetchTauserPendingTransaccionesCount(
+                cliente.id.toString(),
+              );
               counts[cliente.id] = count;
             } catch (error) {
               console.error(`Error al cargar operaciones pendientes para cliente ${cliente.id}:`, error);

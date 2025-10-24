@@ -1,9 +1,9 @@
 import { useEffect, useState } from "react";
-import { getHistorialTransacciones } from "../../clientes/services/clienteService";
 import type { Cliente } from "../../clientes/types/Cliente";
 import type { TransaccionDetalle } from "../../operaciones/types/Transaccion";
 import { toast } from "react-toastify";
 import { ArrowLeft } from "lucide-react";
+import { fetchTauserTransacciones } from "../services/tauserDataService";
 
 interface EtapaOperacionesPendientesProps {
   cliente: Cliente | null;
@@ -28,8 +28,10 @@ export default function EtapaOperacionesPendientes({ cliente, onVolver }: EtapaO
 
       setLoading(true);
       try {
-        const response = await getHistorialTransacciones(cliente.id.toString(), ['pendiente', 'en_proceso']);
-        const transaccionesList = response.data;
+        const transaccionesList = await fetchTauserTransacciones(
+          cliente.id.toString(),
+          ['pendiente', 'en_proceso'],
+        );
         
         setTransacciones(transaccionesList);
         setTotalPages(Math.ceil(transaccionesList.length / itemsPerPage));

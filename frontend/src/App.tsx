@@ -9,6 +9,7 @@ import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
 import { ToastContainer } from "react-toastify";
 import { AuthZProvider } from "./context/AuthZContext";
+import { TauserAuthProvider } from "./features/tauser/context/useTauserAuth";
 
 /** Rutas donde se oculta la barra de navegación */
 const HIDE_NAV_ROUTES = ["/login", "/register","/Register","/Login", "/tauser","/simulador-transaccion-bancaria"];
@@ -39,26 +40,28 @@ function App() {
   return (
     <UserProvider>
       <AuthZProvider>
-        <div className="flex flex-col min-h-screen">
-          <ToastContainer 
-            position="top-right"
-            autoClose={1000}
-            hideProgressBar={false}
-            newestOnTop={false}
-            closeOnClick
-            rtl={false}
-            pauseOnFocusLoss
-            draggable
-            pauseOnHover
-            limit={2}
-            theme="light"
-          />
-          {!hideNavbar && <Navbar />}
-          <div className="flex-grow">
-            <Outlet />
+        <TauserAuthProvider>
+          <div className="flex flex-col min-h-screen">
+            <ToastContainer 
+              position="top-right"
+              autoClose={1000}
+              hideProgressBar={false}
+              newestOnTop={false}
+              closeOnClick
+              rtl={false}
+              pauseOnFocusLoss
+              draggable
+              pauseOnHover
+              limit={2}
+              theme="light"
+            />
+            {!hideNavbar && <Navbar />}
+            <div className="flex-grow">
+              <Outlet />
+            </div>
+            {!hideNavbar && <Footer />}
           </div>
-          {!hideNavbar && <Footer />}
-        </div>
+        </TauserAuthProvider>
       </AuthZProvider>
     </UserProvider>
   );
