@@ -9,6 +9,7 @@ import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
 import { ToastContainer } from "react-toastify";
 import { AuthZProvider } from "./context/AuthZContext";
+import NotificacionesWatcher from "./features/notificaciones/components/NotificacionesWatcher";
 
 /** Rutas donde se oculta la barra de navegación */
 const HIDE_NAV_ROUTES = ["/login", "/register","/Register","/Login", "/tauser","/simulador-transaccion-bancaria"];
@@ -39,18 +40,19 @@ function App() {
   return (
     <UserProvider>
       <AuthZProvider>
+        <NotificacionesWatcher />
         <div className="flex flex-col min-h-screen">
           <ToastContainer 
             position="top-right"
-            autoClose={1000}
+            autoClose={6000}
             hideProgressBar={false}
-            newestOnTop={false}
+            newestOnTop
             closeOnClick
             rtl={false}
             pauseOnFocusLoss
             draggable
             pauseOnHover
-            limit={2}
+            limit={3}
             theme="light"
           />
           {!hideNavbar && <Navbar />}
