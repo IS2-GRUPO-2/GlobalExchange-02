@@ -2,6 +2,7 @@ from django.db import models
 from apps.usuarios.models import User
 from apps.clientes.models import Cliente
 from apps.divisas.models import Divisa
+from django.utils import timezone
 
 # Create your models here.
 
@@ -91,3 +92,56 @@ class NotificacionTasaCliente(models.Model):
     def __str__(self):
         estado = "Activas" if self.is_active else "Inactivas"
         return f"Notificaciones de tasa de {self.cliente.nombre} - {estado}"
+
+class NotificacionCambioTasa(models.Model):
+    """Notificaciones tipo toast por cambio de tasa dirigidas a un usuario."""
+
+    class TipoEvento(models.TextChoices):
+        SUSCRIPCION = "suscripcion", "Divisa suscrita"
+        TRANSACCION_PENDIENTE = "transaccion_pendiente", "Transacción pendiente"
+
+    usuario = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name="notificaciones_cambio_tasa",
+        verbose_name="Usuario"
+    )
+    divisa = models.ForeignKey(
+        Divisa,
+        on_delete=models.CASCADE,
+        related_name="notificaciones_cambio_tasa",
+        verbose_name="Divisa"
+    )
+    tipo_evento = models.CharField(
+        max_length=32,
+        choices=TipoEvento.choices
+    )
+    titulo = models.CharField(max_length=120)
+    descripcion = models.CharField(max_length=255)
+    tasa_compra_anterior = models.DecimalField(max_digits=15, decimal_places=6)
+    tasa_compra_nueva = models.DecimalField(max_digits=15, decimal_places=6)
+    tasa_venta_anterior = models.DecimalField(max_digits=15, decimal_places=6)
+    tasa_venta_nueva = models.DecimalField(max_digits=15, decimal_places=6)
+    is_read = models.BooleanField(default=False)
+    read_at = models.DateTimeField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = "Notificación de cambio de tasa"
+        verbose_name_plural = "Notificaciones de cambio de tasa"
+        db_table = "notificaciones_cambio_tasa"
+        ordering = ["-created_at"]
+        indexes = [
+            models.Index(fields=["usuario", "is_read"]),
+            models.Index(fields=["divisa"]),
+        ]
+
+    def marcar_como_leida(self):
+        """Marca la notificación como leída."""
+        if not self.is_read:
+            self.is_read = True
+            self.read_at = timezone.now()
+            self.save(update_fields=["is_read", "read_at"])
+
+    def __str__(self):
+        return f"{self.get_tipo_evento_display()} - {self.divisa.codigo} - {self.usuario.username}"

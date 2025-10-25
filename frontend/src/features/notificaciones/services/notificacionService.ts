@@ -2,6 +2,7 @@ import axios from 'axios';
 import {
   type NotificacionTasaUsuario,
   type NotificacionTasaCliente,
+  type NotificacionCambioTasa,
 } from '../types/Notificacion';
 
 const API_URL = '/api/notificaciones'
@@ -70,4 +71,21 @@ export const updateNotificacionTasaCliente = async (
     getAuthHeader()
   );
   return normalizeNotificacionTasa(response.data);
+};
+
+// ===================================================
+// NOTIFICACIONES TOAST POR CAMBIO DE TASA
+// ===================================================
+
+export const getNotificacionesCambioTasa = async (): Promise<NotificacionCambioTasa[]> => {
+  const response = await axios.get(
+    `${API_URL}/tasa/eventos/`,
+    getAuthHeader()
+  );
+
+  if (Array.isArray(response.data)) {
+    return response.data as NotificacionCambioTasa[];
+  }
+
+  return [];
 };

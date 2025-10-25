@@ -15,7 +15,7 @@ interface Props {
   setDivisaDestino: (divisa: string) => void;
   monto: number;
   setMonto: (monto: number) => void;
-  clienteActual: Cliente | undefined;
+  clienteActual: Cliente | null;
   onContinuar: () => void;
 }
 

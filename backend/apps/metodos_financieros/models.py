@@ -125,6 +125,7 @@ class MetodoFinancieroDetalle(models.Model):
     metodo_financiero = models.ForeignKey(MetodoFinanciero, on_delete=models.PROTECT)
     alias = models.CharField(max_length=100, help_text="Nombre identificativo del método")
     
+    
     fecha_registro = models.DateTimeField(auto_now_add=True)
     is_active = models.BooleanField(default=True)
     desactivado_por_catalogo = models.BooleanField(default=False, help_text="Indica si fue desactivado por desactivación de catálogo (banco/billetera digital)")
@@ -281,9 +282,11 @@ class Tarjeta(models.Model):
         ('LOCAL', 'Local'),
         ('STRIPE', 'Stripe'),
     ], default='STRIPE')
+    stripe_customer_id = models.CharField(max_length=255, null=True, blank=True)
     payment_method_id = models.CharField(max_length=100, unique=True)  # ID de Stripe u otro proveedor
     marca = models.ForeignKey(TarjetaCatalogo, on_delete=models.PROTECT, null=True, blank=True)
     brand = models.CharField(max_length=50, null=True, blank=True)  # Visa, Mastercard, etc.
+    funding = models.CharField(max_length=20, null=True, blank=True) # credito/debito
     last4 = models.CharField(max_length=4)   # Últimos 4 dígitos
     exp_month = models.IntegerField()
     exp_year = models.IntegerField()
@@ -292,6 +295,9 @@ class Tarjeta(models.Model):
     class Meta:
         verbose_name = "Tarjeta de Crédito/Débito"
         verbose_name_plural = "Tarjetas de Crédito/Débito"
+        indexes = [
+            models.Index(fields=["stripe_customer_id"])
+        ]
     
     def __str__(self):
         return f"{self.brand} ****{self.last4} ({self.titular})"
