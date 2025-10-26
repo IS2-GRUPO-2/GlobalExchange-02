@@ -55,7 +55,8 @@ urlpatterns = [
     path("api/auth/", include("apps.autenticacion.urls")),
     path('api/', include("apps.tauser.urls")),
     path("api/notificaciones/", include("apps.notificaciones.urls")),
-    path('api/', include("apps.stock.urls"))
+    path('api/', include("apps.stock.urls")),
+    path('api/facturacion/', include("apps.facturacion.urls"))
 ]
 
 if settings.DEBUG:
