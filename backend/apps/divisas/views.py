@@ -9,20 +9,24 @@ from drf_yasg import openapi
 from rest_framework.pagination import PageNumberPagination
 from apps.cotizaciones.models import Tasa
 from rest_framework.generics import RetrieveUpdateAPIView
+from .service import puede_acumular_monto
+
 
 class DivisaPagination(PageNumberPagination):
     page_size = 10
     page_size_query_param = "page_size"
     max_page_size = 100
 
+
 class DivisaViewset(viewsets.ModelViewSet):
     serializer_class = DivisaSerializer
     queryset = Divisa.objects.all()
-    permission_classes = [permissions.IsAuthenticated, permissions.DjangoModelPermissions]
+    permission_classes = [permissions.IsAuthenticated,
+                          permissions.DjangoModelPermissions]
     filter_backends = [filters.SearchFilter]
     search_fields = ["nombre", "codigo"]
     pagination_class = DivisaPagination
-    
+
     def get_queryset(self):
         qs = super().get_queryset()
         es_base = self.request.query_params.get("es_base")
@@ -36,27 +40,27 @@ class DivisaViewset(viewsets.ModelViewSet):
         return qs
 
     @swagger_auto_schema(
-    operation_summary="Listar divisas",
-    operation_description="Obtiene un listado paginado de todas las divisas registradas en el sistema.",
-    manual_parameters=[
-        openapi.Parameter(
-            "page",
-            openapi.IN_QUERY,
-            description="Número de página a retornar.",
-            type=openapi.TYPE_INTEGER
-        ),
-        openapi.Parameter(
-            "page_size",
-            openapi.IN_QUERY,
-            description="Cantidad de resultados por página.",
-            type=openapi.TYPE_INTEGER
-        ),
-    ],
-    responses={200: DivisaPaginatedResponseSerializer},
-)
+        operation_summary="Listar divisas",
+        operation_description="Obtiene un listado paginado de todas las divisas registradas en el sistema.",
+        manual_parameters=[
+            openapi.Parameter(
+                "page",
+                openapi.IN_QUERY,
+                description="Número de página a retornar.",
+                type=openapi.TYPE_INTEGER
+            ),
+            openapi.Parameter(
+                "page_size",
+                openapi.IN_QUERY,
+                description="Cantidad de resultados por página.",
+                type=openapi.TYPE_INTEGER
+            ),
+        ],
+        responses={200: DivisaPaginatedResponseSerializer},
+    )
     def list(self, request, *args, **kwargs):
         return super().list(request, *args, **kwargs)
-    
+
     @swagger_auto_schema(
         operation_summary="Crear divisa",
         operation_description="Crea una nueva divisa en el sistema.",
@@ -117,7 +121,7 @@ class DivisaViewset(viewsets.ModelViewSet):
         instance.save()
         self._desactivar_tasa_si_existe(instance)
         return Response(status=status.HTTP_200_OK)
-    
+
     def _desactivar_tasa_si_existe(self, divisa: Divisa) -> None:
         """
         Al desactivar un divisa, tambien debe desactivar la tasa asociada.
@@ -129,22 +133,24 @@ class DivisaViewset(viewsets.ModelViewSet):
         if tasa.activo:
             tasa.activo = False
             tasa.save(update_fields=["activo"])
-    
+
     @action(detail=True)
     def get_denominaciones(self, request, pk=None):
         divisa = self.get_object()
         denominaciones = Denominacion.objects.filter(divisa=divisa)
         serializer = DenominacionSerializer(denominaciones, many=True)
         return Response(serializer.data)
-    
-    
+
     @swagger_auto_schema(
         operation_summary="Divisas activas sin tasa",
         operation_description="Devuelve divisas activas que no tienen Tasa asociada. Soporta ?search=",
         manual_parameters=[
-            openapi.Parameter("search", openapi.IN_QUERY, description="Buscar por código/nombre", type=openapi.TYPE_STRING),
-            openapi.Parameter("page", openapi.IN_QUERY, description="Número de página", type=openapi.TYPE_INTEGER),
-            openapi.Parameter("page_size", openapi.IN_QUERY, description="Tamaño de página", type=openapi.TYPE_INTEGER),
+            openapi.Parameter("search", openapi.IN_QUERY,
+                              description="Buscar por código/nombre", type=openapi.TYPE_STRING),
+            openapi.Parameter("page", openapi.IN_QUERY,
+                              description="Número de página", type=openapi.TYPE_INTEGER),
+            openapi.Parameter("page_size", openapi.IN_QUERY,
+                              description="Tamaño de página", type=openapi.TYPE_INTEGER),
         ],
         responses={200: DivisaPaginatedResponseSerializer},
     )
@@ -155,7 +161,8 @@ class DivisaViewset(viewsets.ModelViewSet):
         Respeta SearchFilter (?search=USD).
         Pagina usando DivisaPagination.
         """
-        qs = Divisa.objects.filter(is_active=True, tasa__isnull=True, es_base=False)
+        qs = Divisa.objects.filter(
+            is_active=True, tasa__isnull=True, es_base=False)
         qs = self.filter_queryset(qs)
         page = self.paginate_queryset(qs)
         if page is not None:
@@ -164,15 +171,17 @@ class DivisaViewset(viewsets.ModelViewSet):
 
         serializer = self.get_serializer(qs, many=True)
         return Response(serializer.data)
-    
 
     @swagger_auto_schema(
         operation_summary="Divisas activas con tasa + divisa base",
         operation_description="Devuelve divisas activas que tienen una Tasa asociada más la divisa base. Soporta ?search=",
         manual_parameters=[
-            openapi.Parameter("search", openapi.IN_QUERY, description="Buscar por código/nombre", type=openapi.TYPE_STRING),
-            openapi.Parameter("page", openapi.IN_QUERY, description="Número de página", type=openapi.TYPE_INTEGER),
-            openapi.Parameter("page_size", openapi.IN_QUERY, description="Tamaño de página", type=openapi.TYPE_INTEGER),
+            openapi.Parameter("search", openapi.IN_QUERY,
+                              description="Buscar por código/nombre", type=openapi.TYPE_STRING),
+            openapi.Parameter("page", openapi.IN_QUERY,
+                              description="Número de página", type=openapi.TYPE_INTEGER),
+            openapi.Parameter("page_size", openapi.IN_QUERY,
+                              description="Tamaño de página", type=openapi.TYPE_INTEGER),
         ],
         responses={200: DivisaPaginatedResponseSerializer},
     )
@@ -195,12 +204,80 @@ class DivisaViewset(viewsets.ModelViewSet):
 
         serializer = self.get_serializer(qs, many=True)
         return Response(serializer.data)
-    
-    
+
+    @swagger_auto_schema(
+        operation_summary="Validar disponibilidad de denominaciones",
+        operation_description="Verifica si es posible acumular un monto dado con las denominaciones activas de una divisa.",
+        manual_parameters=[
+            openapi.Parameter(
+                "monto",
+                openapi.IN_QUERY,
+                description="Monto a validar (debe ser un entero positivo).",
+                type=openapi.TYPE_INTEGER,
+                required=True
+            ),
+        ],
+        responses={
+            200: openapi.Response(
+                "Validación exitosa",
+                schema=openapi.Schema(
+                    type=openapi.TYPE_OBJECT,
+                    properties={
+                        'puede_acumular': openapi.Schema(type=openapi.TYPE_BOOLEAN, description="Indica si es posible acumular el monto"),
+                        'divisa_id': openapi.Schema(type=openapi.TYPE_INTEGER, description="ID de la divisa"),
+                        'monto': openapi.Schema(type=openapi.TYPE_INTEGER, description="Monto validado"),
+                    }
+                )
+            ),
+            400: openapi.Response("Parámetros inválidos"),
+            404: openapi.Response("Divisa no encontrada"),
+        },
+    )
+    @action(detail=True, methods=["get"], url_path="validar_denominaciones")
+    def validar_denominaciones(self, request, pk=None):
+        """
+        Valida si es posible acumular un monto con las denominaciones activas de la divisa.
+        """
+        try:
+            divisa = self.get_object()
+        except Divisa.DoesNotExist:
+            return Response(
+                {"detail": "Divisa no encontrada."},
+                status=status.HTTP_404_NOT_FOUND
+            )
+
+        monto_str = request.query_params.get('monto')
+
+        if not monto_str:
+            return Response(
+                {"detail": "El parámetro 'monto' es requerido."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        try:
+            monto = int(monto_str)
+            if monto <= 0:
+                raise ValueError("El monto debe ser positivo")
+        except ValueError:
+            return Response(
+                {"detail": "El parámetro 'monto' debe ser un entero positivo."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        puede_acumular = puede_acumular_monto(divisa.id, monto)
+
+        return Response({
+            "puede_acumular": puede_acumular,
+            "divisa_id": divisa.id,
+            "monto": monto
+        })
+
+
 class DenominacionViewset(viewsets.ModelViewSet):
     serializer_class = DenominacionSerializer
     queryset = Denominacion.objects.all()
-    permission_classes = [permissions.IsAuthenticated, permissions.DjangoModelPermissions]
+    permission_classes = [permissions.IsAuthenticated,
+                          permissions.DjangoModelPermissions]
 
     def create(self, request, *args, **kwargs):
         divisa = request.data.get('divisa')
@@ -211,7 +288,7 @@ class DenominacionViewset(viewsets.ModelViewSet):
                 "detail": "Ya existe una denominación con ese valor para esta divisa."},
                 status=status.HTTP_400_BAD_REQUEST,
             )
-        
+
         return super().create(request, *args, **kwargs)
 
     def destroy(self, request, *args, **kwargs):
@@ -221,11 +298,13 @@ class DenominacionViewset(viewsets.ModelViewSet):
         instance.is_active = False
         instance.save()
         return Response(status=status.HTTP_200_OK)
-    
+
+
 class LimiteConfigView(RetrieveUpdateAPIView):
     serializer_class = LimiteConfigSerializer
-    permission_classes = [permissions.IsAuthenticated, permissions.DjangoModelPermissions]
+    permission_classes = [permissions.IsAuthenticated,
+                          permissions.DjangoModelPermissions]
     queryset = LimiteConfig.objects.all()
 
-    def get_object(self): # type: ignore[override]
+    def get_object(self):  # type: ignore[override]
         return LimiteConfig.get_solo()

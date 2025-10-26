@@ -3,6 +3,7 @@ import type { Divisa } from "../../divisas/types/Divisa";
 import {
   getDivisasConTasa,
   getLimiteConfig,
+  validarDenominaciones,
 } from "../../divisas/services/divisaService";
 import { formatInputNumber, unformatInputNumber } from "../utils/formatNumber";
 import { getTasas } from "../../cotizaciones/services/tasaService";
@@ -51,6 +52,11 @@ export default function EtapaSeleccionDivisas({
   const [loadingLimites, setLoadingLimites] = useState(true);
   const [limiteMsg, setLimiteMsg] = useState<string>("");
   const [tasaBase, setTasaBase] = useState<string>("");
+
+  // --- validación de denominaciones ---
+  const [denominacionesMsg, setDenominacionesMsg] = useState<string>("");
+  const [validandoDenominaciones, setValidandoDenominaciones] =
+    useState<boolean>(false);
 
   // Sincronizar monto con display formateado cuando cambia externamente
   useEffect(() => {
@@ -160,7 +166,52 @@ export default function EtapaSeleccionDivisas({
     }
   }, [monto, clienteActual, limites, loadingLimites, divisaOrigen, tasaBase]);
 
-  // Habilita avanzar solo si no hay mensaje de límite ni carga pendiente
+  // Validar disponibilidad de denominaciones
+  useEffect(() => {
+    // Solo validar si tenemos divisa, monto y perspectiva determinada
+    if (!opPerspectivaCasa || !monto || monto <= 0) {
+      setDenominacionesMsg("");
+      setValidandoDenominaciones(false);
+      return;
+    }
+
+    const validarDisponibilidadDenominaciones = async () => {
+      setValidandoDenominaciones(true);
+      setDenominacionesMsg("");
+
+      try {
+        // Determinar qué divisa validar según la perspectiva
+        const divisaAValidar =
+          opPerspectivaCasa === "compra"
+            ? Number(divisaOrigen)
+            : Number(divisaDestino);
+
+        if (!divisaAValidar) {
+          setValidandoDenominaciones(false);
+          return;
+        }
+
+        const resultado = await validarDenominaciones(divisaAValidar, monto);
+
+        if (!resultado.puede_acumular) {
+          const divisaInfo = divisas.find((d) => d.id === divisaAValidar);
+          const codigoDivisa = divisaInfo?.codigo || "la divisa";
+          setDenominacionesMsg(
+            `No es posible acumular el monto con las denominaciones disponibles de ${codigoDivisa}`
+          );
+        }
+      } catch (error) {
+        console.error("Error validando denominaciones:", error);
+        // No mostramos error al usuario, solo en consola
+      } finally {
+        setValidandoDenominaciones(false);
+      }
+    };
+
+    validarDisponibilidadDenominaciones();
+  }, [opPerspectivaCasa, divisaOrigen, divisaDestino, monto, divisas]);
+
+  // Habilita avanzar a la siguiente etapa
   const puedeAvanzar =
     divisaOrigen &&
     divisaDestino &&
@@ -168,7 +219,9 @@ export default function EtapaSeleccionDivisas({
     monto > 0 &&
     clienteActual &&
     !limiteMsg &&
-    !loadingLimites;
+    !loadingLimites &&
+    !denominacionesMsg &&
+    !validandoDenominaciones;
 
   // Determinar perspectiva cuando cambian las divisas
   useEffect(() => {
@@ -240,6 +293,7 @@ export default function EtapaSeleccionDivisas({
               value={divisaOrigen}
               onChange={(e) => {
                 setLimiteMsg(""); // limpiar feedback viejo
+                setDenominacionesMsg(""); // limpiar validación de denominaciones
                 setDivisaOrigen(e.target.value);
                 const origen = divisas.find(
                   (d) => d.id?.toString() === e.target.value
@@ -287,6 +341,7 @@ export default function EtapaSeleccionDivisas({
             type="button"
             onClick={() => {
               setLimiteMsg(""); // limpiar feedback viejo
+              setDenominacionesMsg(""); // limpiar validación de denominaciones
               const temp = divisaOrigen;
               setDivisaOrigen(divisaDestino);
               setDivisaDestino(temp);
@@ -306,6 +361,7 @@ export default function EtapaSeleccionDivisas({
               value={divisaDestino}
               onChange={(e) => {
                 setLimiteMsg(""); // limpiar feedback viejo
+                setDenominacionesMsg(""); // limpiar validación de denominaciones
                 setDivisaDestino(e.target.value);
               }}
               autoComplete="off"
@@ -356,6 +412,7 @@ export default function EtapaSeleccionDivisas({
                 // Validar que sea un número válido
                 if (unformatted === "" || /^\d+$/.test(unformatted)) {
                   setLimiteMsg(""); // limpiar mensaje de límite
+                  setDenominacionesMsg(""); // limpiar validación de denominaciones
                   setMontoDisplay(formatInputNumber(unformatted));
                   setMonto(unformatted === "" ? 0 : Number(unformatted));
                 }
@@ -393,6 +450,16 @@ export default function EtapaSeleccionDivisas({
           aria-live="polite"
         >
           {limiteMsg}
+        </div>
+      )}
+
+      {/* Mensaje de validación de denominaciones */}
+      {!!denominacionesMsg && (
+        <div
+          className="bg-orange-50 border border-orange-200 rounded-lg p-3 text-sm text-orange-700"
+          aria-live="polite"
+        >
+          {denominacionesMsg}
         </div>
       )}
 
