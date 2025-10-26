@@ -652,7 +652,7 @@ export default function OperacionCompraVenta() {
             setOpPerspectivaCasa={setOpPerspectivaCasa}
             monto={monto}
             setMonto={setMonto}
-            clienteActual={selectedClient}
+            clienteActual={selectedClient ?? undefined}
             onContinuar={avanzarEtapa2}
           />
         );

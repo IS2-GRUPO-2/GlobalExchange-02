@@ -1,7 +1,8 @@
 from django.urls import path
 from apps.notificaciones.views import (
     NotificacionTasaUsuarioView,
-    NotificacionTasaClienteView
+    NotificacionTasaClienteView,
+    NotificacionCambioTasaView,
 )
 
 urlpatterns = [
@@ -17,5 +18,12 @@ urlpatterns = [
         'tasa/cliente/',
         NotificacionTasaClienteView.as_view(),
         name='tasa-cliente'
-    )
+    ),
+
+    # Notificaciones toast de cambio de tasa
+    path(
+        'tasa/eventos/',
+        NotificacionCambioTasaView.as_view(),
+        name='tasa-eventos'
+    ),
 ]
