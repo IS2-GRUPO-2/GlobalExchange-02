@@ -45,7 +45,6 @@ export interface Transaccion {
   updated_at: string;
 }
 
-
 export interface TransaccionDetalle {
   id: number;
   id_user: number;
@@ -60,6 +59,7 @@ export interface TransaccionDetalle {
   metodo_financiero: number;
   fecha_inicio: Date;
   fecha_fin: Date;
+  factura_emitida: boolean;
   tauser: string;
   estado: "pendiente" | "en_proceso" | "completada" | "cancelada" | "fallida";
   created_at: Date;
