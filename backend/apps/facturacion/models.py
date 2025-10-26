@@ -4,8 +4,15 @@ from solo.models import SingletonModel
 from apps.operaciones.models import Transaccion
 
 class Factura(models.Model):
+    ESTADO_CHOICES = [
+        ("APROBADO", "Aprobado"),
+        ("RECHAZADO", "Rechazado"),
+        ("EN_PROCESO", "En proceso"),
+    ]
+
     transaccion = models.ForeignKey(Transaccion, on_delete=models.PROTECT)
-    pdf_url = models.CharField(max_length=200, )
+    cdc = models.CharField(max_length=50)
+    estado = models.CharField(max_length=100, choices=ESTADO_CHOICES, default="EN_PROCESO")
 
 class FacturaSettings(SingletonModel):
     ultimo_num = models.IntegerField(default=201)
