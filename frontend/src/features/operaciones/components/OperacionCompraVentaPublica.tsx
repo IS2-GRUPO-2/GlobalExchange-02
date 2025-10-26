@@ -8,7 +8,7 @@ import { getMetodosFinancierosPorOperacion } from "../../metodos_financieros/ser
 import { type CalcularOperacionResponse } from "../types/Operacion";
 import { type Divisa } from "../../divisas/types/Divisa";
 import { type MetodoFinanciero } from "../../metodos_financieros/types/MetodoFinanciero";
-import { getDivisasConTasa } from "../../divisas/services/divisaService";
+import { getDivisasConTasa, validarDenominaciones } from "../../divisas/services/divisaService";
 import {
   formatInputNumber,
   unformatInputNumber,
@@ -102,7 +102,7 @@ export default function OperacionCompraVentaPublica() {
       const res = await operacionPublica({
         divisa_origen: Number(divisaOrigen),
         divisa_destino: Number(divisaDestino),
-        monto_origen: monto,
+        monto: monto,
         op_perspectiva_casa: opPerspectivaCasa!,
         metodo_id: Number(metodoSeleccionado),
       });
@@ -140,6 +140,8 @@ export default function OperacionCompraVentaPublica() {
             setDivisaDestino={setDivisaDestino}
             monto={monto}
             setMonto={setMonto}
+            opPerspectivaCasa={opPerspectivaCasa}
+            setOpPerspectivaCasa={setOpPerspectivaCasa}
             onContinuar={avanzarEtapa2}
           />
         )}
@@ -179,6 +181,8 @@ interface EtapaSeleccionDivisasPublicaProps {
   setDivisaDestino: (valor: string) => void;
   monto: number;
   setMonto: (valor: number) => void;
+  opPerspectivaCasa: "compra" | "venta" | null;
+  setOpPerspectivaCasa: (perspectiva: "compra" | "venta" | null) => void;
   onContinuar: () => void;
 }
 
@@ -191,10 +195,17 @@ function EtapaSeleccionDivisasPublica({
   setDivisaDestino,
   monto,
   setMonto,
-  onContinuar,
+  opPerspectivaCasa,
+  setOpPerspectivaCasa,
+  onContinuar
 }: EtapaSeleccionDivisasPublicaProps) {
   // Estado para el input formateado
   const [montoDisplay, setMontoDisplay] = useState<string>("");
+
+   // --- validación de denominaciones ---
+  const [denominacionesMsg, setDenominacionesMsg] = useState<string>("");
+  const [validandoDenominaciones, setValidandoDenominaciones] =
+    useState<boolean>(false);
 
   // Sincronizar monto con display formateado cuando cambia externamente
   useEffect(() => {
@@ -209,9 +220,112 @@ function EtapaSeleccionDivisasPublica({
     const temp = divisaOrigen;
     setDivisaOrigen(divisaDestino);
     setDivisaDestino(temp);
+    setDenominacionesMsg(""); // limpiar validación de denominaciones
   };
 
-  const puedeAvanzar = divisaOrigen && divisaDestino && monto > 0;
+  // Determinar perspectiva cuando cambian las divisas
+  useEffect(() => {
+    if (!divisaOrigen || !divisaDestino) {
+      setOpPerspectivaCasa(null);
+      setMonto(0);
+      return;
+    }
+
+    const determinarTipoOperacion = async () => {
+      try {
+        const { op_perspectiva_casa } = await getOpPerspectivaCasa(
+          Number(divisaOrigen),
+          Number(divisaDestino)
+        );
+        setOpPerspectivaCasa(op_perspectiva_casa);
+      } catch (error) {
+        console.error("Error determinando perspectiva de operación:", error);
+        setOpPerspectivaCasa(null);
+      }
+    };
+
+    determinarTipoOperacion();
+  }, [divisaOrigen, divisaDestino, setOpPerspectivaCasa]);
+
+  // Validar disponibilidad de denominaciones
+  useEffect(() => {
+    // Solo validar si tenemos divisa, monto y perspectiva determinada
+    if (!opPerspectivaCasa || !monto || monto <= 0) {
+      setDenominacionesMsg("");
+      setValidandoDenominaciones(false);
+      return;
+    }
+
+    const validarDisponibilidadDenominaciones = async () => {
+      setValidandoDenominaciones(true);
+      setDenominacionesMsg("");
+
+      try {
+        // Determinar qué divisa validar según la perspectiva
+        const divisaAValidar =
+          opPerspectivaCasa === "compra"
+            ? Number(divisaOrigen)
+            : Number(divisaDestino);
+
+        if (!divisaAValidar) {
+          setValidandoDenominaciones(false);
+          return;
+        }
+
+        const resultado = await validarDenominaciones(divisaAValidar, monto);
+
+        if (!resultado.puede_acumular) {
+          const divisaInfo = divisas.find((d) => d.id === divisaAValidar);
+          const codigoDivisa = divisaInfo?.codigo || "la divisa";
+          setDenominacionesMsg(
+            `No es posible acumular el monto con las denominaciones disponibles de ${codigoDivisa}`
+          );
+        }
+      } catch (error) {
+        console.error("Error validando denominaciones:", error);
+        // No mostramos error al usuario, solo en consola
+      } finally {
+        setValidandoDenominaciones(false);
+      }
+    };
+
+    validarDisponibilidadDenominaciones();
+  }, [opPerspectivaCasa, divisaOrigen, divisaDestino, monto, divisas]);
+
+
+  // Obtener información de la divisa origen para mostrar el código
+  const divisaOrigenInfo = divisas.find(
+    (d) => d.id?.toString() === divisaOrigen
+  );
+
+  // Obtener información de la divisa origen para mostrar el código
+  const divisaDestinoInfo = divisas.find(
+    (d) => d.id?.toString() === divisaDestino
+  );
+  const codigoDivisaOrigen = divisaOrigenInfo?.codigo || "";
+  const codigoDivisaDestino = divisaDestinoInfo?.codigo || "";
+
+
+  // Determinar el label del monto según la perspectiva
+  const getLabelMonto = () => {
+    if (!divisaOrigen || !divisaDestino || !codigoDivisaOrigen || !codigoDivisaDestino) {
+      return "";
+    }
+
+    if (opPerspectivaCasa === "venta") {
+      return `Monto que quieres recibir ${`(${codigoDivisaDestino})`}`;
+    }
+
+    // Por defecto (compra o sin determinar aún)
+    return `Monto que vas a entregar ${`(${codigoDivisaOrigen})`}`;
+  };
+
+  const puedeAvanzar = 
+    divisaOrigen && 
+    divisaDestino && 
+    monto > 0 && 
+    !denominacionesMsg &&
+    !validandoDenominaciones;
 
   return (
     <div className="space-y-6 select-none">
@@ -234,6 +348,7 @@ function EtapaSeleccionDivisasPublica({
             value={divisaOrigen}
             onChange={(e) => {
               setDivisaOrigen(e.target.value);
+              setDenominacionesMsg(""); // limpiar validación de denominaciones
 
               const origen = divisas.find(
                 (d) => d.id?.toString() === e.target.value
@@ -290,6 +405,7 @@ function EtapaSeleccionDivisasPublica({
             value={divisaDestino}
             onChange={(e) => {
               setDivisaDestino(e.target.value);
+              setDenominacionesMsg(""); // limpiar validación de denominaciones
             }}
             className="w-full border border-gray-300 rounded-md p-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
           >
@@ -325,9 +441,7 @@ function EtapaSeleccionDivisasPublica({
           htmlFor="monto"
           className="block text-sm font-medium text-gray-700 mb-2"
         >
-          Cantidad en{" "}
-          {divisas.find((d) => d.id?.toString() === divisaOrigen)?.nombre ||
-            "Divisa origen"}
+          {getLabelMonto()}
         </label>
         <input
           id="monto"
@@ -342,6 +456,7 @@ function EtapaSeleccionDivisasPublica({
             if (unformatted === "" || /^\d+$/.test(unformatted)) {
               setMontoDisplay(formatInputNumber(unformatted));
               setMonto(unformatted === "" ? 0 : Number(unformatted));
+              setDenominacionesMsg(""); // limpiar validación de denominaciones
             }
           }}
           onKeyDown={(e) => {
@@ -358,12 +473,22 @@ function EtapaSeleccionDivisasPublica({
           }}
           autoComplete="off"
           placeholder="Ingrese el monto"
-          className="w-full text-2xl font-semibold text-gray-900 text-center bg-transparent focus:outline-none focus:ring-2 focus:ring-blue-500 rounded-md py-2"
+          className="w-full text-2xl font-semibold text-gray-900 text-center bg-transparent focus:outline-none focus:ring-2 focus:ring-gray-500 rounded-md py-2"
         />
-        <span className="text-sm text-gray-500">
+        {/* <span className="text-sm text-gray-500">
           {divisas.find((d) => d.id?.toString() === divisaOrigen)?.codigo || ""}
-        </span>
+        </span> */}
       </div>
+
+      {/* Mensaje de validación de denominaciones */}
+      {!!denominacionesMsg && (
+        <div
+          className="bg-orange-50 border border-orange-200 rounded-lg p-3 text-sm text-orange-700"
+          aria-live="polite"
+        >
+          {denominacionesMsg}
+        </div>
+      )}
 
       {/* Botón continuar */}
       <div className="flex justify-center">
@@ -603,7 +728,7 @@ function EtapaResultadoPublica({
               {operacionCliente === "compra" ? "Entrega" : "Entrega"}
             </div>
             <div className="text-lg sm:text-xl lg:text-2xl font-bold text-zinc-900 whitespace-nowrap overflow-hidden text-ellipsis">
-              {formatNumber(resultado.monto_origen, 2)}
+              {formatNumber(resultado.monto_origen, 0)}
             </div>
             <div className="text-sm font-semibold text-zinc-600 mt-2">
               {resultado.divisa_origen}
@@ -621,7 +746,7 @@ function EtapaResultadoPublica({
               {operacionCliente === "compra" ? "Recibe" : "Recibe"}
             </div>
             <div className="text-lg sm:text-xl lg:text-2xl font-bold text-zinc-900 whitespace-nowrap overflow-hidden text-ellipsis">
-              {formatNumber(resultado.monto_destino, 2)}
+              {formatNumber(resultado.monto_destino, 0)}
             </div>
             <div className="text-sm font-semibold text-zinc-600 mt-2">
               {resultado.divisa_destino}
@@ -662,7 +787,7 @@ function EtapaResultadoPublica({
               Tasa final aplicada:
             </span>
             <p className="text-zinc-900 text-xl font-bold">
-              {formatNumber(resultado.tc_final, 4)}
+              {formatNumber(resultado.tc_final, 0)}
             </p>
           </div>
         </div>

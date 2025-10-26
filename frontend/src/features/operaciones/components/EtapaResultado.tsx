@@ -147,7 +147,7 @@ export default function EtapaResultado({
           <div className="col-span-2 pt-2 border-t border-zinc-200">
             <span className="text-sm font-medium text-zinc-500 block mb-1">Tasa final aplicada:</span>
             <p className="text-zinc-900 text-xl font-bold">
-              {resultado.tc_final}
+              {formatNumber(resultado.tc_final, 0)}
             </p>
           </div>
         </div>

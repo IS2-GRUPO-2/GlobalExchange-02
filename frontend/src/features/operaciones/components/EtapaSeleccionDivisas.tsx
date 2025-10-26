@@ -211,18 +211,6 @@ export default function EtapaSeleccionDivisas({
     validarDisponibilidadDenominaciones();
   }, [opPerspectivaCasa, divisaOrigen, divisaDestino, monto, divisas]);
 
-  // Habilita avanzar a la siguiente etapa
-  const puedeAvanzar =
-    divisaOrigen &&
-    divisaDestino &&
-    divisaOrigen !== divisaDestino &&
-    monto > 0 &&
-    clienteActual &&
-    !limiteMsg &&
-    !loadingLimites &&
-    !denominacionesMsg &&
-    !validandoDenominaciones;
-
   // Determinar perspectiva cuando cambian las divisas
   useEffect(() => {
     if (!divisaOrigen || !divisaDestino) {
@@ -246,6 +234,20 @@ export default function EtapaSeleccionDivisas({
 
     determinarTipoOperacion();
   }, [divisaOrigen, divisaDestino, setOpPerspectivaCasa]);
+
+  // Habilita avanzar a la siguiente etapa
+  const puedeAvanzar =
+    divisaOrigen &&
+    divisaDestino &&
+    divisaOrigen !== divisaDestino &&
+    monto > 0 &&
+    clienteActual &&
+    !limiteMsg &&
+    !loadingLimites &&
+    !denominacionesMsg &&
+    !validandoDenominaciones;
+
+  
 
   // Obtener información de la divisa origen para mostrar el código
   const divisaOrigenInfo = divisas.find(
@@ -287,7 +289,7 @@ export default function EtapaSeleccionDivisas({
         <div className="flex items-center justify-center space-x-4 w-full max-w-[736px]">
           <div className="w-80">
             <label className="block text-sm font-medium text-gray-700 mb-2 select-none">
-              Divisa de origen (Entregas)
+              De
             </label>
             <select
               value={divisaOrigen}
@@ -355,7 +357,7 @@ export default function EtapaSeleccionDivisas({
 
           <div className="w-80">
             <label className="block text-sm font-medium text-gray-700 mb-2 select-none">
-              Divisa de destino (Recibes)
+              A
             </label>
             <select
               value={divisaDestino}

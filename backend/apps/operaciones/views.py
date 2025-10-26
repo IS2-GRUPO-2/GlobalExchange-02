@@ -84,7 +84,7 @@ def operacion_publica(request):
             resultado = calcular_operacion(
                 divisa_origen_id=data.get("divisa_origen"),
                 divisa_destino_id=data.get("divisa_destino"),
-                monto=data.get("monto_origen"),
+                monto=data.get("monto"),
                 op_perspectiva_casa=data.get("op_perspectiva_casa"),
                 metodo_id=data.get("metodo_id"),
             )
