@@ -2,8 +2,8 @@
 factura_base = {
             "iTipEmi": "1", # tipo de emision
             "iTiDE": "1", # harcoded
-            "dNumTim": "80002247", # nro de timbrado
-            "dFeIniT": "2023-12-27", # fecha de inicio de timbrado
+            "dNumTim": "02595733", # nro de timbrado
+            "dFeIniT": "2025-03-27", # fecha de inicio de timbrado
             "dEst": "001", # establecimiento
             "dPunExp": "003", # punto de expedicion
             "dNumDoc": "", # numero de factura (de 201 a 250), deben ser 7 caracteres
@@ -27,22 +27,22 @@ factura_base = {
             "dEmailE": "ggonzar@gmail.com",
             "gActEco": [ # hardcoded
                 {
-                    "cActEco": "46699",
-                    "dDesActEco": "Comercio al por mayor de otros productos n.c.p."
+                    "cActEco": "62010",
+                    "dDesActEco": "Actividades de programación informática"
                 },
                 {
-                    "cActEco": "46302",
-                    "dDesActEco": "Comercio al por mayor de comestibles, excepto carnes"
+                    "cActEco": "74909",
+                    "dDesActEco": "Otras actividades profesionales, científicas y técnicas n.c.p."
                 }
             ],
             "iNatRec": "", # naturaleza del emisor, revisar manual sifen
     	    "iTiOpe": "", # tipo de operacion, 1 si es persona juridica, 2 si es persona fisica
             "cPaisRec": "PRY", # todos los clientes son de py
             "iTiContRec": "", # tipo de contribuyente del receptor
-            "dRucRec": "", # ruc del receptor
-            "dDVRec": "", #digito verificador del ruc del receptor
-            "iTipIDRec": "", # obligatorio si inatRec es 2, 1 es CI
-            "dNumIDRec": "", # obligatorio si iTipIDRec existe
+            "dRucRec": "0", # ruc del receptor
+            "dDVRec": "0", #digito verificador del ruc del receptor
+            "iTipIDRec": "0", # obligatorio si inatRec es 2, 1 es CI
+            "dNumIDRec": "0", # obligatorio si iTipIDRec existe
             "dNomRec": "", # nombre del receptor
             "dEmailRec": "", # correo del receptor
             "iIndPres": "", # indicador de presencia, 1 es presencial, 2 es online
