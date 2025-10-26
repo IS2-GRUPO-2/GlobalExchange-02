@@ -256,7 +256,7 @@ class DivisaViewset(viewsets.ModelViewSet):
 
         try:
             monto = int(monto_str)
-            if monto <= 0:
+            if monto < 0:
                 raise ValueError("El monto debe ser positivo")
         except ValueError:
             return Response(
