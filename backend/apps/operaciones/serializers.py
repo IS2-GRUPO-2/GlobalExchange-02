@@ -34,7 +34,7 @@ class TransaccionDetalleSerializer(serializers.ModelSerializer):
             'id', 'id_user', 'cliente', 'operacion', 'tasa_aplicada', 'tasa_inicial',
             'divisa_origen', 'divisa_destino', 'monto_origen', 'monto_destino',
             'metodo_financiero', 'fecha_inicio', 'fecha_fin', 'tauser', 'estado',
-            'created_at', 'updated_at',
+            'created_at', 'updated_at', 'factura_emitida',
             # Campos detallados para lectura
             'id_user_detalle', 'cliente_detalle', 'divisa_origen_detalle',
             'divisa_destino_detalle', 'metodo_financiero_detalle', 'tauser_detalle'
