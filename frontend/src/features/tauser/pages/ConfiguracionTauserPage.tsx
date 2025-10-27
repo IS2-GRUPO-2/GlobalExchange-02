@@ -5,10 +5,11 @@ import {
   updateTauser,
 } from "../services/tauserService";
 import type { Tauser } from "../types/Tauser";
-import { Edit, Search, Plus, Check, X, Eye } from "lucide-react";
+import { Edit, Search, Plus, Check, X, Eye, Layers } from "lucide-react";
 import { toast } from "react-toastify";
 import Modal from "../../../components/Modal";
 import TauserForm from "../components/TauserForm";
+import TauserStockModal from "../components/TauserStockModal";
 import { MapContainer, TileLayer, Marker } from "react-leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
@@ -21,7 +22,9 @@ const ConfiguracionTauserPage = () => {
   const [createModalOpen, setCreateModalOpen] = useState<boolean>(false);
   const [editModalOpen, setEditModalOpen] = useState<boolean>(false);
   const [detailsModalOpen, setDetailsModalOpen] = useState<boolean>(false);
+  const [stockModalOpen, setStockModalOpen] = useState<boolean>(false);
   const [selectedTauser, setSelectedTauser] = useState<Tauser | null>(null);
+  const [stockTauser, setStockTauser] = useState<Tauser | null>(null);
 
   const fetchTausers = async () => {
     try {
@@ -59,6 +62,16 @@ const ConfiguracionTauserPage = () => {
   const closeDetailsModal = () => {
     setDetailsModalOpen(false);
     setSelectedTauser(null);
+  };
+
+  const openStockModal = (tauser: Tauser) => {
+    setStockTauser(tauser);
+    setStockModalOpen(true);
+  };
+
+  const closeStockModal = () => {
+    setStockModalOpen(false);
+    setStockTauser(null);
   };
 
   const handleCreateTauser = async (data: Partial<Tauser>) => {
@@ -159,6 +172,15 @@ const ConfiguracionTauserPage = () => {
                       <Can anyOf={[TAUSER.CHANGE]}>
                         <button onClick={() => openEditModal(tauser)} className="p-1 text-gray-500 hover:text-blue-600 rounded-full hover:bg-gray-100" title="Editar">
                           <Edit size={16} />
+                        </button>
+                      </Can>
+                      <Can anyOf={[TAUSER.CHANGE]}>
+                        <button
+                          onClick={() => openStockModal(tauser)}
+                          className="p-1 text-gray-500 hover:text-purple-600 rounded-full hover:bg-gray-100"
+                          title="Gestionar stock"
+                        >
+                          <Layers size={16} />
                         </button>
                       </Can>
                       <Can anyOf={[TAUSER.DELETE]}>
@@ -275,6 +297,13 @@ const ConfiguracionTauserPage = () => {
             </div>
           )}
         </Modal>
+
+        <TauserStockModal
+          isOpen={stockModalOpen}
+          tauser={stockTauser}
+          onClose={closeStockModal}
+          onSuccess={fetchTausers}
+        />
       </div>
     </div>
   );

@@ -1,12 +1,29 @@
 from rest_framework import serializers
-from .models import TipoMovimiento, MovimientoStock, MovimientoStockDetalle, StockDivisaCasa, StockDivisaTauser, EstadoMovimiento
 from django.db import transaction
-from apps.divisas.models import Denominacion
+from django.db.models import F
 from decimal import Decimal
+
+from .models import (
+    TipoMovimiento,
+    MovimientoStock,
+    MovimientoStockDetalle,
+    StockDivisaCasa,
+    StockDivisaTauser,
+    EstadoMovimiento,
+)
+from apps.divisas.models import Denominacion
+from apps.divisas.serializers import DivisaSerializer, DenominacionSerializer
 from apps.operaciones.models import Transaccion
+from apps.tauser.serializers import TauserSerializer
+
 class TipoMovimientoSerializer(serializers.ModelSerializer):
     class Meta:
         model = TipoMovimiento
+        fields = '__all__'
+
+class EstadoMovimientoSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = EstadoMovimiento
         fields = '__all__'
 
 class StockDivisaCasaSerializer(serializers.ModelSerializer):
@@ -26,9 +43,19 @@ class MovimientoStockDetalleCreateSerializer(serializers.ModelSerializer):
         fields = ["denominacion", "cantidad"]        
 
 class MovimientoStockDetalleSerializer(serializers.ModelSerializer):
+    denominacion_detalle = DenominacionSerializer(
+        source="denominacion", read_only=True)
+
     class Meta:
         model = MovimientoStockDetalle
-        fields = '__all__'
+        fields = [
+            "id",
+            "movimiento_stock",
+            "denominacion",
+            "cantidad",
+            "denominacion_detalle",
+        ]
+        read_only_fields = ["id", "movimiento_stock", "denominacion_detalle"]
 class MovimientoStockSerializer(serializers.ModelSerializer):
     detalles = MovimientoStockDetalleCreateSerializer(many=True, required=False)
     detalles_info = MovimientoStockDetalleSerializer(
@@ -36,11 +63,31 @@ class MovimientoStockSerializer(serializers.ModelSerializer):
         read_only=True,
         source="movimientostockdetalle_set"
     )
-
+    tauser_detalle = TauserSerializer(source="tauser", read_only=True)
+    tipo_movimiento_detalle = TipoMovimientoSerializer(
+        source="tipo_movimiento", read_only=True)
+    estado_detalle = EstadoMovimientoSerializer(
+        source="estado", read_only=True)
+    divisa_detalle = DivisaSerializer(source="divisa", read_only=True)
 
     class Meta:
         model = MovimientoStock
-        fields = '__all__'
+        fields = [
+            "id",
+            "tipo_movimiento",
+            "tipo_movimiento_detalle",
+            "tauser",
+            "tauser_detalle",
+            "transaccion",
+            "fecha",
+            "monto",
+            "estado",
+            "estado_detalle",
+            "divisa",
+            "divisa_detalle",
+            "detalles",
+            "detalles_info",
+        ]
         extra_kwargs = {
             'transaccion': {'required': False, 'allow_null': True},
             'monto': {'required': False, 'allow_null': True},
@@ -59,13 +106,24 @@ class MovimientoStockSerializer(serializers.ModelSerializer):
             estado, _ = EstadoMovimiento.objects.get_or_create(codigo="EN_PROCESO", descripcion="Movimiento de stock en proceso.")
             attrs["estado"] = estado
 
+        # Validar que todas las denominaciones pertenezcan a la divisa seleccionada
+        if 'detalles' in attrs and 'divisa' in attrs:
+            divisa_id = attrs['divisa'].id
+            for detalle in attrs['detalles']:
+                denominacion = detalle['denominacion']
+                if denominacion.divisa_id != divisa_id:
+                    raise serializers.ValidationError({
+                        'detalles': f"La denominación {denominacion.denominacion} no pertenece a la divisa seleccionada"
+                    })
+
         # Si no se proporciona monto, pero hay detalles, calculamos el monto total
         if 'monto' not in attrs and 'detalles' in attrs:
             monto_total = Decimal('0')
             for detalle in attrs['detalles']:
                 denominacion = detalle['denominacion']
                 cantidad = detalle['cantidad']
-                monto_total += Decimal(str(denominacion.denominacion)) * Decimal(str(cantidad))
+                # Conversión simplificada: denominacion.denominacion ya es numérico
+                monto_total += Decimal(denominacion.denominacion) * cantidad
             attrs['monto'] = monto_total
         elif 'monto' not in attrs:
             # Si no hay monto ni detalles, establecemos 0 como valor por defecto
@@ -131,7 +189,12 @@ class MovimientoStockSerializer(serializers.ModelSerializer):
         return reglas[codigo_tipo]
     
     def _procesar_detalles(self, movimiento, regla, detalles_data):
-        """Crea los detalles y actualiza el stock según la regla."""
+        """
+        Crea los detalles y actualiza el stock según la regla.
+        
+        Utiliza actualizaciones atómicas con F() expressions para prevenir race conditions
+        y garantizar la integridad del stock en operaciones concurrentes.
+        """
         for det in detalles_data:
             denominacion = det["denominacion"]
             cantidad = det["cantidad"]
@@ -142,21 +205,30 @@ class MovimientoStockSerializer(serializers.ModelSerializer):
                 cantidad=cantidad
             )
 
-            # Descontar del origen
+            # Descontar del origen usando actualización atómica
             if regla["decrementa"]:
                 stock_origen = regla["decrementa"](det)
-                if stock_origen.stock < cantidad:
+                # Actualización atómica que previene race conditions
+                updated = (
+                    stock_origen.__class__.objects
+                    .filter(id=stock_origen.id, stock__gte=cantidad)
+                    .update(stock=F('stock') - cantidad)
+                )
+                if updated == 0:
+                    # Re-consultar para obtener el stock actual
+                    stock_origen.refresh_from_db()
                     raise serializers.ValidationError(
-                        f"No hay suficiente stock para la denominación {denominacion}"
+                        f"No hay suficiente stock para la denominación {denominacion}. "
+                        f"Stock disponible: {stock_origen.stock}, requerido: {cantidad}"
                     )
-                stock_origen.stock -= cantidad
-                stock_origen.save(update_fields=["stock"])
 
-            # Sumar al destino
+            # Sumar al destino usando actualización atómica
             if regla["incrementa"]:
                 stock_destino = regla["incrementa"](det)
-                stock_destino.stock += cantidad
-                stock_destino.save(update_fields=["stock"])
+                # Actualización atómica
+                stock_destino.__class__.objects.filter(
+                    id=stock_destino.id
+                ).update(stock=F('stock') + cantidad)
 
     def _procesar_salida_cliente(self, movimiento, tauser, transaccion):
         """Calcula las denominaciones automáticamente para una salida al cliente."""
@@ -190,8 +262,17 @@ class MovimientoStockSerializer(serializers.ModelSerializer):
                     cantidad=cantidad_a_usar
                 )
 
-                stock_item.stock -= cantidad_a_usar
-                stock_item.save(update_fields=["stock"])
+                # Actualización atómica del stock
+                updated = (
+                    StockDivisaTauser.objects
+                    .filter(id=stock_item.id, stock__gte=cantidad_a_usar)
+                    .update(stock=F('stock') - cantidad_a_usar)
+                )
+                if updated == 0:
+                    raise serializers.ValidationError(
+                        f"No hay suficiente stock para la denominación {stock_item.denominacion.denominacion}"
+                    )
+                
                 monto_restante -= Decimal(cantidad_a_usar) * valor
 
         if monto_restante > 0:

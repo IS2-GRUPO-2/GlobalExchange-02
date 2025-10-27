@@ -5,6 +5,7 @@ const API_URL = "/api/divisas/";
 
 interface GetDivisasParams {
   page?: number;
+  page_size?: number;
   search?: string;
   es_base?: boolean;
 }
