@@ -513,6 +513,8 @@ export const UserProvider = ({ children }: Props) => {
     localStorage.removeItem("token");
     localStorage.removeItem("user");
     localStorage.removeItem("refresh");
+    // Limpiar el cliente seleccionado del store
+    localStorage.removeItem("selected-client");
     setUser(null);
     setToken("");
     setRefresh("");
@@ -531,6 +533,8 @@ export const UserProvider = ({ children }: Props) => {
     localStorage.removeItem("token");
     localStorage.removeItem("user");
     localStorage.removeItem("refresh");
+    // Limpiar el cliente seleccionado del store
+    localStorage.removeItem("selected-client");
     
     // Reiniciar estados de autenticación
     setMfaRequired(false);
