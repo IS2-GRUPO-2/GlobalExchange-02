@@ -1,19 +1,22 @@
 import { LogOut } from "lucide-react";
+import clsx from "clsx";
 
-interface LogoutButtonProps {
+type LogoutButtonProps = {
   onLogout: () => void;
-}
+  className?: string;
+};
 
-export default function LogoutButton({ onLogout }: LogoutButtonProps) {
+export default function LogoutButton({ onLogout, className }: LogoutButtonProps) {
   return (
-    <div className="absolute top-4 right-4">
-      <button 
-        onClick={onLogout}
-        className="bg-red-600 hover:bg-red-700 text-white px-5 py-3 rounded-lg text-base font-medium shadow-lg flex items-center justify-center gap-2 transition-colors"
-      >
-        <LogOut size={24} />
-        Cerrar SesiÃ³n
-      </button>
-    </div>
+    <button
+      onClick={onLogout}
+      className={clsx(
+        "bg-red-600 hover:bg-red-700 text-white px-5 py-3 rounded-lg text-base font-medium shadow-lg flex items-center justify-center gap-2 transition-colors",
+        className
+      )}
+    >
+      <LogOut size={20} />
+      Cerrar sesión
+    </button>
   );
 }

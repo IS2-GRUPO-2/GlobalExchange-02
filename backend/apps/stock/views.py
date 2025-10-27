@@ -12,7 +12,7 @@ class MovimientoStockViewset(viewsets.ModelViewSet):
         'tipo_movimiento', 'tauser', 'transaccion', 'estado'
     )
     serializer_class = serializers.MovimientoStockSerializer
-    permission_classes = [permissions.IsAuthenticated, permissions.DjangoModelPermissions]
+    permission_classes = [permissions.AllowAny]#[permissions.IsAuthenticated, permissions.DjangoModelPermissions]
 
     def create(self, request, *args, **kwargs):
         """

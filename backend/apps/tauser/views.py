@@ -28,6 +28,22 @@ class TauserViewSet(viewsets.ModelViewSet):
     search_fields = ["nombre", "codigo", "direccion", "ciudad", "departamento"]
     pagination_class = TauserPagination
 
+    def get_permissions(self):
+        if self.action in ("list", "retrieve"):
+            return [permissions.AllowAny()]
+        return super().get_permissions()
+
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        is_active = self.request.query_params.get('is_active')
+        if is_active is not None:
+            value = is_active.lower()
+            if value in ("true", "1", "yes"):
+                queryset = queryset.filter(is_active=True)
+            elif value in ("false", "0", "no"):
+                queryset = queryset.filter(is_active=False)
+        return queryset
+
     @swagger_auto_schema(
         operation_summary="Listar Tausers",
         operation_description="""Obtiene un listado paginado de todos los Tausers registrados en el sistema.
