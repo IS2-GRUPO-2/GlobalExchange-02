@@ -92,14 +92,18 @@ def calcular_operacion(divisa_origen_id, divisa_destino_id, monto: Decimal, op_p
         com_metodo = _get_comision_compra(
             detalle) if detalle else metodo.comision_pago_porcentaje
         tc = TasaService.calcular_tasa_compra(tasa, com_metodo, cliente)
-        monto_destino = monto * tc
+        # El monto ingresado en el input representa el monto que el cliente entrega
+        monto_origen = monto
+        monto_destino = monto_origen * tc
 
     else:
 
         com_metodo = _get_comision_venta(
             detalle) if detalle else metodo.comision_cobro_porcentaje
         tc = TasaService.calcular_tasa_venta(tasa, com_metodo, cliente)
-        monto_destino = monto / tc
+        # El monto ingresado en el imput representa el monto que el cliente quiere
+        monto_destino = monto
+        monto_origen = monto_destino * tc
 
     return {
         "op_perspectiva_casa": op_perspectiva_casa,
@@ -112,8 +116,8 @@ def calcular_operacion(divisa_origen_id, divisa_destino_id, monto: Decimal, op_p
             "comision_metodo": float(com_metodo),
         },
         "tc_final": tc,
-        "monto_origen": float(monto),
-        "monto_destino": round(monto_destino, 2)
+        "monto_origen": monto_origen,
+        "monto_destino": monto_destino
     }
 
 
