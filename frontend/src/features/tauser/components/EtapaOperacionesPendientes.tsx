@@ -4,36 +4,60 @@ import type { TransaccionDetalle } from "../../operaciones/types/Transaccion";
 import { toast } from "react-toastify";
 import { ArrowLeft } from "lucide-react";
 import { getTauserTransacciones } from "../services/tauserTerminalService";
+import type { SelectedTauser } from "../store/useSelectedTauser";
 
 type Props = {
   cliente: Cliente | null;
+  tauser: SelectedTauser | null;
   onVolver: () => void;
   onSeleccionar: (transaccion: TransaccionDetalle) => void;
 };
 
 const ITEMS_PER_PAGE = 8;
 
-export default function EtapaOperacionesPendientes({ cliente, onVolver, onSeleccionar }: Props) {
+export default function EtapaOperacionesPendientes({ cliente, tauser, onVolver, onSeleccionar }: Props) {
   const [transacciones, setTransacciones] = useState<TransaccionDetalle[]>([]);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
 
   useEffect(() => {
-    if (!cliente) {
+    if (!cliente || !tauser) {
+      setTransacciones([]);
+      setTotalPages(1);
+      setPage(1);
+      setLoading(false);
       return;
     }
+
+    setLoading(true);
 
     const fetchTransacciones = async () => {
       try {
         const res = await getTauserTransacciones(cliente.id.toString(), ["pendiente", "en_proceso"]);
-        const lista = (res.data ?? [])
+        const listaFiltrada = (res.data ?? [])
           .filter((transaccion) => ["pendiente", "en_proceso"].includes(transaccion.estado))
           .filter(
             (transaccion) => !(transaccion.operacion === "venta" && transaccion.estado === "pendiente")
-          );
-        setTransacciones(lista);
-        setTotalPages(Math.max(1, Math.ceil(lista.length / ITEMS_PER_PAGE)));
+          )
+          .filter((transaccion) => {
+            const targetId = `${tauser.id}`.toLowerCase();
+            const targetCodigo = `${tauser.codigo}`.toLowerCase();
+            const posiblesValores = [
+              transaccion.tauser ?? null,
+              transaccion.tauser_detalle?.id ?? null,
+              transaccion.tauser_detalle?.codigo ?? null,
+            ]
+              .filter((valor): valor is string | number => valor !== null && valor !== undefined)
+              .map((valor) => `${valor}`.toLowerCase());
+
+            return posiblesValores.some(
+              (valor) => valor === targetId || valor === targetCodigo
+            );
+          });
+
+        setTransacciones(listaFiltrada);
+        setTotalPages(Math.max(1, Math.ceil(listaFiltrada.length / ITEMS_PER_PAGE)));
       } catch (error) {
         console.error(error);
         toast.error("No se pudieron cargar las operaciones pendientes");
@@ -45,14 +69,18 @@ export default function EtapaOperacionesPendientes({ cliente, onVolver, onSelecc
     fetchTransacciones();
     const interval = setInterval(fetchTransacciones, 5000);
     return () => clearInterval(interval);
-  }, [cliente]);
+  }, [cliente, tauser]);
 
   useEffect(() => {
     if (!cliente) {
-      toast.error("No se ha seleccionado ningún cliente");
+      toast.error("No se ha seleccionado ningun cliente");
       onVolver();
     }
   }, [cliente, onVolver]);
+
+  useEffect(() => {
+    setPage(1);
+  }, [cliente?.id, tauser?.id]);
 
   const transaccionesActuales = useMemo(() => {
     const startIndex = (page - 1) * ITEMS_PER_PAGE;

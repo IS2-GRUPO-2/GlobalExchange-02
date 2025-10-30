@@ -4,12 +4,29 @@ import type { TransaccionDetalle } from "../../operaciones/types/Transaccion";
 import { toast } from "react-toastify";
 import { useTauserAuth } from "../context/useTauserAuth";
 import { getTauserClientes, getTauserTransacciones } from "../services/tauserTerminalService";
+import type { SelectedTauser } from "../store/useSelectedTauser";
 
 interface EtapaClienteProps {
   onSelectCliente: (cliente: Cliente) => void;
+  tauser: SelectedTauser | null;
 }
 
-export default function EtapaCliente({ onSelectCliente }: EtapaClienteProps) {
+const matchesSelectedTauser = (transaccion: TransaccionDetalle, tauser: SelectedTauser) => {
+  const targetId = `${tauser.id}`.toLowerCase();
+  const targetCodigo = `${tauser.codigo}`.toLowerCase();
+
+  const posiblesValores = [
+    transaccion.tauser ?? null,
+    transaccion.tauser_detalle?.id ?? null,
+    transaccion.tauser_detalle?.codigo ?? null,
+  ]
+    .filter((valor): valor is string | number => valor !== null && valor !== undefined)
+    .map((valor) => `${valor}`.toLowerCase());
+
+  return posiblesValores.some((valor) => valor === targetId || valor === targetCodigo);
+};
+
+export default function EtapaCliente({ onSelectCliente, tauser }: EtapaClienteProps) {
   const { user } = useTauserAuth();
   const [clientes, setClientes] = useState<Cliente[]>([]);
   const [loading, setLoading] = useState(true);
@@ -23,16 +40,25 @@ export default function EtapaCliente({ onSelectCliente }: EtapaClienteProps) {
     const fetchUserClients = async () => {
       if (!user || !user.id) {
         toast.error("No se pudo identificar el usuario actual");
+        setLoading(false);
+        return;
+      }
+
+      if (!tauser) {
+        setClientes([]);
+        setPendingCounts({});
+        setTotalPages(1);
+        setLoading(false);
         return;
       }
 
       setLoading(true);
       try {
-  const res = await getTauserClientes(user.id);
-  const clientesList: Cliente[] = res.data ?? [];
+        const res = await getTauserClientes(user.id);
+        const clientesList: Cliente[] = res.data ?? [];
 
         setClientes(clientesList);
-        setTotalPages(Math.ceil(clientesList.length / itemsPerPage));
+        setTotalPages(Math.max(1, Math.ceil(clientesList.length / itemsPerPage)));
 
         const counts: Record<string, number> = {};
         await Promise.all(
@@ -49,7 +75,8 @@ export default function EtapaCliente({ onSelectCliente }: EtapaClienteProps) {
                 .filter(
                   (operacion: TransaccionDetalle) =>
                     !(operacion.operacion === "venta" && operacion.estado === "pendiente")
-                );
+                )
+                .filter((operacion: TransaccionDetalle) => matchesSelectedTauser(operacion, tauser));
               counts[cliente.id] = pendientes.length;
             } catch (error) {
               console.error(
@@ -71,7 +98,7 @@ export default function EtapaCliente({ onSelectCliente }: EtapaClienteProps) {
     };
 
     fetchUserClients();
-  }, [user]);
+  }, [user, tauser]);
 
   // Obtener los clientes para la página actual
   const getCurrentPageClientes = () => {

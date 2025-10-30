@@ -16,7 +16,7 @@ export default function LogoutButton({ onLogout, className }: LogoutButtonProps)
       )}
     >
       <LogOut size={20} />
-      Cerrar sesión
+      Cerrar sesiÃ³n
     </button>
   );
 }

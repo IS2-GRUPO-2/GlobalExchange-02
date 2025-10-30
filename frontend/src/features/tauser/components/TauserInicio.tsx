@@ -179,11 +179,12 @@ export default function TauserInicio() {
           </div>
         );
       case "clientes":
-        return <EtapaCliente onSelectCliente={handleSeleccionCliente} />;
+        return <EtapaCliente onSelectCliente={handleSeleccionCliente} tauser={bannerTauser} />;
       case "operaciones":
         return (
           <EtapaOperacionesPendientes
             cliente={clienteActual}
+            tauser={bannerTauser}
             onVolver={handleVolverClientes}
             onSeleccionar={handleSeleccionTransaccion}
           />
