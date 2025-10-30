@@ -21,7 +21,7 @@ class MovimientoStockViewset(viewsets.ModelViewSet):
         'tipo_movimiento', 'tauser', 'transaccion', 'estado', 'divisa'
     ).order_by('-fecha', '-id')
     serializer_class = serializers.MovimientoStockSerializer
-    permission_classes = [permissions.AllowAny]#[permissions.IsAuthenticated, permissions.DjangoModelPermissions]
+    permission_classes = [permissions.IsAuthenticated, permissions.DjangoModelPermissions]
 
     def get_queryset(self):
         qs = super().get_queryset()
