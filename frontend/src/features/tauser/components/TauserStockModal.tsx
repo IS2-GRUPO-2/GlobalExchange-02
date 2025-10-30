@@ -122,9 +122,13 @@ const TauserStockModal = ({
   const loadDivisas = async () => {
     try {
       const res = await getDivisas({ page: 1, page_size: 100 });
-      setDivisas(res.results);
-      if (res.results.length > 0) {
-        const firstId = res.results[0].id ?? null;
+      // Filtrar para excluir la divisa base (PYG)
+      const divisasDisponibles = res.results.filter(
+        (divisa) => divisa.codigo !== "PYG"
+      );
+      setDivisas(divisasDisponibles);
+      if (divisasDisponibles.length > 0) {
+        const firstId = divisasDisponibles[0].id ?? null;
         setSelectedDivisa(firstId);
       }
     } catch (error) {
