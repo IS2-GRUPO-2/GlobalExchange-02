@@ -40,10 +40,13 @@ const ClientPicker = () => {
       }
     };
 
-    if (!selectedClient) {
+    // Siempre ejecutar al montar el componente para sincronizar con el backend
+    // Esto asegura que cliente_actual esté persistido en DB
+    if (user?.id) {
+    // if (!selectedClient) {
       fetchClienteActual();
     }
-  }, [user, setSelectedClient]);
+  }, [user?.id, setSelectedClient]);
 
   const handleClienteChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const clienteId = e.target.value;

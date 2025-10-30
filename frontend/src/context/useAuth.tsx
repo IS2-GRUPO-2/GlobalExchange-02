@@ -373,6 +373,8 @@ export const UserProvider = ({ children }: Props) => {
     localStorage.removeItem("token");
     localStorage.removeItem("user");
     localStorage.removeItem("refresh");
+    // Limpiar el cliente seleccionado del store
+    localStorage.removeItem("selected-client");
     setUser(null);
     setToken("");
     setRefresh("");
@@ -383,6 +385,31 @@ export const UserProvider = ({ children }: Props) => {
     
     navigate("/");
   };
+   /**
+   * Cierra la sesión del usuario actual en el terminal TAUSER
+   * NO redirecciona - permite que el componente maneje la navegación
+   */
+  const logoutTauser = () => {
+    // Limpiar localStorage
+    localStorage.removeItem("token");
+    localStorage.removeItem("user");
+    localStorage.removeItem("refresh");
+    // Limpiar el cliente seleccionado del store
+    localStorage.removeItem("selected-client");
+    
+    // Reiniciar estados de autenticación
+    setMfaRequired(false);
+    setTempToken(null);
+    setUser(null);
+    setToken("");
+    setRefresh("");
+    
+    // Limpiar headers de autorización
+    delete axios.defaults.headers.common["Authorization"];
+    
+    // NO redireccionamos aquí - el componente maneja su propio estado
+  };
+
   return (
     <UserContext.Provider
       value={{

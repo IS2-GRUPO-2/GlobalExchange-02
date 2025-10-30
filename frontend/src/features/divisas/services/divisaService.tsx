@@ -5,6 +5,7 @@ const API_URL = "/api/divisas/";
 
 interface GetDivisasParams {
   page?: number;
+  page_size?: number;
   search?: string;
   es_base?: boolean;
 }
@@ -177,6 +178,24 @@ export const updateLimiteConfig = async (limite: LimiteDivisaFormData) => {
     return res;
   } catch (err) {
     console.log(err);
+    throw err;
+  }
+};
+
+export const validarDenominaciones = async (
+  divisa_id: number,
+  monto: number
+): Promise<{ puede_acumular: boolean; divisa_id: number; monto: number }> => {
+  try {
+    const res = await axios.get(
+      `${API_URL}${divisa_id}/validar_denominaciones/`,
+      {
+        params: { monto },
+      }
+    );
+    return res.data;
+  } catch (err) {
+    console.error("Error validando denominaciones: ", err);
     throw err;
   }
 };
