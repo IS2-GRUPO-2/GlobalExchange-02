@@ -290,15 +290,6 @@ const TauserStockModal = ({
     );
   }, [resumen, selectedDivisa]);
 
-  const totalFilasStock = useMemo(
-    () =>
-      Math.max(
-        stockTauserSeleccionado.length,
-        stockCasaSeleccionado.length
-      ),
-    [stockTauserSeleccionado, stockCasaSeleccionado]
-  );
-
   const handleCantidadChange = (
     denominacionId: number,
     value: string
@@ -357,40 +348,6 @@ const TauserStockModal = ({
   const selectedDivisaInfo = useMemo(
     () => divisas.find((div) => div.id === selectedDivisa) ?? null,
     [divisas, selectedDivisa]
-  );
-
-  const renderStockList = (
-    title: string,
-    items: typeof stockTauserSeleccionado,
-    emptyText: string
-  ) => (
-    <div className="rounded-lg border border-gray-200 bg-white shadow-sm">
-      <div className="flex items-center justify-between border-b border-gray-100 px-3 py-2">
-        <span className="text-sm font-semibold text-gray-700">{title}</span>
-        {selectedDivisaInfo && (
-          <span className="text-xs uppercase tracking-wide text-gray-400">
-            {selectedDivisaInfo.codigo}
-          </span>
-        )}
-      </div>
-      <div className="max-h-60 overflow-y-auto divide-y divide-gray-100">
-        {items.length === 0 ? (
-          <p className="p-4 text-sm text-gray-500">{emptyText}</p>
-        ) : (
-          items.map((item) => (
-            <div
-              key={`${title}-${item.stock_id}`}
-              className="flex items-center justify-between px-3 py-2 text-sm text-gray-700"
-            >
-              <span>
-                {item.denominacion_valor.toLocaleString("es-PY")} · Stock
-              </span>
-              <span className="font-mono text-gray-900">{item.cantidad}</span>
-            </div>
-          ))
-        )}
-      </div>
-    </div>
   );
 
   if (!tauser) {

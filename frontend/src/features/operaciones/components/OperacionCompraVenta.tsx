@@ -650,7 +650,7 @@ export default function OperacionCompraVenta() {
             setDivisaDestino={setDivisaDestino}
             monto={monto}
             setMonto={setMonto}
-            clienteActual={selectedClient ?? undefined}
+            clienteActual={selectedClient ?? null}
             onContinuar={avanzarEtapa2}
           />
         );
