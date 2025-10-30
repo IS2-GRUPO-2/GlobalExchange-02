@@ -28,7 +28,7 @@ from .serializers import (
 )
 
 from .service import (
-    calcular_operacion,  
+    calcular_operacion,
     inferir_op_perspectiva_casa,
     _get_tasa_activa,
 )
@@ -38,9 +38,10 @@ import stripe
 stripe.api_key = config.STRIPE_KEY
 endpoint_secret = config.STRIPE_WEBHOOK_SECRET
 
-#=============================================================
+# =============================================================
 # Vistas de operaciones
-#=============================================================
+# =============================================================
+
 
 @api_view(["POST"])
 @permission_classes([permissions.IsAuthenticated])
@@ -57,7 +58,7 @@ def operacion_privada(request):
                 divisa_origen_id=data.get("divisa_origen"),
                 divisa_destino_id=data.get("divisa_destino"),
                 op_perspectiva_casa=data.get("op_perspectiva_casa"),
-                monto=data.get("monto_origen"),
+                monto=data.get("monto"),
                 metodo_id=data.get("metodo_id", None),
                 detalle_metodo_id=data.get("detalle_metodo_id", None)
             )
@@ -83,14 +84,14 @@ def operacion_publica(request):
             resultado = calcular_operacion(
                 divisa_origen_id=data.get("divisa_origen"),
                 divisa_destino_id=data.get("divisa_destino"),
-                monto=data.get("monto_origen"),
+                monto=data.get("monto"),
                 op_perspectiva_casa=data.get("op_perspectiva_casa"),
                 metodo_id=data.get("metodo_id"),
             )
             return Response(resultado, status=status.HTTP_200_OK)
         except Exception as e:
             return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
-    
+
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
@@ -113,7 +114,8 @@ def get_op_perspectiva_casa(request) -> str:
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        op_perspectiva_casa = inferir_op_perspectiva_casa(divisa_origen_id, divisa_destino_id)
+        op_perspectiva_casa = inferir_op_perspectiva_casa(
+            divisa_origen_id, divisa_destino_id)
 
         return Response(
             {
@@ -140,56 +142,56 @@ def stripe_webhook(request):
         return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
     except stripe.SignatureVerificationError as e:
         return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
-    
+
     if (
         event['type'] == 'checkout.session.completed'
         or event['type'] == 'checkout.session.async_payment_succeded'
     ):
         completar_pago_stripe(event['data']['object']['id'])
 
-
     if event['type'] == 'payment_method.attached':
         guardar_tarjeta_stripe(event['data']['object']['id'])
 
-    return Response(data=None, status=status.HTTP_200_OK)    
-        
+    return Response(data=None, status=status.HTTP_200_OK)
 
 
 class TransaccionViewSet(viewsets.ModelViewSet):
     queryset = Transaccion.objects.select_related(
-        'id_user', 'cliente', 'divisa_origen', 'divisa_destino', 
+        'id_user', 'cliente', 'divisa_origen', 'divisa_destino',
         'metodo_financiero', 'tauser'
     ).all()
     permission_classes = [permissions.IsAuthenticated]
     filter_backends = [filters.SearchFilter, filters.OrderingFilter]
     search_fields = ['cliente__nombre', 'operador__username']
-    filterset_fields = ['operacion', 'estado', 'divisa_origen', 'divisa_destino', 'id_user', 'cliente']
-    ordering_fields = ['fecha_inicio', 'fecha_fin', 'monto_origen', 'monto_destino', 'created_at']
+    filterset_fields = ['operacion', 'estado',
+                        'divisa_origen', 'divisa_destino', 'id_user', 'cliente']
+    ordering_fields = ['fecha_inicio', 'fecha_fin',
+                       'monto_origen', 'monto_destino', 'created_at']
     ordering = ['-created_at']
-    
+
     def get_serializer_class(self):
         if self.action == 'create':
             return TransaccionSerializer
         return TransaccionDetalleSerializer
-    
+
     def create(self, request, *args, **kwargs):
         """
         Método create personalizado para manejar correctamente los métodos financieros.
-        
+
         Lógica:
         - Si se envía metodo_financiero (EFECTIVO/CHEQUE): Se usa directamente
         - Si se envía metodo_financiero_detalle: Se obtiene metodo_financiero desde el detalle
         - Siempre se garantiza que metodo_financiero esté poblado
         """
         from apps.metodos_financieros.models import MetodoFinancieroDetalle
-        
+
         # Obtener los datos del request (antes de la serialización)
         data = request.data.copy()
-        
+
         # Manejar la lógica de métodos financieros
         metodo_financiero_id = data.get('metodo_financiero')
         metodo_financiero_detalle_id = data.get('metodo_financiero_detalle')
-        
+
         if metodo_financiero_detalle_id and not metodo_financiero_id:
             # Caso: Se envió detalle_metodo_id (cuenta bancaria, billetera, tarjeta, etc.)
             # Obtener el método financiero desde el detalle
@@ -218,69 +220,68 @@ class TransaccionViewSet(viewsets.ModelViewSet):
                 {'error': 'No puede proporcionar ambos metodo_financiero y metodo_financiero_detalle'},
                 status=status.HTTP_400_BAD_REQUEST
             )
-        
+
         # Ahora proceder con la validación y creación usando los datos modificados
         serializer = self.get_serializer(data=data)
         serializer.is_valid(raise_exception=True)
-        
+
         # Crear la transacción con los datos validados y procesados
         transaccion = serializer.save()
-        
+
         # Serializar la respuesta
         response_serializer = self.get_serializer(transaccion)
         return Response(response_serializer.data, status=status.HTTP_201_CREATED)
 
     def destroy(self, request, *args, **kwargs):
         return Response(
-            {'error': 'No se permite eliminar transacciones'}, 
+            {'error': 'No se permite eliminar transacciones'},
             status=status.HTTP_405_METHOD_NOT_ALLOWED
         )
-    
-    
+
     @action(detail=True, methods=['patch'])
     def completar(self, request, pk=None):
         """Marcar transacción como completada"""
         transaccion = self.get_object()
         if transaccion.estado != 'pendiente' and transaccion.estado != 'en_proceso':
             return Response(
-                {'error': 'Solo se pueden completar transacciones pendientes o en proceso'}, 
+                {'error': 'Solo se pueden completar transacciones pendientes o en proceso'},
                 status=status.HTTP_400_BAD_REQUEST
             )
-        
+
         transaccion.estado = 'completada'
         transaccion.fecha_fin = timezone.now()
         transaccion.save()
-        
+
         serializer = self.get_serializer(transaccion)
         return Response(serializer.data)
-    
+
     @action(detail=True, methods=['patch'])
     def cancelar(self, request, pk=None):
         """Cancelar transacción"""
         transaccion = self.get_object()
         if transaccion.estado == 'completada':
             return Response(
-                {'error': 'No se puede cancelar una transacción completada'}, 
+                {'error': 'No se puede cancelar una transacción completada'},
                 status=status.HTTP_400_BAD_REQUEST
             )
-        
+
         transaccion.estado = 'cancelada'
         transaccion.fecha_fin = timezone.now()
         transaccion.save()
-        
+
         serializer = self.get_serializer(transaccion)
         return Response(serializer.data)
-    
+
     @action(detail=False, methods=['get'])
     def estadisticas(self, request):
         """Obtener estadísticas de transacciones"""
         queryset = self.get_queryset()
-        
+
         total = queryset.count()
         pendientes = queryset.filter(estado='pendiente').count()
         completadas = queryset.filter(estado='completada').count()
         canceladas = queryset.filter(estado='cancelada').count()
-        
+
         # Montos por divisa
         from django.db.models import Sum
         montos_por_divisa = {}
@@ -289,7 +290,7 @@ class TransaccionViewSet(viewsets.ModelViewSet):
             if divisa not in montos_por_divisa:
                 montos_por_divisa[divisa] = 0.0
             montos_por_divisa[divisa] += float(transaccion.monto_origen)
-        
+
         return Response({
             'total': total,
             'pendientes': pendientes,
@@ -298,14 +299,14 @@ class TransaccionViewSet(viewsets.ModelViewSet):
             'montos_por_divisa': montos_por_divisa
         })
         # ...código existente de TransaccionViewSet...
-    
+
     @action(detail=False, methods=['get'])
     def cantidad_transacciones_clientes(self, request):
         """
         Obtiene el conteo de transacciones por estado para un cliente específico.
         Requiere el parámetro 'cliente' en la URL.
         Opcionalmente acepta 'estado' para filtrar por un estado específico.
-        
+
         Ejemplo de uso:
         - /api/transacciones/cantidad_transacciones_clientes/?cliente=123
         - /api/transacciones/cantidad_transacciones_clientes/?cliente=123&estado=pendiente
@@ -316,10 +317,10 @@ class TransaccionViewSet(viewsets.ModelViewSet):
                 {'error': 'Debe proporcionar el ID del cliente'},
                 status=status.HTTP_400_BAD_REQUEST
             )
-        
+
         # Filtrar transacciones por cliente
         queryset = self.get_queryset().filter(cliente_id=cliente_id)
-        
+
         # Si se especifica un estado, filtrar también por estado
         estado = request.query_params.get('estado')
         if estado:
@@ -340,6 +341,7 @@ class TransaccionViewSet(viewsets.ModelViewSet):
                 'canceladas': queryset.filter(estado='cancelada').count(),
                 'fallidas': queryset.filter(estado='fallida').count(),
             })
+
     def _recalcular_tc_y_monto(self, transaccion: Transaccion):
         """
         Recalcula la tasa vigente y el monto_destino actual usando la misma lógica que la operacion:
@@ -363,10 +365,12 @@ class TransaccionViewSet(viewsets.ModelViewSet):
         return tc_final, monto_destino
 
     def _build_reconfirm_payload(self, transaccion: Transaccion):
-        tc_actual, monto_destino_actual = self._recalcular_tc_y_monto(transaccion)
+        tc_actual, monto_destino_actual = self._recalcular_tc_y_monto(
+            transaccion)
 
         delta_tc = (tc_actual - Decimal(transaccion.tasa_aplicada))
-        delta_pct = (delta_tc / Decimal(transaccion.tasa_aplicada) * Decimal('100')) if Decimal(transaccion.tasa_aplicada) != 0 else Decimal('0')
+        delta_pct = (delta_tc / Decimal(transaccion.tasa_aplicada) * Decimal('100')
+                     ) if Decimal(transaccion.tasa_aplicada) != 0 else Decimal('0')
 
         payload = {
             'cambio': bool(delta_tc != 0),
@@ -378,8 +382,6 @@ class TransaccionViewSet(viewsets.ModelViewSet):
             'monto_destino_actual': str(monto_destino_actual),
         }
         return payload, tc_actual, monto_destino_actual
-
-        
 
     @action(detail=True, methods=['get'], url_path='reconfirmar-tasa')
     def reconfirmar_tasa(self, request, pk=None):
@@ -396,7 +398,8 @@ class TransaccionViewSet(viewsets.ModelViewSet):
     )
     def reconfirmar_tasa_simulador_pago(self, request, pk=None):
         transaccion = self.get_object()
-        payload, tc_actual, monto_destino_actual = self._build_reconfirm_payload(transaccion)
+        payload, tc_actual, monto_destino_actual = self._build_reconfirm_payload(
+            transaccion)
 
         payload['transaccion'] = {
             'monto_origen': str(transaccion.monto_origen),
@@ -457,14 +460,16 @@ class TransaccionViewSet(viewsets.ModelViewSet):
             return Response({'error': 'La transacción no está en un estado confirmable.'},
                             status=status.HTTP_400_BAD_REQUEST)
 
-        terminos_aceptados = bool(request.data.get('terminos_aceptados', False))
+        terminos_aceptados = bool(
+            request.data.get('terminos_aceptados', False))
         if not terminos_aceptados:
             return Response({'error': 'Debe aceptar los términos y condiciones.'},
                             status=status.HTTP_400_BAD_REQUEST)
 
         acepta_cambio = bool(request.data.get('acepta_cambio', False))
 
-        tc_actual, monto_destino_actual = self._recalcular_tc_y_monto(transaccion)
+        tc_actual, monto_destino_actual = self._recalcular_tc_y_monto(
+            transaccion)
         cambio = (tc_actual != Decimal(transaccion.tasa_aplicada))
 
         # Si la tasa cambió y NO acepta el cambio → devolvemos conflicto (409)
@@ -479,8 +484,8 @@ class TransaccionViewSet(viewsets.ModelViewSet):
 
         # Si no cambió, o cambió y el cliente acepta, aplicamos posible nueva tasa
         if cambio and acepta_cambio:
-            transaccion.tasa_aplicada = tc_actual              
-            transaccion.monto_destino = monto_destino_actual    
+            transaccion.tasa_aplicada = tc_actual
+            transaccion.monto_destino = monto_destino_actual
 
         # 2) Simular pago/cobro en el procesador (dummy)
         pago = componenteSimuladorPagosCobros(transaccion)
@@ -524,14 +529,16 @@ class TransaccionViewSet(viewsets.ModelViewSet):
             return Response({'error': 'La transacción no está en un estado confirmable.'},
                             status=status.HTTP_400_BAD_REQUEST)
 
-        terminos_aceptados = bool(request.data.get('terminos_aceptados', False))
+        terminos_aceptados = bool(
+            request.data.get('terminos_aceptados', False))
         if not terminos_aceptados:
             return Response({'error': 'Debe aceptar los términos y condiciones.'},
                             status=status.HTTP_400_BAD_REQUEST)
 
         acepta_cambio = bool(request.data.get('acepta_cambio', False))
 
-        tc_actual, monto_destino_actual = self._recalcular_tc_y_monto(transaccion)
+        tc_actual, monto_destino_actual = self._recalcular_tc_y_monto(
+            transaccion)
         cambio = (tc_actual != Decimal(transaccion.tasa_aplicada))
 
         # Si la tasa cambió y NO acepta el cambio → devolvemos conflicto (409)
@@ -546,7 +553,7 @@ class TransaccionViewSet(viewsets.ModelViewSet):
 
         # Si no cambió, o cambió y el cliente acepta, aplicamos posible nueva tasa
         if cambio and acepta_cambio:
-            transaccion.tasa_aplicada = tc_actual              
+            transaccion.tasa_aplicada = tc_actual
             transaccion.monto_destino = monto_destino_actual
 
         transaccion.save()
@@ -584,8 +591,11 @@ class TransaccionViewSet(viewsets.ModelViewSet):
                     }
                 ],
                 mode="payment",
-                success_url=DOMAIN + "/checkout/success?session_id={CHECKOUT_SESSION_ID}&transaccion_id="+str(transaccion.id),
-                cancel_url=DOMAIN + "/checkout/cancel?session_id={CHECKOUT_SESSION_ID}",
+                success_url=DOMAIN +
+                "/checkout/success?session_id={CHECKOUT_SESSION_ID}&transaccion_id="+str(
+                    transaccion.id),
+                cancel_url=DOMAIN +
+                "/checkout/cancel?session_id={CHECKOUT_SESSION_ID}",
                 locale="es",
                 metadata={
                     "transaccion_id": str(transaccion.id),
@@ -608,5 +618,3 @@ class TransaccionViewSet(viewsets.ModelViewSet):
         pago.response = "STRIPE_CHECKOUT_SESSION_CREATED"
         pago.save()
         return Response({"url": checkout_session.url}, status=status.HTTP_200_OK)
-        
-
