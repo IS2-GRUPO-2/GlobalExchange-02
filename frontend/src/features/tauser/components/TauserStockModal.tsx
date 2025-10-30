@@ -34,17 +34,15 @@ const HIST_PAGE_SIZE = 8;
 
 const MOVIMIENTO_OPCIONES: Record<
   MovimientoTipo,
-  { label: string; descripcion: string }
+  { label: string; icon: string }
 > = {
   ENTCS: {
-    label: "Recarga (Casa → Tauser)",
-    descripcion:
-      "Transfiere efectivo de la casa central hacia el Tauser seleccionado.",
+    label: "Recarga",
+    icon: "↓",
   },
   SALCS: {
-    label: "Descarga (Tauser → Casa)",
-    descripcion:
-      "Devuelve el efectivo disponible del Tauser a la casa central.",
+    label: "Descarga",
+    icon: "↑",
   },
 };
 
@@ -397,145 +395,128 @@ const TauserStockModal = ({
 
   return (
     <Modal isOpen={isOpen} onClose={closeModal}>
-      <div className="w-full max-w-5xl">
-        <div className="max-h-[80vh] overflow-y-auto pr-1">
-          <div className="sticky top-0 bg-white pb-4">
-            <h2 className="text-2xl font-semibold text-gray-900">
-              Gestión de stock — {tauser.nombre} ({tauser.codigo})
-            </h2>
-            <p className="text-sm text-gray-500">
-              Administrá las recargas y descargas del Tauser, y consultá el historial de movimientos.
-            </p>
-            <div className="mt-4 flex gap-2">
-              <button
-                type="button"
-                className={`rounded-full px-4 py-2 text-sm font-medium transition ${
-                  activeTab === "operacion"
-                    ? "bg-gray-900 text-white"
-                    : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                }`}
-                onClick={() => setActiveTab("operacion")}
-                aria-pressed={activeTab === "operacion"}
-              >
-                Operar stock
-              </button>
-              <button
-                type="button"
-                className={`rounded-full px-4 py-2 text-sm font-medium transition ${
-                  activeTab === "historial"
-                    ? "bg-gray-900 text-white"
-                    : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                }`}
-                onClick={() => setActiveTab("historial")}
-                aria-pressed={activeTab === "historial"}
-              >
-                Historial
-              </button>
+      <div className="w-full max-w-6xl">
+        <div className="max-h-[85vh] overflow-y-auto">
+          {/* Header compacto */}
+          <div className="sticky top-0 bg-white z-10 border-b pb-3 mb-4">
+            <div className="flex items-center justify-between mb-3">
+              <div>
+                <h2 className="text-xl font-bold text-gray-900">
+                  Stock · {tauser.nombre}
+                </h2>
+                <p className="text-xs text-gray-500">{tauser.codigo}</p>
+              </div>
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  className={`px-3 py-1.5 text-sm font-medium rounded-lg transition ${
+                    activeTab === "operacion"
+                      ? "bg-gray-900 text-white"
+                      : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                  }`}
+                  onClick={() => setActiveTab("operacion")}
+                >
+                  Operar
+                </button>
+                <button
+                  type="button"
+                  className={`px-3 py-1.5 text-sm font-medium rounded-lg transition ${
+                    activeTab === "historial"
+                      ? "bg-gray-900 text-white"
+                      : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                  }`}
+                  onClick={() => setActiveTab("historial")}
+                >
+                  Historial
+                </button>
+              </div>
             </div>
           </div>
 
-          <div className="space-y-6 pb-2 pt-4">
+          {/* Contenido */}
           {activeTab === "operacion" && (
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 px-1">
+            {/* Formulario - más compacto */}
             <form
-              className="rounded-2xl border border-gray-200 bg-gray-50/80 p-4 shadow-sm space-y-4"
+              className="lg:col-span-2 space-y-4"
               onSubmit={handleGuardarMovimiento}
             >
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Tipo de movimiento
-                </label>
-                <div className="grid grid-cols-1 gap-3">
-                  {(
-                    Object.keys(
-                      MOVIMIENTO_OPCIONES
-                    ) as MovimientoTipo[]
-                  ).map((tipo) => (
-                    <label
-                      key={tipo}
-                      className={`border rounded-md p-3 cursor-pointer ${
-                        movimientoTipo === tipo
-                          ? "border-gray-900 bg-white"
-                          : "border-gray-200 bg-white"
-                      }`}
-                    >
-                      <input
-                        type="radio"
-                        className="mr-2"
-                        checked={movimientoTipo === tipo}
-                        onChange={() => setMovimientoTipo(tipo)}
-                      />
-                      <span className="font-semibold">
-                        {MOVIMIENTO_OPCIONES[tipo].label}
-                      </span>
-                      <p className="text-sm text-gray-500 mt-1">
-                        {MOVIMIENTO_OPCIONES[tipo].descripcion}
-                      </p>
-                    </label>
-                  ))}
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 gap-4">
+              {/* Tipo y Divisa en una fila */}
+              <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700">
+                  <label className="block text-xs font-medium text-gray-700 mb-1.5">
+                    Tipo
+                  </label>
+                  <div className="grid grid-cols-2 gap-2">
+                    {(Object.keys(MOVIMIENTO_OPCIONES) as MovimientoTipo[]).map((tipo) => (
+                      <button
+                        key={tipo}
+                        type="button"
+                        onClick={() => setMovimientoTipo(tipo)}
+                        className={`flex items-center justify-center gap-1.5 px-3 py-2 text-sm font-medium rounded-lg border transition ${
+                          movimientoTipo === tipo
+                            ? "border-gray-900 bg-gray-900 text-white"
+                            : "border-gray-300 bg-white text-gray-700 hover:border-gray-400"
+                        }`}
+                      >
+                        <span className="text-lg">{MOVIMIENTO_OPCIONES[tipo].icon}</span>
+                        <span>{MOVIMIENTO_OPCIONES[tipo].label}</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-medium text-gray-700 mb-1.5">
                     Divisa
                   </label>
                   <select
-                    className="mt-1 w-full border border-gray-300 rounded-md px-3 py-2"
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-gray-900 focus:border-transparent"
                     value={selectedDivisa ?? ""}
-                    onChange={(e) =>
-                      setSelectedDivisa(Number(e.target.value))
-                    }
+                    onChange={(e) => setSelectedDivisa(Number(e.target.value))}
                   >
                     {divisas.map((divisa) => (
                       <option key={divisa.id} value={divisa.id}>
-                        {divisa.codigo} · {divisa.nombre}
+                        {divisa.codigo}
                       </option>
                     ))}
                   </select>
                 </div>
               </div>
 
+              {/* Denominaciones */}
               <div>
-                <div className="flex items-center justify-between">
-                  <label className="block text-sm font-medium text-gray-700">
+                <div className="flex items-center justify-between mb-1.5">
+                  <label className="text-xs font-medium text-gray-700">
                     Denominaciones
                   </label>
                   {loadingDenominaciones && (
-                    <span className="text-xs text-gray-500 flex items-center gap-1">
-                      <Loader2 className="animate-spin" size={14} /> Cargando...
-                    </span>
+                    <Loader2 className="animate-spin text-gray-400" size={14} />
                   )}
                 </div>
-                <div className="mt-2 max-h-64 overflow-y-auto rounded-2xl border border-gray-200 bg-white/80 p-2">
+                <div className="max-h-64 overflow-y-auto rounded-lg border border-gray-200 bg-white p-2">
                   {denominacionesActuales.length === 0 ? (
-                    <p className="p-4 text-sm text-gray-500">
-                      No hay denominaciones configuradas para esta divisa.
+                    <p className="p-4 text-sm text-gray-500 text-center">
+                      Sin denominaciones
                     </p>
                   ) : (
-                    <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                    <div className="grid grid-cols-2 gap-2">
                       {denominacionesActuales.map((denom) => (
                         <div
-                          key={`${denom.id}-${denom.denominacion}`}
-                          className="flex items-center justify-between rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm shadow-sm"
+                          key={denom.id}
+                          className="flex items-center justify-between bg-gray-50 rounded-lg px-3 py-2 border border-gray-200"
                         >
-                          <span className="font-medium text-gray-700">
-                            {denom.denominacion.toLocaleString("es-PY")}{" "}
-                            {divisas.find(
-                              (d) => d.id === denom.divisa_id
-                            )?.codigo ?? ""}
+                          <span className="text-sm font-medium text-gray-700">
+                            {denom.denominacion.toLocaleString("es-PY")}
                           </span>
                           <input
                             type="number"
                             min={0}
-                            className="w-20 rounded-md border border-gray-300 bg-gray-50 px-2 py-1 text-right text-sm focus:border-gray-500 focus:outline-none"
+                            placeholder="0"
+                            className="w-16 rounded-md border border-gray-300 px-2 py-1 text-right text-sm focus:ring-1 focus:ring-gray-900 focus:border-transparent"
                             value={cantidades[denom.id ?? 0] ?? ""}
                             onChange={(e) =>
-                              handleCantidadChange(
-                                denom.id ?? 0,
-                                e.target.value
-                              )
+                              handleCantidadChange(denom.id ?? 0, e.target.value)
                             }
                           />
                         </div>
@@ -545,126 +526,90 @@ const TauserStockModal = ({
                 </div>
               </div>
 
-              <div className="flex items-center justify-between rounded-2xl border border-gray-200 bg-white px-4 py-3 shadow-inner">
+              {/* Total y botón */}
+              <div className="flex items-center justify-between bg-gradient-to-r from-gray-50 to-gray-100 rounded-lg px-4 py-3 border border-gray-200">
                 <div>
-                  <p className="text-xs uppercase tracking-wide text-gray-500">
-                    Total operación estimado
-                  </p>
-                  <p className="text-xl font-semibold text-gray-900">
+                  <p className="text-xs text-gray-600">Total</p>
+                  <p className="text-lg font-bold text-gray-900">
                     {selectedDivisa
                       ? formatoMoneda(
                           totalMovimiento.toString(),
-                          divisas.find((d) => d.id === selectedDivisa)?.codigo ??
-                            "PYG"
+                          divisas.find((d) => d.id === selectedDivisa)?.codigo ?? "PYG"
                         )
                       : "—"}
                   </p>
                 </div>
                 <button
                   type="submit"
-                  className="rounded-full bg-gray-900 px-5 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-gray-800 disabled:opacity-60"
-                  disabled={guardando}
+                  className="bg-gray-900 text-white px-6 py-2.5 rounded-lg font-medium hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed transition text-sm"
+                  disabled={guardando || detallesPayload.length === 0}
                 >
-                  {guardando ? "Procesando..." : "Registrar movimiento"}
+                  {guardando ? "Procesando..." : "Registrar"}
                 </button>
               </div>
             </form>
 
-            <div className="space-y-6">
-              <div className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm">
-                <div className="mb-3 flex items-center justify-between">
-                  <div>
-                    <h3 className="text-lg font-semibold text-gray-900">
-                      Stock actual
-                    </h3>
-                    <p className="text-sm text-gray-500">
-                      Comparativo entre la casa central y el Tauser.
-                    </p>
-                  </div>
+            {/* Stock actual - más compacto */}
+            <div className="space-y-4">
+              <div className="bg-white rounded-lg border border-gray-200 p-3">
+                <div className="flex items-center justify-between mb-3">
+                  <h3 className="text-sm font-semibold text-gray-900">
+                    Stock Actual
+                  </h3>
                   <button
                     type="button"
-                    className="text-sm font-medium text-gray-600 hover:text-gray-900"
+                    className="text-xs text-gray-600 hover:text-gray-900 font-medium"
                     onClick={() => loadResumen()}
                   >
-                    Actualizar
+                    ↻ Actualizar
                   </button>
                 </div>
 
                 {loadingResumen ? (
-                  <div className="flex items-center justify-center py-10 text-gray-500">
-                    <Loader2 className="mr-2 animate-spin" /> Actualizando stock...
+                  <div className="flex items-center justify-center py-8 text-gray-500">
+                    <Loader2 className="animate-spin" size={20} />
                   </div>
                 ) : (
                   <div>
-                    <div className="mb-2 flex items-center justify-between text-xs uppercase tracking-wide text-gray-500">
-                      <span>Divisa seleccionada</span>
-                      <span>{selectedDivisaInfo?.codigo ?? "—"}</span>
+                    <div className="text-xs text-gray-500 mb-2">
+                      {selectedDivisaInfo?.codigo ?? "—"}
                     </div>
-                    <div className="overflow-hidden rounded-2xl border border-gray-100">
-                      <div className="grid grid-cols-2 bg-gray-50 text-xs font-semibold uppercase tracking-wide text-gray-600">
-                        <div className="px-3 py-2">Tauser</div>
-                        <div className="px-3 py-2 text-right">Casa central</div>
-                      </div>
-                      <div className="max-h-56 overflow-y-auto bg-white">
-                        {stockTauserSeleccionado.length === 0 &&
-                        stockCasaSeleccionado.length === 0 ? (
-                          <p className="p-4 text-sm text-gray-500">
-                            Sin registros para la divisa seleccionada.
-                          </p>
+                    <div className="space-y-2">
+                      <div className="bg-gray-50 rounded-lg p-2 border border-gray-200">
+                        <p className="text-xs font-medium text-gray-600 mb-1">Tauser</p>
+                        {stockTauserSeleccionado.length === 0 ? (
+                          <p className="text-xs text-gray-400">Sin stock</p>
                         ) : (
-                          <div className="divide-y divide-gray-50 text-sm">
-                            {Array.from({ length: totalFilasStock }, (_, idx) => (
-                              <div
-                                key={`stock-row-${idx}`}
-                                className="grid grid-cols-2"
-                              >
-                                <div className="border-r border-gray-50 px-3 py-2">
-                                  {stockTauserSeleccionado[idx] ? (
-                                    <span className="flex items-center justify-between">
-                                      <span className="text-gray-500">
-                                        {stockTauserSeleccionado[
-                                          idx
-                                        ].denominacion_valor.toLocaleString(
-                                          "es-PY"
-                                        )}
-                                        &nbsp;· Stock
-                                      </span>
-                                      <span className="font-mono text-gray-900">
-                                        {stockTauserSeleccionado[idx].cantidad}
-                                      </span>
-                                    </span>
-                                  ) : (
-                                    <span className="text-xs text-gray-300">—</span>
-                                  )}
-                                </div>
-                                <div className="px-3 py-2 text-right">
-                                  {stockCasaSeleccionado[idx] ? (
-                                    <span className="flex items-center justify-between text-right">
-                                      <span className="text-gray-500">
-                                        {stockCasaSeleccionado[
-                                          idx
-                                        ].denominacion_valor.toLocaleString(
-                                          "es-PY"
-                                        )}
-                                        &nbsp;· Stock
-                                      </span>
-                                      <span className="font-mono text-gray-900">
-                                        {stockCasaSeleccionado[idx].cantidad}
-                                      </span>
-                                    </span>
-                                  ) : (
-                                    <span className="text-xs text-gray-300">—</span>
-                                  )}
-                                </div>
+                          <div className="space-y-1">
+                            {stockTauserSeleccionado.map((item) => (
+                              <div key={item.stock_id} className="flex justify-between text-xs">
+                                <span className="text-gray-600">
+                                  {item.denominacion_valor.toLocaleString("es-PY")}
+                                </span>
+                                <span className="font-mono font-medium">{item.cantidad}</span>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                      <div className="bg-gray-50 rounded-lg p-2 border border-gray-200">
+                        <p className="text-xs font-medium text-gray-600 mb-1">Casa</p>
+                        {stockCasaSeleccionado.length === 0 ? (
+                          <p className="text-xs text-gray-400">Sin stock</p>
+                        ) : (
+                          <div className="space-y-1">
+                            {stockCasaSeleccionado.map((item) => (
+                              <div key={item.stock_id} className="flex justify-between text-xs">
+                                <span className="text-gray-600">
+                                  {item.denominacion_valor.toLocaleString("es-PY")}
+                                </span>
+                                <span className="font-mono font-medium">{item.cantidad}</span>
                               </div>
                             ))}
                           </div>
                         )}
                       </div>
                     </div>
-                    <p className="mt-2 text-xs text-gray-500 text-right">
-                      Vista simplificada por divisa seleccionada.
-                    </p>
                   </div>
                 )}
               </div>
@@ -673,197 +618,175 @@ const TauserStockModal = ({
           )}
 
           {activeTab === "historial" && (
-          <div className="bg-gray-50 rounded-lg p-4 space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-              <div>
-                <label className="text-sm text-gray-600">Tipo</label>
-                <select
-                  className="mt-1 w-full border rounded-md px-2 py-1"
-                  value={histFilters.tipo}
-                  onChange={(e) => {
-                    setHistFilters((prev) => ({
-                      ...prev,
-                      tipo: e.target.value,
-                    }));
-                    setHistPage(1);
-                  }}
-                >
-                  {HISTORIAL_TIPOS.map((tipo) => (
-                    <option key={tipo.value} value={tipo.value}>
-                      {tipo.label}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div>
-                <label className="text-sm text-gray-600">Divisa</label>
-                <select
-                  className="mt-1 w-full border rounded-md px-2 py-1"
-                  value={histFilters.divisa}
-                  onChange={(e) => {
-                    setHistFilters((prev) => ({
-                      ...prev,
-                      divisa: e.target.value,
-                    }));
-                    setHistPage(1);
-                  }}
-                >
-                  <option value="ALL">Todas</option>
-                  {divisas.map((divisa) => (
-                    <option key={divisa.id} value={divisa.id}>
-                      {divisa.codigo}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div>
-                <label className="text-sm text-gray-600">Desde</label>
-                <input
-                  type="date"
-                  className="mt-1 w-full border rounded-md px-2 py-1"
-                  value={histFilters.fechaDesde}
-                  onChange={(e) => {
-                    setHistFilters((prev) => ({
-                      ...prev,
-                      fechaDesde: e.target.value,
-                    }));
-                    setHistPage(1);
-                  }}
-                />
-              </div>
-              <div>
-                <label className="text-sm text-gray-600">Hasta</label>
-                <input
-                  type="date"
-                  className="mt-1 w-full border rounded-md px-2 py-1"
-                  value={histFilters.fechaHasta}
-                  onChange={(e) => {
-                    setHistFilters((prev) => ({
-                      ...prev,
-                      fechaHasta: e.target.value,
-                    }));
-                    setHistPage(1);
-                  }}
-                />
-              </div>
+          <div className="px-1">
+            {/* Filtros compactos */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-2 mb-4">
+              <select
+                className="border border-gray-300 rounded-lg px-2 py-1.5 text-sm focus:ring-2 focus:ring-gray-900 focus:border-transparent"
+                value={histFilters.tipo}
+                onChange={(e) => {
+                  setHistFilters((prev) => ({ ...prev, tipo: e.target.value }));
+                  setHistPage(1);
+                }}
+              >
+                {HISTORIAL_TIPOS.map((tipo) => (
+                  <option key={tipo.value} value={tipo.value}>
+                    {tipo.label}
+                  </option>
+                ))}
+              </select>
+              
+              <select
+                className="border border-gray-300 rounded-lg px-2 py-1.5 text-sm focus:ring-2 focus:ring-gray-900 focus:border-transparent"
+                value={histFilters.divisa}
+                onChange={(e) => {
+                  setHistFilters((prev) => ({ ...prev, divisa: e.target.value }));
+                  setHistPage(1);
+                }}
+              >
+                <option value="ALL">Todas</option>
+                {divisas.map((divisa) => (
+                  <option key={divisa.id} value={divisa.id}>
+                    {divisa.codigo}
+                  </option>
+                ))}
+              </select>
+              
+              <input
+                type="date"
+                placeholder="Desde"
+                className="border border-gray-300 rounded-lg px-2 py-1.5 text-sm focus:ring-2 focus:ring-gray-900 focus:border-transparent"
+                value={histFilters.fechaDesde}
+                onChange={(e) => {
+                  setHistFilters((prev) => ({ ...prev, fechaDesde: e.target.value }));
+                  setHistPage(1);
+                }}
+              />
+              
+              <input
+                type="date"
+                placeholder="Hasta"
+                className="border border-gray-300 rounded-lg px-2 py-1.5 text-sm focus:ring-2 focus:ring-gray-900 focus:border-transparent"
+                value={histFilters.fechaHasta}
+                onChange={(e) => {
+                  setHistFilters((prev) => ({ ...prev, fechaHasta: e.target.value }));
+                  setHistPage(1);
+                }}
+              />
             </div>
 
             {historialLoading ? (
-              <div className="flex items-center justify-center py-10 text-gray-500">
-                <Loader2 className="animate-spin mr-2" /> Cargando historial...
+              <div className="flex items-center justify-center py-12 text-gray-500">
+                <Loader2 className="animate-spin mr-2" size={20} />
+                <span className="text-sm">Cargando...</span>
               </div>
             ) : historial.length === 0 ? (
-              <p className="text-sm text-gray-500 text-center py-6">
-                No se encontraron movimientos con los filtros seleccionados.
-              </p>
+              <div className="text-center py-12">
+                <p className="text-sm text-gray-500">Sin movimientos</p>
+              </div>
             ) : (
-              <div className="overflow-x-auto">
-                <table className="min-w-full divide-y divide-gray-200">
-                  <thead className="bg-gray-100">
-                    <tr>
-                      <th className="px-3 py-2 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                        Fecha
-                      </th>
-                      <th className="px-3 py-2 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                        Tipo
-                      </th>
-                      <th className="px-3 py-2 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                        Divisa
-                      </th>
-                      <th className="px-3 py-2 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                        Monto
-                      </th>
-                      <th className="px-3 py-2 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                        Detalles
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody className="bg-white divide-y divide-gray-200">
-                    {historial.map((mov) => (
-                      <tr key={mov.id}>
-                        <td className="px-3 py-2 text-sm text-gray-700">
-                          {new Date(mov.fecha).toLocaleString("es-PY")}
-                        </td>
-                        <td className="px-3 py-2 text-sm">
-                          <span
-                            className={`px-2 py-1 rounded-full text-xs font-semibold ${
-                              mov.tipo_movimiento === "ENTCS"
-                                ? "bg-green-100 text-green-700"
-                                : "bg-yellow-100 text-yellow-700"
-                            }`}
-                          >
-                            {mov.tipo_movimiento_detalle.descripcion}
-                          </span>
-                        </td>
-                        <td className="px-3 py-2 text-sm text-gray-700">
-                          {mov.divisa_detalle?.codigo}
-                        </td>
-                        <td className="px-3 py-2 text-sm text-gray-700">
-                          {formatoMoneda(
-                            mov.monto,
-                            mov.divisa_detalle?.codigo ?? "PYG"
-                          )}
-                        </td>
-                        <td className="px-3 py-2 text-sm text-gray-700">
-                          {!mov.detalles_info || mov.detalles_info.length === 0 ? (
-                            <span className="text-xs text-gray-400">
-                              Sin detalle registrado
-                            </span>
-                          ) : (
-                            <ul className="text-xs text-gray-600 space-y-1">
-                              {mov.detalles_info.map((detalle) => (
-                                <li key={detalle.id}>
-                                  {detalle.denominacion_detalle?.denominacion?.toLocaleString(
-                                    "es-PY"
-                                  )}{" "}
-                                  · Cant: {detalle.cantidad}
-                                </li>
-                              ))}
-                            </ul>
-                          )}
-                        </td>
+              <>
+                <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+                  <table className="min-w-full divide-y divide-gray-200">
+                    <thead className="bg-gray-50">
+                      <tr>
+                        <th className="px-3 py-2 text-left text-xs font-medium text-gray-600">
+                          Fecha
+                        </th>
+                        <th className="px-3 py-2 text-left text-xs font-medium text-gray-600">
+                          Tipo
+                        </th>
+                        <th className="px-3 py-2 text-left text-xs font-medium text-gray-600">
+                          Monto
+                        </th>
+                        <th className="px-3 py-2 text-left text-xs font-medium text-gray-600">
+                          Detalles
+                        </th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
-
-            {historial.length > 0 && (
-              <div className="flex items-center justify-between pt-2">
-                <p className="text-sm text-gray-600">
-                  Página {histPage} de{" "}
-                  {Math.max(
-                    1,
-                    Math.ceil(historialTotal / HIST_PAGE_SIZE)
-                  )}
-                </p>
-                <div className="space-x-2">
-                  <button
-                    className="px-3 py-1 border rounded-md text-sm"
-                    disabled={histPage === 1}
-                    onClick={() => setHistPage((prev) => Math.max(1, prev - 1))}
-                  >
-                    Anterior
-                  </button>
-                  <button
-                    className="px-3 py-1 border rounded-md text-sm"
-                    disabled={
-                      histPage >=
-                      Math.ceil(historialTotal / HIST_PAGE_SIZE)
-                    }
-                    onClick={() =>
-                      setHistPage((prev) => prev + 1)
-                    }
-                  >
-                    Siguiente
-                  </button>
+                    </thead>
+                    <tbody className="divide-y divide-gray-200">
+                      {historial.map((mov) => (
+                        <tr key={mov.id} className="hover:bg-gray-50">
+                          <td className="px-3 py-2 text-xs text-gray-700 whitespace-nowrap">
+                            {new Date(mov.fecha).toLocaleDateString("es-PY", {
+                              day: "2-digit",
+                              month: "2-digit",
+                              year: "2-digit",
+                              hour: "2-digit",
+                              minute: "2-digit",
+                            })}
+                          </td>
+                          <td className="px-3 py-2">
+                            <span
+                              className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium ${
+                                mov.tipo_movimiento === "ENTCS"
+                                  ? "bg-green-100 text-green-700"
+                                  : "bg-orange-100 text-orange-700"
+                              }`}
+                            >
+                              <span>{mov.tipo_movimiento === "ENTCS" ? "↓" : "↑"}</span>
+                              <span>{mov.tipo_movimiento === "ENTCS" ? "Recarga" : "Descarga"}</span>
+                            </span>
+                          </td>
+                          <td className="px-3 py-2 text-xs">
+                            <div className="font-medium text-gray-900">
+                              {formatoMoneda(mov.monto, mov.divisa_detalle?.codigo ?? "PYG")}
+                            </div>
+                            <div className="text-gray-500">{mov.divisa_detalle?.codigo}</div>
+                          </td>
+                          <td className="px-3 py-2 text-xs text-gray-600">
+                            {!mov.detalles_info || mov.detalles_info.length === 0 ? (
+                              <span className="text-gray-400">—</span>
+                            ) : (
+                              <div className="flex flex-wrap gap-1">
+                                {mov.detalles_info.map((detalle) => (
+                                  <span
+                                    key={detalle.id}
+                                    className="inline-flex items-center gap-1 bg-gray-100 px-1.5 py-0.5 rounded"
+                                  >
+                                    <span className="font-medium">
+                                      {detalle.denominacion_detalle?.denominacion?.toLocaleString("es-PY")}
+                                    </span>
+                                    <span className="text-gray-500">×{detalle.cantidad}</span>
+                                  </span>
+                                ))}
+                              </div>
+                            )}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
                 </div>
-              </div>
+
+                {/* Paginación compacta */}
+                {historialTotal > HIST_PAGE_SIZE && (
+                  <div className="flex items-center justify-between mt-3">
+                    <p className="text-xs text-gray-600">
+                      Pág. {histPage} de {Math.ceil(historialTotal / HIST_PAGE_SIZE)}
+                    </p>
+                    <div className="flex gap-1">
+                      <button
+                        className="px-3 py-1 border border-gray-300 rounded-lg text-xs font-medium hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                        disabled={histPage === 1}
+                        onClick={() => setHistPage((prev) => Math.max(1, prev - 1))}
+                      >
+                        ← Ant
+                      </button>
+                      <button
+                        className="px-3 py-1 border border-gray-300 rounded-lg text-xs font-medium hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                        disabled={histPage >= Math.ceil(historialTotal / HIST_PAGE_SIZE)}
+                        onClick={() => setHistPage((prev) => prev + 1)}
+                      >
+                        Sig →
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </>
             )}
           </div>
-          )}
-          </div>
+        )}
         </div>
       </div>
     </Modal>
