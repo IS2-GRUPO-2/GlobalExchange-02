@@ -5,26 +5,12 @@ import { toast } from "react-toastify";
 import { useTauserAuth } from "../context/useTauserAuth";
 import { getTauserClientes, getTauserTransacciones } from "../services/tauserTerminalService";
 import type { SelectedTauser } from "../store/useSelectedTauser";
+import { debeMostrarTransaccionTauser } from "../utils/transacciones";
 
 interface EtapaClienteProps {
   onSelectCliente: (cliente: Cliente) => void;
   tauser: SelectedTauser | null;
 }
-
-const matchesSelectedTauser = (transaccion: TransaccionDetalle, tauser: SelectedTauser) => {
-  const targetId = `${tauser.id}`.toLowerCase();
-  const targetCodigo = `${tauser.codigo}`.toLowerCase();
-
-  const posiblesValores = [
-    transaccion.tauser ?? null,
-    transaccion.tauser_detalle?.id ?? null,
-    transaccion.tauser_detalle?.codigo ?? null,
-  ]
-    .filter((valor): valor is string | number => valor !== null && valor !== undefined)
-    .map((valor) => `${valor}`.toLowerCase());
-
-  return posiblesValores.some((valor) => valor === targetId || valor === targetCodigo);
-};
 
 export default function EtapaCliente({ onSelectCliente, tauser }: EtapaClienteProps) {
   const { user } = useTauserAuth();
@@ -72,11 +58,18 @@ export default function EtapaCliente({ onSelectCliente, tauser }: EtapaClientePr
                 .filter((operacion: TransaccionDetalle) =>
                   ["pendiente", "en_proceso"].includes(operacion.estado)
                 )
-                .filter(
-                  (operacion: TransaccionDetalle) =>
-                    !(operacion.operacion === "venta" && operacion.estado === "pendiente")
-                )
-                .filter((operacion: TransaccionDetalle) => matchesSelectedTauser(operacion, tauser));
+                .filter((operacion: TransaccionDetalle) => {
+                  const esVentaPendiente =
+                    operacion.operacion === "venta" && operacion.estado === "pendiente";
+                  if (!esVentaPendiente) {
+                    return true;
+                  }
+                  const metodoNombre = operacion.metodo_financiero_detalle?.nombre ?? "";
+                  return metodoNombre.toUpperCase() === "CHEQUE";
+                })
+                .filter((operacion: TransaccionDetalle) =>
+                  debeMostrarTransaccionTauser(operacion, tauser)
+                );
               counts[cliente.id] = pendientes.length;
             } catch (error) {
               console.error(

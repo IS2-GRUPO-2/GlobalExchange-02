@@ -129,8 +129,8 @@ export default function TauserInicio() {
   const handleOperacionProcesada = (transaccionActualizada: TransaccionDetalle) => {
     setTransaccionResumen(transaccionActualizada);
     setTransaccionActual(null);
-    setFinalizada(false);
     setCountdown(null);
+    setFinalizada(transaccionActualizada.estado === "completada");
     setEtapaActual("resumen");
   };
 

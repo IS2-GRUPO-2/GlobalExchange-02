@@ -5,6 +5,7 @@ import { toast } from "react-toastify";
 import { ArrowLeft } from "lucide-react";
 import { getTauserTransacciones } from "../services/tauserTerminalService";
 import type { SelectedTauser } from "../store/useSelectedTauser";
+import { debeMostrarTransaccionTauser } from "../utils/transacciones";
 
 type Props = {
   cliente: Cliente | null;
@@ -37,24 +38,16 @@ export default function EtapaOperacionesPendientes({ cliente, tauser, onVolver, 
         const res = await getTauserTransacciones(cliente.id.toString(), ["pendiente", "en_proceso"]);
         const listaFiltrada = (res.data ?? [])
           .filter((transaccion) => ["pendiente", "en_proceso"].includes(transaccion.estado))
-          .filter(
-            (transaccion) => !(transaccion.operacion === "venta" && transaccion.estado === "pendiente")
-          )
           .filter((transaccion) => {
-            const targetId = `${tauser.id}`.toLowerCase();
-            const targetCodigo = `${tauser.codigo}`.toLowerCase();
-            const posiblesValores = [
-              transaccion.tauser ?? null,
-              transaccion.tauser_detalle?.id ?? null,
-              transaccion.tauser_detalle?.codigo ?? null,
-            ]
-              .filter((valor): valor is string | number => valor !== null && valor !== undefined)
-              .map((valor) => `${valor}`.toLowerCase());
-
-            return posiblesValores.some(
-              (valor) => valor === targetId || valor === targetCodigo
-            );
-          });
+            const isVentaPendiente =
+              transaccion.operacion === "venta" && transaccion.estado === "pendiente";
+            if (!isVentaPendiente) {
+              return true;
+            }
+            const metodoNombre = transaccion.metodo_financiero_detalle?.nombre ?? "";
+            return metodoNombre.toUpperCase() === "CHEQUE";
+          })
+          .filter((transaccion) => debeMostrarTransaccionTauser(transaccion, tauser));
 
         setTransacciones(listaFiltrada);
         setTotalPages(Math.max(1, Math.ceil(listaFiltrada.length / ITEMS_PER_PAGE)));

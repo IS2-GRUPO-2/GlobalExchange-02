@@ -1,9 +1,10 @@
-import { useState } from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { Printer, CheckCircle2, Loader2 } from "lucide-react";
 import type { TransaccionDetalle } from "../../operaciones/types/Transaccion";
 import type { SelectedTauser } from "../store/useSelectedTauser";
 import { completarTransaccionTauser } from "../services/tauserTerminalService";
 import { toast } from "react-toastify";
+import { estadosTransaccion } from "../../../types/EstadosTransaccion";
 
 type Props = {
   transaccion: TransaccionDetalle;
@@ -25,15 +26,35 @@ export function OperacionResumen({
   cuentaRegresiva,
 }: Props) {
   const [procesando, setProcesando] = useState(false);
+  const [detalle, setDetalle] = useState<TransaccionDetalle>(transaccion);
+
+  useEffect(() => {
+    setDetalle(transaccion);
+  }, [transaccion]);
+
+  const operacionFinalizada = useMemo(
+    () => finalizada || detalle.estado === "completada",
+    [detalle.estado, finalizada]
+  );
+
+  const estadoConfig =
+    estadosTransaccion.find((item) => item.estado === detalle.estado) ?? estadosTransaccion[0];
 
   const handleImprimir = () => {
     window.print();
   };
 
   const handleFinalizar = async () => {
+    if (operacionFinalizada) {
+      return;
+    }
+
     setProcesando(true);
     try {
-      await completarTransaccionTauser(transaccion.id);
+      const res = await completarTransaccionTauser(detalle.id);
+      if (res?.data) {
+        setDetalle(res.data);
+      }
       toast.success("Operación finalizada exitosamente.");
       onFinalizada();
     } catch (error) {
@@ -54,22 +75,31 @@ export function OperacionResumen({
       </header>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <InfoCard label="ID transacción" value={`#${transaccion.id}`} />
-        <InfoCard label="Estado" value={transaccion.estado} />
+        <InfoCard label="ID transacción" value={`#${detalle.id}`} />
+        <InfoCard
+          label="Estado"
+          value={
+            <span
+              className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${estadoConfig.bgColor} ${estadoConfig.textColor}`}
+            >
+              {estadoConfig.read}
+            </span>
+          }
+        />
         <InfoCard
           label="Cliente"
-          value={transaccion.cliente_detalle?.nombre ?? transaccion.cliente_detalle?.id ?? ""}
+          value={detalle.cliente_detalle?.nombre ?? detalle.cliente_detalle?.id ?? ""}
         />
-        <InfoCard label="Operación" value={transaccion.operacion.toUpperCase()} />
+        <InfoCard label="Operación" value={detalle.operacion.toUpperCase()} />
         <InfoCard
           label="Monto origen"
-          value={`${Number(transaccion.monto_origen).toLocaleString()} ${transaccion.divisa_origen_detalle?.codigo}`}
+          value={`${Number(detalle.monto_origen).toLocaleString()} ${detalle.divisa_origen_detalle?.codigo}`}
         />
         <InfoCard
           label="Monto destino"
-          value={`${Number(transaccion.monto_destino).toLocaleString()} ${transaccion.divisa_destino_detalle?.codigo}`}
+          value={`${Number(detalle.monto_destino).toLocaleString()} ${detalle.divisa_destino_detalle?.codigo}`}
         />
-        <InfoCard label="Tasa aplicada" value={Number(transaccion.tasa_aplicada).toFixed(4)} />
+        <InfoCard label="Tasa aplicada" value={Number(detalle.tasa_aplicada).toFixed(4)} />
         <InfoCard label="Tauser" value={`${tauser.nombre} (${tauser.codigo})`} />
       </div>
 
@@ -81,7 +111,7 @@ export function OperacionResumen({
           <Printer className="w-4 h-4" />
           Imprimir ticket
         </button>
-        {!finalizada ? (
+        {!operacionFinalizada ? (
           <button
             onClick={handleFinalizar}
             disabled={procesando}
@@ -98,7 +128,7 @@ export function OperacionResumen({
         )}
       </div>
 
-      {finalizada && (
+      {operacionFinalizada && (
         <div className="rounded-3xl bg-[var(--accent)]/60 p-4 space-y-3 text-sm text-[var(--foreground)]">
           <p>
             La sesión se cerrará automáticamente en{" "}
@@ -126,18 +156,17 @@ export function OperacionResumen({
 
 type InfoCardProps = {
   label: string;
-  value: string | number | null | undefined;
+  value: ReactNode;
 };
 
 function InfoCard({ label, value }: InfoCardProps) {
+  const displayValue = value ?? "No disponible";
   return (
     <div className="rounded-2xl border border-[var(--border)] bg-[var(--card)] px-4 py-3">
       <div className="text-xs uppercase tracking-[0.2em] text-[var(--muted-foreground)] mb-1">
         {label}
       </div>
-      <div className="text-lg font-semibold text-[var(--foreground)]">
-        {value ?? "No disponible"}
-      </div>
+      <div className="text-lg font-semibold text-[var(--foreground)]">{displayValue}</div>
     </div>
   );
 }

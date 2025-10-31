@@ -10,19 +10,24 @@ from rest_framework import viewsets, status, filters, permissions
 from rest_framework.response import Response
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.decorators import action, api_view, permission_classes
-from rest_framework.exceptions import PermissionDenied
+from rest_framework.exceptions import PermissionDenied, ValidationError
+from django.db import transaction as db_transaction
+from django.core.exceptions import ValidationError as DjangoValidationError
 
 from .models import (
     Banco,
     BilleteraDigitalCatalogo,
     TarjetaCatalogo,
     MetodoFinanciero,
+    TipoMetodoFinanciero,
     MetodoFinancieroDetalle,
     CuentaBancaria,
     BilleteraDigital,
     Tarjeta,
     Cheque
 )
+from apps.operaciones.models import Transaccion
+from apps.pagos.models import Pagos
 
 from .serializers import (
     BancoSerializer,
@@ -624,3 +629,56 @@ class ChequeViewSet(viewsets.ModelViewSet):
     filter_backends = [filters.SearchFilter]
     search_fields = ['banco_emisor__nombre', 'numero', 'titular']
     pagination_class = OperacionesPagination
+
+    def create(self, request, *args, **kwargs):
+        data = request.data.copy()
+        transaccion_id = data.pop("transaccion", None)
+        if isinstance(transaccion_id, list):
+            transaccion_id = transaccion_id[0]
+
+        if not transaccion_id:
+            raise ValidationError("Debe indicar la transaccion asociada al cheque.")
+
+        serializer = self.get_serializer(data=data)
+        serializer.is_valid(raise_exception=True)
+
+        with db_transaction.atomic():
+            try:
+                transaccion = (
+                    Transaccion.objects.select_for_update()
+                    .get(pk=transaccion_id)
+                )
+            except Transaccion.DoesNotExist:
+                raise ValidationError("La transaccion indicada no existe.")
+
+            if transaccion.estado != "pendiente":
+                raise ValidationError("La transaccion ya tiene un cheque registrado.")
+
+            cheque = serializer.save()
+
+            try:
+                metodo_cheque = MetodoFinanciero.objects.get(nombre=TipoMetodoFinanciero.CHEQUE)
+            except MetodoFinanciero.DoesNotExist:
+                raise ValidationError("El metodo financiero CHEQUE no esta configurado.")
+
+            try:
+                Pagos.objects.update_or_create(
+                    transaccion=transaccion,
+                    metodo_pago=metodo_cheque,
+                    defaults={
+                        "request": f"REGISTRO_CHEQUE_{cheque.numero}",
+                        "response": f"Cheque {cheque.numero} registrado",
+                        "estado": "APROBADO",
+                    },
+                )
+            except DjangoValidationError as exc:
+                raise ValidationError(
+                    exc.messages[0] if exc.messages else "No se pudo registrar el pago asociado al cheque."
+                )
+
+            transaccion.estado = "en_proceso"
+            transaccion.save(update_fields=["estado", "updated_at"])
+
+        output_serializer = self.get_serializer(cheque)
+        headers = self.get_success_headers(output_serializer.data)
+        return Response(output_serializer.data, status=status.HTTP_201_CREATED, headers=headers)

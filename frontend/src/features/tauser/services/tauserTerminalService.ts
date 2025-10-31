@@ -25,6 +25,7 @@ type EntregarMetalicoPayload = {
 
 type ChequePayload = {
   cliente: string;
+  transaccion: number;
   banco_emisor: number;
   titular: string;
   numero: string;
@@ -69,11 +70,26 @@ export const cancelarTransaccionTauser = async (transaccionId: number) =>
 export const getTauserDenominaciones = async (divisaId: number) =>
   tauserApi.get<Denominacion[]>(`/divisas/${divisaId}/get_denominaciones/`);
 
-export const getTauserBancos = async () =>
-  tauserApi.get<Banco[]>(`/metodos-financieros/bancos/`);
+export const getTauserBancos = async (): Promise<Banco[]> => {
+  const response = await tauserApi.get(`/metodos_financieros/bancos/`, {
+    params: { page_size: 200, is_active: true },
+  });
+
+  const data = response.data;
+
+  if (Array.isArray(data)) {
+    return data as Banco[];
+  }
+
+  if (Array.isArray(data?.results)) {
+    return data.results as Banco[];
+  }
+
+  return [] as Banco[];
+};
 
 export const crearChequeTauser = async (payload: ChequePayload) =>
-  tauserApi.post(`/metodos-financieros/cheques/`, payload);
+  tauserApi.post(`/metodos_financieros/cheques/`, payload);
 
 export const reconfirmarTasaTauser = async (transaccionId: number) =>
   tauserApi.get<{ cambio: boolean } & Record<string, string>>(

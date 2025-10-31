@@ -1,16 +1,17 @@
-﻿import { useEffect, useMemo, useState } from "react";
+﻿import { useEffect, useMemo, useRef, useState } from "react";
 import type { TransaccionDetalle } from "../../operaciones/types/Transaccion";
 import type { SelectedTauser } from "../store/useSelectedTauser";
 import {
   actualizarReconfirmacionTauser,
   cancelarTransaccionTauser,
+  completarTransaccionTauser,
   crearChequeTauser,
   entregarMetalicoTauser,
   getTauserBancos,
   reconfirmarTasaTauser,
   type Banco,
 } from "../services/tauserTerminalService";
-import { Loader2 } from "lucide-react";
+import { Loader2, BanknoteArrowDown } from "lucide-react";
 import { toast } from "react-toastify";
 
 type Props = {
@@ -27,6 +28,12 @@ export function ProcesarVenta({ transaccion, tauser, onCancelar, onProcesada, on
     [transaccion.metodo_financiero_detalle]
   );
   const requiereCheque = metodoNombre === "CHEQUE";
+  const esBaseToForeign = useMemo(
+    () =>
+      Boolean(transaccion.divisa_origen_detalle?.es_base) &&
+      !transaccion.divisa_destino_detalle?.es_base,
+    [transaccion.divisa_destino_detalle?.es_base, transaccion.divisa_origen_detalle?.es_base]
+  );
 
   const [bancos, setBancos] = useState<Banco[]>([]);
   const [loadingBancos, setLoadingBancos] = useState(true);
@@ -34,6 +41,8 @@ export function ProcesarVenta({ transaccion, tauser, onCancelar, onProcesada, on
   const [procesandoEntrega, setProcesandoEntrega] = useState(false);
   const [chequeRegistrado, setChequeRegistrado] = useState(!requiereCheque);
   const [cambioTasa, setCambioTasa] = useState<Record<string, string> | null>(null);
+  const [animatingEntrega, setAnimatingEntrega] = useState(false);
+  const animationTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const [form, setForm] = useState({
     numero: "",
@@ -47,8 +56,8 @@ export function ProcesarVenta({ transaccion, tauser, onCancelar, onProcesada, on
       banco_emisor: "",
       titular: transaccion.cliente_detalle?.nombre ?? "",
     });
-    setChequeRegistrado(!requiereCheque);
-  }, [transaccion.id, transaccion.cliente_detalle?.nombre, requiereCheque]);
+    setChequeRegistrado(!requiereCheque || transaccion.estado !== "pendiente");
+  }, [transaccion.id, transaccion.cliente_detalle?.nombre, requiereCheque, transaccion.estado]);
 
   useEffect(() => {
     if (!requiereCheque) {
@@ -58,8 +67,8 @@ export function ProcesarVenta({ transaccion, tauser, onCancelar, onProcesada, on
 
     const fetchBancos = async () => {
       try {
-        const res = await getTauserBancos();
-        setBancos(res.data ?? []);
+        const bancosData = await getTauserBancos();
+        setBancos(bancosData);
       } catch (error) {
         console.error(error);
         toast.error("No se pudieron cargar los bancos.");
@@ -69,6 +78,22 @@ export function ProcesarVenta({ transaccion, tauser, onCancelar, onProcesada, on
     };
     fetchBancos();
   }, [requiereCheque]);
+
+  useEffect(() => {
+    setAnimatingEntrega(false);
+    if (animationTimeoutRef.current) {
+      clearTimeout(animationTimeoutRef.current);
+      animationTimeoutRef.current = null;
+    }
+  }, [transaccion.id]);
+
+  useEffect(() => {
+    return () => {
+      if (animationTimeoutRef.current) {
+        clearTimeout(animationTimeoutRef.current);
+      }
+    };
+  }, []);
 
   const handleRegistrarCheque = async () => {
     if (!requiereCheque) {
@@ -85,6 +110,7 @@ export function ProcesarVenta({ transaccion, tauser, onCancelar, onProcesada, on
     try {
       await crearChequeTauser({
         cliente: String(transaccion.cliente),
+        transaccion: transaccion.id,
         banco_emisor: Number(form.banco_emisor),
         titular: form.titular,
         numero: form.numero.padStart(8, "0"),
@@ -146,6 +172,10 @@ export function ProcesarVenta({ transaccion, tauser, onCancelar, onProcesada, on
   };
 
   const procesarEntrega = async () => {
+    if (procesandoEntrega || animatingEntrega) {
+      return;
+    }
+
     if (requiereCheque && !chequeRegistrado) {
       toast.warning("Registra el cheque antes de entregar metalico.");
       return;
@@ -155,30 +185,66 @@ export function ProcesarVenta({ transaccion, tauser, onCancelar, onProcesada, on
     if (!puedeContinuar) return;
 
     setProcesandoEntrega(true);
+
+    let entregaData: TransaccionDetalle | null = null;
+
     try {
-      const res = await entregarMetalicoTauser(transaccion.id, { tauser: tauser.id });
-      toast.success("Entrega de metalico registrada.");
-      onProcesada(res.data);
+      const resEntrega = await entregarMetalicoTauser(transaccion.id, { tauser: tauser.id });
+      entregaData = resEntrega.data ?? null;
+    } catch (error: any) {
+      console.error(error);
+      const data = error?.response?.data;
+      const detalle = data?.transaccion?.[0] ?? data?.detail ?? data?.error;
+      const mensaje = typeof detalle === "string" ? detalle.toLowerCase() : "";
+
+      if (mensaje.includes("movimiento de stock")) {
+        entregaData = transaccion;
+      } else {
+        toast.error("No se pudo registrar la entrega.");
+        setProcesandoEntrega(false);
+        return;
+      }
+    }
+
+    let transaccionFinal: TransaccionDetalle = entregaData ?? transaccion;
+
+    try {
+      const resCompletar = await completarTransaccionTauser(transaccion.id);
+      if (resCompletar?.data) {
+        transaccionFinal = resCompletar.data;
+      }
     } catch (error) {
       console.error(error);
-      toast.error("No se pudo completar la entrega.");
-    } finally {
+      toast.error("No se pudo finalizar la operacion.");
       setProcesandoEntrega(false);
+      return;
     }
+
+    toast.success("Operacion finalizada.");
+
+    if (esBaseToForeign) {
+      setProcesandoEntrega(false);
+      setAnimatingEntrega(true);
+      if (animationTimeoutRef.current) {
+        clearTimeout(animationTimeoutRef.current);
+      }
+      const finalData = transaccionFinal;
+      animationTimeoutRef.current = setTimeout(() => {
+        setAnimatingEntrega(false);
+        animationTimeoutRef.current = null;
+        onProcesada(finalData);
+      }, 3000);
+      return;
+    }
+
+    setProcesandoEntrega(false);
+    onProcesada(transaccionFinal);
   };
 
   return (
     <div className="w-full max-w-3xl mx-auto bg-white/90 rounded-3xl shadow-xl p-8 space-y-6">
       <header className="space-y-2">
-        <h2 className="text-2xl font-semibold text-[var(--foreground)]">Proceso de venta</h2>
-        <p className="text-sm text-[var(--muted-foreground)]">
-          Primero registra los datos del cheque recibido y luego entrega el metalico al cliente.
-        </p>
-        {metodoNombre && (
-          <p className="text-xs text-[var(--muted-foreground)] uppercase tracking-[0.2em]">
-            Metodo de pago: {metodoNombre.replace(/_/g, " ")}
-          </p>
-        )}
+        <h2 className="text-2xl font-semibold text-[var(--foreground)]">Proceso Retiro</h2>
       </header>
 
       {requiereCheque ? (
@@ -260,34 +326,65 @@ export function ProcesarVenta({ transaccion, tauser, onCancelar, onProcesada, on
         <section className="rounded-2xl border border-[var(--border)] bg-[var(--accent)]/60 px-4 py-3 text-sm text-[var(--foreground)]">
           Esta operacion ya fue cobrada mediante {" "}
           <strong>{metodoNombre ? metodoNombre.replace(/_/g, " ").toLowerCase() : "otro metodo electronico"}</strong>.
-          Solo debes entregar el metalico al cliente.
         </section>
       )}
 
       <section className="space-y-3">
-        <h3 className="text-lg font-semibold text-[var(--foreground)]">2. Entrega de metalico</h3>
+        <h3 className="text-lg font-semibold text-[var(--foreground)]">2. Entrega de efectivo</h3>
         <p className="text-sm text-[var(--muted-foreground)]">
-          Monto a entregar:{" "}
+          Monto a recibir:{" "}
           <strong>
             {Number(transaccion.monto_destino).toLocaleString()} {transaccion.divisa_destino_detalle?.codigo}
           </strong>
         </p>
-        <div className="flex flex-col md:flex-row gap-4">
-          <button
-            onClick={onCancelar}
-            className="px-5 py-3 rounded-2xl border border-[var(--border)] text-[var(--foreground)] hover:bg-[var(--accent)] transition"
-          >
-            Volver
-          </button>
-          <button
-            onClick={procesarEntrega}
-            disabled={(requiereCheque && !chequeRegistrado) || procesandoEntrega}
-            className="px-6 py-3 rounded-2xl bg-[var(--primary)] text-white font-semibold flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {procesandoEntrega && <Loader2 className="w-4 h-4 animate-spin" />}
-            Entregar metalico
-          </button>
-        </div>
+        {esBaseToForeign ? (
+          <div className="flex flex-col items-center gap-6 pt-4">
+            <CashIllustration className="w-48 h-32 text-[var(--primary)]" />
+            <div className="flex flex-col items-center gap-3">
+              <button
+                onClick={procesarEntrega}
+                disabled={(requiereCheque && !chequeRegistrado) || procesandoEntrega || animatingEntrega}
+                className="w-28 h-28 sm:w-32 sm:h-32 rounded-full bg-[var(--primary)] text-white flex items-center justify-center shadow-xl transition-transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"
+                aria-label="Entregar efectivo"
+              >
+                {procesandoEntrega ? (
+                  <Loader2 className="w-10 h-10 animate-spin" />
+                ) : (
+                  <BanknoteArrowDown
+                    className={`w-12 h-12 ${animatingEntrega ? "cash-withdrawal-icon" : ""}`}
+                  />
+                )}
+              </button>
+              <span className="text-sm text-center text-[var(--muted-foreground)]">
+                {animatingEntrega ? "Entregando efectivo..." : "Toque para entregar el efectivo"}
+              </span>
+            </div>
+            <button
+              onClick={onCancelar}
+              className="px-5 py-3 rounded-2xl border border-[var(--border)] text-[var(--foreground)] hover:bg-[var(--accent)] transition"
+              disabled={animatingEntrega}
+            >
+              Volver
+            </button>
+          </div>
+        ) : (
+          <div className="flex flex-col md:flex-row gap-4">
+            <button
+              onClick={onCancelar}
+              className="px-5 py-3 rounded-2xl border border-[var(--border)] text-[var(--foreground)] hover:bg-[var(--accent)] transition"
+            >
+              Volver
+            </button>
+            <button
+              onClick={procesarEntrega}
+              disabled={(requiereCheque && !chequeRegistrado) || procesandoEntrega}
+              className="px-6 py-3 rounded-2xl bg-[var(--primary)] text-white font-semibold flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {procesandoEntrega && <Loader2 className="w-4 h-4 animate-spin" />}
+              Entregar efectivo
+            </button>
+          </div>
+        )}
       </section>
 
       {cambioTasa && (
@@ -323,5 +420,28 @@ export function ProcesarVenta({ transaccion, tauser, onCancelar, onProcesada, on
         </div>
       )}
     </div>
+  );
+}
+
+function CashIllustration({ className = "" }: { className?: string }) {
+  return (
+    <svg
+      className={className}
+      viewBox="0 0 220 140"
+      xmlns="http://www.w3.org/2000/svg"
+      role="img"
+      aria-hidden="true"
+    >
+      <rect x="20" y="18" width="180" height="100" rx="16" fill="currentColor" fillOpacity="0.15" />
+      <rect x="10" y="28" width="180" height="100" rx="16" fill="currentColor" fillOpacity="0.3" />
+      <rect x="20" y="38" width="180" height="100" rx="16" fill="currentColor" fillOpacity="0.85" />
+      <circle cx="110" cy="88" r="26" fill="#ffffff" fillOpacity="0.25" />
+      <circle cx="110" cy="88" r="16" fill="#ffffff" fillOpacity="0.5" />
+      <path
+        d="M110 72L122 88L110 104L98 88Z"
+        fill="#ffffff"
+        fillOpacity="0.65"
+      />
+    </svg>
   );
 }

@@ -21,7 +21,7 @@ class Pagos(models.Model):
     history = HistoricalRecords()
 
     def clean(self):
-        """Evita pagos activos duplicados para la misma transacciA3n y mActodo."""
+        """Evita pagos activos duplicados para la misma transacción y método."""
         from django.core.exceptions import ValidationError
 
         existing_payment = Pagos.objects.filter(
@@ -32,7 +32,7 @@ class Pagos(models.Model):
 
         if existing_payment:
             raise ValidationError(
-                "Ya existe un pago pendiente o aprobado para esta transacciA3n con este mActodo. "
+                "Ya existe un pago pendiente o aprobado para esta transacción con este métodos. "
                 "No se puede crear un nuevo pago hasta que el pago existente sea marcado como fallido."
             )
 

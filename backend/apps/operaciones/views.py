@@ -394,7 +394,7 @@ class TransaccionViewSet(viewsets.ModelViewSet):
         serializer.is_valid(raise_exception=True)
         detalles_validados = serializer.validated_data.get('detalles', [])
         if not detalles_validados:
-            raise ValidationError('Debe proporcionar al menos una denominaciA3n vA!lida.')
+            raise ValidationError('Debe proporcionar al menos una denominación válida.')
 
         total = Decimal('0')
         for item in detalles_validados:
@@ -424,21 +424,32 @@ class TransaccionViewSet(viewsets.ModelViewSet):
         serializer.save()
 
     def _registrar_pagos_compra(self, transaccion: Transaccion):
-        configuraciones = [
-            (TipoMetodoFinanciero.TRANSFERENCIA_BANCARIA, 'Transferencia bancaria aprobada en tauser'),
-            (TipoMetodoFinanciero.BILLETERA_DIGITAL, 'Transferencia a billetera digital aprobada en tauser'),
-        ]
-        for metodo_nombre, mensaje in configuraciones:
-            metodo = self._get_metodo_financiero(metodo_nombre)
-            Pagos.objects.update_or_create(
-                transaccion=transaccion,
-                metodo_pago=metodo,
-                defaults={
-                    'request': f'SIM_{metodo_nombre}_TAUSER',
-                    'response': mensaje,
-                    'estado': 'APROBADO',
-                }
-            )
+        metodo = transaccion.metodo_financiero
+        if not metodo:
+            return
+
+        mensajes = {
+            TipoMetodoFinanciero.TRANSFERENCIA_BANCARIA: 'Transferencia bancaria aprobada en tauser',
+            TipoMetodoFinanciero.BILLETERA_DIGITAL: 'Transferencia a billetera digital aprobada en tauser',
+        }
+
+        mensaje = mensajes.get(metodo.nombre)
+        if not mensaje:
+            return
+
+        detalle_alias = getattr(getattr(transaccion, "metodo_financiero_detalle", None), "alias", None)
+        if detalle_alias:
+            mensaje = f"{mensaje} - {detalle_alias}"
+
+        Pagos.objects.update_or_create(
+            transaccion=transaccion,
+            metodo_pago=metodo,
+            defaults={
+                'request': f'SIM_{metodo.nombre}_TAUSER',
+                'response': mensaje,
+                'estado': 'APROBADO',
+            }
+        )
 
     def _registrar_pago_operacion(self, transaccion: Transaccion):
         if transaccion.operacion != "venta":
