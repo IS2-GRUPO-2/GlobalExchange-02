@@ -50,12 +50,12 @@ def authenticated_user():
         email='test@example.com',
         password='testpass123'
     )
-    
+
     # Asignar permisos necesarios para Tauser
     content_type = ContentType.objects.get_for_model(Tauser)
     permissions = Permission.objects.filter(content_type=content_type)
     user.user_permissions.set(permissions)
-    
+
     return user
 
 
@@ -73,7 +73,7 @@ class TestTauserModel:
     def test_create_tauser_success(self, tauser_data):
         """Test: Crear un Tauser exitosamente"""
         tauser = Tauser.objects.create(**tauser_data)
-        
+
         assert tauser.id is not None
         assert tauser.codigo == tauser_data['codigo']
         assert tauser.nombre == tauser_data['nombre']
@@ -92,7 +92,7 @@ class TestTauserModel:
     def test_codigo_unique_constraint(self, tauser_data):
         """Test: Restricción de unicidad en el campo codigo"""
         Tauser.objects.create(**tauser_data)
-        
+
         # Intentar crear otro Tauser con el mismo código debería fallar
         with pytest.raises(IntegrityError):
             Tauser.objects.create(**tauser_data)
@@ -107,9 +107,10 @@ class TestTauserModel:
         """Test: Validación de longitud máxima de campos"""
         long_string_51 = 'a' * 51
         long_string_101 = 'a' * 101
-        
+
         # Test codigo max_length=50
-        with pytest.raises(Exception):  # DataError en PostgreSQL, ValidationError en otros
+        # DataError en PostgreSQL, ValidationError en otros
+        with pytest.raises(Exception):
             Tauser.objects.create(
                 codigo=long_string_51,
                 nombre='Test',
@@ -125,9 +126,9 @@ class TestTauserModel:
         # Test con exactamente 6 decimales
         tauser_data['latitud'] = Decimal('-25.263739')
         tauser_data['longitud'] = Decimal('-57.575926')
-        
+
         tauser = Tauser.objects.create(**tauser_data)
-        
+
         # Verificar que los decimales se mantienen correctamente
         assert tauser.latitud == Decimal('-25.263739')
         assert tauser.longitud == Decimal('-57.575926')
@@ -141,7 +142,7 @@ class TestTauserSerializer:
         """Test: Serialización de un Tauser"""
         serializer = TauserSerializer(tauser)
         data = serializer.data
-        
+
         assert data['id'] == str(tauser.id)
         assert data['codigo'] == tauser.codigo
         assert data['nombre'] == tauser.nombre
@@ -156,7 +157,7 @@ class TestTauserSerializer:
         """Test: Deserialización de datos válidos"""
         serializer = TauserSerializer(data=tauser_data)
         assert serializer.is_valid()
-        
+
         tauser = serializer.save()
         assert tauser.codigo == tauser_data['codigo']
         assert tauser.nombre == tauser_data['nombre']
@@ -172,7 +173,7 @@ class TestTauserSerializer:
             'latitud': 'invalid_decimal',  # Decimal inválido
             'longitud': Decimal('-57.575926')
         }
-        
+
         serializer = TauserSerializer(data=invalid_data)
         assert not serializer.is_valid()
         assert 'codigo' in serializer.errors
@@ -184,10 +185,10 @@ class TestTauserSerializer:
             'nombre': 'Tauser Actualizado',
             'ciudad': 'Ciudad Actualizada'
         }
-        
+
         serializer = TauserSerializer(tauser, data=update_data, partial=True)
         assert serializer.is_valid()
-        
+
         updated_tauser = serializer.save()
         assert updated_tauser.nombre == update_data['nombre']
         assert updated_tauser.ciudad == update_data['ciudad']
@@ -201,7 +202,7 @@ class TestTauserSerializer:
             'previous': None,
             'results': [TauserSerializer(tauser).data]
         }
-        
+
         # Este serializer es solo para documentación, no para validación
         serializer = TauserPaginatedResponseSerializer(mock_data)
         assert serializer.data['count'] == 1
@@ -216,7 +217,7 @@ class TestTauserViewSet:
         """Test: Listar Tausers con usuario autenticado"""
         url = reverse('tauser-list')
         response = authenticated_client.get(url)
-        
+
         assert response.status_code == status.HTTP_200_OK
         assert 'results' in response.data
         assert len(response.data['results']) == 1
@@ -226,7 +227,7 @@ class TestTauserViewSet:
         """Test: Listar Tausers sin autenticación debe fallar"""
         url = reverse('tauser-list')
         response = api_client.get(url)
-        
+
         assert response.status_code == status.HTTP_401_UNAUTHORIZED
 
     def test_list_all_tausers(self, authenticated_client, tauser_data):
@@ -236,10 +237,10 @@ class TestTauserViewSet:
             data = tauser_data.copy()
             data['codigo'] = f'TAU-TEST-{i:03d}'
             Tauser.objects.create(**data)
-        
+
         url = reverse('tauser-list')
         response = authenticated_client.get(url, {'all': 'true'})
-        
+
         assert response.status_code == status.HTTP_200_OK
         assert isinstance(response.data, list)
         assert len(response.data) == 3
@@ -252,16 +253,16 @@ class TestTauserViewSet:
         tauser1_data['nombre'] = 'Tauser Asunción'
         tauser1_data['ciudad'] = 'Asunción'
         Tauser.objects.create(**tauser1_data)
-        
+
         tauser2_data = tauser_data.copy()
         tauser2_data['codigo'] = 'TAU-CDE-001'
         tauser2_data['nombre'] = 'Tauser Ciudad del Este'
         tauser2_data['ciudad'] = 'Ciudad del Este'
         Tauser.objects.create(**tauser2_data)
-        
+
         url = reverse('tauser-list')
         response = authenticated_client.get(url, {'search': 'Asunción'})
-        
+
         assert response.status_code == status.HTTP_200_OK
         assert len(response.data['results']) == 1
         assert 'Asunción' in response.data['results'][0]['nombre']
@@ -270,7 +271,7 @@ class TestTauserViewSet:
         """Test: Crear un nuevo Tauser"""
         url = reverse('tauser-list')
         response = authenticated_client.post(url, tauser_data, format='json')
-        
+
         assert response.status_code == status.HTTP_201_CREATED
         assert response.data['codigo'] == tauser_data['codigo']
         assert Tauser.objects.filter(codigo=tauser_data['codigo']).exists()
@@ -281,10 +282,10 @@ class TestTauserViewSet:
             'codigo': '',  # Campo requerido vacío
             'nombre': 'Test Name'
         }
-        
+
         url = reverse('tauser-list')
         response = authenticated_client.post(url, invalid_data, format='json')
-        
+
         assert response.status_code == status.HTTP_400_BAD_REQUEST
         assert 'codigo' in response.data
 
@@ -292,7 +293,7 @@ class TestTauserViewSet:
         """Test: Obtener un Tauser específico"""
         url = reverse('tauser-detail', kwargs={'pk': tauser.pk})
         response = authenticated_client.get(url)
-        
+
         assert response.status_code == status.HTTP_200_OK
         assert response.data['codigo'] == tauser.codigo
 
@@ -302,13 +303,13 @@ class TestTauserViewSet:
             'nombre': 'Tauser Actualizado',
             'ciudad': 'Ciudad Actualizada'
         }
-        
+
         url = reverse('tauser-detail', kwargs={'pk': tauser.pk})
         response = authenticated_client.patch(url, update_data, format='json')
-        
+
         assert response.status_code == status.HTTP_200_OK
         assert response.data['nombre'] == update_data['nombre']
-        
+
         # Verificar en base de datos
         tauser.refresh_from_db()
         assert tauser.nombre == update_data['nombre']
@@ -317,9 +318,9 @@ class TestTauserViewSet:
         """Test: Eliminación suave de Tauser (soft delete)"""
         url = reverse('tauser-detail', kwargs={'pk': tauser.pk})
         response = authenticated_client.delete(url)
-        
+
         assert response.status_code == status.HTTP_200_OK
-        
+
         # Verificar que el Tauser sigue existiendo pero está inactivo
         tauser.refresh_from_db()
         assert tauser.is_active is False
@@ -329,10 +330,10 @@ class TestTauserViewSet:
         # Primero marcar como inactivo
         tauser.is_active = False
         tauser.save()
-        
+
         url = reverse('tauser-detail', kwargs={'pk': tauser.pk})
         response = authenticated_client.delete(url)
-        
+
         assert response.status_code == status.HTTP_404_NOT_FOUND
 
     def test_pagination(self, authenticated_client, tauser_data):
@@ -342,10 +343,10 @@ class TestTauserViewSet:
             data = tauser_data.copy()
             data['codigo'] = f'TAU-TEST-{i:03d}'
             Tauser.objects.create(**data)
-        
+
         url = reverse('tauser-list')
         response = authenticated_client.get(url, {'page_size': 5})
-        
+
         assert response.status_code == status.HTTP_200_OK
         assert len(response.data['results']) == 5
         assert response.data['count'] == 15
@@ -358,10 +359,10 @@ class TestTauserViewSet:
             data = tauser_data.copy()
             data['codigo'] = f'TAU-TEST-{i:03d}'
             Tauser.objects.create(**data)
-        
+
         url = reverse('tauser-list')
         response = authenticated_client.get(url, {'page_size': 8})
-        
+
         assert response.status_code == status.HTTP_200_OK
         assert len(response.data['results']) == 8
 
@@ -375,10 +376,10 @@ class TestTauserViewSet:
             password='testpass123'
         )
         api_client.force_authenticate(user=user)
-        
+
         url = reverse('tauser-list')
         response = api_client.get(url)
-        
+
         # Sin configuración específica de permisos, usuario autenticado puede acceder
         assert response.status_code == status.HTTP_200_OK
 
@@ -406,26 +407,28 @@ class TestTauserIntegration:
         """Test: Flujo completo CRUD de Tauser"""
         # 1. CREATE
         create_url = reverse('tauser-list')
-        create_response = authenticated_client.post(create_url, tauser_data, format='json')
+        create_response = authenticated_client.post(
+            create_url, tauser_data, format='json')
         assert create_response.status_code == status.HTTP_201_CREATED
         tauser_id = create_response.data['id']
-        
+
         # 2. READ
         detail_url = reverse('tauser-detail', kwargs={'pk': tauser_id})
         read_response = authenticated_client.get(detail_url)
         assert read_response.status_code == status.HTTP_200_OK
         assert read_response.data['codigo'] == tauser_data['codigo']
-        
+
         # 3. UPDATE
         update_data = {'nombre': 'Tauser Actualizado'}
-        update_response = authenticated_client.patch(detail_url, update_data, format='json')
+        update_response = authenticated_client.patch(
+            detail_url, update_data, format='json')
         assert update_response.status_code == status.HTTP_200_OK
         assert update_response.data['nombre'] == 'Tauser Actualizado'
-        
+
         # 4. DELETE (soft delete)
         delete_response = authenticated_client.delete(detail_url)
         assert delete_response.status_code == status.HTTP_200_OK
-        
+
         # Verificar que está marcado como inactivo
         tauser = Tauser.objects.get(id=tauser_id)
         assert tauser.is_active is False
@@ -440,20 +443,314 @@ class TestTauserIntegration:
             data['nombre'] = f'Tauser {city}'
             data['ciudad'] = city
             Tauser.objects.create(**data)
-        
+
         url = reverse('tauser-list')
-        
+
         # Test búsqueda por ciudad
         response = authenticated_client.get(url, {'search': 'Asunción'})
         assert response.status_code == status.HTTP_200_OK
         assert len(response.data['results']) == 1
-        
+
         # Test búsqueda por código - usar código completo
         response = authenticated_client.get(url, {'search': 'TAU-CIU'})
         assert response.status_code == status.HTTP_200_OK
         assert len(response.data['results']) == 1
-        
+
         # Test búsqueda que no encuentra resultados
         response = authenticated_client.get(url, {'search': 'NoExiste'})
         assert response.status_code == status.HTTP_200_OK
         assert len(response.data['results']) == 0
+
+
+@pytest.mark.django_db
+class TestTauserConStockEndpoint:
+    """Pruebas para el endpoint con-stock de Tauser"""
+
+    @pytest.fixture
+    def divisa(self):
+        """Crear una divisa de prueba"""
+        from apps.divisas.models import Divisa
+        return Divisa.objects.create(
+            codigo='USD',
+            nombre='Dólar Estadounidense',
+            simbolo='$',
+            is_active=True,
+            max_digitos=30,
+            precision=6,
+            es_base=False
+        )
+
+    @pytest.fixture
+    def denominaciones(self, divisa):
+        """Crear denominaciones de prueba para la divisa"""
+        from apps.divisas.models import Denominacion
+        return [
+            Denominacion.objects.create(
+                divisa=divisa, denominacion=1, is_active=True),
+            Denominacion.objects.create(
+                divisa=divisa, denominacion=5, is_active=True),
+            Denominacion.objects.create(
+                divisa=divisa, denominacion=10, is_active=True),
+            Denominacion.objects.create(
+                divisa=divisa, denominacion=20, is_active=True),
+            Denominacion.objects.create(
+                divisa=divisa, denominacion=50, is_active=True),
+            Denominacion.objects.create(
+                divisa=divisa, denominacion=100, is_active=True),
+        ]
+
+    @pytest.fixture
+    def tausers_con_stock(self, tauser_data, denominaciones, divisa):
+        """Crear tausers con diferentes niveles de stock"""
+        from apps.stock.models import StockDivisaTauser
+
+        # Tauser 1: Stock total = 1000 (100x10)
+        tauser1_data = tauser_data.copy()
+        tauser1_data['codigo'] = 'TAU-001'
+        tauser1_data['nombre'] = 'Tauser Alto Stock'
+        tauser1 = Tauser.objects.create(**tauser1_data)
+        StockDivisaTauser.objects.create(
+            tauser=tauser1,
+            denominacion=denominaciones[5],  # Denominación de 100
+            stock=10
+        )
+
+        # Tauser 2: Stock total = 250 (50x5)
+        tauser2_data = tauser_data.copy()
+        tauser2_data['codigo'] = 'TAU-002'
+        tauser2_data['nombre'] = 'Tauser Medio Stock'
+        tauser2 = Tauser.objects.create(**tauser2_data)
+        StockDivisaTauser.objects.create(
+            tauser=tauser2,
+            denominacion=denominaciones[4],  # Denominación de 50
+            stock=5
+        )
+
+        # Tauser 3: Stock total = 50 (10x5)
+        tauser3_data = tauser_data.copy()
+        tauser3_data['codigo'] = 'TAU-003'
+        tauser3_data['nombre'] = 'Tauser Bajo Stock'
+        tauser3 = Tauser.objects.create(**tauser3_data)
+        StockDivisaTauser.objects.create(
+            tauser=tauser3,
+            denominacion=denominaciones[2],  # Denominación de 10
+            stock=5
+        )
+
+        # Tauser 4: Stock mixto = 165 (100x1 + 50x1 + 10x1 + 5x1)
+        tauser4_data = tauser_data.copy()
+        tauser4_data['codigo'] = 'TAU-004'
+        tauser4_data['nombre'] = 'Tauser Stock Mixto'
+        tauser4 = Tauser.objects.create(**tauser4_data)
+        StockDivisaTauser.objects.create(
+            tauser=tauser4,
+            denominacion=denominaciones[5],  # 100
+            stock=1
+        )
+        StockDivisaTauser.objects.create(
+            tauser=tauser4,
+            denominacion=denominaciones[4],  # 50
+            stock=1
+        )
+        StockDivisaTauser.objects.create(
+            tauser=tauser4,
+            denominacion=denominaciones[2],  # 10
+            stock=1
+        )
+        StockDivisaTauser.objects.create(
+            tauser=tauser4,
+            denominacion=denominaciones[1],  # 5
+            stock=1
+        )
+
+        # Tauser 5: Sin stock
+        tauser5_data = tauser_data.copy()
+        tauser5_data['codigo'] = 'TAU-005'
+        tauser5_data['nombre'] = 'Tauser Sin Stock'
+        tauser5 = Tauser.objects.create(**tauser5_data)
+
+        # Tauser 6: Inactivo con stock (no debería aparecer)
+        tauser6_data = tauser_data.copy()
+        tauser6_data['codigo'] = 'TAU-006'
+        tauser6_data['nombre'] = 'Tauser Inactivo'
+        tauser6_data['is_active'] = False
+        tauser6 = Tauser.objects.create(**tauser6_data)
+        StockDivisaTauser.objects.create(
+            tauser=tauser6,
+            denominacion=denominaciones[5],
+            stock=10
+        )
+
+        return [tauser1, tauser2, tauser3, tauser4, tauser5, tauser6]
+
+    def test_con_stock_missing_divisa_id(self, authenticated_client):
+        """Test: Error cuando falta el parámetro divisa_id"""
+        url = reverse('tauser-con-stock')
+        response = authenticated_client.get(url, {'monto': 100})
+
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        assert 'divisa_id' in response.data['detail']
+
+    def test_con_stock_missing_monto(self, authenticated_client, divisa):
+        """Test: Error cuando falta el parámetro monto"""
+        url = reverse('tauser-con-stock')
+        response = authenticated_client.get(url, {'divisa_id': divisa.id})
+
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        assert 'monto' in response.data['detail']
+
+    def test_con_stock_invalid_divisa_id(self, authenticated_client):
+        """Test: Error cuando divisa_id no es un número"""
+        url = reverse('tauser-con-stock')
+        response = authenticated_client.get(
+            url, {'divisa_id': 'invalid', 'monto': 100})
+
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        assert 'numéricos válidos' in response.data['detail']
+
+    def test_con_stock_invalid_monto(self, authenticated_client, divisa):
+        """Test: Error cuando monto no es un número"""
+        url = reverse('tauser-con-stock')
+        response = authenticated_client.get(
+            url, {'divisa_id': divisa.id, 'monto': 'invalid'})
+
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        assert 'numéricos válidos' in response.data['detail']
+
+    def test_con_stock_monto_bajo(self, authenticated_client, divisa, tausers_con_stock):
+        """Test: Todos los tausers con stock aparecen para montos bajos"""
+        url = reverse('tauser-con-stock')
+        response = authenticated_client.get(
+            url, {'divisa_id': divisa.id, 'monto': 10})
+
+        assert response.status_code == status.HTTP_200_OK
+        # Deberían aparecer TAU-001 (1000), TAU-002 (250), TAU-003 (50), TAU-004 (165)
+        assert len(response.data) == 4
+        codigos = [t['codigo'] for t in response.data]
+        assert 'TAU-001' in codigos
+        assert 'TAU-002' in codigos
+        assert 'TAU-003' in codigos
+        assert 'TAU-004' in codigos
+        assert 'TAU-005' not in codigos  # Sin stock
+        assert 'TAU-006' not in codigos  # Inactivo
+
+    def test_con_stock_monto_medio(self, authenticated_client, divisa, tausers_con_stock):
+        """Test: Solo tausers con stock suficiente aparecen para monto medio"""
+        url = reverse('tauser-con-stock')
+        response = authenticated_client.get(
+            url, {'divisa_id': divisa.id, 'monto': 100})
+
+        assert response.status_code == status.HTTP_200_OK
+        # Deberían aparecer TAU-001 (1000), TAU-002 (250), TAU-004 (165)
+        # No debería aparecer TAU-003 (50)
+        assert len(response.data) == 3
+        codigos = [t['codigo'] for t in response.data]
+        assert 'TAU-001' in codigos
+        assert 'TAU-002' in codigos
+        assert 'TAU-004' in codigos
+        assert 'TAU-003' not in codigos
+
+    def test_con_stock_monto_alto(self, authenticated_client, divisa, tausers_con_stock):
+        """Test: Solo tausers con stock muy alto aparecen"""
+        url = reverse('tauser-con-stock')
+        response = authenticated_client.get(
+            url, {'divisa_id': divisa.id, 'monto': 500})
+
+        assert response.status_code == status.HTTP_200_OK
+        # Solo debería aparecer TAU-001 (1000)
+        assert len(response.data) == 1
+        assert response.data[0]['codigo'] == 'TAU-001'
+
+    def test_con_stock_monto_exacto(self, authenticated_client, divisa, tausers_con_stock):
+        """Test: Tauser con stock exactamente igual al monto aparece"""
+        url = reverse('tauser-con-stock')
+        response = authenticated_client.get(
+            url, {'divisa_id': divisa.id, 'monto': 250})
+
+        assert response.status_code == status.HTTP_200_OK
+        # Deberían aparecer TAU-001 (1000) y TAU-002 (250)
+        assert len(response.data) == 2
+        codigos = [t['codigo'] for t in response.data]
+        assert 'TAU-001' in codigos
+        assert 'TAU-002' in codigos
+
+    def test_con_stock_monto_imposible(self, authenticated_client, divisa, tausers_con_stock):
+        """Test: Ningún tauser aparece si el monto es muy alto"""
+        url = reverse('tauser-con-stock')
+        response = authenticated_client.get(
+            url, {'divisa_id': divisa.id, 'monto': 10000})
+
+        assert response.status_code == status.HTTP_200_OK
+        assert len(response.data) == 0
+
+    def test_con_stock_divisa_inexistente(self, authenticated_client, tausers_con_stock):
+        """Test: Ningún tauser aparece para divisa que no tiene stock"""
+        url = reverse('tauser-con-stock')
+        response = authenticated_client.get(
+            url, {'divisa_id': 99999, 'monto': 10})
+
+        assert response.status_code == status.HTTP_200_OK
+        assert len(response.data) == 0
+
+    def test_con_stock_monto_cero(self, authenticated_client, divisa, tausers_con_stock):
+        """Test: Todos los tausers con stock aparecen para monto cero"""
+        url = reverse('tauser-con-stock')
+        response = authenticated_client.get(
+            url, {'divisa_id': divisa.id, 'monto': 0})
+
+        assert response.status_code == status.HTTP_200_OK
+        # Deberían aparecer todos menos TAU-005 (sin stock) y TAU-006 (inactivo)
+        assert len(response.data) == 4
+
+    def test_con_stock_monto_decimal(self, authenticated_client, divisa, tausers_con_stock):
+        """Test: Funciona correctamente con montos decimales"""
+        url = reverse('tauser-con-stock')
+        response = authenticated_client.get(
+            url, {'divisa_id': divisa.id, 'monto': 49.99})
+
+        assert response.status_code == status.HTTP_200_OK
+        # Deberían aparecer TAU-001, TAU-002, TAU-003, TAU-004
+        assert len(response.data) == 4
+
+    def test_con_stock_ordenado_por_codigo(self, authenticated_client, divisa, tausers_con_stock):
+        """Test: Los resultados están ordenados por código"""
+        url = reverse('tauser-con-stock')
+        response = authenticated_client.get(
+            url, {'divisa_id': divisa.id, 'monto': 10})
+
+        assert response.status_code == status.HTTP_200_OK
+        codigos = [t['codigo'] for t in response.data]
+        assert codigos == sorted(codigos)
+
+    def test_con_stock_unauthenticated(self, api_client, divisa):
+        """Test: Usuario no autenticado no puede acceder"""
+        url = reverse('tauser-con-stock')
+        response = api_client.get(url, {'divisa_id': divisa.id, 'monto': 100})
+
+        assert response.status_code == status.HTTP_401_UNAUTHORIZED
+
+    def test_con_stock_calculo_stock_mixto(self, authenticated_client, divisa, tausers_con_stock):
+        """Test: Cálculo correcto de stock con múltiples denominaciones"""
+        url = reverse('tauser-con-stock')
+        # TAU-004 tiene: 100x1 + 50x1 + 10x1 + 5x1 = 165 total
+        response = authenticated_client.get(
+            url, {'divisa_id': divisa.id, 'monto': 165})
+
+        assert response.status_code == status.HTTP_200_OK
+        codigos = [t['codigo'] for t in response.data]
+        assert 'TAU-004' in codigos  # Debe aparecer con monto exacto
+        assert 'TAU-001' in codigos  # También tiene suficiente
+
+    def test_con_stock_solo_tausers_activos(self, authenticated_client, divisa, tausers_con_stock):
+        """Test: Solo tausers activos aparecen en los resultados"""
+        url = reverse('tauser-con-stock')
+        response = authenticated_client.get(
+            url, {'divisa_id': divisa.id, 'monto': 10})
+
+        assert response.status_code == status.HTTP_200_OK
+        codigos = [t['codigo'] for t in response.data]
+        # TAU-006 está inactivo pero tiene stock, no debería aparecer
+        assert 'TAU-006' not in codigos
+        # Verificar que todos los retornados tienen is_active=True
+        for tauser_data in response.data:
+            assert tauser_data['is_active'] is True
