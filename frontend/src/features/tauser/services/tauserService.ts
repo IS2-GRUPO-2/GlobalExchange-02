@@ -9,7 +9,7 @@ export const getTausers = async (params: Record<string, unknown> = {}) => {
 };
 
 export const getTausersConStock = async (divisa_id: number, monto: number) => {
-  const params: any = { divisa_id , monto};
+  const params: unknown = { divisa_id , monto};
   const res = await axios.get<Tauser[]>(`${API_URL}con-stock/`, { params });
   return res.data;
 };
