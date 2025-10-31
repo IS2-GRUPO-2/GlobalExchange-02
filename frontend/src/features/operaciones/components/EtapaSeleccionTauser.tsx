@@ -1,11 +1,14 @@
 import { useState, useEffect } from "react";
 import { MapPin, Building2 } from "lucide-react";
 import type { Tauser } from "../../tauser/types/Tauser";
-import { getTausers } from "../../tauser/services/tauserService";
+import { getTausersConStock, getTausers } from "../../tauser/services/tauserService";
 
 interface EtapaSeleccionTauserProps {
   tauserSeleccionado: string;
   setTauserSeleccionado: (tauserId: string) => void;
+  divisaDestino: string;
+  opPerspectivaCasa: "compra" | "venta" | null;
+  monto: number;
   onRetroceder: () => void;
   onAvanzar: () => void;
   onCancelar: () => void;
@@ -14,6 +17,9 @@ interface EtapaSeleccionTauserProps {
 export default function EtapaSeleccionTauser({
   tauserSeleccionado,
   setTauserSeleccionado,
+  divisaDestino,
+  opPerspectivaCasa,
+  monto,
   onRetroceder,
   onAvanzar,
   onCancelar
@@ -25,18 +31,30 @@ export default function EtapaSeleccionTauser({
     const fetchTausers = async () => {
       setLoading(true);
       try {
-        const data = await getTausers({ all: true });
-        // Filtrar solo los tausers activos
-        const tausersActivos = Array.isArray(data) ? data.filter((t: Tauser) => t.is_active) : [];
-        setTausers(tausersActivos);
+        // Determinar el servicio a utilizar dependiendo de la operacion
+        // - COMPRA (casa compra del cliente): Se asume que siempre hay stock de guaranies, mostramos todos los tausers activos
+        // - VENTA (casa vende al cliente): Tauser necesita stock de divisaDestino (para entregar al cliente), mostramos solo los que tienen stock para el monto
+     
+        
+        if (opPerspectivaCasa === "compra") {
+          const data = await getTausers({ all: true});
+          const tauserActivos = Array.isArray(data) ? data.filter((t: Tauser) => t.is_active) : [];
+          setTausers(tauserActivos);
+        } else if (opPerspectivaCasa === "venta") {
+          const data = await getTausersConStock(Number(divisaDestino), monto);
+          setTausers(data);
+        }
+        
       } catch (err) {
         console.error("Error cargando tausers", err);
+        setTausers([]);
       } finally {
         setLoading(false);
       }
     };
+    
     fetchTausers();
-  }, []);
+  }, [divisaDestino, opPerspectivaCasa, monto]);
 
   const puedeAvanzar = !!tauserSeleccionado;
 

@@ -682,6 +682,9 @@ export default function OperacionCompraVenta() {
           <EtapaSeleccionTauser
             tauserSeleccionado={tauserSeleccionado}
             setTauserSeleccionado={setTauserSeleccionado}
+            divisaDestino={divisaDestino}
+            opPerspectivaCasa={opPerspectivaCasa}
+            monto={monto}
             onRetroceder={retrocederEtapa2}
             onAvanzar={avanzarEtapa4}
             onCancelar={cancelarOperacion}
