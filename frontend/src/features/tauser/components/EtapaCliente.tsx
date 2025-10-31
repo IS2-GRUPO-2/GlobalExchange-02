@@ -1,16 +1,19 @@
 import { useEffect, useState } from "react";
-import { getUserClients } from "../../usuario/services/usuarioService";
-import { getPendingTransaccionesCount } from "../../clientes/services/clienteService";
 import type { Cliente } from "../../clientes/types/Cliente";
-import { useAuth } from "../../../context/useAuth";
+import type { TransaccionDetalle } from "../../operaciones/types/Transaccion";
 import { toast } from "react-toastify";
+import { useTauserAuth } from "../context/useTauserAuth";
+import { getTauserClientes, getTauserTransacciones } from "../services/tauserTerminalService";
+import type { SelectedTauser } from "../store/useSelectedTauser";
+import { debeMostrarTransaccionTauser } from "../utils/transacciones";
 
 interface EtapaClienteProps {
   onSelectCliente: (cliente: Cliente) => void;
+  tauser: SelectedTauser | null;
 }
 
-export default function EtapaCliente({ onSelectCliente }: EtapaClienteProps) {
-  const { user } = useAuth();
+export default function EtapaCliente({ onSelectCliente, tauser }: EtapaClienteProps) {
+  const { user } = useTauserAuth();
   const [clientes, setClientes] = useState<Cliente[]>([]);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
@@ -23,42 +26,72 @@ export default function EtapaCliente({ onSelectCliente }: EtapaClienteProps) {
     const fetchUserClients = async () => {
       if (!user || !user.id) {
         toast.error("No se pudo identificar el usuario actual");
+        setLoading(false);
+        return;
+      }
+
+      if (!tauser) {
+        setClientes([]);
+        setPendingCounts({});
+        setTotalPages(1);
+        setLoading(false);
         return;
       }
 
       setLoading(true);
       try {
-        const response = await getUserClients(user.id);
-        const clientesList = response.data;
-        
+        const res = await getTauserClientes(user.id);
+        const clientesList: Cliente[] = res.data ?? [];
+
         setClientes(clientesList);
-        setTotalPages(Math.ceil(clientesList.length / itemsPerPage));
-        
-        // Cargar contadores de transacciones pendientes para cada cliente
+        setTotalPages(Math.max(1, Math.ceil(clientesList.length / itemsPerPage)));
+
         const counts: Record<string, number> = {};
         await Promise.all(
-          clientesList.map(async (cliente) => {
+          clientesList.map(async (cliente: Cliente) => {
             try {
-              const count = await getPendingTransaccionesCount(cliente.id.toString());
-              counts[cliente.id] = count;
+              const operaciones = await getTauserTransacciones(cliente.id.toString(), [
+                "pendiente",
+                "en_proceso",
+              ]);
+              const pendientes = (operaciones.data ?? [])
+                .filter((operacion: TransaccionDetalle) =>
+                  ["pendiente", "en_proceso"].includes(operacion.estado)
+                )
+                .filter((operacion: TransaccionDetalle) => {
+                  const esVentaPendiente =
+                    operacion.operacion === "venta" && operacion.estado === "pendiente";
+                  if (!esVentaPendiente) {
+                    return true;
+                  }
+                  const metodoNombre = operacion.metodo_financiero_detalle?.nombre ?? "";
+                  return metodoNombre.toUpperCase() === "CHEQUE";
+                })
+                .filter((operacion: TransaccionDetalle) =>
+                  debeMostrarTransaccionTauser(operacion, tauser)
+                );
+              counts[cliente.id] = pendientes.length;
             } catch (error) {
-              console.error(`Error al cargar operaciones pendientes para cliente ${cliente.id}:`, error);
-              counts[cliente.id] = 0; // Si hay error, mostramos 0
+              console.error(
+                `Error al cargar operaciones pendientes para cliente ${cliente.id}:`,
+                error
+              );
+              counts[cliente.id] = 0;
             }
           })
         );
-        
+
         setPendingCounts(counts);
-        setLoading(false);
       } catch (error) {
         console.error("Error al cargar los clientes del usuario:", error);
         toast.error("No se pudieron cargar los clientes asignados");
+      } finally {
         setLoading(false);
       }
     };
 
     fetchUserClients();
-  }, [user]);
+  }, [user, tauser]);
 
   // Obtener los clientes para la página actual
   const getCurrentPageClientes = () => {
@@ -122,7 +155,7 @@ export default function EtapaCliente({ onSelectCliente }: EtapaClienteProps) {
       {totalPages > 1 && (
         <div className="flex justify-center items-center mt-6 space-x-4">
           <button
-            onClick={() => setPage((p) => Math.max(p - 1, 1))}
+            onClick={() => setPage((p: number) => Math.max(p - 1, 1))}
             disabled={page === 1}
             className="px-3 py-1 btn-primary disabled:opacity-50"
           >
@@ -132,7 +165,7 @@ export default function EtapaCliente({ onSelectCliente }: EtapaClienteProps) {
             Página {page} de {totalPages}
           </div>
           <button
-            onClick={() => setPage((p) => Math.min(p + 1, totalPages))}
+            onClick={() => setPage((p: number) => Math.min(p + 1, totalPages))}
             disabled={page === totalPages}
             className="px-3 py-1 btn-primary disabled:opacity-50"
           >

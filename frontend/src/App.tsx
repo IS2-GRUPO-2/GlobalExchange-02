@@ -10,9 +10,17 @@ import Footer from "./components/Footer";
 import { ToastContainer } from "react-toastify";
 import { AuthZProvider } from "./context/AuthZContext";
 import NotificacionesWatcher from "./features/notificaciones/components/NotificacionesWatcher";
+import { TauserAuthProvider } from "./features/tauser/context/useTauserAuth";
 
 /** Rutas donde se oculta la barra de navegación */
-const HIDE_NAV_ROUTES = ["/login", "/register","/Register","/Login", "/tauser","/simulador-transaccion-bancaria"];
+const HIDE_NAV_ROUTES = [
+  "/login",
+  "/register",
+  "/Register",
+  "/Login",
+  "/tauser",
+  "/simulador-transaccion-bancaria",
+];
 
 /**
  * Componente principal de la aplicación
@@ -36,28 +44,37 @@ const HIDE_NAV_ROUTES = ["/login", "/register","/Register","/Login", "/tauser","
 function App() {
   const { pathname } = useLocation();
   const hideNavbar = HIDE_NAV_ROUTES.some((p) => pathname === p || pathname.startsWith(p + "/"));
+  const isTauserRoute = pathname === "/tauser" || pathname.startsWith("/tauser/");
 
   return (
     <UserProvider>
       <AuthZProvider>
-        <NotificacionesWatcher />
+        {!isTauserRoute && <NotificacionesWatcher />}
         <div className="flex flex-col min-h-screen">
-          <ToastContainer 
-            position="top-right"
-            autoClose={6000}
-            hideProgressBar={false}
-            newestOnTop
-            closeOnClick
-            rtl={false}
-            pauseOnFocusLoss
-            draggable
-            pauseOnHover
-            limit={3}
-            theme="light"
-          />
+          {!isTauserRoute && (
+            <ToastContainer
+              position="top-right"
+              autoClose={6000}
+              hideProgressBar={false}
+              newestOnTop
+              closeOnClick
+              rtl={false}
+              pauseOnFocusLoss
+              draggable
+              pauseOnHover
+              limit={3}
+              theme="light"
+            />
+          )}
           {!hideNavbar && <Navbar />}
           <div className="flex-grow">
-            <Outlet />
+            {isTauserRoute ? (
+              <TauserAuthProvider>
+                <Outlet />
+              </TauserAuthProvider>
+            ) : (
+              <Outlet />
+            )}
           </div>
           {!hideNavbar && <Footer />}
         </div>

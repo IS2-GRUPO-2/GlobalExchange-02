@@ -10,17 +10,23 @@ financieros (`MetodoFinanciero`) y sus implementaciones específicas
 # NUEVO: simulador de pagos
 from .pyments import APROBADO, componenteSimuladorPagosCobros, completar_pago_stripe, guardar_tarjeta_stripe
 from decimal import Decimal, ROUND_HALF_UP, InvalidOperation
-from apps.cotizaciones.service import TasaService
-from apps.pagos.models import Pagos
-from rest_framework import viewsets, status, filters, permissions
-from rest_framework.response import Response
-from rest_framework.decorators import action, api_view, permission_classes
+from django.db import transaction as db_transaction
 from django.utils import timezone
 from django.views.decorators.csrf import csrf_exempt
+from rest_framework import viewsets, status, filters, permissions
+from rest_framework.decorators import action, api_view, permission_classes
+from rest_framework.exceptions import ValidationError
+from rest_framework.response import Response
+
+from apps.cotizaciones.service import TasaService
+from apps.metodos_financieros.models import MetodoFinanciero, TipoMetodoFinanciero
+from apps.pagos.models import Pagos
+from apps.stock.models import TipoMovimiento, MovimientoStock, EstadoMovimiento
+from apps.stock.serializers import MovimientoStockSerializer
+from apps.tauser.models import Tauser
 from globalexchange.configuration import config
-from .models import (
-    Transaccion
-)
+
+from .models import Transaccion
 from .serializers import (
     TransaccionDetalleSerializer,
     TransaccionSerializer,
@@ -28,6 +34,7 @@ from .serializers import (
 )
 
 from .service import (
+    calcular_operacion,
     calcular_operacion,
     inferir_op_perspectiva_casa,
     _get_tasa_activa,
@@ -248,9 +255,19 @@ class TransaccionViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_400_BAD_REQUEST
             )
 
-        transaccion.estado = 'completada'
-        transaccion.fecha_fin = timezone.now()
-        transaccion.save()
+        estado_finalizado = (
+            EstadoMovimiento.objects.filter(codigo="FINALIZADO").first()
+        )
+
+        with db_transaction.atomic():
+            transaccion.estado = 'completada'
+            transaccion.fecha_fin = timezone.now()
+            transaccion.save(update_fields=['estado', 'fecha_fin', 'updated_at'])
+
+            if estado_finalizado:
+                MovimientoStock.objects.filter(transaccion=transaccion).update(
+                    estado=estado_finalizado
+                )
 
         serializer = self.get_serializer(transaccion)
         return Response(serializer.data)
@@ -341,6 +358,122 @@ class TransaccionViewSet(viewsets.ModelViewSet):
                 'canceladas': queryset.filter(estado='cancelada').count(),
                 'fallidas': queryset.filter(estado='fallida').count(),
             })
+    def _get_tauser(self, tauser_id):
+        try:
+            return Tauser.objects.get(pk=tauser_id)
+        except Tauser.DoesNotExist:
+            raise ValidationError('El tauser indicado no existe.')
+
+    def _get_tipo_movimiento(self, codigo: str) -> TipoMovimiento:
+        try:
+            return TipoMovimiento.objects.get(codigo=codigo)
+        except TipoMovimiento.DoesNotExist:
+            raise ValidationError(f"El tipo de movimiento '{codigo}' no estA� configurado.")
+
+    def _get_metodo_financiero(self, nombre: str) -> MetodoFinanciero:
+        try:
+            return MetodoFinanciero.objects.get(nombre=nombre)
+        except MetodoFinanciero.DoesNotExist:
+            raise ValidationError(f"El mActodo financiero '{nombre}' no estA� disponible.")
+
+    def _get_divisa_extranjera_id(self, transaccion: Transaccion) -> int:
+        if not transaccion.divisa_origen.es_base:
+            return transaccion.divisa_origen_id
+        return transaccion.divisa_destino_id
+
+    def _registrar_movimiento_entclt(self, transaccion: Transaccion, tauser: Tauser, detalles):
+        tipo_mov = self._get_tipo_movimiento('ENTCLT')
+        data = {
+            'tipo_movimiento': tipo_mov.pk,
+            'tauser': str(tauser.id),
+            'transaccion': transaccion.id,
+            'divisa': self._get_divisa_extranjera_id(transaccion),
+            'detalles': detalles,
+        }
+        serializer = MovimientoStockSerializer(data=data)
+        serializer.is_valid(raise_exception=True)
+        detalles_validados = serializer.validated_data.get('detalles', [])
+        if not detalles_validados:
+            raise ValidationError('Debe proporcionar al menos una denominación válida.')
+
+        total = Decimal('0')
+        for item in detalles_validados:
+            denominacion = Decimal(str(item['denominacion'].denominacion))
+            cantidad = Decimal(item['cantidad'])
+            total += denominacion * cantidad
+
+        total = total.quantize(Decimal('0.01'))
+        esperado = Decimal(str(transaccion.monto_origen)).quantize(Decimal('0.01'))
+        if total != esperado:
+            raise ValidationError(
+                f"Las denominaciones suman {total} pero se esperaba {esperado}."
+            )
+
+        serializer.save()
+
+    def _registrar_movimiento_salclt(self, transaccion: Transaccion, tauser: Tauser):
+        tipo_mov = self._get_tipo_movimiento('SALCLT')
+        data = {
+            'tipo_movimiento': tipo_mov.pk,
+            'tauser': str(tauser.id),
+            'transaccion': transaccion.id,
+            'divisa': self._get_divisa_extranjera_id(transaccion),
+        }
+        serializer = MovimientoStockSerializer(data=data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+
+    def _registrar_pagos_compra(self, transaccion: Transaccion):
+        metodo = transaccion.metodo_financiero
+        if not metodo:
+            return
+
+        mensajes = {
+            TipoMetodoFinanciero.TRANSFERENCIA_BANCARIA: 'Transferencia bancaria aprobada en tauser',
+            TipoMetodoFinanciero.BILLETERA_DIGITAL: 'Transferencia a billetera digital aprobada en tauser',
+        }
+
+        mensaje = mensajes.get(metodo.nombre)
+        if not mensaje:
+            return
+
+        detalle_alias = getattr(getattr(transaccion, "metodo_financiero_detalle", None), "alias", None)
+        if detalle_alias:
+            mensaje = f"{mensaje} - {detalle_alias}"
+
+        Pagos.objects.update_or_create(
+            transaccion=transaccion,
+            metodo_pago=metodo,
+            defaults={
+                'request': f'SIM_{metodo.nombre}_TAUSER',
+                'response': mensaje,
+                'estado': 'APROBADO',
+            }
+        )
+
+    def _registrar_pago_operacion(self, transaccion: Transaccion):
+        if transaccion.operacion != "venta":
+            return
+
+        if not transaccion.metodo_financiero:
+            return
+
+        if transaccion.metodo_financiero.nombre not in {
+            TipoMetodoFinanciero.TRANSFERENCIA_BANCARIA,
+            TipoMetodoFinanciero.BILLETERA_DIGITAL,
+            TipoMetodoFinanciero.TARJETA,
+        }:
+            return
+
+        Pagos.objects.update_or_create(
+            transaccion=transaccion,
+            metodo_pago=transaccion.metodo_financiero,
+            defaults={
+                "request": transaccion.metodo_financiero.nombre,
+                "response": f"Pago con {transaccion.metodo_financiero.nombre} registrado",
+                "estado": "APROBADO",
+            },
+        )
 
     def _recalcular_tc_y_monto(self, transaccion: Transaccion):
         """
@@ -512,6 +645,7 @@ class TransaccionViewSet(viewsets.ModelViewSet):
         cliente.gasto_mensual += monto
         cliente.save()
         transaccion.save()
+        self._registrar_pago_operacion(transaccion)
 
         serializer = self.get_serializer(transaccion)
         data = dict(serializer.data)
@@ -618,3 +752,99 @@ class TransaccionViewSet(viewsets.ModelViewSet):
         pago.response = "STRIPE_CHECKOUT_SESSION_CREATED"
         pago.save()
         return Response({"url": checkout_session.url}, status=status.HTTP_200_OK)
+        
+
+    @action(detail=True, methods=['post'], url_path='recibir-efectivo')
+    def recibir_efectivo(self, request, pk=None):
+        """Registra la recepci?n de efectivo cuando la casa compra divisa extranjera."""
+        transaccion = self.get_object()
+
+        if transaccion.operacion != 'compra':
+            return Response(
+                {'error': 'Esta acci?n solo est? disponible para operaciones de compra.'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        if transaccion.estado not in ('pendiente', 'en_proceso'):
+            return Response(
+                {'error': 'La transacci?n debe estar pendiente o en proceso para recibir efectivo.'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        tauser_id = request.data.get('tauser')
+        detalles = request.data.get('detalles')
+        acepta_cambio = bool(request.data.get('acepta_cambio', False))
+
+        if not tauser_id:
+            raise ValidationError('Debe indicar el tauser asignado.')
+
+        if not isinstance(detalles, list) or not detalles:
+            raise ValidationError('Debe proporcionar las denominaciones recibidas.')
+
+        tauser = self._get_tauser(tauser_id)
+        fields_to_update = []
+
+        if transaccion.tauser_id != tauser.id:
+            transaccion.tauser = tauser
+            fields_to_update.append('tauser')
+
+        if transaccion.estado == 'pendiente':
+            payload, _, _ = self._build_reconfirm_payload(transaccion)
+            if payload['cambio']:
+                if not acepta_cambio:
+                    return Response(payload, status=status.HTTP_409_CONFLICT)
+                transaccion.tasa_aplicada = Decimal(payload['tasa_actual'])
+                transaccion.monto_destino = Decimal(payload['monto_destino_actual'])
+                fields_to_update.extend(['tasa_aplicada', 'monto_destino'])
+
+        with db_transaction.atomic():
+            self._registrar_movimiento_entclt(transaccion, tauser, detalles)
+            self._registrar_pagos_compra(transaccion)
+
+            if transaccion.estado == 'pendiente':
+                transaccion.estado = 'en_proceso'
+                fields_to_update.append('estado')
+
+            if fields_to_update:
+                fields_to_update.append('updated_at')
+                transaccion.save(update_fields=fields_to_update)
+
+        serializer = self.get_serializer(transaccion)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+    @action(detail=True, methods=['post'], url_path='entregar-metalico')
+    def entregar_metalico(self, request, pk=None):
+        """Registra la entrega de met?lico cuando la casa vende divisa extranjera."""
+        transaccion = self.get_object()
+
+        if transaccion.operacion != 'venta':
+            return Response(
+                {'error': 'Esta acci?n solo est? disponible para operaciones de venta.'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        if transaccion.estado != 'en_proceso':
+            return Response(
+                {'error': 'La transacci?n debe estar en proceso para entregar met?lico.'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        tauser_id = request.data.get('tauser')
+        if not tauser_id:
+            raise ValidationError('Debe indicar el tauser asignado.')
+
+        tauser = self._get_tauser(tauser_id)
+        fields_to_update = []
+        if transaccion.tauser_id != tauser.id:
+            transaccion.tauser = tauser
+            fields_to_update.append('tauser')
+
+        with db_transaction.atomic():
+            self._registrar_movimiento_salclt(transaccion, tauser)
+            if fields_to_update:
+                fields_to_update.append('updated_at')
+                transaccion.save(update_fields=fields_to_update)
+
+        serializer = self.get_serializer(transaccion)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+

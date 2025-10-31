@@ -1,21 +1,24 @@
 import { useState, useEffect } from "react";
 import { getFormattedDateTime } from "../../../utils/date";
+import clsx from "clsx";
 
-export default function DateTimeDisplay() {
-  // Estado para la fecha y hora actuales
+type Props = {
+  className?: string;
+};
+
+export default function DateTimeDisplay({ className }: Props) {
   const [fechaHora, setFechaHora] = useState(new Date());
-  
-  // Actualizar fecha y hora cada minuto
+
   useEffect(() => {
     const interval = setInterval(() => {
       setFechaHora(new Date());
-    }, 1000 * 60); // Actualizar cada minuto
-    
+    }, 1000 * 60);
+
     return () => clearInterval(interval);
   }, []);
-  
+
   return (
-    <div className="absolute bottom-8 text-sm text-gray-600">
+    <div className={clsx("text-sm text-gray-600", className)}>
       {getFormattedDateTime(fechaHora).formattedDate},{" "}
       {getFormattedDateTime(fechaHora).formattedTime}
     </div>
