@@ -95,3 +95,103 @@ class TauserViewSet(viewsets.ModelViewSet):
         instance.is_active = False
         instance.save()
         return Response(status=status.HTTP_200_OK)
+
+    @swagger_auto_schema(
+        operation_summary="Listar Tausers con stock disponible",
+        operation_description="""
+        Retorna los Tausers que tienen stock suficiente para una operación específica.
+        
+        Lógica de filtrado:
+        - COMPRA (casa compra del cliente): Tauser debe tener stock de divisaDestino
+        - VENTA (casa vende al cliente): Tauser debe tener stock de divisaOrigen
+        
+        El stock se valida que sea mayor a 0 para la divisa correspondiente.
+        """,
+        manual_parameters=[
+            openapi.Parameter(
+                "divisa_id",
+                openapi.IN_QUERY,
+                description="ID de la divisa a verificar stock",
+                type=openapi.TYPE_INTEGER,
+                required=True
+            ),
+            openapi.Parameter(
+                "monto",
+                openapi.IN_QUERY,
+                description="Monto de la operación (para futuras validaciones)",
+                type=openapi.TYPE_NUMBER,
+                required=False
+            ),
+        ],
+        responses={
+            200: openapi.Response(
+                description="Lista de Tausers con stock disponible",
+                schema=TauserSerializer(many=True)
+            ),
+            400: openapi.Response(description="Parámetros inválidos"),
+        },
+    )
+    @action(detail=False, methods=["get"], url_path="con-stock")
+    def con_stock(self, request):
+        """
+        Lista Tausers activos que tienen stock disponible para una divisa específica.
+        Calcula el stock total (suma de stock * denominacion) para determinar si el tauser
+        puede cubrir el monto de la operación.
+        """
+        from apps.stock.models import StockDivisaTauser
+        from decimal import Decimal
+
+        divisa_id = request.query_params.get('divisa_id')
+        monto = request.query_params.get('monto')
+
+        if not divisa_id:
+            return Response(
+                {"detail": "El parámetro 'divisa_id' es requerido."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        if not monto:
+            return Response(
+                {"detail": "El parámetro 'monto' es requerido."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        try:
+            divisa_id = int(divisa_id)
+            monto = Decimal(str(monto))
+        except Exception:
+            return Response(
+                {"detail": "Los parámetros 'divisa_id' y 'monto' deben ser valores numéricos válidos."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        # Obtener todos los tausers activos
+        tausers_activos = Tauser.objects.filter(is_active=True)
+
+        # Aplicar filtros de búsqueda si existen
+        tausers_activos = self.filter_queryset(tausers_activos)
+
+        tausers_con_stock_suficiente = []
+
+        # Recorrer cada tauser y evaluar si tiene stock suficiente
+        for tauser in tausers_activos:
+            # Consultar registros de stock del tauser para la divisa específica
+            registros_stock = StockDivisaTauser.objects.filter(
+                tauser=tauser,
+                denominacion__divisa_id=divisa_id
+            ).select_related('denominacion')
+
+            # Calcular el stock total (suma de stock * denominacion)
+            stock_total = Decimal('0')
+            for registro in registros_stock:
+                stock_total += registro.stock * registro.denominacion.denominacion
+                # Si el stock total es mayor o igual al monto, agregar el tauser
+                if stock_total >= monto:
+                    tausers_con_stock_suficiente.append(tauser)
+                    break
+
+        # Ordenar por código
+        tausers_con_stock_suficiente.sort(key=lambda t: t.codigo)
+
+        serializer = TauserSerializer(tausers_con_stock_suficiente, many=True)
+        return Response(serializer.data)

@@ -10,6 +10,12 @@ export const getTausers = async (params?: any) => {
   return res.data; // Axios ya devuelve la data en res.data
 };
 
+export const getTausersConStock = async (divisa_id: number, monto: number) => {
+  const params: any = { divisa_id , monto};
+  const res = await axios.get<Tauser[]>(`${API_URL}con-stock/`, { params });
+  return res.data;
+};
+
 export const getTauserById = (id: string) =>
   axios.get<Tauser>(`${API_URL}${id}/`);
 
