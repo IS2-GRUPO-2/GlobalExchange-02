@@ -647,7 +647,7 @@ class ChequeViewSet(viewsets.ModelViewSet):
 
     def create(self, request, *args, **kwargs):
         data = request.data.copy()
-        transaccion_id = data.pop("transaccion", None)
+        transaccion_id = data.get("transaccion", None)
         if isinstance(transaccion_id, list):
             transaccion_id = transaccion_id[0]
 

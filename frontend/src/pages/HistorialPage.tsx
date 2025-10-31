@@ -6,7 +6,8 @@ import { formatNumberDecimals } from "../utils/format";
 import { useClientStore } from "../hooks/useClientStore";
 import { estadosTransaccion } from "../types/EstadosTransaccion";
 import { tipoMetodoDisplay } from "../features/metodos_financieros/types/MetodoFinanciero";
-
+import { downloadFacturaPDF } from "../features/operaciones/services/transaccionService";
+import { FileText } from "lucide-react";
 const getEstadoConfig = (estado: string) => {
   return (
     estadosTransaccion.find((e) => e.estado === estado) || estadosTransaccion[0]
@@ -56,6 +57,7 @@ const HistorialPage = () => {
               <th>Estado</th>
               <th>Operador</th>
               <th>Método financiero</th>
+              <th>Acciones</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-200">
@@ -97,6 +99,23 @@ const HistorialPage = () => {
                     getTipoDisplay(transaccion.metodo_financiero_detalle.nombre)
                       .display
                   }
+                </td>
+                <td>
+                  <div className="flex items-center space-x-2">
+                    {transaccion.factura_emitida === true && (
+                      <button
+                        onClick={() =>
+                          downloadFacturaPDF(transaccion.id).catch(() =>
+                            toast.error("No se pudo descargar la factura")
+                          )
+                        }
+                        className="text-sm text-gray-500 hover:text-blue-600 font-medium"
+                        title="Descargar factura"
+                      >
+                        <FileText size={16} />
+                      </button>
+                    )}
+                  </div>
                 </td>
               </tr>
             ))}

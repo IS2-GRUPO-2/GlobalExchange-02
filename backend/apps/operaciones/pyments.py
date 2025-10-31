@@ -4,12 +4,17 @@ from dataclasses import dataclass
 from typing import Optional
 from globalexchange.configuration import config
 import stripe
-from apps.operaciones.models import Transaccion
+from apps.operaciones.models import Transaccion, PagoStripe
 from apps.clientes.models import Cliente
 from django.db import transaction
 from apps.metodos_financieros.models import Tarjeta, MetodoFinancieroDetalle, MetodoFinanciero
 from apps.clientes.models import Cliente
 from apps.pagos.models import Pagos
+from apps.facturacion.factura_service import cargar_datos_factura, calcular_factura, generar_factura
+from apps.facturacion.models import Factura, FacturaSettings
+import logging
+
+logger = logging.getLogger(__name__)
 
 from django.db.models import F
 stripe.api_key = config.STRIPE_KEY
@@ -67,6 +72,14 @@ def completar_pago_stripe(session_id):
         print("No se encontró pago_id en metadata")
         return
 
+    payment_intent_id = checkout_session.get("payment_intent")
+
+    payment_intent = stripe.PaymentIntent.retrieve(payment_intent_id) # type: ignore
+    payment_method = stripe.PaymentMethod.retrieve(payment_intent["payment_method"])
+    card_info = payment_method.get("card", {})
+    brand = card_info.get("brand")
+    funding = card_info.get("funding")
+
     with transaction.atomic():
         try:
             transaccion = Transaccion.objects.select_for_update().get(id=transaccion_id)
@@ -104,7 +117,41 @@ def completar_pago_stripe(session_id):
         pago.response = "checkout.session.completed"
         pago.save()
 
-    print(f"Transacción {transaccion_id} completada con éxito (Stripe Session {session_id})")    
+        tarjeta_data = PagoStripe.objects.create(transaccion=transaccion, brand=brand, funding=funding)
+        tarjeta_data.save()
+
+        # Generar factura después de guardar la información de la tarjeta
+        try:
+            logger.info(f"Generando factura para transaccion con id {transaccion.pk}")
+            datos_factura = cargar_datos_factura(transaccion.pk)
+            resultado = calcular_factura(datos_factura)
+
+            if resultado.get('code') != 0 or not resultado.get('results'):
+                logger.error(f"Ocurrió algún error calculando factura para transacción {transaccion.pk}")
+                return
+
+            factura_calculada = resultado['results'][0].get('DE')
+
+            if not factura_calculada:
+                logger.error(f"Ocurrió algún error calculando factura para transacción {transaccion.pk}")
+                return
+            
+            cdc = generar_factura(factura_calculada)
+            
+            transaccion.factura_emitida = True
+            transaccion.save()
+            factura = Factura.objects.create(transaccion=transaccion, cdc=cdc)
+            factura.save()
+
+            settings = FacturaSettings.get_solo()
+            settings.ultimo_num += 1
+            settings.save()
+            
+            logger.info(f"Factura generada exitosamente para transacción {transaccion.pk}")
+        except Exception as e:
+            logger.error(f"Error generando factura para transacción {transaccion.pk}: {str(e)}")
+
+    logger.info(f"Transacción {transaccion_id} completada con éxito (Stripe Session {session_id})")   
 
 def guardar_tarjeta_stripe(payment_method_id):
     payment_method = stripe.PaymentMethod.retrieve(payment_method_id, expand=["card"])

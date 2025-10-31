@@ -46,6 +46,7 @@ export const useClientes = () => {
     let clienteData: Partial<Cliente> = {
       nombre: clientData.nombre,
       is_persona_fisica: clientData.is_persona_fisica,
+      is_contribuyente: clientData.is_contribuyente,
       id_categoria: clientData.idCategoria,
       correo: clientData.correo,
       telefono: clientData.telefono,
@@ -53,7 +54,7 @@ export const useClientes = () => {
       is_active: true,
     };
 
-    clientData.is_persona_fisica
+    clientData.is_contribuyente
       ? (clienteData.cedula = clientData.documento)
       : (clienteData.ruc = clientData.documento);
     try {
@@ -71,6 +72,7 @@ export const useClientes = () => {
       let clienteData: Partial<Cliente> = {
         nombre: clientData.nombre,
         is_persona_fisica: clientData.is_persona_fisica,
+        is_contribuyente: clientData.is_contribuyente,
         id_categoria: clientData.idCategoria,
         correo: clientData.correo,
         telefono: clientData.telefono,

@@ -59,6 +59,7 @@ INSTALLED_APPS = [
     'apps.metodos_financieros',
     'apps.stock',
     'apps.pagos',
+    'apps.facturacion',
     'drf_yasg',
     'django_otp',
     'django_otp.plugins.otp_static',
