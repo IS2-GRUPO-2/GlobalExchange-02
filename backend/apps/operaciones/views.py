@@ -21,7 +21,7 @@ from rest_framework.response import Response
 from apps.cotizaciones.service import TasaService
 from apps.metodos_financieros.models import MetodoFinanciero, TipoMetodoFinanciero
 from apps.pagos.models import Pagos
-from apps.stock.models import TipoMovimiento
+from apps.stock.models import TipoMovimiento, MovimientoStock, EstadoMovimiento
 from apps.stock.serializers import MovimientoStockSerializer
 from apps.tauser.models import Tauser
 from globalexchange.configuration import config
@@ -255,9 +255,19 @@ class TransaccionViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_400_BAD_REQUEST
             )
 
-        transaccion.estado = 'completada'
-        transaccion.fecha_fin = timezone.now()
-        transaccion.save()
+        try:
+            estado_finalizado = EstadoMovimiento.objects.get(codigo="FINALIZADO")
+        except EstadoMovimiento.DoesNotExist:
+            raise ValidationError("El estado FINALIZADO no esta configurado.")
+
+        with db_transaction.atomic():
+            transaccion.estado = 'completada'
+            transaccion.fecha_fin = timezone.now()
+            transaccion.save(update_fields=['estado', 'fecha_fin', 'updated_at'])
+
+            MovimientoStock.objects.filter(transaccion=transaccion).update(
+                estado=estado_finalizado
+            )
 
         serializer = self.get_serializer(transaccion)
         return Response(serializer.data)
@@ -430,6 +440,30 @@ class TransaccionViewSet(viewsets.ModelViewSet):
                 }
             )
 
+    def _registrar_pago_operacion(self, transaccion: Transaccion):
+        if transaccion.operacion != "venta":
+            return
+
+        if not transaccion.metodo_financiero:
+            return
+
+        if transaccion.metodo_financiero.nombre not in {
+            TipoMetodoFinanciero.TRANSFERENCIA_BANCARIA,
+            TipoMetodoFinanciero.BILLETERA_DIGITAL,
+            TipoMetodoFinanciero.TARJETA,
+        }:
+            return
+
+        Pagos.objects.update_or_create(
+            transaccion=transaccion,
+            metodo_pago=transaccion.metodo_financiero,
+            defaults={
+                "request": transaccion.metodo_financiero.nombre,
+                "response": f"Pago con {transaccion.metodo_financiero.nombre} registrado",
+                "estado": "APROBADO",
+            },
+        )
+
     def _recalcular_tc_y_monto(self, transaccion: Transaccion):
         """
         Recalcula la tasa vigente y el monto_destino actual usando la misma lógica que la operacion:
@@ -600,6 +634,7 @@ class TransaccionViewSet(viewsets.ModelViewSet):
         cliente.gasto_mensual += monto
         cliente.save()
         transaccion.save()
+        self._registrar_pago_operacion(transaccion)
 
         serializer = self.get_serializer(transaccion)
         data = dict(serializer.data)
