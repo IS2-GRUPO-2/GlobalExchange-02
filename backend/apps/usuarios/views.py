@@ -22,36 +22,37 @@ from rest_framework.permissions import IsAuthenticated
 class UserViewSet(viewsets.ModelViewSet):
     """
     ViewSet para operaciones CRUD de usuarios.
-    
+
     Proporciona endpoints estándar para crear, leer, actualizar y eliminar usuarios,
     además de endpoints personalizados para gestionar las relaciones con clientes.
-    
+
     Endpoints personalizados:
         - asignar_clientes: Asigna clientes específicos a un usuario.
         - get_clientes_asignados: Obtiene la lista de clientes asignados a un usuario.
     """
     queryset = User.objects.all()
     serializer_class = UserSerializer
-    permission_classes = [permissions.IsAuthenticated, permissions.DjangoModelPermissions]
-    
+    permission_classes = [permissions.IsAuthenticated,
+                          permissions.DjangoModelPermissions]
+
     def get_permissions(self):
         """
         Define los permisos necesarios según la acción.
-        
+
         Returns:
             list: Lista de clases de permisos aplicables.
         """
         # Endpoints personalizados que solo requieren autenticación
         if self.action in ["get_roles", "get_clientes", "get_cliente_actual"]:
             return [permissions.IsAuthenticated()]
-        
+
         # Creación de usuarios permite acceso público (registro)
         if self.action == "create":
             return [permissions.AllowAny()]
-        
+
         # Todos los demás endpoints usan los permisos por defecto
         return [permissions.AllowAny()]
-    
+
     def perform_update(self, serializer):
         # Esto se llama en update() y partial_update()
         instance = serializer.save()
@@ -65,22 +66,23 @@ class UserViewSet(viewsets.ModelViewSet):
         user.is_active = False
         user.save()
         return Response(
-            {"message": f"Usuario {user.username} desactivado (eliminado lógico)."},
+            {"message":
+                f"Usuario {user.username} desactivado (eliminado lógico)."},
             status=status.HTTP_200_OK,
         )
-    
+
     @action(detail=True, methods=["post"], url_path="asignar_clientes", permission_classes=[IsAuthenticated])
     def asignar_clientes(self, request, pk=None):
         """
         Asigna clientes al usuario sin necesidad de actualizar todo el objeto.
-        
+
         Args:
             request: Objeto de petición HTTP con lista de IDs de clientes.
             pk: ID del usuario al que se asignarán los clientes.
-            
+
         Returns:
             Response: Confirmación de la asignación o error.
-            
+
         Formato esperado del body:
             {"clientes": [1, 2, 3]}
         """
@@ -90,7 +92,7 @@ class UserViewSet(viewsets.ModelViewSet):
                 {"detail": "No tienes permiso para asignar clientes."},
                 status=status.HTTP_403_FORBIDDEN,
             )
-        
+
         clientes_ids = request.data.get("clientes", [])
 
         if not isinstance(clientes_ids, list):
@@ -100,7 +102,8 @@ class UserViewSet(viewsets.ModelViewSet):
             )
 
         clientes = Cliente.objects.filter(id__in=clientes_ids)
-        user.clientes.set(clientes)  # reemplaza la relación actual con estos clientes
+        # reemplaza la relación actual con estos clientes
+        user.clientes.set(clientes)
         user.save()
 
         return Response(
@@ -111,16 +114,16 @@ class UserViewSet(viewsets.ModelViewSet):
             },
             status=status.HTTP_200_OK,
         )
-    
+
     @action(detail=True, methods=['get'], url_path="get_clientes_asignados", permission_classes=[IsAuthenticated])
     def get_clientes(self, request, pk=None):
         """
         Obtiene la lista de clientes asignados a un usuario específico.
-        
+
         Args:
             request: Objeto de petición HTTP.
             pk: ID del usuario del que se quieren obtener los clientes.
-            
+
         Returns:
             Response: Lista de clientes asignados al usuario.
         """
@@ -141,7 +144,7 @@ class UserViewSet(viewsets.ModelViewSet):
                 {"detail": "No tienes permiso para asignar roles."},
                 status=status.HTTP_403_FORBIDDEN,
             )
-        
+
         role_ids = request.data.get("roles", [])
 
         if not isinstance(role_ids, list):
@@ -206,7 +209,6 @@ class UserViewSet(viewsets.ModelViewSet):
             status=status.HTTP_200_OK,
         )
 
-
     @action(detail=True, methods=["get"], url_path="cliente_actual")
     def get_cliente_actual(self, request, pk=None):
         """
@@ -231,11 +233,14 @@ class UserViewSet(viewsets.ModelViewSet):
         alternativo = activos_qs.order_by("nombre").first()
         if alternativo:
             user.cliente_actual = alternativo
-            user.save()
+            user.save(update_fields=['cliente_actual'])
+            # Refrescar el usuario desde la base de datos para asegurar consistencia
+            user.refresh_from_db()
             return Response({"cliente_actual": ClienteSerializer(alternativo).data},
                             status=status.HTTP_200_OK)
 
         return Response({"cliente_actual": None}, status=status.HTTP_200_OK)
+
 
 @api_view(["GET"])
 @permission_classes([permissions.AllowAny])

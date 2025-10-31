@@ -192,7 +192,7 @@ export default function OperacionCompraVenta() {
         cliente_id: selectedClient!.id,
         divisa_origen: Number(divisaOrigen),
         divisa_destino: Number(divisaDestino),
-        monto_origen: monto,
+        monto: monto, // monto origen si es op compra, monto destino en op venta
         op_perspectiva_casa: opPerspectivaCasa!,
         detalle_metodo_id: detalleMetodoSeleccionado ?? undefined,
         metodo_id: metodoGenericoSeleccionado ?? undefined,
@@ -648,9 +648,11 @@ export default function OperacionCompraVenta() {
             setDivisaOrigen={setDivisaOrigen}
             divisaDestino={divisaDestino}
             setDivisaDestino={setDivisaDestino}
+            opPerspectivaCasa={opPerspectivaCasa}
+            setOpPerspectivaCasa={setOpPerspectivaCasa}
             monto={monto}
             setMonto={setMonto}
-            clienteActual={selectedClient}
+            clienteActual={selectedClient ?? null}
             onContinuar={avanzarEtapa2}
           />
         );

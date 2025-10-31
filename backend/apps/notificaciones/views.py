@@ -8,13 +8,17 @@ from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from django.shortcuts import get_object_or_404
 
+from django.db import transaction
+from django.utils import timezone
 from apps.notificaciones.models import (
     NotificacionTasaUsuario,
-    NotificacionTasaCliente
+    NotificacionTasaCliente,
+    NotificacionCambioTasa,
 )
 from apps.notificaciones.serializers import (
     NotificacionTasaUsuarioSerializer,
-    NotificacionTasaClienteSerializer
+    NotificacionTasaClienteSerializer,
+    NotificacionCambioTasaSerializer,
 )
 
 
@@ -84,3 +88,35 @@ class NotificacionTasaClienteView(APIView):
         serializer.is_valid(raise_exception=True)
         serializer.save()
         return Response(serializer.data)
+
+
+class NotificacionCambioTasaView(APIView):
+    """Retorna las notificaciones tipo toast pendientes del usuario autenticado."""
+
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        notificaciones_qs = (
+            NotificacionCambioTasa.objects.filter(
+                usuario=request.user,
+                is_read=False
+            ).order_by("created_at")
+        )
+
+        notificaciones = list(notificaciones_qs[:20])
+
+        serializer = NotificacionCambioTasaSerializer(notificaciones, many=True)
+
+        if not notificaciones:
+            return Response(serializer.data, status=status.HTTP_200_OK)
+
+        ids = [notif.id for notif in notificaciones]
+        now = timezone.now()
+
+        with transaction.atomic():
+            NotificacionCambioTasa.objects.filter(id__in=ids).update(
+                is_read=True,
+                read_at=now
+            )
+
+        return Response(serializer.data, status=status.HTTP_200_OK)

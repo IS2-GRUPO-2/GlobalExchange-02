@@ -1,6 +1,6 @@
 import { useState} from "react";
-import { useAuth } from "../../../context/useAuth";
 import { Loader2 } from "lucide-react";
+import { useTauserAuth } from "../context/useTauserAuth";
 type Props = {
   onVolverInicio: () => void;
   onAutenticacionExitosa: () => void;
@@ -20,7 +20,7 @@ export default function EtapaLogin({
   onVolverInicio,
   onAutenticacionExitosa,
 }: Props) {
-  const { loginUserTauser, verifyMfaTauser, mfaRequired, logoutTauser } = useAuth();
+  const { loginTauser, verifyMfaTauser, mfaRequired, logoutTauser } = useTauserAuth();
 
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
@@ -41,7 +41,7 @@ export default function EtapaLogin({
     setLoading(true);
     
     try {
-      await loginUserTauser(username, password);
+  await loginTauser(username, password);
       // Si llegamos aquí sin error y mfaRequired se activó, 
       // el componente se re-renderizará automáticamente mostrando el formulario MFA
       
