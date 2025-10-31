@@ -5,6 +5,8 @@ import type {
   TransaccionRequest,
   TransaccionDetalle,
 } from "../types/Transaccion";
+import { downloadFile } from "../../../utils/download";
+import { toast } from "react-toastify";
 
 const API_URL = "/api/operaciones/";
 
@@ -109,4 +111,32 @@ export const obtenerTransaccion = async (
 ): Promise<TransaccionDetalle> => {
   const response = await axios.get(`${API_URL}transacciones/${id}/`);
   return response.data;
+};
+
+export const downloadFacturaPDF = async (transaccionId: number) => {
+  try {
+    const response = await axios.get(
+      `/api/facturacion/${transaccionId}/descargar_pdf`,
+      {
+        responseType: "arraybuffer", // 👈 importante para recibir el PDF como binario
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("token")}`, // si usás autenticación
+        },
+      }
+    );
+
+    // Obtener nombre del archivo desde Content-Disposition
+    const disposition = response.headers["content-disposition"];
+    let filename = "factura.pdf";
+    if (disposition) {
+      const match = disposition.match(/filename="(.+)"/);
+      if (match?.[1]) filename = match[1];
+    }
+
+    // Llamar a tu función utilitaria
+    downloadFile(response.data, filename);
+  } catch (error) {
+    console.error("Error al descargar la factura:", error);
+    toast.error("No se pudo descargar la factura. Intente nuevamente.");
+  }
 };

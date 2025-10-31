@@ -156,8 +156,9 @@ def stripe_webhook(request):
     ):
         completar_pago_stripe(event['data']['object']['id'])
 
-    if event['type'] == 'payment_method.attached':
-        guardar_tarjeta_stripe(event['data']['object']['id'])
+    # TODO: Manejar de manera correcta el almacenamiento de tarjetas con Stripe
+    #if event['type'] == 'payment_method.attached':
+    #    guardar_tarjeta_stripe(event['data']['object']['id'])
 
     return Response(data=None, status=status.HTTP_200_OK)
 

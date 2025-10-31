@@ -95,6 +95,7 @@ const ClientesPage = () => {
                 <th>Categoría</th>
                 <th>Estado</th>
                 <th>Tipo</th>
+                <th>Contribuyente</th>
                 <th>Documento</th>
                 <th>Acciones</th>
               </tr>
@@ -120,6 +121,7 @@ const ClientesPage = () => {
                       ? "Persona física"
                       : "Persona jurídica"}
                   </td>
+                  <td>{cliente.is_contribuyente ? "Sí" : "No"}</td>
                   <td>
                     {cliente.is_persona_fisica ? cliente.cedula : cliente.ruc}
                   </td>

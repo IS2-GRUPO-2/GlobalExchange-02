@@ -44,6 +44,7 @@ class Cliente(models.Model):
     correo = models.EmailField(unique=True)
     telefono = models.CharField(max_length=20)
     direccion = models.TextField()
+    is_contribuyente = models.BooleanField(default=False)
     is_active = models.BooleanField(default=True)
     ruc = models.CharField(max_length=20, unique=True, null=True, blank=True)
     stripe_customer_id = models.CharField(max_length=100, null=True)

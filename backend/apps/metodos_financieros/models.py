@@ -3,9 +3,6 @@ from django.core.exceptions import ValidationError
 from apps.clientes.models import Cliente
 from apps.usuarios.models import User 
 
-
-
-
 # ======================== CATÁLOGOS INDEPENDIENTES ========================
 
 class Banco(models.Model):
@@ -354,6 +351,7 @@ class Cheque(models.Model):
     fecha_vencimiento = models.DateTimeField(null=True, blank=True)
     fecha_procesamiento = models.DateTimeField(null=True, blank=True)
     observaciones = models.TextField(blank=True)
+    transaccion = models.ForeignKey('operaciones.Transaccion', on_delete=models.PROTECT, null=True, blank=True)
     
     class Meta:
         verbose_name = "Cheque"

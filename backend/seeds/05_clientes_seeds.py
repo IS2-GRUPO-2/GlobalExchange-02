@@ -59,12 +59,12 @@ def run():
             'nombre': 'Fernando David Fleitas Cáceres',
             'is_persona_fisica': True,
             'id_categoria': categoria_minorista,
-            'cedula': '12345678',
+            'cedula': '6052031',
             'correo': 'lilfleitas27@gmail.com',
             'telefono': '+54911234567',
             'direccion': 'Av. Corrientes 1234, Ciudad Autónoma de Buenos Aires, Argentina',
             'is_active': True,
-            'ruc': None
+            'ruc': '6052031-0'
         },
         {
             'nombre': 'Javier Toshifumi Goto Dominguez',

@@ -47,6 +47,7 @@ class Transaccion(models.Model):
     metodo_financiero_detalle = models.ForeignKey(MetodoFinancieroDetalle, on_delete=models.SET_NULL, null=True, blank=True)
     fecha_inicio = models.DateTimeField(auto_now_add=True)
     fecha_fin = models.DateTimeField(null=True, blank=True)
+    factura_emitida = models.BooleanField(default=False)
     tauser = models.ForeignKey(Tauser, on_delete=models.CASCADE, related_name='transacciones')
     estado = models.CharField(max_length=20, choices=ESTADO_CHOICES, default='pendiente')
     stripe_session_id = models.CharField(max_length=255, null=True, blank=True, unique=True)
@@ -60,3 +61,9 @@ class Transaccion(models.Model):
         verbose_name = "Transacción"
         verbose_name_plural = "Transacciones"
         ordering = ['-created_at']
+
+
+class PagoStripe(models.Model):
+    transaccion = models.ForeignKey(Transaccion, on_delete=models.PROTECT)
+    brand = models.CharField(max_length=20)
+    funding = models.CharField(max_length=10)
