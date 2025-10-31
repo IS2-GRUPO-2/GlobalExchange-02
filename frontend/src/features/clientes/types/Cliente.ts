@@ -25,6 +25,7 @@ export type Cliente = {
   cedula?: string;
   correo: string;
   telefono: string;
+  is_contribuyente: boolean;
   direccion: string;
   is_active: boolean;
   ruc?: string;

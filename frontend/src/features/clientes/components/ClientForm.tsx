@@ -10,6 +10,7 @@ export type ClientFormData = {
   id?: number;
   nombre: string;
   is_persona_fisica: boolean;
+  is_contribuyente: boolean;
   idCategoria: string;
   documento: string;
   correo: string;
@@ -35,6 +36,7 @@ const clientSchema = yup.object().shape({
     .required("Este campo es requerido")
     .email("Ingrese una dirección de correo válida"),
   is_persona_fisica: yup.boolean().required("Este campo es requerido."),
+  is_contribuyente: yup.boolean().required("Este campo es requerido."),
   idCategoria: yup.string().required("Este campo es requerido."),
   documento: yup
     .string()
@@ -69,6 +71,7 @@ const ClientForm = ({
     formState: { errors, isSubmitting },
     reset,
     setValue,
+    watch,
   } = useForm<ClientFormData>({
     resolver: yupResolver(clientSchema),
     defaultValues:
@@ -80,6 +83,7 @@ const ClientForm = ({
               ? cliente?.cedula
               : cliente?.ruc,
             is_persona_fisica: cliente?.is_persona_fisica,
+            is_contribuyente: cliente?.is_contribuyente,
             direccion: cliente?.direccion,
             telefono: cliente?.telefono,
             correo: cliente?.correo,
@@ -89,11 +93,19 @@ const ClientForm = ({
             idCategoria: "",
             documento: "",
             is_persona_fisica: false,
+            is_contribuyente: true,
             direccion: "",
             telefono: "",
             correo: "",
           },
   });
+  const isContribuyente = watch("is_contribuyente");
+  const personaFisicaDisabled = readOnly || !isContribuyente;
+  useEffect(() => {
+    if (!isContribuyente) {
+      setValue("is_persona_fisica", false);
+    }
+  }, [isContribuyente, setValue]);
   // Cargar categorías al montar el componente
   useEffect(() => {
     const fetchCategorias = async () => {
@@ -153,6 +165,29 @@ const ClientForm = ({
           />
           {errors.nombre && (
             <p className="mt-1 text-sm text-red-600">{errors.nombre.message}</p>
+          )}
+        </div>
+
+        <div>
+          <label
+            htmlFor="contribuyente"
+            className="flex items-center text-sm font-medium text-gray-700 cursor-pointer"
+          >
+            <input
+              type="checkbox"
+              id="contribuyente"
+              {...register("is_contribuyente")}
+              className={`mr-2 h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded ${
+                errors.is_contribuyente ? "border-red-500" : ""
+              }`}
+              disabled={readOnly}
+            />
+            Contribuyente
+          </label>
+          {errors.is_contribuyente && (
+            <p className="mt-1 text-sm text-red-600">
+              {errors.is_contribuyente.message}
+            </p>
           )}
         </div>
 
@@ -286,7 +321,7 @@ const ClientForm = ({
         <div>
           <label
             htmlFor="tipo"
-            className="flex items-center text-sm font-medium text-gray-700 cursor-pointer"
+            className={`flex items-center text-sm font-medium ${personaFisicaDisabled ? "text-gray-400 cursor-not-allowed" : "text-gray-700 cursor-pointer"}`}
           >
             <input
               type="checkbox"
@@ -295,10 +330,7 @@ const ClientForm = ({
               className={`mr-2 h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded ${
                 errors.is_persona_fisica ? "border-red-500" : ""
               }`}
-              defaultChecked={
-                isEditForm || readOnly ? cliente?.is_persona_fisica : true
-              }
-              disabled={readOnly}
+              disabled={readOnly || !isContribuyente}
             />
             Persona física
           </label>
