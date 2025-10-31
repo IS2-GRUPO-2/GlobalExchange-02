@@ -2,7 +2,7 @@ from .factura_base import factura_base
 from .models import FacturaSettings
 from apps.operaciones.models import Transaccion, PagoStripe
 from django.core.exceptions import ValidationError
-from apps.metodos_financieros.models import Tarjeta
+from apps.metodos_financieros.models import Tarjeta, Cheque
 import json
 import requests
 from globalexchange.configuration import config
@@ -38,17 +38,14 @@ def _cargar_transaccion(transaccion_id) -> Transaccion:
     except Transaccion.DoesNotExist:
         raise ValidationError("La transaccion no existe")
     
-    if transaccion.divisa_origen.codigo not in ["PYG", "USD"]:
-        raise ValidationError("No se hacen facturas que no sean en PYG o USD")
-    
-    if transaccion.estado != "en_proceso":
+    if transaccion.estado not in ["en_proceso", "completada"]:
         raise ValidationError("No se pueden factura transacciones que aun no hayan sido pagadas")
 
     if transaccion.metodo_financiero is None:
         raise ValidationError("La transaccion no tiene metodo de pago")
 
     if transaccion.metodo_financiero_detalle is None:
-        if transaccion.metodo_financiero.nombre not in ["STRIPE", "EFECTIVO"]: # type: ignore
+        if transaccion.metodo_financiero.nombre not in ["STRIPE", "EFECTIVO", "CHEQUE"]: # type: ignore
             raise ValidationError("No hay metodo de pago asociado")
 
     return transaccion
@@ -60,7 +57,7 @@ def _cargar_datos_iniciales(transaccion: Transaccion):
     utc_minus_3 = timezone(timedelta(hours=-3))
     factura["dNumDoc"] = "0000" + str(num_doc)
     factura["dFeEmiDE"] = datetime.now(utc_minus_3).isoformat().split('.')[0]
-    factura["iTipTra"] = "4" if transaccion.operacion == "venta" else "6"
+    factura["iTipTra"] = "5" if transaccion.operacion == "venta" else "6"
 
     return factura
 
@@ -103,6 +100,26 @@ def _cargar_datos_tarjeta(transaccion: Transaccion, pago: dict):
     pago["iDenTarj"] = "99" if marca not in BRANDS else BRANDS[marca]
     pago["iForProPa"] = "2"
 
+def _cargar_datos_cheque(transaccion: Transaccion, pago: dict):
+    """Carga datos específicos cuando el pago es con CHEQUE.
+    Busca el cheque asociado a la transacción. Intenta primero por la FK directa
+    y, si no está, por el texto en observaciones con el patrón "Transaccion <id>".
+    """
+    # Tipo de pago 2 = Cheque
+    pago["iTiPago"] = "2"
+    cheque = None
+    # Preferir relación directa si existe
+    try:
+        cheque = Cheque.objects.filter(transaccion=transaccion).first()
+    except Exception:
+        cheque = None
+    if not cheque:
+        raise ValidationError("No se encontró un cheque asociado a la transacción")
+    numero = str(cheque.numero) if cheque.numero is not None else ""
+    # Debe ser de 8 caracteres, padding con ceros a la izquierda
+    pago["dNumCheq"] = numero.zfill(8)[:8]
+    pago["dBcoEmi"] = cheque.banco_emisor.nombre if cheque.banco_emisor else ""
+
 def _cargar_datos_pago(transaccion: Transaccion, factura: dict):
     metodo_pago = transaccion.metodo_financiero
     pago = {
@@ -122,6 +139,8 @@ def _cargar_datos_pago(transaccion: Transaccion, factura: dict):
             _cargar_datos_tarjeta(transaccion, pago)
         case "TRANSFERENCIA_BANCARIA":
             pago["iTiPago"] = "5"
+        case "CHEQUE":
+            _cargar_datos_cheque(transaccion, pago)
         case "BILLETERA_DIGITAL":
             pago["iTiPago"] = "7"     
         case _:

@@ -7,7 +7,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('operaciones', '0003_transaccion_stripe_session_id'),
+        ('operaciones', '0001_initial'),
     ]
 
     operations = [

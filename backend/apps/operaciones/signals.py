@@ -16,7 +16,7 @@ def generar_factura_al_pagar(sender, instance: Transaccion, **kwargs):
     """
     logger.info(f"Generando factura para transaccion con id {instance.pk}")
     try:
-        if instance.estado != "en_proceso" or instance.factura_emitida:
+        if instance.estado not in ["en_proceso", "completada"] or instance.factura_emitida:
             logger.error(f"Transacción con id {instance.pk} ya fue facturada o no puede ser facturada")
             return
             

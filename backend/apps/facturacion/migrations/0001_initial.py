@@ -9,7 +9,7 @@ class Migration(migrations.Migration):
     initial = True
 
     dependencies = [
-        ('operaciones', '0003_transaccion_stripe_session_id'),
+        ('operaciones', '0004_transaccion_factura_emitida_pagostripe'),
     ]
 
     operations = [

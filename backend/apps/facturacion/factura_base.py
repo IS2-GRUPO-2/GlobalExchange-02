@@ -35,10 +35,10 @@ factura_base = {
                     "dDesActEco": "Otras actividades profesionales, científicas y técnicas n.c.p."
                 }
             ],
-            "iNatRec": "", # naturaleza del emisor, revisar manual sifen
-    	    "iTiOpe": "", # tipo de operacion, 1 si es persona juridica, 2 si es persona fisica
+            "iNatRec": "", # naturaleza del receptor, (1 contribuyente 2 persona fisica)
+    	    "iTiOpe": "", # tipo de operacion, (1 B2B 2 B2C)
             "cPaisRec": "PRY", # todos los clientes son de py
-            "iTiContRec": "", # tipo de contribuyente del receptor
+            "iTiContRec": "", # tipo de contribuyente del receptor (1 persona fisica 2 persona juridica)
             "dRucRec": "0", # ruc del receptor
             "dDVRec": "0", #digito verificador del ruc del receptor
             "iTipIDRec": "0", # obligatorio si inatRec es 2, 1 es CI
