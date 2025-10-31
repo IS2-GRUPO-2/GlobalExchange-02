@@ -15,7 +15,7 @@ class Factura(models.Model):
     estado = models.CharField(max_length=100, choices=ESTADO_CHOICES, default="EN_PROCESO")
 
 class FacturaSettings(SingletonModel):
-    ultimo_num = models.IntegerField(default=201)
+    ultimo_num = models.IntegerField(default=214)
     last_updated = models.DateTimeField(auto_now=True)
     rango_inicio = models.IntegerField(default=201)
     rango_fin = models.IntegerField(default=250)
