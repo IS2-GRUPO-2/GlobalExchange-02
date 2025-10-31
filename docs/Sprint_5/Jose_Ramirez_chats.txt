@@ -1,0 +1,291 @@
+Hola ahora puedes hacer que en el tauser en la etapa donde muestra las operaciones pendientes con el cliente seleccionado en la EtapaOperacionesPendiente solo debe listar las operaciones que llevan seleccionado ese tauser, ejemplo si en la transaccion se selecciono solo el tauser de ita, esta operacion solo debe listar el el tauser de Ita
+
+
+Cambios Clave
+
+frontend/src/features/tauser/components/EtapaOperacionesPendientes.tsx:9 ahora recibe el tauser seleccionado y usa esa información para filtrar las operaciones, manteniendo solo aquellas cuyo tauser (id o código en el detalle) coincide con la terminal activa. También se reinicia la paginación cuando cambian cliente o tauser y se evita seguir mostrando datos cuando alguno falta.
+frontend/src/features/tauser/components/EtapaOperacionesPendientes.tsx:24 añade el guard clause y el nuevo filtrado dentro del ciclo de polling, asegurando que los listados se sincronicen cada 5 s sin mezclar operaciones de otras terminales.
+frontend/src/features/tauser/components/TauserInicio.tsx:185 pasa el tauser seleccionado como nueva prop para que la etapa de pendientes conozca la terminal activa.
+Sugerencias
+
+Probar el flujo en la UI seleccionando distintos tausers para confirmar que cada uno solo ve sus operaciones.
+2 files changed
++91
+-62
+
+Undo
+
+View all changes
+EtapaOperacionesPendientes.tsx
++82
+-54
+
+TauserInicio.tsx
++9
+-8
+
+ahora en la etapa seleccion de clientes tambien debajo de cada cliente solo debe aparecer la cantidad de operaciones que tiene ese cliente en ese tause disponible
+
+
+Actualicé la selección de clientes para que solo muestre el recuento de operaciones del tauser activo.
+
+frontend/src/features/tauser/components/EtapaCliente.tsx:9 ahora recibe tauser y usa matchesSelectedTauser para filtrar las operaciones pendientes antes de contarlas.
+frontend/src/features/tauser/components/EtapaCliente.tsx:37 reinicia listados y conteos cuando falta tauser y vuelve a calcularlos cada vez que cambian usuario o terminal.
+frontend/src/features/tauser/components/TauserInicio.tsx:182 pasa el tauser seleccionado al componente de clientes para habilitar el nuevo filtrado.
+Siguiente paso: 1) Probar en la UI cambiando de tauser y cliente para confirmar que los totales corresponden a cada terminal.
+
+2 files changed
++99
+-72
+
+Undo
+
+View all changes
+EtapaCliente.tsx
++97
+-70
+
+TauserInicio.tsx
++2
+-2
+
+en el tause necesito que que cuando selecciona procesar una operacion en la etapaoperacionespendientes, pase a la estapa procesar venta, para el caso en que divisa base -> divisa extranjera, el boton que dice entregar metalico sea un icono del tipo : BanknoteArrowDown
+de este boton de lucide react, agrega lo en el proceso de entregar metalico
+grande en el medio debajo de una imagen de efectivo, y qeu cuando se precione el boton con el icono este haga un efecto de tipo retirando el dinero y luego de eso automaticamente pase a la siguiente estapa, esa animacion puede durar unos 3 segundos
+
+
+frontend/src/features/tauser/components/ProcesarVenta.tsx:31 detecta cuando la operación va de divisa base a extranjera, añade estados para animación y gestiona el timeout que dispara el avance automático tras 3 s.
+frontend/src/features/tauser/components/ProcesarVenta.tsx:82 reinicia y limpia la animación si cambia la transacción; se añadió la ilustración CashIllustration y se remaquetó la sección de entrega (…:556) con el icono BanknoteArrowDown centrado y el nuevo copy.
+frontend/src/index.css:74 incorpora los keyframes cashWithdraw que animan el icono simulando el retiro de efectivo.
+Siguiente paso recomendado:
+
+Probar en la UI una venta base→extranjera para ver la animación completa y confirmar que pasa al resumen tras los 3 s; validar también que otras operaciones conservan el flujo anterior.
+2 files changed
++199
+-75
+
+Undo
+
+View all changes
+ProcesarVenta.tsx
++173
+-72
+
+index.css
++26
+-3
+
+ahora ya luego de paga en el proceso de venta cuando se le da al boton que realiza la animacion y lleva a la etapa de resumen, este ya debe finalizar la operacion osea en la ultima etapa ya debe de llegar la transaccion en estado finalizado.
+
+
+frontend/src/features/tauser/components/ProcesarVenta.tsx:26 detecta cuando la venta es de divisa base a extranjera, añade estados para animación y maneja un timeout de 3 s tras entregar metálico. Después de registrar la entrega, ahora se llama a completarTransaccionTauser, se actualiza la transacción a estado finalizado y se pasa al resumen (con animación en operaciones base→extranjera antes del avance).
+frontend/src/index.css:74 extiende la animación cashWithdraw; ésta se usa mientras se espera la finalización automática y bloquea acciones simultáneas para evitar dobles envíos.
+Siguiente paso recomendado:
+
+Probar una venta base→extranjera y otra con divisas distintas para verificar que al terminar se llega al resumen con la transacción ya finalizada y que el flujo sin animación sigue estable.
+
+puedes checkear bien la logica que se realiza para los movimiento de stock? cuando se realiza una salida a cliente el estado del movimiento de stock sigue quedandoce en pendiente, este mecanismo de stock funciona asi, cuando el cliente paga en guaranies ese stock deja de estar disponible y pasa a proceso osea se reserva ese stok para el cliente, cuando el cliente retira ese stock qeu estaba pendiente debe pasar a finalizado. cuando le da al boton para para retirar el dinero en la estapa procesar venta, debe finalizar ya la operacion cambiando el estado, entonces en la ultima etapa de resumen directamente aparece el comprobante ya no debe estar el boton de finalizar operacion y tambien en el comprobante la operacion ya tiene que esta en estado finalizado.
+
+
+backend/apps/operaciones/views.py:258-269 ahora, al completar una transacción, busca el estado FINALIZADO, actualiza la transacción en una transacción atómica y marca todos los movimientos de stock asociados como finalizados, garantizando que las salidas reservadas queden cerradas.
+frontend/src/features/tauser/components/ProcesarVenta.tsx:188-240 encadena entregarMetalicoTauser con completarTransaccionTauser, maneja el caso de movimientos ya registrados y dispara la animación/avance automático con la transacción ya finalizada.
+frontend/src/features/tauser/components/TauserInicio.tsx:129-134 ajusta el flujo para marcar la operación como finalizada en cuanto recibe una transacción en estado completada, activando el conteo regresivo sin pasos manuales.
+frontend/src/features/tauser/components/OperacionResumen.tsx:28-116 detecta operaciones ya cerradas, protege el botón de “Finalizar” y muestra directamente el comprobante finalizado, manteniendo el botón solo cuando aún falta cerrar la operación.
+Siguiente paso sugerido: 1) probar en la UI el flujo de venta (incluyendo base→extranjera) para confirmar que la transacción llega al resumen con estado completada, sin botón de finalizar y con el movimiento de stock ya en FINALIZADO. No ejecuté tests automáticos.
+
+4 files changed
++114
+-70
+
+Undo
+
+View all changes
+views.py
++17
+-7
+
+OperacionResumen.tsx
++10
+-5
+
+ProcesarVenta.tsx
++80
+-51
+
+TauserInicio.tsx
++7
+-7
+
+en OperacionResumen.tsx puedes poner el estado de manera mejor? osea le mismo formato que aparece en la tabl de HistorialPage
+
+
+frontend/src/features/tauser/components/OperacionResumen.tsx:28 now calcula la configuración visual del estado usando estadosTransaccion, garantizando que el resumen y el historial compartan el mismo badge.
+frontend/src/features/tauser/components/OperacionResumen.tsx:44 reemplaza el valor plano del estado por un span con las clases de fondo/texto, replicando el estilo de HistorialPage.
+frontend/src/features/tauser/components/OperacionResumen.tsx:128 actualiza InfoCard para aceptar ReactNode, permitiendo renderizar badges u otros elementos sin formato plano.
+Siguiente paso sugerido: 1) Abrir la vista de resumen para verificar que el badge de estado refleje correctamente cada transición (por ejemplo, pendiente, en proceso, finalizada) y que el resto de valores sigan mostrándose sin cambios.
+
+1 file changed
+
+Undo
+
+View all changes
+OperacionResumen.tsx
++39
+-24
+
+para la venta cuando el metodo de pago es cheche tambien debe listar en EtapaOpracionesPendientes
+
+
+frontend/src/features/tauser/components/EtapaOperacionesPendientes.tsx:38 now retiene las ventas pendientes cuyo método financiero es cheque (CHEQUE), mientras sigue ocultando las demás ventas pendientes, de modo que esas operaciones especiales sí aparecen en la lista de pendientes.
+Listo para seguir: probá en la UI una venta pendiente con método cheque y otra con otro método para confirmar que solo la primera queda visible.
+
+1 file changed
+
+Undo
+
+View all changes
+EtapaOperacionesPendientes.tsx
++9
+-3
+
+en el contador de la estapaCliente que tambien tenga en cuenta las transacciones que son con cheque
+
+
+frontend/src/features/tauser/components/EtapaCliente.tsx:73 ahora conserva las ventas pendientes cuyo método financiero es cheque (CHEQUE) en el conteo de operaciones pendientes, mientras sigue excluyendo el resto de ventas pendientes.
+Listo; las etapas de clientes y pendientes quedan alineadas mostrando también las transacciones con cheque.
+
+1 file changed
+
+Undo
+
+View all changes
+EtapaCliente.tsx
++9
+-4
+
+en la etapa cuando doy a procesar la transaccion con tipo de pago cheche no me esta trayendo correctamente los bancos debido a que la url utiliza _ y no - puedes fijarte en el service como esta hecho
+
+
+frontend/src/features/tauser/services/tauserTerminalService.ts:73 corrige el endpoint de bancos del tauser: se usa /metodos_financieros/bancos/ (con guion bajo) para alinearlo con los endpoints del backend, lo que permite cargar los bancos cuando el método es cheque.
+Listo; las solicitudes de bancos deberían responder correctamente en la etapa de procesamiento de ventas con cheques.
+
+1 file changed
+
+Undo
+
+View all changes
+tauserTerminalService.ts
++2
+-2
+
+puedes checkear bien los tipos de respuesta qeu retorna los endpoint de bancos me da error de mapeo, puedes checkear bien las respuestas qeu trae los enspoints que requiere es etapa:
+Unexpected Application Error!
+bancos.map is not a function
+
+ProcesarVenta@http://localhost:5173/src/features/tauser/components/ProcesarVenta.tsx?t=1761865229433:260:24
+react_stack_bottom_frame@http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=ba50f8cb:17424:20
+renderWithHooks@http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=ba50f8cb:4206:42
+updateFunctionComponent@http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=ba50f8cb:6619:21
+beginWork@http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=ba50f8cb:7654:20
+runWithFiberInDEV@http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=ba50f8cb:1487:15
+performUnitOfWork@http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=ba50f8cb:10868:98
+workLoopSync@http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=ba50f8cb:10728:60
+renderRootSync@http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=ba50f8cb:10711:13
+performWorkOnRoot@http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=ba50f8cb:10359:46
+performWorkOnRootViaSchedulerTask@http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=ba50f8cb:11623:26
+performWorkUntilDeadline@http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=ba50f8cb:36:58
+
+💿 Hey developer 👋
+
+You can provide a way better UX than this when your app throws errors by providing your own ErrorBoundary or errorElement prop on your route.
+
+
+frontend/src/features/tauser/services/tauserTerminalService.ts:37 now normaliza la respuesta de /metodos_financieros/bancos/, convirtiéndola en un Banco[] aunque el backend devuelva un objeto paginado; además agrega un fallback vacío y una consulta con page_size e is_active.
+frontend/src/features/tauser/components/ProcesarVenta.tsx:66 actualiza la carga de bancos para usar directamente el array normalizado, evitando el acceso a res.data.
+Con esto, el listado de bancos para cheques vuelve a renderizarse sin lanzar bancos.map is not a function.
+
+2 files changed
++20
+-5
+
+Undo
+
+View all changes
+ProcesarVenta.tsx
++3
+-3
+
+tauserTerminalService.ts
++17
+-2
+
+puedes checkear el service del tauser que todas las peticiones urls y tipos conicidan con lo que solicita? todos los prefijos a los /metodo llevan metodos-financieros con _ osea metodos_financiero
+
+
+frontend/src/features/tauser/services/tauserTerminalService.ts:37 normaliza la respuesta de /metodos_financieros/bancos/ y siempre devuelve un Banco[], incluso si el backend responde paginado; además, ajusta el fallback vacío con un cast explícito para mantener el tipado.
+frontend/src/features/tauser/services/tauserTerminalService.ts:53 corrige la URL de creación de cheques al usar el mismo prefijo _ (/metodos_financieros/cheques/) que el resto de endpoints del módulo.
+Con ambas rutas alineadas, las peticiones del tauser para bancos y cheques deberían resolverse sin errores de mapeo ni inconsistencias de formato.
+
+1 file changed
+
+Undo
+
+View all changes
+tauserTerminalService.ts
++4
+-4
+
+ahora una vez registrado el cheque registre eso en como un pago, tamibien que cambien de estado la transaccion a en proceso, y si en operaciones pendientes la transaccion con cheque ya llega en estado en proceso no deberia de permitir volver a ingresar otro cheque para esta transaccion, osea deberia bloquear o algo asi
+
+
+backend/apps/metodos_financieros/views.py:17 importa transacción, pagos y el enum de métodos; en ChequeViewSet.create (#L628) agregué validaciones para exigir transaccion, rechazar reintentos cuando ya está en proceso, persistir el cheque dentro de una transacción atómica, crear/actualizar el pago con método CHEQUE y cambiar la transacción a en_proceso junto con el updated_at.
+frontend/src/features/tauser/services/tauserTerminalService.ts:26 amplía ChequePayload con el transaccion y ajusta crearChequeTauser para enviar esa información.
+frontend/src/features/tauser/components/ProcesarVenta.tsx:61 inicializa el estado chequeRegistrado en true cuando la transacción ya no está pendiente y, en handleRegistrarCheque (#L112), envía el transaccion.id; tras registrar, el formulario queda bloqueado tal como solicitaste.
+Con esto, registrar un cheque genera el pago, mueve la operación a “en proceso” y evita que se vuelva a cargar un segundo cheque.
+
+3 files changed
++105
+-45
+
+Undo
+
+View all changes
+views.py
++82
+-24
+
+ProcesarVenta.tsx
++16
+-15
+
+tauserTerminalService.ts
++7
+-6
+
+en operaciones de la app origina (no tauser), cuando realiza un operacion del tipo venta de divisa extranjera, utilizando los metodos de pagocliente( casa cobra) de billetera, transferencia y trajetas de credito debito no se genera correctamente el registro del componente Pago puedes agregar eso?
+
+
+backend/apps/operaciones/views.py:443 introduces _registrar_pago_operacion, which creates or actualiza el registro en Pagos para ventas con métodos TRANSFERENCIA_BANCARIA, BILLETERA_DIGITAL o TARJETA. Se apoya en Pagos.update_or_create, dejando el registro en estado aprobado y con un mensaje genérico.
+backend/apps/operaciones/views.py:603 llama a _registrar_pago_operacion(transaccion) tras aprobar el pago en confirmar_pago, asegurando que el pago se registre cuando la operación pasa a “en proceso” en la app principal.
+Con esto, las ventas de divisa extranjera procesadas desde la app principal generan el componente Pago correspondiente para billetera, transferencia y tarjeta.
+
+1 file changed
+
+Undo
+
+View all changes
+views.py
++49
+-24
+
+ahora hace bien pero que en request guarde el TipoMetodoFinanciero correspondiente (el que esta en mayuscula y con _)y que en response asi como esta ahora ver (porque cambie)
+
+
+backend/apps/operaciones/views.py:449 ahora guarda en Pagos.request el nombre del método financiero tal como está en TipoMetodoFinanciero (e.g. TRANSFERENCIA_BANCARIA) en lugar del literal genérico, mientras mantiene la respuesta descriptiva.
+Queda consistente con tu petición: response sigue con el mensaje actual y request almacena el enum en mayúsculas.
+
+ahora puedes agregar esto antes de todo lo que hay?
+
+
+jose:
+para operaciones del tipo compra en EtapaOperacionesPendientes no lista correctamente, para el caso en el que la transacion es de divisa extranjera -> base, la transaccion se encuentra en estado pendiente, asegurate que para esos casos se liste estas opeaciones y tambien en la estapa seleccion de cliente el contador debe reflejar la cantidad de operaciones de cada cliente, luego de seleccionar procesar tal transferencia me lleva a la etapaprocesarpago, alli debe ser similar a cheque, pero en lugar de ingresar un cheque , que sea un inputs de la divisa extranjera para cada denominaciones e ingresar y la cantidad ingresada debe coincidir con la cantidad que requiere la transaccion, el input debe ser para cada denominaciones, asi luego de ingresar el monto correcto en denominaciones, este realize un movimiento de stock del tipo entradacliente para el tause (investiga como funciona ya existe todo eso para
