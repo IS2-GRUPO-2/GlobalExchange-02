@@ -12,8 +12,12 @@ from apps.clientes.models import Cliente, CategoriaCliente
 from apps.notificaciones.models import (
     NotificacionTasaUsuario,
     NotificacionTasaCliente,
+    NotificacionCambioTasa,
 )
 from apps.cotizaciones.models import Tasa
+from apps.cotizaciones.serializers import TasaSerializer
+from apps.tauser.models import Tauser
+from apps.operaciones.models import Transaccion
 
 
 @pytest.fixture
@@ -831,3 +835,142 @@ class TestEdgeCases:
         )
 
         assert response.status_code == status.HTTP_400_BAD_REQUEST
+
+
+# ============================================
+# TESTS DE NOTIFICACIONES TOAST POR CAMBIO DE TASA
+# ============================================
+
+@pytest.mark.django_db
+class TestNotificacionCambioTasaIntegracion:
+    """Pruebas para la generación automática de notificaciones tipo toast."""
+
+    def test_crea_notificacion_toast_para_usuario_suscrito(
+        self, user_with_token, divisas_activas
+    ):
+        user = user_with_token["user"]
+        usd = divisas_activas["usd"]
+
+        preferencia = NotificacionTasaUsuario.objects.create(
+            usuario=user,
+            is_active=True
+        )
+        preferencia.divisas_suscritas.add(usd)
+
+        tasa = Tasa.objects.get(divisa=usd)
+
+        serializer = TasaSerializer(
+            tasa,
+            data={"precioBase": "7100.00"},
+            partial=True
+        )
+        assert serializer.is_valid(), serializer.errors
+        serializer.save()
+
+        notificacion = NotificacionCambioTasa.objects.filter(usuario=user).first()
+        assert notificacion is not None
+        assert notificacion.tipo_evento == NotificacionCambioTasa.TipoEvento.SUSCRIPCION
+        assert "Cambio en tasa" in notificacion.titulo
+
+    def test_crea_notificacion_toast_para_transaccion_pendiente(
+        self, user_with_token, cliente_with_user, divisas_activas
+    ):
+        user = user_with_token["user"]
+        cliente = cliente_with_user
+        usd = divisas_activas["usd"]
+        base = divisas_activas["guarani"]
+
+        tauser = Tauser.objects.create(
+            codigo="TAU-001",
+            nombre="Tauser Principal",
+            direccion="Av. Principal 123",
+            ciudad="Asunción",
+            departamento="Central",
+            latitud=Decimal("-25.300000"),
+            longitud=Decimal("-57.635000"),
+        )
+
+        Transaccion.objects.create(
+            id_user=user,
+            cliente=cliente,
+            operacion="compra",
+            tasa_aplicada=Decimal("7000.00"),
+            tasa_inicial=Decimal("7000.00"),
+            divisa_origen=base,
+            divisa_destino=usd,
+            monto_origen=Decimal("1000.00"),
+            monto_destino=Decimal("1.00"),
+            tauser=tauser,
+            estado="pendiente"
+        )
+
+        tasa = Tasa.objects.get(divisa=usd)
+
+        mail.outbox.clear()
+
+        serializer = TasaSerializer(
+            tasa,
+            data={"precioBase": "7150.00"},
+            partial=True
+        )
+        assert serializer.is_valid(), serializer.errors
+        serializer.save()
+
+        notificacion = NotificacionCambioTasa.objects.filter(usuario=user).first()
+        assert notificacion is not None
+        assert notificacion.tipo_evento == NotificacionCambioTasa.TipoEvento.TRANSACCION_PENDIENTE
+        assert "Transacción pendiente" in notificacion.titulo
+
+        assert len(mail.outbox) == 1
+        assert mail.outbox[0].to == [user.email]
+
+
+@pytest.mark.django_db
+class TestNotificacionCambioTasaAPI:
+    """Pruebas del endpoint de polling de notificaciones visuales."""
+
+    def test_obtener_notificaciones_cambio_tasa(
+        self, api_client, user_with_token, divisas_activas
+    ):
+        token = user_with_token["token"]
+        user = user_with_token["user"]
+        usd = divisas_activas["usd"]
+
+        notificacion = NotificacionCambioTasa.objects.create(
+            usuario=user,
+            divisa=usd,
+            tipo_evento=NotificacionCambioTasa.TipoEvento.SUSCRIPCION,
+            titulo="Cambio en tasa de USD/PYG",
+            descripcion="Nueva tasa compra 7100.00 (antes 7000.00). Venta 7200.00 (antes 7100.00)",
+            tasa_compra_anterior=Decimal("7000.00"),
+            tasa_compra_nueva=Decimal("7100.00"),
+            tasa_venta_anterior=Decimal("7200.00"),
+            tasa_venta_nueva=Decimal("7300.00"),
+        )
+
+        response = api_client.get(
+            "/api/notificaciones/tasa/eventos/",
+            HTTP_AUTHORIZATION=f"Bearer {token}"
+        )
+
+        assert response.status_code == status.HTTP_200_OK
+        assert isinstance(response.data, list)
+        assert len(response.data) == 1
+
+        payload = response.data[0]
+        assert payload["tipo_evento"] == "suscripcion"
+        assert "par_divisa" in payload
+        assert "tasa_compra" in payload
+        assert payload["tasa_compra"]["es_incremento"] is True
+
+        notificacion.refresh_from_db()
+        assert notificacion.is_read is True
+        assert notificacion.read_at is not None
+
+        # Segunda llamada no debe retornar la notificación ya consumida
+        response_follow_up = api_client.get(
+            "/api/notificaciones/tasa/eventos/",
+            HTTP_AUTHORIZATION=f"Bearer {token}"
+        )
+        assert response_follow_up.status_code == status.HTTP_200_OK
+        assert response_follow_up.data == []

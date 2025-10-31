@@ -15,6 +15,11 @@ class StockDivisaTauser(models.Model):
     stock = models.IntegerField()
     denominacion = models.ForeignKey(Denominacion, on_delete=models.PROTECT)
 
+    class Meta:
+        unique_together = [['tauser', 'denominacion']]
+        verbose_name = "Stock de Divisa en Tauser"
+        verbose_name_plural = "Stocks de Divisas en Tausers"
+
 
 class TipoMovimiento(models.Model):
     codigo = models.CharField(max_length=10, unique=True, primary_key=True)

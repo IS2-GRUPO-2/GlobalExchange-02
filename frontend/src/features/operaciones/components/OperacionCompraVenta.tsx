@@ -12,7 +12,6 @@ import type {
   TransaccionDetalle,
 } from "../types/Transaccion";
 import { jwtDecode } from "jwt-decode";
-import type { Cliente } from "../../clientes/types/Cliente";
 import type { DecodedToken } from "../../usuario/types/User";
 import type {
   MetodoFinanciero,
@@ -20,7 +19,6 @@ import type {
   BilleteraDigital,
   Tarjeta,
 } from "../../metodos_financieros/types/MetodoFinanciero";
-import { getClienteActual } from "../../usuario/services/usuarioService";
 import {
   crearTransaccion,
   reconfirmarTasa,
@@ -37,6 +35,7 @@ import EtapaSeleccionTauser from "./EtapaSeleccionTauser";
 import EtapaResultado from "./EtapaResultado";
 import EtapaPago from "./EtapaPago";
 import EtapaComprobante from "./EtapaComprobante";
+import { useClientStore } from "../../../hooks/useClientStore";
 
 type EtapaActual = 1 | 2 | 3 | 4 | 5 | 6;
 
@@ -96,9 +95,7 @@ export default function OperacionCompraVenta() {
   >(null);
 
   // Cliente actual
-  const [clienteActual, setClienteActual] = useState<Cliente | undefined>(
-    undefined
-  );
+  const { selectedClient } = useClientStore();
 
   // Estados para reconfirmación y transacción
   const [transaccionId, setTransaccionId] = useState<number | null>(null);
@@ -142,65 +139,9 @@ export default function OperacionCompraVenta() {
     };
   }, []);
 
-  // Función para manejar cambio de cliente
-  const handleClienteChange = (
-    nuevoCliente: Cliente | null,
-    mostrarError: boolean = false
-  ) => {
+  useEffect(() => {
     resetOperacion();
-    setClienteActual(nuevoCliente || undefined);
-
-    // Solo mostrar error si se especifica explícitamente
-    if (!nuevoCliente && mostrarError) {
-      toast.error("No tienes un cliente asignado. Contacta a soporte.");
-    }
-  };
-
-  useEffect(() => {
-    const fetchClienteActual = async () => {
-      try {
-        const token = localStorage.getItem("token");
-        if (!token) return;
-        const userId = jwtDecode<DecodedToken>(token).user_id;
-        const res = await getClienteActual(Number(userId));
-        const { clienteActual } = res.data;
-
-        // No mostrar error en la carga inicial
-        handleClienteChange(clienteActual, false);
-      } catch (err) {
-        console.error("Error obteniendo cliente actual", err);
-        // Solo mostrar error si hay un problema real en la petición
-        toast.error(
-          "Error al cargar el cliente. Por favor, recarga la página."
-        );
-      }
-    };
-    fetchClienteActual();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  // Escuchar cambios del cliente desde ClientPicker
-  useEffect(() => {
-    const handleClienteChangeEvent = (event: Event) => {
-      const custom = event as CustomEvent;
-      const { cliente } = custom.detail || {};
-      // Mostrar error cuando el usuario cambia manualmente el cliente y no hay ninguno
-      handleClienteChange(cliente, true);
-    };
-
-    window.addEventListener(
-      "clienteActualChanged",
-      handleClienteChangeEvent as EventListener
-    );
-
-    return () => {
-      window.removeEventListener(
-        "clienteActualChanged",
-        handleClienteChangeEvent as EventListener
-      );
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [selectedClient]);
 
   // ========== FUNCIONES DE NAVEGACIÓN ==========
 
@@ -210,7 +151,7 @@ export default function OperacionCompraVenta() {
       toast.error("Completa todos los campos");
       return;
     }
-    if (!clienteActual) {
+    if (!selectedClient) {
       toast.error("Debes tener un cliente seleccionado");
       return;
     }
@@ -248,10 +189,10 @@ export default function OperacionCompraVenta() {
     try {
       // Realizar la simulación/cálculo de la operación
       const operacionData = {
-        cliente_id: clienteActual!.id,
+        cliente_id: selectedClient!.id,
         divisa_origen: Number(divisaOrigen),
         divisa_destino: Number(divisaDestino),
-        monto_origen: monto,
+        monto: monto, // monto origen si es op compra, monto destino en op venta
         op_perspectiva_casa: opPerspectivaCasa!,
         detalle_metodo_id: detalleMetodoSeleccionado ?? undefined,
         metodo_id: metodoGenericoSeleccionado ?? undefined,
@@ -377,7 +318,7 @@ export default function OperacionCompraVenta() {
 
       const transaccionData: TransaccionRequest = {
         id_user: Number(userId),
-        cliente: String(clienteActual!.id),
+        cliente: String(selectedClient!.id),
         operacion: opPerspectivaCasa!,
         tasa_aplicada: resultado.tc_final,
         tasa_inicial: resultado.tc_final,
@@ -422,7 +363,7 @@ export default function OperacionCompraVenta() {
       window.location.origin
     );
     url.searchParams.set("transaccionId", String(idTransaccion));
-    url.searchParams.set("cliente", clienteActual?.nombre ?? "Cliente");
+    url.searchParams.set("cliente", selectedClient?.nombre ?? "Cliente");
     url.searchParams.set("monto", String(resultado.monto_origen));
     if (resultado.divisa_origen) {
       url.searchParams.set("divisa", resultado.divisa_origen);
@@ -707,9 +648,11 @@ export default function OperacionCompraVenta() {
             setDivisaOrigen={setDivisaOrigen}
             divisaDestino={divisaDestino}
             setDivisaDestino={setDivisaDestino}
+            opPerspectivaCasa={opPerspectivaCasa}
+            setOpPerspectivaCasa={setOpPerspectivaCasa}
             monto={monto}
             setMonto={setMonto}
-            clienteActual={clienteActual}
+            clienteActual={selectedClient ?? null}
             onContinuar={avanzarEtapa2}
           />
         );
@@ -739,6 +682,9 @@ export default function OperacionCompraVenta() {
           <EtapaSeleccionTauser
             tauserSeleccionado={tauserSeleccionado}
             setTauserSeleccionado={setTauserSeleccionado}
+            divisaDestino={divisaDestino}
+            opPerspectivaCasa={opPerspectivaCasa}
+            monto={monto}
             onRetroceder={retrocederEtapa2}
             onAvanzar={avanzarEtapa4}
             onCancelar={cancelarOperacion}
@@ -796,7 +742,7 @@ export default function OperacionCompraVenta() {
     }
   };
 
-  if (!clienteActual) {
+  if (!selectedClient) {
     return (
       <section className="flex flex-col items-center p-6 select-none">
         <div className="w-full max-w-md bg-white rounded-lg shadow-lg p-8 text-center">

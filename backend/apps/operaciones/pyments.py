@@ -5,7 +5,13 @@ from typing import Optional
 from globalexchange.configuration import config
 import stripe
 from apps.operaciones.models import Transaccion
+from apps.clientes.models import Cliente
 from django.db import transaction
+from apps.metodos_financieros.models import Tarjeta, MetodoFinancieroDetalle, MetodoFinanciero
+from apps.clientes.models import Cliente
+from apps.pagos.models import Pagos
+
+from django.db.models import F
 stripe.api_key = config.STRIPE_KEY
 
 # Códigos normalizados del “procesador”
@@ -56,13 +62,23 @@ def completar_pago_stripe(session_id):
         print("No se encontró transaccion_id en metadata")
         return
     
+    pago_id = checkout_session['metadata'].get('pago_id')
+    if not pago_id:
+        print("No se encontró pago_id en metadata")
+        return
+
     with transaction.atomic():
         try:
             transaccion = Transaccion.objects.select_for_update().get(id=transaccion_id)
+            pago = Pagos.objects.select_for_update().get(id=pago_id)
         except Transaccion.DoesNotExist:
             print("La transacción no existe en la base de datos")
             return
-        
+        except Pagos.DoesNotExist:
+            print("El pago no existe en la base de datos")
+            return    
+
+
         if transaccion.stripe_session_id == session_id or transaccion.estado != "pendiente":
             print("Esta sesión ya fue procesada previamente")
             return
@@ -72,5 +88,55 @@ def completar_pago_stripe(session_id):
         transaccion.estado = "en_proceso"
         print("Actualizando informacion de transaccion")
         transaccion.save()
+        cliente = transaccion.cliente
+        
+        monto = transaccion.monto_origen
+        
+        # Actualización segura en SQL usando F()
+        Cliente.objects.filter(pk=cliente.pk).update(
+            gasto_diario=F('gasto_diario') + monto,
+            gasto_mensual=F('gasto_mensual') + monto
+        )
+
+        cliente.refresh_from_db(fields=["gasto_diario", "gasto_mensual"])
+
+        pago.estado = "APROBADO"
+        pago.response = "checkout.session.completed"
+        pago.save()
 
     print(f"Transacción {transaccion_id} completada con éxito (Stripe Session {session_id})")    
+
+def guardar_tarjeta_stripe(payment_method_id):
+    payment_method = stripe.PaymentMethod.retrieve(payment_method_id, expand=["card"])
+
+    cliente = Cliente.objects.get(stripe_customer_id=payment_method.customer)
+
+    if payment_method.card is None:
+        print("El metodo no es una tarjeta")
+        return
+    
+    with transaction.atomic():
+        metodo_financiero = MetodoFinanciero.objects.get(nombre="STRIPE")
+
+        metodo_financiero_detalle, _ = MetodoFinancieroDetalle.objects.get_or_create(
+            alias="Mi " + payment_method["card"]["brand"],
+            cliente=cliente,
+            metodo_financiero=metodo_financiero
+        )
+
+        metodo_financiero_detalle.save()
+
+        tarjeta, _ = Tarjeta.objects.get_or_create(
+            tipo="STRIPE",
+            payment_method_id=payment_method_id,
+            brand=payment_method["card"]["brand"],
+            last4=payment_method["card"]["last4"],
+            exp_month=payment_method["card"]["exp_month"],
+            exp_year=payment_method["card"]["exp_year"],
+            titular=cliente.nombre,
+            metodo_financiero_detalle=metodo_financiero_detalle,
+            funding=payment_method["card"]["funding"],
+            stripe_customer_id=cliente.stripe_customer_id
+        )
+
+        tarjeta.save()

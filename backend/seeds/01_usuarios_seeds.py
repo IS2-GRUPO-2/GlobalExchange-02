@@ -9,7 +9,7 @@ def run():
     
     # Usuario super administrador
     admin, created = User.objects.get_or_create(
-        email='admin@globalexchange.com',
+        email='ejfr09@hotmail.com',  # Actualizado a ejfr09@hotmail.com
         defaults={
             'username': 'admin',
             'first_name': 'Super',
@@ -30,7 +30,7 @@ def run():
     
     # Usuario administrador
     operador, created = User.objects.get_or_create(
-        email='operador@globalexchange.com',
+        email='elias4845@gmail.com',  # Actualizado a elias4845@gmail.com
         defaults={
             'username': 'operador',
             'first_name': 'Juan',
@@ -47,7 +47,7 @@ def run():
     
     # Usuario cliente
     cliente, created = User.objects.get_or_create(
-        email='cliente@globalexchange.com',
+        email='joseramirezdure03@gmail.com',  # Actualizado a joseramirezdure03@gmail.com
         defaults={
             'username': 'cliente',
             'first_name': 'María',
@@ -64,7 +64,7 @@ def run():
     
     # Usuario gerente
     gerente, created = User.objects.get_or_create(
-        email='gerente@globalexchange.com',
+        email='fernanfleitas@gmail.com',  # Actualizado a fernanfleitas@gmail.com
         defaults={
             'username': 'gerente',
             'first_name': 'Gerente',
@@ -82,35 +82,35 @@ def run():
     # Usuarios adicionales para pruebas
     usuarios_prueba = [
         {
-            'email': 'ana.garcia@email.com',
+            'email': 'eliasjfigueredo@outlook.com',
             'username': 'ana.garcia',
             'first_name': 'Ana',
             'last_name': 'García',
             'password': make_password('password123')
         },
         {
-            'email': 'carlos.lopez@email.com',
+            'email': 'gotojavier9@gmail.com',
             'username': 'carlos.lopez',
             'first_name': 'Carlos',
             'last_name': 'López',
             'password': make_password('password123')
         },
         {
-            'email': 'sofia.martinez@email.com',
+            'email': 'IIN_Cesars@hotmail.com',
             'username': 'sofia.martinez',
             'first_name': 'Sofía',
             'last_name': 'Martínez',
             'password': make_password('password123')
         },
         {
-            'email': 'pedro.gonzalez@email.com',
+            'email': 'marceloriveros3435@gmail.com',
             'username': 'pedro.gonzalez',
             'first_name': 'Pedro',
             'last_name': 'González',
             'password': make_password('password123')
         },
         {
-            'email': 'laura.rodriguez@email.com',
+            'email': 'marceloriveros13@hotmail.com',
             'username': 'laura.rodriguez',
             'first_name': 'Laura',
             'last_name': 'Rodríguez',
@@ -150,20 +150,20 @@ def run():
         cliente.groups.add(cliente_regular_role)
         
         # Asignar roles a usuarios de prueba
-        if User.objects.filter(email='ana.garcia@email.com').exists():
-            usuario_ana = User.objects.get(email='ana.garcia@email.com')
+        if User.objects.filter(email='eliasjfigueredo@outlook.com').exists():
+            usuario_ana = User.objects.get(email='eliasjfigueredo@outlook.com')
             usuario_ana.groups.add(cliente_premium_role)
-        if User.objects.filter(email='carlos.lopez@email.com').exists():
-            usuario_carlos = User.objects.get(email='carlos.lopez@email.com')
+        if User.objects.filter(email='gotojavier9@gmail.com').exists():
+            usuario_carlos = User.objects.get(email='gotojavier9@gmail.com')
             usuario_carlos.groups.add(cliente_premium_role)
-        if User.objects.filter(email='sofia.martinez@email.com').exists():
-            usuario_sofia = User.objects.get(email='sofia.martinez@email.com')
+        if User.objects.filter(email='IIN_Cesars@hotmail.com').exists():
+            usuario_sofia = User.objects.get(email='IIN_Cesars@hotmail.com')
             usuario_sofia.groups.add(cliente_regular_role)
-        if User.objects.filter(email='pedro.gonzalez@email.com').exists():
-            usuario_pedro = User.objects.get(email='pedro.gonzalez@email.com')
+        if User.objects.filter(email='marceloriveros3435@gmail.com').exists():
+            usuario_pedro = User.objects.get(email='marceloriveros3435@gmail.com')
             usuario_pedro.groups.add(cliente_regular_role)
-        if User.objects.filter(email='laura.rodriguez@email.com').exists():
-            usuario_laura = User.objects.get(email='laura.rodriguez@email.com')
+        if User.objects.filter(email='marceloriveros13@hotmail.com').exists():
+            usuario_laura = User.objects.get(email='marceloriveros13@hotmail.com')
             usuario_laura.groups.add(cliente_regular_role)
         
         print("  → Roles asignados correctamente")

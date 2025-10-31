@@ -37,7 +37,7 @@ export interface OperacionRequest {
   cliente_id?: string;
   divisa_origen: number;
   divisa_destino: number;
-  monto_origen: number;
+  monto: number;
   op_perspectiva_casa: "compra" | "venta";
   detalle_metodo_id?: number;
   metodo_id?: number;
