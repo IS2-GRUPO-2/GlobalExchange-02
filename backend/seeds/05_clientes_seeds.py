@@ -64,7 +64,6 @@ def run():
             'telefono': '+54911234567',
             'direccion': 'Av. Corrientes 1234, Ciudad Autónoma de Buenos Aires, Argentina',
             'is_active': True,
-            'contribuyente': True,
             'ruc': '6052031-0'
         },
         {
