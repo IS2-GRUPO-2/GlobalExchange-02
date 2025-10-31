@@ -119,6 +119,14 @@ export function ProcesarCompra({ transaccion, tauser, onCancelar, onProcesada, o
 
   const diferencia = totalRecibido - montoEsperado;
 
+  const denominacionesConId = useMemo(
+    () =>
+      denominaciones.filter(
+        (den): den is Denominacion & { id: number } => typeof den.id === "number"
+      ),
+    [denominaciones]
+  );
+
   const detallePayload = useMemo(
     () =>
       Object.entries(cantidades)
@@ -130,6 +138,20 @@ export function ProcesarCompra({ transaccion, tauser, onCancelar, onProcesada, o
     [cantidades]
   );
 
+  const buildCambioPayload = (
+    data: Partial<CambioPayload> & { mensaje?: string }
+  ): CambioPayload => ({
+    mensaje: data.mensaje,
+    tasa_anterior: data.tasa_anterior ?? String(transaccionDetalle.tasa_aplicada),
+    tasa_actual: data.tasa_actual ?? String(transaccionDetalle.tasa_aplicada),
+    monto_destino_anterior:
+      data.monto_destino_anterior ?? String(transaccionDetalle.monto_destino),
+    monto_destino_actual:
+      data.monto_destino_actual ?? String(transaccionDetalle.monto_destino),
+    delta_tc: data.delta_tc,
+    delta_pct: data.delta_pct,
+  });
+
   const verificarCambioDeTasa = async () => {
     if (!requiereRecepcion) {
       return true;
@@ -139,12 +161,12 @@ export function ProcesarCompra({ transaccion, tauser, onCancelar, onProcesada, o
       const res = await reconfirmarTasaTauser(transaccionDetalle.id);
       const data = res.data ?? res;
       if (data?.cambio) {
-        const payload: CambioPayload = {
+        const payload = buildCambioPayload({
           ...data,
           mensaje:
             data.mensaje ??
             "La cotizacion cambiA3 desde la ultima consulta. Acepta para actualizar los montos.",
-        };
+        });
         setCambioTasa({ fuente: "reconfirmacion", payload });
         return false;
       }
@@ -190,12 +212,12 @@ export function ProcesarCompra({ transaccion, tauser, onCancelar, onProcesada, o
     } catch (error: any) {
       if (error?.response?.status === 409) {
         const data = error.response.data ?? {};
-        const payload: CambioPayload = {
+        const payload = buildCambioPayload({
           ...data,
           mensaje:
             data.mensaje ??
             "La cotizacion cambiA3 antes de confirmar la recepcion. Debes aceptar la nueva tasa para continuar.",
-        };
+        });
         setCambioTasa({ fuente: "recepcion", payload });
         return;
       }
@@ -329,29 +351,32 @@ export function ProcesarCompra({ transaccion, tauser, onCancelar, onProcesada, o
           .
         </p>
         <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
-          {denominaciones.map((den) => (
-            <div
-              key={den.id}
-              className="border border-[var(--border)] rounded-2xl p-4 flex flex-col gap-3 bg-[var(--card)]"
-            >
-              <div className="text-sm text-[var(--muted-foreground)]">Denominacion</div>
-              <div className="text-2xl font-semibold text-[var(--foreground)]">
-                {Number(den.denominacion).toLocaleString()}
+          {denominacionesConId.map((den) => {
+            const denId = den.id!;
+            return (
+              <div
+                key={denId}
+                className="border border-[var(--border)] rounded-2xl p-4 flex flex-col gap-3 bg-[var(--card)]"
+              >
+                <div className="text-sm text-[var(--muted-foreground)]">Denominacion</div>
+                <div className="text-2xl font-semibold text-[var(--foreground)]">
+                  {Number(den.denominacion).toLocaleString()}
+                </div>
+                <input
+                  type="number"
+                  min={0}
+                  value={cantidades[denId] ?? 0}
+                  onChange={(event) =>
+                    setCantidades((prev) => ({
+                      ...prev,
+                      [denId]: Math.max(0, Number(event.target.value)),
+                    }))
+                  }
+                  className="w-full border border-[var(--border)] rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[var(--primary)] text-center"
+                />
               </div>
-              <input
-                type="number"
-                min={0}
-                value={cantidades[den.id] ?? 0}
-                onChange={(event) =>
-                  setCantidades((prev) => ({
-                    ...prev,
-                    [den.id]: Math.max(0, Number(event.target.value)),
-                  }))
-                }
-                className="w-full border border-[var(--border)] rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[var(--primary)] text-center"
-              />
-            </div>
-          ))}
+            );
+          })}
         </div>
       </section>
 

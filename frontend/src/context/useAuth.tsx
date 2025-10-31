@@ -370,6 +370,7 @@ export const UserProvider = ({ children }: Props) => {
    * logout(); // Cierra sesión y redirecciona
    */
   const logout = () => {
+    logoutTauser();
     localStorage.removeItem("token");
     localStorage.removeItem("user");
     localStorage.removeItem("refresh");
@@ -389,7 +390,7 @@ export const UserProvider = ({ children }: Props) => {
    * Cierra la sesión del usuario actual en el terminal TAUSER
    * NO redirecciona - permite que el componente maneje la navegación
    */
-  const logoutTauser = () => {
+  function logoutTauser() {
     // Limpiar localStorage
     localStorage.removeItem("token");
     localStorage.removeItem("user");
@@ -408,7 +409,7 @@ export const UserProvider = ({ children }: Props) => {
     delete axios.defaults.headers.common["Authorization"];
     
     // NO redireccionamos aquí - el componente maneja su propio estado
-  };
+  }
 
   return (
     <UserContext.Provider

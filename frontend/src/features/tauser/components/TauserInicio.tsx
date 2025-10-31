@@ -27,7 +27,7 @@ import LogoutButton from "./LogoutButton";
   | "resumen";
 
 export default function TauserInicio() {
-  const { user, isLoggedIn, logoutTauser } = useTauserAuth();
+  const { isLoggedIn, logoutTauser } = useTauserAuth();
   const { selectedTauser, setSelectedTauser } = useSelectedTauserStore();
 
   const [etapaActual, setEtapaActual] = useState<EtapaActual>(

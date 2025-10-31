@@ -255,19 +255,19 @@ class TransaccionViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_400_BAD_REQUEST
             )
 
-        try:
-            estado_finalizado = EstadoMovimiento.objects.get(codigo="FINALIZADO")
-        except EstadoMovimiento.DoesNotExist:
-            raise ValidationError("El estado FINALIZADO no esta configurado.")
+        estado_finalizado = (
+            EstadoMovimiento.objects.filter(codigo="FINALIZADO").first()
+        )
 
         with db_transaction.atomic():
             transaccion.estado = 'completada'
             transaccion.fecha_fin = timezone.now()
             transaccion.save(update_fields=['estado', 'fecha_fin', 'updated_at'])
 
-            MovimientoStock.objects.filter(transaccion=transaccion).update(
-                estado=estado_finalizado
-            )
+            if estado_finalizado:
+                MovimientoStock.objects.filter(transaccion=transaccion).update(
+                    estado=estado_finalizado
+                )
 
         serializer = self.get_serializer(transaccion)
         return Response(serializer.data)

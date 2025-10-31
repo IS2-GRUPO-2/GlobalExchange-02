@@ -28,10 +28,7 @@ class TauserViewSet(viewsets.ModelViewSet):
     search_fields = ["nombre", "codigo", "direccion", "ciudad", "departamento"]
     pagination_class = TauserPagination
 
-    def get_permissions(self):
-        if self.action in ("list", "retrieve"):
-            return [permissions.AllowAny()]
-        return super().get_permissions()
+    # Mantener la autenticación para todas las acciones (incluyendo list/retrieve)
 
     def get_queryset(self):
         queryset = super().get_queryset()
