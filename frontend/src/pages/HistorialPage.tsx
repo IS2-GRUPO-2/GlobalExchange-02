@@ -102,7 +102,7 @@ const HistorialPage = () => {
                 </td>
                 <td>
                   <div className="flex items-center space-x-2">
-                    {transaccion.estado === "en_proceso" && (
+                    {transaccion.factura_emitida === true && (
                       <button
                         onClick={() =>
                           downloadFacturaPDF(transaccion.id).catch(() =>
