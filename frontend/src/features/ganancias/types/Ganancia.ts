@@ -123,6 +123,7 @@ export interface ReporteGeneral {
   };
 }
 
+// Base filter type for all reports
 export interface GananciaFiltros {
   divisa_extranjera?: number;
   operacion?: 'compra' | 'venta';
@@ -134,6 +135,41 @@ export interface GananciaFiltros {
   granularidad?: 'mes' | 'dia'; // Para evolucion_temporal
   limit?: number; // Para top_transacciones
 }
+
+// Specific filter types for each report view
+export interface FiltrosGeneralReport {
+  divisa_extranjera?: number;
+  metodo_financiero?: number;
+  fecha_inicio?: string;
+  fecha_fin?: string;
+}
+
+export interface FiltrosPorDivisaReport {
+  fecha_inicio?: string;
+  fecha_fin?: string;
+  operacion?: 'compra' | 'venta';
+  metodo_financiero?: number;
+}
+
+export interface FiltrosEvolucionReport {
+  operacion?: 'compra' | 'venta';
+  divisa_extranjera?: number;
+  metodo_financiero?: number;
+  periodo_tipo: 'mes' | 'anio'; // mes or año
+  anio: number;
+  mes?: number; // Only when periodo_tipo is 'mes'
+}
+
+export interface FiltrosTop10Report {
+  fecha_inicio?: string;
+  fecha_fin?: string;
+  divisa_extranjera?: number;
+  operacion?: 'compra' | 'venta';
+  metodo_financiero?: number;
+}
+
+// Tab type for report navigation
+export type ReportTab = 'general' | 'por-divisas' | 'evolucion' | 'top-10';
 
 export interface GananciasPaginatedResponse {
   count: number;

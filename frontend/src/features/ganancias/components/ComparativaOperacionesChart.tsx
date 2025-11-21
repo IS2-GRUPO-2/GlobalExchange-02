@@ -24,7 +24,7 @@ export const ComparativaOperacionesChart = ({ data, loading }: Props) => {
     );
   }
 
-  if (!data) {
+  if (!data || (data.compra.cantidad_operaciones === 0 && data.venta.cantidad_operaciones === 0)) {
     return (
       <div className="flex items-center justify-center h-64">
         <p className="text-gray-500">No hay datos disponibles</p>
@@ -84,7 +84,7 @@ export const ComparativaOperacionesChart = ({ data, loading }: Props) => {
 
   return (
     <div className="w-full">
-      <h3 className="text-lg font-semibold mb-4">Comparativa: Compra vs Venta</h3>
+      <h3 className="text-lg font-semibold mb-4">Compra vs Venta</h3>
       <ResponsiveContainer width="100%" height={300}>
         <PieChart>
           <Pie
