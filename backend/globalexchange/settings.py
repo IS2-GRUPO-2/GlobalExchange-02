@@ -60,6 +60,7 @@ INSTALLED_APPS = [
     'apps.stock',
     'apps.pagos',
     'apps.facturacion',
+    'apps.ganancias',
     'drf_yasg',
     'django_otp',
     'django_otp.plugins.otp_static',
@@ -130,9 +131,8 @@ REST_FRAMEWORK = {
 }
 
 
-
 SIMPLE_JWT = {
-    "TOKEN_OBTAINER_SERIALIZER" : "globalexchange.serializers.CustomTokenObtainPairSerializer",
+    "TOKEN_OBTAINER_SERIALIZER": "globalexchange.serializers.CustomTokenObtainPairSerializer",
     "ACCESS_TOKEN_LIFETIME": timedelta(hours=1),
     "REFRESH_TOKEN_LIFETIME": timedelta(days=7),
 }
