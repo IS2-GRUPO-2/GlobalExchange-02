@@ -33,7 +33,7 @@ class Ganancia(models.Model):
 
     Atributos:
         transaccion (OneToOne): Relación uno a uno con la transacción que generó la ganancia.
-        ganancia_margen_tasa (Decimal): Ganancia por el margen en la tasa de cambio.
+        ganancia_neta (Decimal): Ganancia total por operación.
         divisa_extranjera (FK): Divisa extranjera involucrada en la operación.
         fecha (Date): Fecha de la operación (sin hora, para agrupaciones).
         anio (int): Año de la operación (índice para consultas rápidas).

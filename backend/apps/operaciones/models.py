@@ -42,7 +42,8 @@ class Transaccion(models.Model):
     operacion = models.CharField(max_length=10, choices=OPERACION_CHOICES)
     tasa_aplicada = models.DecimalField(max_digits=15, decimal_places=6)
     tasa_inicial = models.DecimalField(max_digits=15, decimal_places=6)
-    precio_base = models.DecimalField(max_digits=30, decimal_places=10)
+    precio_base = models.DecimalField(
+        max_digits=30, decimal_places=10, default=0)
     divisa_origen = models.ForeignKey(
         Divisa, on_delete=models.CASCADE, related_name='transacciones_origen')
     divisa_destino = models.ForeignKey(

@@ -387,6 +387,8 @@ class GananciaViewSet(viewsets.ReadOnlyModelViewSet):
         data['total_ganancia'] = data['total_ganancia'] or Decimal('0')
         data['ganancia_promedio_operacion'] = data['ganancia_promedio_operacion'] or Decimal(
             '0')
+        data['ganancia_maxima'] = data['ganancia_maxima'] or Decimal('0')
+        data['ganancia_minima'] = data['ganancia_minima'] or Decimal('0')
         data['total_operaciones'] = data['total_operaciones'] or 0
         data['operaciones_compra'] = data['operaciones_compra'] or 0
         data['operaciones_venta'] = data['operaciones_venta'] or 0

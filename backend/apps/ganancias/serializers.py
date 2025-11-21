@@ -148,11 +148,13 @@ class EstadisticasGeneralesSerializer(serializers.Serializer):
     total_operaciones = serializers.IntegerField()
     ganancia_promedio_operacion = serializers.DecimalField(
         max_digits=15, decimal_places=2)
-    ganancia_maxima = serializers.DecimalField(max_digits=15, decimal_places=2)
-    ganancia_minima = serializers.DecimalField(max_digits=15, decimal_places=2)
+    ganancia_maxima = serializers.DecimalField(
+        max_digits=15, decimal_places=2, allow_null=True)
+    ganancia_minima = serializers.DecimalField(
+        max_digits=15, decimal_places=2, allow_null=True)
     operaciones_compra = serializers.IntegerField()
     operaciones_venta = serializers.IntegerField()
     ganancia_compra = serializers.DecimalField(max_digits=15, decimal_places=2)
     ganancia_venta = serializers.DecimalField(max_digits=15, decimal_places=2)
-    fecha_inicio = serializers.DateField()
-    fecha_fin = serializers.DateField()
+    fecha_inicio = serializers.DateField(allow_null=True)
+    fecha_fin = serializers.DateField(allow_null=True)
