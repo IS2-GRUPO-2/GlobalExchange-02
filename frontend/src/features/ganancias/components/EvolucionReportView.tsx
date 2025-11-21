@@ -9,8 +9,8 @@ import { getEvolucionTemporal } from '../services/gananciaService';
 import { EvolucionTemporalChart } from './EvolucionTemporalChart';
 
 interface Props {
-  divisas: Array<{ id: number; codigo: string; nombre: string }>;
-  metodos: Array<{ id: number; nombre: string }>;
+  divisas: Array<{ id?: number; codigo: string; nombre: string }>;
+  metodos: Array<{ id?: number; nombre: string }>;
 }
 
 export const EvolucionReportView = ({ divisas, metodos }: Props) => {

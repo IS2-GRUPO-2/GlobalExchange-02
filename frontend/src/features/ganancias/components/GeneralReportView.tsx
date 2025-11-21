@@ -9,8 +9,8 @@ import { getComparativaOperaciones } from '../services/gananciaService';
 import { ComparativaOperacionesChart } from './ComparativaOperacionesChart';
 
 interface Props {
-  divisas: Array<{ id: number; codigo: string; nombre: string }>;
-  metodos: Array<{ id: number; nombre: string }>;
+  divisas: Array<{ id?: number; codigo: string; nombre: string }>;
+  metodos: Array<{ id?: number; nombre: string }>;
 }
 
 export const GeneralReportView = ({ divisas, metodos }: Props) => {

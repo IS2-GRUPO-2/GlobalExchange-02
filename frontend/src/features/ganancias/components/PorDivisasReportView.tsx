@@ -9,7 +9,7 @@ import { getGananciasPorDivisa } from '../services/gananciaService';
 import { GananciasPorDivisaChart } from './GananciasPorDivisaChart';
 
 interface Props {
-  metodos: Array<{ id: number; nombre: string }>;
+  metodos: Array<{ id?: number; nombre: string }>;
 }
 
 export const PorDivisasReportView = ({ metodos }: Props) => {

@@ -8,8 +8,8 @@ import type { FiltrosTop10Report, GananciaTopTransaccion } from '../types/Gananc
 import { getTopTransacciones } from '../services/gananciaService';
 
 interface Props {
-  divisas: Array<{ id: number; codigo: string; nombre: string }>;
-  metodos: Array<{ id: number; nombre: string }>;
+  divisas: Array<{ id?: number; codigo: string; nombre: string }>;
+  metodos: Array<{ id?: number; nombre: string }>;
 }
 
 export const Top10ReportView = ({ divisas, metodos }: Props) => {

@@ -12,17 +12,8 @@ import { GeneralReportView } from '../components/GeneralReportView';
 import { PorDivisasReportView } from '../components/PorDivisasReportView';
 import { EvolucionReportView } from '../components/EvolucionReportView';
 import { Top10ReportView } from '../components/Top10ReportView';
-
-interface Divisa {
-  id: number;
-  codigo: string;
-  nombre: string;
-}
-
-interface MetodoFinanciero {
-  id: number;
-  nombre: string;
-}
+import type { Divisa } from '../../divisas/types/Divisa';
+import type { MetodoFinanciero } from '../../metodos_financieros/types/MetodoFinanciero';
 
 export const GananciasPage = () => {
   const [activeTab, setActiveTab] = useState<ReportTab>('general');
