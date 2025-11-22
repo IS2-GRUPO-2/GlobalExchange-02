@@ -96,8 +96,13 @@ class MovimientoStockViewset(viewsets.ModelViewSet):
                 status=status.HTTP_404_NOT_FOUND
             )
 
-        tauser_stock = models.StockDivisaTauser.objects.filter(
-            tauser_id=tauser_id).select_related('denominacion__divisa', 'tauser')
+        tauser_stock = (
+            models.StockDivisaTauser.objects
+            .filter(tauser_id=tauser_id)
+            .select_related('denominacion__divisa', 'tauser')
+            .all()
+        )
+        
         casa_stock = models.StockDivisaCasa.objects.all(
         ).select_related('denominacion__divisa')
 
