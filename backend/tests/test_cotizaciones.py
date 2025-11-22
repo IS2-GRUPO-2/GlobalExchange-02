@@ -1,9 +1,11 @@
 # tests/test_cotizaciones.py
 import pytest
+from datetime import timedelta
 from decimal import Decimal
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Permission
 from django.urls import reverse, NoReverseMatch, get_resolver
+from django.utils import timezone
 from rest_framework.test import APIClient
 
 from apps.divisas.models import Divisa
@@ -84,6 +86,17 @@ def url_public():
                         name = _find_url_name(["tasa", "public"])
                     except NoReverseMatch:
                         name = _find_url_name(["tasas", "public"])
+    return reverse(name)
+
+
+def url_public_history():
+    try:
+        name = _find_url_name(["cotizaciones", "public", "history"])
+    except NoReverseMatch:
+        try:
+            name = _find_url_name(["tasa", "public", "history"])
+        except NoReverseMatch:
+            name = _find_url_name(["tasas", "public", "history"])
     return reverse(name)
 
 # =========================
@@ -318,6 +331,81 @@ def test_public_rates_endpoint(api, base_divisa, usd_divisa, eur_divisa):
     assert Decimal(mapa["USD"]["venta"]) == Decimal("7450")
     assert Decimal(mapa["EUR"]["compra"]) == Decimal("7800")
     assert Decimal(mapa["EUR"]["venta"]) == Decimal("8300")
+
+
+# =========================
+# Historial público
+# =========================
+
+
+@pytest.mark.django_db
+def test_public_history_requires_divisa_param(api, base_divisa):
+    resp = api.get(url_public_history())
+    assert resp.status_code == 400
+    assert "divisa" in resp.data["detail"]
+
+
+@pytest.mark.django_db
+def test_public_history_filters_by_range(api, base_divisa, usd_divisa):
+    tasa = Tasa.objects.create(
+        divisa=usd_divisa,
+        precioBase=Decimal("7000"),
+        comisionBaseCompra=Decimal("50"),
+        comisionBaseVenta=Decimal("80"),
+        activo=True,
+    )
+    old_point = HistorialTasa.objects.create(
+        tasa=tasa,
+        tasaCompra=Decimal("6950"),
+        tasaVenta=Decimal("7080"),
+    )
+    new_point = HistorialTasa.objects.create(
+        tasa=tasa,
+        tasaCompra=Decimal("6900"),
+        tasaVenta=Decimal("7120"),
+    )
+    old_point.fechaCreacion = timezone.now() - timedelta(days=10)
+    old_point.save(update_fields=["fechaCreacion"])
+    new_point.fechaCreacion = timezone.now() - timedelta(days=2)
+    new_point.save(update_fields=["fechaCreacion"])
+
+    start = (timezone.now() - timedelta(days=3)).date().isoformat()
+    end = timezone.now().date().isoformat()
+
+    resp = api.get(
+        url_public_history(),
+        {"divisa": "USD", "start": start, "end": end},
+    )
+
+    assert resp.status_code == 200
+    assert resp.data["divisa"]["codigo"] == "USD"
+    assert len(resp.data["points"]) == 1
+    assert Decimal(resp.data["points"][0]["tasaVenta"]) == new_point.tasaVenta
+
+
+@pytest.mark.django_db
+def test_public_history_validates_dates(api, base_divisa, usd_divisa):
+    Tasa.objects.create(
+        divisa=usd_divisa,
+        precioBase=Decimal("7000"),
+        comisionBaseCompra=Decimal("50"),
+        comisionBaseVenta=Decimal("80"),
+        activo=True,
+    )
+
+    resp = api.get(
+        url_public_history(),
+        {"divisa": "USD", "start": "2024-99-01"},
+    )
+    assert resp.status_code == 400
+    assert "formato" in resp.data["detail"].lower()
+
+    resp = api.get(
+        url_public_history(),
+        {"divisa": "USD", "start": "2024-01-10", "end": "2024-01-01"},
+    )
+    assert resp.status_code == 400
+    assert "inicial" in resp.data["detail"]
 
 @pytest.mark.django_db
 def test_list_endpoint_requiere_permiso(api, usd_divisa):

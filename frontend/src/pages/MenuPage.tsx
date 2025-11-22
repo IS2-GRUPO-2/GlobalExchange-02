@@ -1,5 +1,6 @@
 import OperacionCompraVentaPublica from "../features/operaciones/components/OperacionCompraVentaPublica";
 import CotizacionesTabla from "../components/CotizacionesTabla";
+import CotizacionesEvolucion from "../components/CotizacionesEvolucion";
 import FeatureCards from "../components/FeatureCards";
 
 export default function MainMenuPage() {
@@ -27,7 +28,7 @@ export default function MainMenuPage() {
           {/* Contenedor de componentes */}
           <div className="relative z-10 py-8">
             <div className="max-w-7xl mx-auto px-6">
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
+              <div className="grid grid-cols-1 gap-8 lg:grid-cols-2 lg:items-start">
                 {/* Tabla de Cotizaciones - Sticky */}
                 <div className="w-full">
                   <div className="lg:sticky lg:top-6">
@@ -38,6 +39,10 @@ export default function MainMenuPage() {
                 {/* Simulador de Operación */}
                 <div className="w-full">
                   <OperacionCompraVentaPublica />
+                </div>
+
+                <div className="lg:col-span-2">
+                  <CotizacionesEvolucion />
                 </div>
               </div>
             </div>
