@@ -11,7 +11,7 @@ import { ReportTabNavigation } from '../components/ReportTabNavigation';
 import { GeneralReportView } from '../components/GeneralReportView';
 import { PorDivisasReportView } from '../components/PorDivisasReportView';
 import { EvolucionReportView } from '../components/EvolucionReportView';
-import { Top10ReportView } from '../components/Top10ReportView';
+import { TransaccionesReportView } from '../components/TransaccionesReportView';
 import type { Divisa } from '../../divisas/types/Divisa';
 import type { MetodoFinanciero } from '../../metodos_financieros/types/MetodoFinanciero';
 
@@ -47,8 +47,8 @@ export const GananciasPage = () => {
         return <PorDivisasReportView metodos={metodos} />;
       case 'evolucion':
         return <EvolucionReportView divisas={divisas} metodos={metodos} />;
-      case 'top-10':
-        return <Top10ReportView divisas={divisas} metodos={metodos} />;
+      case 'transacciones':
+        return <TransaccionesReportView divisas={divisas} metodos={metodos} />;
       default:
         return <GeneralReportView divisas={divisas} metodos={metodos} />;
     }

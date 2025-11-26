@@ -62,7 +62,7 @@ export interface GananciaEvolucionTemporal {
   ganancia_promedio: string;
 }
 
-export interface GananciaTopTransaccion {
+export interface GananciaTransaccion {
   transaccion_id: number;
   fecha: string;
   divisa_codigo: string;
@@ -133,7 +133,6 @@ export interface GananciaFiltros {
   fecha_inicio?: string;
   fecha_fin?: string;
   granularidad?: 'mes' | 'dia'; // Para evolucion_temporal
-  limit?: number; // Para top_transacciones
 }
 
 // Specific filter types for each report view
@@ -160,7 +159,7 @@ export interface FiltrosEvolucionReport {
   mes?: number; // Only when periodo_tipo is 'mes'
 }
 
-export interface FiltrosTop10Report {
+export interface FiltrosTransaccionesReport {
   fecha_inicio?: string;
   fecha_fin?: string;
   divisa_extranjera?: number;
@@ -169,7 +168,7 @@ export interface FiltrosTop10Report {
 }
 
 // Tab type for report navigation
-export type ReportTab = 'general' | 'por-divisas' | 'evolucion' | 'top-10';
+export type ReportTab = 'general' | 'por-divisas' | 'evolucion' | 'transacciones';
 
 export interface GananciasPaginatedResponse {
   count: number;

@@ -12,7 +12,7 @@ import type {
   GananciaPorDivisa,
   GananciaPorMetodo,
   GananciaEvolucionTemporal,
-  GananciaTopTransaccion,
+  GananciaTransaccion,
   EstadisticasGenerales,
   ComparativaOperaciones,
   GananciaFiltros,
@@ -20,6 +20,22 @@ import type {
 
 // Usamos rutas relativas para que las peticiones pasen por el proxy de Nginx
 const BASE_URL = '/api/ganancias';
+
+/**
+ * Obtiene la URL absoluta para las peticiones
+ * En desarrollo, usamos el proxy de Vite
+ * En producción, usa la URL relativa
+ */
+const getAbsoluteUrl = (path: string): string => {
+  // Si ya es una URL absoluta, retornarla
+  if (path.startsWith('http://') || path.startsWith('https://')) {
+    return path;
+  }
+  
+  // En desarrollo con Vite, las rutas relativas funcionan gracias al proxy
+  // En producción, también funcionan porque Nginx maneja el routing
+  return path;
+};
 
 /**
  * Builds query params from filters object
@@ -141,19 +157,22 @@ export const getEvolucionTemporal = async (
 };
 
 /**
- * GET /api/ganancias/top_transacciones/
- * Transacciones con mayor ganancia
+ * GET /api/ganancias/listado_transacciones/
+ * Listado de transacciones en un periodo de hasta 30 días
  * 
- * Parámetros permitidos: divisa_extranjera, operacion, metodo_financiero, anio, mes, fecha_inicio, fecha_fin, limit
+ * Si no se especifican fechas, usa los últimos 30 días por defecto.
+ * El rango no puede exceder 30 días.
+ * 
+ * Parámetros permitidos: divisa_extranjera, operacion, metodo_financiero, fecha_inicio, fecha_fin
  */
-export const getTopTransacciones = async (
+export const getListadoTransacciones = async (
   filtros: GananciaFiltros = {}
-): Promise<GananciaTopTransaccion[]> => {
-  const allowedParams = ['divisa_extranjera', 'operacion', 'metodo_financiero', 'anio', 'mes', 'fecha_inicio', 'fecha_fin', 'limit'];
+): Promise<GananciaTransaccion[]> => {
+  const allowedParams = ['divisa_extranjera', 'operacion', 'metodo_financiero', 'fecha_inicio', 'fecha_fin'];
   const params = buildQueryParams(filtros, allowedParams);
   
-  const response = await axios.get<GananciaTopTransaccion[]>(
-    `${BASE_URL}/top_transacciones/?${params.toString()}`
+  const response = await axios.get<GananciaTransaccion[]>(
+    `${BASE_URL}/listado_transacciones/?${params.toString()}`
   );
   
   return response.data;
@@ -198,6 +217,125 @@ export const getComparativaOperaciones = async (
   return response.data;
 };
 
+/**
+ * Exporta un reporte a Excel
+ * Descarga el archivo directamente usando fetch con autenticación
+ * 
+ * @param reporte - Tipo de reporte: 'general', 'por_divisa', 'evolucion', 'transacciones'
+ * @param filtros - Filtros aplicados al reporte
+ */
+export const exportExcel = async (reporte: string, filtros: GananciaFiltros = {}): Promise<void> => {
+  try {
+    const params = buildQueryParams({ ...filtros, reporte });
+    const url = getAbsoluteUrl(`${BASE_URL}/export_excel/?${params.toString()}`);
+    
+    // Obtener el token de autenticación
+    const token = localStorage.getItem('token');
+    
+    if (!token) {
+      throw new Error('No se encontró token de autenticación. Por favor, inicie sesión nuevamente.');
+    }
+    
+    const response = await fetch(url, {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+    });
+
+    if (!response.ok) {
+      if (response.status === 401) {
+        throw new Error('Sesión expirada. Por favor, inicie sesión nuevamente.');
+      }
+      throw new Error(`Error al generar el reporte: ${response.statusText}`);
+    }
+
+    // Obtener el blob y crear URL temporal
+    const blob = await response.blob();
+    const downloadUrl = window.URL.createObjectURL(blob);
+    
+    // Obtener el nombre del archivo desde el header Content-Disposition
+    const contentDisposition = response.headers.get('Content-Disposition');
+    const filename = contentDisposition
+      ? contentDisposition.split('filename=')[1].replace(/"/g, '')
+      : `reporte_${reporte}_${new Date().toISOString().split('T')[0]}.xlsx`;
+    
+    // Crear enlace temporal y hacer click automático
+    const link = document.createElement('a');
+    link.href = downloadUrl;
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    
+    // Limpiar
+    document.body.removeChild(link);
+    window.URL.revokeObjectURL(downloadUrl);
+  } catch (error) {
+    console.error('Error al exportar a Excel:', error);
+    throw error;
+  }
+};
+
+/**
+ * Exporta un reporte a PDF
+ * Descarga el archivo PDF con el nombre correcto
+ * 
+ * @param reporte - Tipo de reporte: 'general', 'por_divisa', 'evolucion', 'transacciones'
+ * @param filtros - Filtros aplicados al reporte
+ */
+export const exportPDF = async (reporte: string, filtros: GananciaFiltros = {}): Promise<void> => {
+  try {
+    const params = buildQueryParams({ ...filtros, reporte });
+    const url = getAbsoluteUrl(`${BASE_URL}/export_pdf/?${params.toString()}`);
+    
+    // Obtener el token de autenticación
+    const token = localStorage.getItem('token');
+    
+    if (!token) {
+      throw new Error('No se encontró token de autenticación. Por favor, inicie sesión nuevamente.');
+    }
+    
+    const response = await fetch(url, {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+    });
+
+    if (!response.ok) {
+      if (response.status === 401) {
+        throw new Error('Sesión expirada. Por favor, inicie sesión nuevamente.');
+      }
+      throw new Error(`Error al generar el reporte: ${response.statusText}`);
+    }
+
+    // Obtener el nombre del archivo desde el header Content-Disposition
+    const contentDisposition = response.headers.get('Content-Disposition');
+    const filename = contentDisposition
+      ? contentDisposition.split('filename=')[1].replace(/"/g, '')
+      : `reporte_${reporte}_${new Date().toISOString().split('T')[0]}.pdf`;
+
+    // Obtener el blob y descargar con el nombre correcto
+    const blob = await response.blob();
+    const downloadUrl = window.URL.createObjectURL(blob);
+    
+    const link = document.createElement('a');
+    link.href = downloadUrl;
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    
+    // Limpiar
+    window.URL.revokeObjectURL(downloadUrl);
+  } catch (error) {
+    console.error('Error al exportar a PDF:', error);
+    throw error;
+  }
+};
+
 export default {
   getGanancias,
   getGananciaDetalle,
@@ -205,7 +343,9 @@ export default {
   getGananciasPorDivisa,
   getGananciasPorMetodo,
   getEvolucionTemporal,
-  getTopTransacciones,
+  getListadoTransacciones,
   getEstadisticas,
   getComparativaOperaciones,
+  exportExcel,
+  exportPDF,
 };

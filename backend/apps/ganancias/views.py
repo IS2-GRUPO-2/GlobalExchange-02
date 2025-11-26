@@ -5,11 +5,15 @@ Proporciona ViewSet de solo lectura con múltiples endpoints
 para consultar y analizar ganancias del negocio.
 """
 from decimal import Decimal
+from datetime import timedelta
 from django.db.models import Sum, Avg, Max, Min, Count, F
+from django.utils import timezone
 from django.utils.dateparse import parse_date
+from django.http import HttpResponse
 from rest_framework import viewsets, status, permissions
-from rest_framework.decorators import action
+from rest_framework.decorators import action, permission_classes as action_permission_classes
 from rest_framework.response import Response
+from rest_framework.permissions import AllowAny
 
 from .models import Ganancia
 from .serializers import (
@@ -18,8 +22,18 @@ from .serializers import (
     GananciaPorDivisaSerializer,
     GananciaPorMetodoSerializer,
     GananciaEvolucionTemporalSerializer,
-    GananciaTopTransaccionesSerializer,
+    GananciaTransaccionSerializer,
     EstadisticasGeneralesSerializer,
+)
+from .export_utils import (
+    export_comparativa_to_excel,
+    export_comparativa_to_pdf,
+    export_por_divisa_to_excel,
+    export_por_divisa_to_pdf,
+    export_evolucion_to_excel,
+    export_evolucion_to_pdf,
+    export_transacciones_to_excel,
+    export_transacciones_to_pdf,
 )
 
 
@@ -82,6 +96,64 @@ class GananciaViewSet(viewsets.ReadOnlyModelViewSet):
                 queryset = queryset.filter(fecha__lte=fecha_fin)
 
         return queryset
+
+    def _build_filtros_info(self, request):
+        """
+        Construye un diccionario con la información de filtros aplicados.
+        
+        Returns:
+            dict con información legible de los filtros
+        """
+        from apps.divisas.models import Divisa
+        from apps.metodos_financieros.models import MetodoFinanciero
+        
+        filtros = {}
+        
+        # Fechas
+        fecha_inicio = request.query_params.get('fecha_inicio')
+        fecha_fin = request.query_params.get('fecha_fin')
+        if fecha_inicio:
+            filtros['fecha_inicio'] = fecha_inicio
+        if fecha_fin:
+            filtros['fecha_fin'] = fecha_fin
+        
+        # Año y mes
+        anio = request.query_params.get('anio')
+        mes = request.query_params.get('mes')
+        if anio:
+            filtros['anio'] = anio
+        if mes:
+            filtros['mes'] = mes
+        
+        # Divisa
+        divisa_id = request.query_params.get('divisa_extranjera')
+        if divisa_id:
+            try:
+                divisa = Divisa.objects.get(id=divisa_id)
+                filtros['divisa_nombre'] = f"{divisa.codigo} - {divisa.nombre}"
+            except Divisa.DoesNotExist:
+                pass
+        
+        # Operación
+        operacion = request.query_params.get('operacion')
+        if operacion:
+            filtros['operacion'] = operacion
+        
+        # Método financiero
+        metodo_id = request.query_params.get('metodo_financiero')
+        if metodo_id:
+            try:
+                metodo = MetodoFinanciero.objects.get(id=metodo_id)
+                filtros['metodo_nombre'] = metodo.nombre
+            except MetodoFinanciero.DoesNotExist:
+                pass
+        
+        # Granularidad
+        granularidad = request.query_params.get('granularidad')
+        if granularidad:
+            filtros['granularidad'] = granularidad
+        
+        return filtros
 
     @action(detail=False, methods=['get'])
     def reporte_general(self, request):
@@ -271,14 +343,22 @@ class GananciaViewSet(viewsets.ReadOnlyModelViewSet):
         return Response(serializer.data)
 
     @action(detail=False, methods=['get'])
-    def top_transacciones(self, request):
+    def listado_transacciones(self, request):
         """
-        GET /api/ganancias/top_transacciones/
+        GET /api/ganancias/listado_transacciones/
 
-        Retorna las transacciones con mayor ganancia.
+        Retorna el listado de transacciones en un periodo de hasta 30 días.
 
         Query params:
-        - limit: Cantidad de resultados (default: 10, max: 100)
+        - fecha_inicio: Fecha de inicio (YYYY-MM-DD). Si no se especifica, usa últimos 30 días
+        - fecha_fin: Fecha de fin (YYYY-MM-DD). Si no se especifica, usa fecha actual
+        - divisa_extranjera: ID de divisa (opcional)
+        - operacion: 'compra' o 'venta' (opcional)
+        - metodo_financiero: ID de método (opcional)
+
+        Restricciones:
+        - El rango de fechas no puede exceder 30 días
+        - Si no se especifica rango, se usa los últimos 30 días por defecto
 
         Response:
         [
@@ -296,16 +376,59 @@ class GananciaViewSet(viewsets.ReadOnlyModelViewSet):
             ...
         ]
         """
-        queryset = self.filter_queryset(self.get_queryset())
-
-        # Obtener límite de resultados
-        try:
-            limit = int(request.query_params.get('limit', 10))
-            limit = min(limit, 100)  # Máximo 100 resultados
-        except ValueError:
-            limit = 10
-
-        top = queryset.order_by('-ganancia_neta')[:limit]
+        # Obtener fechas del request
+        fecha_inicio_str = request.query_params.get('fecha_inicio')
+        fecha_fin_str = request.query_params.get('fecha_fin')
+        
+        # Si no se especifican fechas, usar últimos 30 días por defecto
+        if not fecha_inicio_str or not fecha_fin_str:
+            fecha_fin = timezone.now().date()
+            fecha_inicio = fecha_fin - timedelta(days=30)
+        else:
+            fecha_inicio = parse_date(fecha_inicio_str)
+            fecha_fin = parse_date(fecha_fin_str)
+            
+            if not fecha_inicio or not fecha_fin:
+                return Response(
+                    {"error": "Formato de fecha inválido. Use YYYY-MM-DD"},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+        
+        # Validar que el rango no exceda 30 días
+        delta = (fecha_fin - fecha_inicio).days
+        if delta > 30:
+            return Response(
+                {"error": "El rango de fechas no puede exceder 30 días"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        if delta < 0:
+            return Response(
+                {"error": "La fecha de inicio debe ser anterior a la fecha de fin"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        # Filtrar por rango de fechas
+        queryset = self.get_queryset().filter(
+            fecha__gte=fecha_inicio,
+            fecha__lte=fecha_fin
+        )
+        
+        # Aplicar filtros adicionales
+        divisa_id = request.query_params.get('divisa_extranjera')
+        if divisa_id:
+            queryset = queryset.filter(divisa_extranjera_id=divisa_id)
+        
+        operacion = request.query_params.get('operacion')
+        if operacion:
+            queryset = queryset.filter(operacion=operacion)
+        
+        metodo_id = request.query_params.get('metodo_financiero')
+        if metodo_id:
+            queryset = queryset.filter(metodo_financiero_id=metodo_id)
+        
+        # Ordenar por fecha descendente y luego por ganancia descendente
+        transacciones = queryset.order_by('-fecha', '-ganancia_neta')
 
         data = [
             {
@@ -319,10 +442,10 @@ class GananciaViewSet(viewsets.ReadOnlyModelViewSet):
                 'cliente_nombre': g.transaccion.cliente.nombre,
                 'metodo_nombre': g.metodo_financiero.nombre if g.metodo_financiero else None,
             }
-            for g in top
+            for g in transacciones
         ]
 
-        serializer = GananciaTopTransaccionesSerializer(data, many=True)
+        serializer = GananciaTransaccionSerializer(data, many=True)
         return Response(serializer.data)
 
     @action(detail=False, methods=['get'])
@@ -457,3 +580,365 @@ class GananciaViewSet(viewsets.ReadOnlyModelViewSet):
             'compra': compra,
             'venta': venta,
         })
+
+    @action(detail=False, methods=['get'])
+    def export_excel(self, request):
+        """
+        GET /api/ganancias/export_excel/?reporte=general&...filtros
+
+        Exporta reportes a formato Excel (.xlsx).
+
+        Query params:
+        - reporte: Tipo de reporte ('general', 'por_divisa', 'evolucion', 'transacciones')
+        - Otros filtros según el tipo de reporte
+
+        Returns:
+            Archivo Excel descargable
+        """
+        reporte_tipo = request.query_params.get('reporte', 'general')
+        
+        try:
+            if reporte_tipo == 'general':
+                # Obtener datos de comparativa
+                queryset = self.filter_queryset(self.get_queryset())
+                total_general = queryset.aggregate(total=Sum('ganancia_neta'))['total'] or Decimal('0')
+
+                compra = queryset.filter(operacion='compra').aggregate(
+                    total_ganancia=Sum('ganancia_neta'),
+                    cantidad_operaciones=Count('id'),
+                    ganancia_promedio=Avg('ganancia_neta'),
+                )
+                venta = queryset.filter(operacion='venta').aggregate(
+                    total_ganancia=Sum('ganancia_neta'),
+                    cantidad_operaciones=Count('id'),
+                    ganancia_promedio=Avg('ganancia_neta'),
+                )
+
+                compra['total_ganancia'] = compra['total_ganancia'] or Decimal('0')
+                venta['total_ganancia'] = venta['total_ganancia'] or Decimal('0')
+
+                if total_general > 0:
+                    compra['porcentaje_total'] = float((compra['total_ganancia'] / total_general) * 100)
+                    venta['porcentaje_total'] = float((venta['total_ganancia'] / total_general) * 100)
+                else:
+                    compra['porcentaje_total'] = 0
+                    venta['porcentaje_total'] = 0
+
+                data = {'compra': compra, 'venta': venta}
+                buffer = export_comparativa_to_excel(data)
+                timestamp = timezone.now().strftime('%Y%m%d_%H%M%S')
+                filename = f'reporte_comparativa_{timestamp}.xlsx'
+
+            elif reporte_tipo == 'por_divisa':
+                # Obtener datos por divisa
+                queryset = self.filter_queryset(self.get_queryset())
+                data = list(queryset.values(
+                    divisa_codigo=F('divisa_extranjera__codigo'),
+                    divisa_nombre=F('divisa_extranjera__nombre')
+                ).annotate(
+                    total_ganancia=Sum('ganancia_neta'),
+                    cantidad_operaciones=Count('id'),
+                    ganancia_promedio=Avg('ganancia_neta'),
+                    monto_total_operado=Sum('monto_divisa'),
+                ).order_by('-total_ganancia'))
+                
+                buffer = export_por_divisa_to_excel(data)
+                timestamp = timezone.now().strftime('%Y%m%d_%H%M%S')
+                filename = f'reporte_por_divisa_{timestamp}.xlsx'
+
+            elif reporte_tipo == 'evolucion':
+                # Obtener datos de evolución
+                queryset = self.filter_queryset(self.get_queryset())
+                granularidad = request.query_params.get('granularidad', 'mes')
+
+                if granularidad == 'dia':
+                    evolucion = queryset.values('fecha').annotate(
+                        total_ganancia=Sum('ganancia_neta'),
+                        cantidad_operaciones=Count('id'),
+                        ganancia_promedio=Avg('ganancia_neta'),
+                    ).order_by('fecha')
+
+                    data = [
+                        {
+                            'periodo': item['fecha'].strftime('%Y-%m-%d'),
+                            'anio': item['fecha'].year,
+                            'mes': item['fecha'].month,
+                            'total_ganancia': item['total_ganancia'],
+                            'cantidad_operaciones': item['cantidad_operaciones'],
+                            'ganancia_promedio': item['ganancia_promedio'],
+                        }
+                        for item in evolucion
+                    ]
+                else:
+                    evolucion = queryset.values('anio', 'mes').annotate(
+                        total_ganancia=Sum('ganancia_neta'),
+                        cantidad_operaciones=Count('id'),
+                        ganancia_promedio=Avg('ganancia_neta'),
+                    ).order_by('anio', 'mes')
+
+                    data = [
+                        {
+                            'periodo': f"{item['anio']}-{item['mes']:02d}",
+                            'anio': item['anio'],
+                            'mes': item['mes'],
+                            'total_ganancia': item['total_ganancia'],
+                            'cantidad_operaciones': item['cantidad_operaciones'],
+                            'ganancia_promedio': item['ganancia_promedio'],
+                        }
+                        for item in evolucion
+                    ]
+
+                buffer = export_evolucion_to_excel(data)
+                timestamp = timezone.now().strftime('%Y%m%d_%H%M%S')
+                filename = f'reporte_evolucion_{timestamp}.xlsx'
+
+            elif reporte_tipo == 'transacciones':
+                # Obtener datos de transacciones
+                fecha_inicio_str = request.query_params.get('fecha_inicio')
+                fecha_fin_str = request.query_params.get('fecha_fin')
+                
+                if not fecha_inicio_str or not fecha_fin_str:
+                    fecha_fin = timezone.now().date()
+                    fecha_inicio = fecha_fin - timedelta(days=30)
+                else:
+                    fecha_inicio = parse_date(fecha_inicio_str)
+                    fecha_fin = parse_date(fecha_fin_str)
+                
+                queryset = self.get_queryset().filter(
+                    fecha__gte=fecha_inicio,
+                    fecha__lte=fecha_fin
+                )
+                
+                # Aplicar filtros adicionales
+                divisa_id = request.query_params.get('divisa_extranjera')
+                if divisa_id:
+                    queryset = queryset.filter(divisa_extranjera_id=divisa_id)
+                
+                operacion = request.query_params.get('operacion')
+                if operacion:
+                    queryset = queryset.filter(operacion=operacion)
+                
+                metodo_id = request.query_params.get('metodo_financiero')
+                if metodo_id:
+                    queryset = queryset.filter(metodo_financiero_id=metodo_id)
+                
+                transacciones = queryset.order_by('-fecha', '-ganancia_neta')
+
+                data = [
+                    {
+                        'transaccion_id': g.transaccion.id,
+                        'fecha': g.fecha.strftime('%Y-%m-%d'),
+                        'divisa_codigo': g.divisa_extranjera.codigo,
+                        'operacion': g.operacion,
+                        'ganancia_neta': str(g.ganancia_neta),
+                        'monto_divisa': str(g.monto_divisa),
+                        'tasa_aplicada': str(g.tasa_aplicada),
+                        'cliente_nombre': g.transaccion.cliente.nombre,
+                        'metodo_nombre': g.metodo_financiero.nombre if g.metodo_financiero else None,
+                    }
+                    for g in transacciones
+                ]
+
+                buffer = export_transacciones_to_excel(data)
+                timestamp = timezone.now().strftime('%Y%m%d_%H%M%S')
+                filename = f'reporte_transacciones_{timestamp}.xlsx'
+
+            else:
+                return Response(
+                    {"error": "Tipo de reporte no válido"},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
+            response = HttpResponse(
+                buffer.getvalue(),
+                content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+            )
+            response['Content-Disposition'] = f'attachment; filename="{filename}"'
+            return response
+
+        except Exception as e:
+            return Response(
+                {"error": f"Error al generar el reporte: {str(e)}"},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
+    @action(detail=False, methods=['get'])
+    def export_pdf(self, request):
+        """
+        GET /api/ganancias/export_pdf/?reporte=general&...filtros
+
+        Exporta reportes a formato PDF.
+
+        Query params:
+        - reporte: Tipo de reporte ('general', 'por_divisa', 'evolucion', 'transacciones')
+        - Otros filtros según el tipo de reporte
+
+        Returns:
+            Archivo PDF descargable
+        """
+        reporte_tipo = request.query_params.get('reporte', 'general')
+        
+        # Construir información de filtros
+        filtros = self._build_filtros_info(request)
+        
+        try:
+            if reporte_tipo == 'general':
+                # Obtener datos de comparativa
+                queryset = self.filter_queryset(self.get_queryset())
+                total_general = queryset.aggregate(total=Sum('ganancia_neta'))['total'] or Decimal('0')
+
+                compra = queryset.filter(operacion='compra').aggregate(
+                    total_ganancia=Sum('ganancia_neta'),
+                    cantidad_operaciones=Count('id'),
+                    ganancia_promedio=Avg('ganancia_neta'),
+                )
+                venta = queryset.filter(operacion='venta').aggregate(
+                    total_ganancia=Sum('ganancia_neta'),
+                    cantidad_operaciones=Count('id'),
+                    ganancia_promedio=Avg('ganancia_neta'),
+                )
+
+                compra['total_ganancia'] = compra['total_ganancia'] or Decimal('0')
+                venta['total_ganancia'] = venta['total_ganancia'] or Decimal('0')
+
+                if total_general > 0:
+                    compra['porcentaje_total'] = float((compra['total_ganancia'] / total_general) * 100)
+                    venta['porcentaje_total'] = float((venta['total_ganancia'] / total_general) * 100)
+                else:
+                    compra['porcentaje_total'] = 0
+                    venta['porcentaje_total'] = 0
+
+                data = {'compra': compra, 'venta': venta}
+                buffer = export_comparativa_to_pdf(data, filtros)
+                timestamp = timezone.now().strftime('%Y%m%d_%H%M%S')
+                filename = f'reporte_comparativa_{timestamp}.pdf'
+
+            elif reporte_tipo == 'por_divisa':
+                # Obtener datos por divisa
+                queryset = self.filter_queryset(self.get_queryset())
+                data = list(queryset.values(
+                    divisa_codigo=F('divisa_extranjera__codigo'),
+                    divisa_nombre=F('divisa_extranjera__nombre')
+                ).annotate(
+                    total_ganancia=Sum('ganancia_neta'),
+                    cantidad_operaciones=Count('id'),
+                    ganancia_promedio=Avg('ganancia_neta'),
+                    monto_total_operado=Sum('monto_divisa'),
+                ).order_by('-total_ganancia'))
+                
+                buffer = export_por_divisa_to_pdf(data, filtros)
+                timestamp = timezone.now().strftime('%Y%m%d_%H%M%S')
+                filename = f'reporte_por_divisa_{timestamp}.pdf'
+
+            elif reporte_tipo == 'evolucion':
+                # Obtener datos de evolución
+                queryset = self.filter_queryset(self.get_queryset())
+                granularidad = request.query_params.get('granularidad', 'mes')
+
+                if granularidad == 'dia':
+                    evolucion = queryset.values('fecha').annotate(
+                        total_ganancia=Sum('ganancia_neta'),
+                        cantidad_operaciones=Count('id'),
+                        ganancia_promedio=Avg('ganancia_neta'),
+                    ).order_by('fecha')
+
+                    data = [
+                        {
+                            'periodo': item['fecha'].strftime('%Y-%m-%d'),
+                            'anio': item['fecha'].year,
+                            'mes': item['fecha'].month,
+                            'total_ganancia': item['total_ganancia'],
+                            'cantidad_operaciones': item['cantidad_operaciones'],
+                            'ganancia_promedio': item['ganancia_promedio'],
+                        }
+                        for item in evolucion
+                    ]
+                else:
+                    evolucion = queryset.values('anio', 'mes').annotate(
+                        total_ganancia=Sum('ganancia_neta'),
+                        cantidad_operaciones=Count('id'),
+                        ganancia_promedio=Avg('ganancia_neta'),
+                    ).order_by('anio', 'mes')
+
+                    data = [
+                        {
+                            'periodo': f"{item['anio']}-{item['mes']:02d}",
+                            'anio': item['anio'],
+                            'mes': item['mes'],
+                            'total_ganancia': item['total_ganancia'],
+                            'cantidad_operaciones': item['cantidad_operaciones'],
+                            'ganancia_promedio': item['ganancia_promedio'],
+                        }
+                        for item in evolucion
+                    ]
+
+                buffer = export_evolucion_to_pdf(data, filtros)
+                timestamp = timezone.now().strftime('%Y%m%d_%H%M%S')
+                filename = f'reporte_evolucion_{timestamp}.pdf'
+
+            elif reporte_tipo == 'transacciones':
+                # Obtener datos de transacciones
+                fecha_inicio_str = request.query_params.get('fecha_inicio')
+                fecha_fin_str = request.query_params.get('fecha_fin')
+                
+                if not fecha_inicio_str or not fecha_fin_str:
+                    fecha_fin = timezone.now().date()
+                    fecha_inicio = fecha_fin - timedelta(days=30)
+                else:
+                    fecha_inicio = parse_date(fecha_inicio_str)
+                    fecha_fin = parse_date(fecha_fin_str)
+                
+                queryset = self.get_queryset().filter(
+                    fecha__gte=fecha_inicio,
+                    fecha__lte=fecha_fin
+                )
+                
+                # Aplicar filtros adicionales
+                divisa_id = request.query_params.get('divisa_extranjera')
+                if divisa_id:
+                    queryset = queryset.filter(divisa_extranjera_id=divisa_id)
+                
+                operacion = request.query_params.get('operacion')
+                if operacion:
+                    queryset = queryset.filter(operacion=operacion)
+                
+                metodo_id = request.query_params.get('metodo_financiero')
+                if metodo_id:
+                    queryset = queryset.filter(metodo_financiero_id=metodo_id)
+                
+                transacciones = queryset.order_by('-fecha', '-ganancia_neta')
+
+                data = [
+                    {
+                        'transaccion_id': g.transaccion.id,
+                        'fecha': g.fecha.strftime('%Y-%m-%d'),
+                        'divisa_codigo': g.divisa_extranjera.codigo,
+                        'operacion': g.operacion,
+                        'ganancia_neta': str(g.ganancia_neta),
+                        'monto_divisa': str(g.monto_divisa),
+                        'tasa_aplicada': str(g.tasa_aplicada),
+                        'cliente_nombre': g.transaccion.cliente.nombre,
+                        'metodo_nombre': g.metodo_financiero.nombre if g.metodo_financiero else None,
+                    }
+                    for g in transacciones
+                ]
+
+                buffer = export_transacciones_to_pdf(data, filtros)
+                timestamp = timezone.now().strftime('%Y%m%d_%H%M%S')
+                filename = f'reporte_transacciones_{timestamp}.pdf'
+
+            else:
+                return Response(
+                    {"error": "Tipo de reporte no válido"},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
+            response = HttpResponse(buffer.getvalue(), content_type='application/pdf')
+            response['Content-Disposition'] = f'attachment; filename="{filename}"'
+            return response
+
+        except Exception as e:
+            return Response(
+                {"error": f"Error al generar el reporte: {str(e)}"},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )

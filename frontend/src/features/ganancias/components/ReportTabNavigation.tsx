@@ -4,7 +4,7 @@
  */
 
 import React from 'react';
-import { BarChart3, TrendingUp, DollarSign, Trophy } from 'lucide-react';
+import { BarChart3, TrendingUp, DollarSign, FileClock } from 'lucide-react';
 import type { ReportTab } from '../types/Ganancia';
 
 interface ReportTabNavigationProps {
@@ -29,9 +29,9 @@ const tabs: Array<{ key: ReportTab; label: string; icon: React.ReactNode }> = [
     icon: <TrendingUp className="w-5 h-5" />,
   },
   {
-    key: 'top-10',
-    label: 'Top 10 Transacciones',
-    icon: <Trophy className="w-5 h-5" />,
+    key: 'transacciones',
+    label: 'Transacciones del Periodo',
+    icon: <FileClock className="w-5 h-5" />,
   },
 ];
 

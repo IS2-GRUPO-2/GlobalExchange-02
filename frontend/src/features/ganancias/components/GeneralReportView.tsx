@@ -7,6 +7,7 @@ import { useState, useEffect } from 'react';
 import type { FiltrosGeneralReport, ComparativaOperaciones } from '../types/Ganancia';
 import { getComparativaOperaciones } from '../services/gananciaService';
 import { ComparativaOperacionesChart } from './ComparativaOperacionesChart';
+import { ExportButtons } from './ExportButtons';
 
 interface Props {
   divisas: Array<{ id?: number; codigo: string; nombre: string }>;
@@ -51,12 +52,15 @@ export const GeneralReportView = ({ divisas, metodos }: Props) => {
       <div className="bg-white rounded-lg shadow p-4 mb-6">
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-lg font-semibold text-gray-900">Filtros</h3>
-          <button
-            onClick={handleReset}
-            className="text-sm text-gray-700 hover:text-gray-900 font-medium transition-colors"
-          >
-            Limpiar filtros
-          </button>
+          <div className="flex gap-3">
+            <button
+              onClick={handleReset}
+              className="text-sm text-gray-700 hover:text-gray-900 font-medium transition-colors"
+            >
+              Limpiar filtros
+            </button>
+            <ExportButtons reportType="general" filtros={filtros} />
+          </div>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">

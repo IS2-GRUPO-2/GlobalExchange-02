@@ -53,9 +53,6 @@ class GananciaSerializer(serializers.ModelSerializer):
             'transaccion_id',
             'cliente_nombre',
             'ganancia_neta',
-            'ganancia_margen_tasa',
-            'ganancia_comision_metodo',
-            'descuento_categoria',
             'divisa_extranjera',
             'divisa_extranjera_detalle',
             'fecha',
@@ -127,8 +124,8 @@ class GananciaEvolucionTemporalSerializer(serializers.Serializer):
         max_digits=15, decimal_places=2)
 
 
-class GananciaTopTransaccionesSerializer(serializers.Serializer):
-    """Serializer para reporte de transacciones con mayor ganancia."""
+class GananciaTransaccionSerializer(serializers.Serializer):
+    """Serializer para reporte de transacciones del periodo."""
 
     transaccion_id = serializers.IntegerField()
     fecha = serializers.DateField()
