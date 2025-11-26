@@ -74,9 +74,9 @@ def test_evolucion_temporal_sin_datos(api_client):
     assert isinstance(data, list)
 
 
-def test_top_transacciones_sin_datos(api_client):
-    """Test top_transacciones sin datos."""
-    url = reverse('ganancia-top-transacciones')
+def test_listado_transacciones_sin_datos(api_client):
+    """Test listado_transacciones sin datos (últimos 30 días)."""
+    url = reverse('ganancia-listado-transacciones')
     response = api_client.get(url)
 
     assert response.status_code == status.HTTP_200_OK
@@ -178,15 +178,17 @@ def test_evolucion_temporal_granularidad_mes(api_client):
     assert isinstance(data, list)
 
 
-def test_top_transacciones_limite_personalizado(api_client):
-    """Test top_transacciones con límite custom."""
-    url = reverse('ganancia-top-transacciones')
-    response = api_client.get(url, {'limit': 5})
+def test_listado_transacciones_con_rango_fechas(api_client):
+    """Test listado_transacciones con rango de fechas válido."""
+    url = reverse('ganancia-listado-transacciones')
+    response = api_client.get(url, {
+        'fecha_inicio': '2024-01-01',
+        'fecha_fin': '2024-01-15'
+    })
 
     assert response.status_code == status.HTTP_200_OK
     data = response.json()
     assert isinstance(data, list)
-    assert len(data) <= 5
 
 
 def test_por_metodo_endpoint(api_client):

@@ -4,8 +4,8 @@
  */
 
 import { useState, useEffect } from 'react';
-import type { FiltrosTop10Report, GananciaTopTransaccion } from '../types/Ganancia';
-import { getTopTransacciones } from '../services/gananciaService';
+import type { FiltrosTransaccionesReport, GananciaTransaccion } from '../types/Ganancia';
+import { getListadoTransacciones } from '../services/gananciaService';
 
 interface Props {
   divisas: Array<{ id?: number; codigo: string; nombre: string }>;
@@ -13,17 +13,17 @@ interface Props {
 }
 
 export const Top10ReportView = ({ divisas, metodos }: Props) => {
-  const [filtros, setFiltros] = useState<FiltrosTop10Report>({});
-  const [data, setData] = useState<GananciaTopTransaccion[]>([]);
+  const [filtros, setFiltros] = useState<FiltrosTransaccionesReport>({});
+  const [data, setData] = useState<GananciaTransaccion[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchData = async () => {
       try {
         setLoading(true);
-        // Add limit parameter
-        const queryParams = { ...filtros, limit: 10 };
-        const result = await getTopTransacciones(queryParams);
+        // Note: listado_transacciones endpoint doesn't use limit parameter
+        // It returns transactions in a date range (max 30 days)
+        const result = await getListadoTransacciones(filtros);
         setData(result);
       } catch (error) {
         console.error('Error fetching top 10 report:', error);
@@ -35,8 +35,8 @@ export const Top10ReportView = ({ divisas, metodos }: Props) => {
     fetchData();
   }, [JSON.stringify(filtros)]);
 
-  const handleFilterChange = (key: keyof FiltrosTop10Report, value: any) => {
-    setFiltros((prev) => ({
+  const handleFilterChange = (key: keyof FiltrosTransaccionesReport, value: any) => {
+    setFiltros((prev: FiltrosTransaccionesReport) => ({
       ...prev,
       [key]: value === '' ? undefined : value,
     }));

@@ -226,7 +226,9 @@ export const getComparativaOperaciones = async (
  */
 export const exportExcel = async (reporte: string, filtros: GananciaFiltros = {}): Promise<void> => {
   try {
-    const params = buildQueryParams({ ...filtros, reporte });
+    // Build params separately to avoid type issues
+    const params = buildQueryParams(filtros);
+    params.append('reporte', reporte);
     const url = getAbsoluteUrl(`${BASE_URL}/export_excel/?${params.toString()}`);
     
     // Obtener el token de autenticación
@@ -286,7 +288,9 @@ export const exportExcel = async (reporte: string, filtros: GananciaFiltros = {}
  */
 export const exportPDF = async (reporte: string, filtros: GananciaFiltros = {}): Promise<void> => {
   try {
-    const params = buildQueryParams({ ...filtros, reporte });
+    // Build params separately to avoid type issues
+    const params = buildQueryParams(filtros);
+    params.append('reporte', reporte);
     const url = getAbsoluteUrl(`${BASE_URL}/export_pdf/?${params.toString()}`);
     
     // Obtener el token de autenticación

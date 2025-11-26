@@ -51,7 +51,7 @@ class GananciaViewSet(viewsets.ReadOnlyModelViewSet):
     - GET /api/ganancias/por_divisa/ - Ganancias agrupadas por divisa
     - GET /api/ganancias/por_metodo/ - Ganancias agrupadas por método de pago
     - GET /api/ganancias/evolucion_temporal/ - Evolución mensual de ganancias
-    - GET /api/ganancias/top_transacciones/ - Transacciones con mayor ganancia
+    - GET /api/ganancias/listado_transacciones/ - Listado de transacciones (max 30 días)
     - GET /api/ganancias/estadisticas/ - Estadísticas generales del periodo
     - GET /api/ganancias/comparativa_operaciones/ - Comparativa compra vs venta
     """
