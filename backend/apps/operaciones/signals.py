@@ -17,6 +17,11 @@ def manejar_transaccion_post_save(sender, instance, created, **kwargs):
     procesar_cambios_transaccion(instance, created)
 
 def procesar_cambios_transaccion(transaccion: Transaccion, created):
+    if created:
+        from .tasks import expire_transaction_task
+        TTL = 86400 # 24hs
+
+        expire_transaction_task.apply_async(args=[transaccion.pk], countdown=TTL)
     
     if transaccion.estado in ["en_proceso", "completada"]:
         generar_factura_al_pagar(transaccion)
