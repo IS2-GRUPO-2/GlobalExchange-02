@@ -78,7 +78,6 @@ export default function EtapaConfiguracionOperacion({
   setOpPerspectivaCasa,
   detalleMetodoSeleccionado,
   setDetalleMetodoSeleccionado,
-  detalleMetodoSeleccionadoInfo,
   setDetalleMetodoSeleccionadoInfo,
   metodoGenericoSeleccionado,
   setMetodoGenericoSeleccionado,

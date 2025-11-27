@@ -162,7 +162,7 @@ export default function EtapaSeleccionTauser({
           Selecciona un Terminal de Autoservicio
         </h3>
         <p className="text-sm text-gray-600">
-          Elige el terminal donde realizarÁs tu operaciA3n
+          Elige el terminal donde realizaras tu operación.
         </p>
       </div>
 

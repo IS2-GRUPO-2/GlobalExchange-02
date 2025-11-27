@@ -54,10 +54,10 @@ type SimuladorMetodo = keyof typeof SIMULADOR_POPUP_NAMES;
 
 export default function OperacionCompraVenta() {
   const navigate = useNavigate();
-  // Estado de navegaciÃ³n
+  // Estado de navegacion
   const [etapaActual, setEtapaActual] = useState<EtapaActual>(1);
 
-  // Estados de datos de la operaciÃ³n
+  // Estados de datos de la operacion
   const [divisaOrigen, setDivisaOrigen] = useState<string>("");
   const [divisaDestino, setDivisaDestino] = useState<string>("");
   const [monto, setMonto] = useState<number>(0);
@@ -72,19 +72,19 @@ export default function OperacionCompraVenta() {
   const [detalleMetodoSeleccionadoInfo, setDetalleMetodoSeleccionadoInfo] =
     useState<CuentaBancaria | BilleteraDigital | Tarjeta | null>(null);
 
-  // Estados para el resultado de la simulaciÃ³n
+  // Estados para el resultado de la simulacion
   const [resultado, setResultado] = useState<CalcularOperacionResponse | null>(
     null
   );
 
-  // Estados para la operaciÃ³n completa (etapas 4-6)
+  // Estados para la operacion completa (etapas 4-6)
   const [tauserSeleccionado, setTauserSeleccionado] = useState<string>("");
   const [procesandoTransaccion, setProcesandoTransaccion] = useState(false);
   const [pagando, setPagando] = useState(false);
   const creandoTransaccionRef = useRef(false);
   const procesamientoTimeoutRef = useRef<number | null>(null);
 
-  // Nuevo estado para operaciÃ³n desde perspectiva de la casa
+  // Nuevo estado para operacion desde perspectiva de la casa
   const [opPerspectivaCasa, setOpPerspectivaCasa] = useState<
     "compra" | "venta" | null
   >(null);
@@ -92,7 +92,7 @@ export default function OperacionCompraVenta() {
   // Cliente actual
   const { selectedClient } = useClientStore();
 
-  // Estados para reconfirmaciÃ³n y transacciÃ³n
+  // Estados para reconfirmacion y transaccion
   const [transaccionId, setTransaccionId] = useState<number | null>(null);
   const [modalCambioOpen, setModalCambioOpen] = useState(false);
   const [reconfirm, setReconfirm] = useState<ReconfirmPayload | null>(null);
@@ -100,7 +100,7 @@ export default function OperacionCompraVenta() {
     Transaccion | TransaccionDetalle | null
   >(null);
 
-  // FunciÃ³n para resetear la operaciÃ³n completa
+  // Funcion para resetear la operacion completa
   const resetOperacion = () => {
     if (procesamientoTimeoutRef.current !== null) {
       window.clearTimeout(procesamientoTimeoutRef.current);
@@ -201,7 +201,7 @@ export default function OperacionCompraVenta() {
     setEtapaActual(1);
   };
 
-  // NavegaciÃ³n Etapa 4 (detalle) -> Confirmar y Pagar (crear transacciÃ³n)
+  // Navegacion Etapa 4 (detalle) -> Confirmar y Pagar (crear transaccion)
   const getMetodoPago = ():
     | "transferencia"
     | "billetera"
@@ -685,7 +685,7 @@ export default function OperacionCompraVenta() {
             Cargando cliente...
           </h3>
           <p className="text-sm text-gray-600">
-            Espera mientras obtenemos tu informaciÃ³n
+            Espera mientras obtenemos tu informacion
           </p>
         </div>
       </section>
@@ -698,10 +698,10 @@ export default function OperacionCompraVenta() {
         <div className="w-full max-w-md bg-white rounded-lg shadow-lg p-8 text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600 mx-auto mb-4"></div>
           <h3 className="text-lg font-semibold text-gray-800 mb-2">
-            Procesando transacciÃ³n...
+            Procesando transaccion...
           </h3>
           <p className="text-sm text-gray-600">
-            Tu operaciÃ³n se estÃ¡ procesando
+            Tu operacion se está procesando
           </p>
         </div>
       </section>
@@ -720,15 +720,15 @@ export default function OperacionCompraVenta() {
         <div className="min-h-[400px]">{renderEtapaActual()}</div>
       </div>
 
-      {/* Modal de cambio de cotizaciÃ³n */}
+      {/* Modal de cambio de cotización */}
       {modalCambioOpen && reconfirm && (
         <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
           <div className="bg-white rounded-xl shadow-xl p-6 w-full max-w-md">
             <h4 className="text-lg font-semibold text-gray-800 mb-2">
-              La cotizaciÃ³n cambiÃ³
+              La cotización cambió
             </h4>
             <p className="text-sm text-gray-600 mb-4">
-              La tasa pasÃ³ de{" "}
+              La tasa pasó de{" "}
               <b>{formatNumber(Number(reconfirm.tasa_anterior), 4)}</b> a{" "}
               <b>{formatNumber(Number(reconfirm.tasa_actual), 4)}</b> (
               {formatNumber(Number(reconfirm.delta_pct), 4)}%).
@@ -756,7 +756,7 @@ export default function OperacionCompraVenta() {
                 onClick={aceptarCambioYConfirmar}
                 className="px-4 py-2 rounded-lg bg-zinc-900 text-white hover:bg-zinc-700"
               >
-                Aceptar nueva cotizaciÃ³n
+                Aceptar nueva cotización
               </button>
             </div>
           </div>
