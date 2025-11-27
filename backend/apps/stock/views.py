@@ -18,7 +18,7 @@ class MovimientoStockViewset(viewsets.ModelViewSet):
     ViewSet para registrar y listar movimientos de stock de tausers.
     """
     queryset = models.MovimientoStock.objects.all().select_related(
-        'tipo_movimiento', 'tauser', 'transaccion', 'estado', 'divisa'
+        'tauser', 'transaccion', 'divisa'
     ).order_by('-fecha', '-id')
     serializer_class = serializers.MovimientoStockSerializer
     permission_classes = [permissions.IsAuthenticated, permissions.DjangoModelPermissions]
@@ -36,7 +36,7 @@ class MovimientoStockViewset(viewsets.ModelViewSet):
             codes = [codigo.strip().upper()
                      for codigo in tipo_param.split(',') if codigo.strip()]
             if codes:
-                qs = qs.filter(tipo_movimiento__codigo__in=codes)
+                qs = qs.filter(tipo_movimiento__in=codes)
 
         divisa = params.get('divisa')
         if divisa:
