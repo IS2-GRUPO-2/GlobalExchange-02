@@ -1,6 +1,7 @@
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 from django.core.exceptions import ValidationError
+from rest_framework.exceptions import ValidationError as DRFValidationError
 from apps.facturacion.factura_service import cargar_datos_factura, calcular_factura, generar_factura
 from .models import Transaccion
 from apps.facturacion.models import Factura, FacturaSettings
@@ -81,7 +82,7 @@ def generar_factura_al_pagar(instance: Transaccion):
 
 def reservar_stock_divisa(instance, created):
     if instance.estado not in ["en_proceso", "pendiente"] or instance.operacion == "compra":
-        logger.warning("No se puede reservar stock para la transaccion con id " + instance.pk)
+        logger.warning("No se puede reservar stock para la transaccion con id " + str(instance.pk))
         return
 
     logger.info(f"Reservando stock para la transaccion con id {instance.pk}")
@@ -101,15 +102,18 @@ def reservar_stock_divisa(instance, created):
     serializer = MovimientoStockSerializer(data=data)
     try:
         serializer.is_valid(raise_exception=True)
-    except ValidationError:
-        logger.error(f"No se puede reservar stock para transacción {instance.pk}, datos inválidos: {data}")
-    serializer.save()
+        serializer.save()
+    except (ValidationError, DRFValidationError) as exc:
+        logger.error(
+            f"No se puede reservar stock para transacción {instance.pk}, datos inválidos: {data}. Error: {exc}"
+        )
+        return
 
 def cancelar_reserva_stock(transaccion: Transaccion):
     try:
         movimiento = MovimientoStock.objects.get(transaccion=transaccion)
     except MovimientoStock.DoesNotExist:
-        logger.warning("No se puede cancelar reserva de stock para la transaccion con id" + transaccion.pk)
+        logger.warning("No se puede cancelar reserva de stock para la transaccion con id" + str(transaccion.pk))
         return
 
     logger.info(f"Cancelando movimiento de stock debido a transacción {transaccion.pk} cancelada")
@@ -121,7 +125,7 @@ def finalizar_movimiento_stock(transaccion: Transaccion):
     try:
         movimiento = MovimientoStock.objects.get(transaccion=transaccion)
     except MovimientoStock.DoesNotExist:
-        logger.warning("No se puede finalizar reserva de stock para la transaccion con id" + transaccion.pk)
+        logger.warning("No se puede finalizar reserva de stock para la transaccion con id" + str(transaccion.pk))
         return
 
     logger.info(f"Cancelando movimiento de stock debido a transacción {transaccion.pk} cancelada")
