@@ -4,27 +4,15 @@ from django.db.models import F
 from decimal import Decimal
 
 from .models import (
-    TipoMovimiento,
     MovimientoStock,
     MovimientoStockDetalle,
     StockDivisaCasa,
     StockDivisaTauser,
-    EstadoMovimiento,
 )
 from apps.divisas.models import Denominacion
 from apps.divisas.serializers import DivisaSerializer, DenominacionSerializer
 from apps.operaciones.models import Transaccion
 from apps.tauser.serializers import TauserSerializer
-
-class TipoMovimientoSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = TipoMovimiento
-        fields = '__all__'
-
-class EstadoMovimientoSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = EstadoMovimiento
-        fields = '__all__'
 
 class StockDivisaCasaSerializer(serializers.ModelSerializer):
     class Meta:
@@ -64,10 +52,8 @@ class MovimientoStockSerializer(serializers.ModelSerializer):
         source="movimientostockdetalle_set"
     )
     tauser_detalle = TauserSerializer(source="tauser", read_only=True)
-    tipo_movimiento_detalle = TipoMovimientoSerializer(
-        source="tipo_movimiento", read_only=True)
-    estado_detalle = EstadoMovimientoSerializer(
-        source="estado", read_only=True)
+    tipo_movimiento_detalle = serializers.SerializerMethodField()
+    estado_detalle = serializers.SerializerMethodField()
     divisa_detalle = DivisaSerializer(source="divisa", read_only=True)
 
     class Meta:
@@ -102,9 +88,8 @@ class MovimientoStockSerializer(serializers.ModelSerializer):
                     'transaccion': 'Ya existe un movimiento de stock para esta transacción'
                 })
 
-        if 'estado' not in attrs:
-            estado, _ = EstadoMovimiento.objects.get_or_create(codigo="EN_PROCESO", descripcion="Movimiento de stock en proceso.")
-            attrs["estado"] = estado
+        if 'estado' not in attrs or attrs["estado"] is None:
+            attrs["estado"] = "en_proceso"
 
         # Validar que todas las denominaciones pertenezcan a la divisa seleccionada
         if 'detalles' in attrs and 'divisa' in attrs:
@@ -133,8 +118,7 @@ class MovimientoStockSerializer(serializers.ModelSerializer):
     @transaction.atomic
     def create(self, validated_data):
         detalles_data = validated_data.pop("detalles", [])
-        tipo_mov = validated_data["tipo_movimiento"]
-        codigo_tipo = tipo_mov.codigo.upper()
+        codigo_tipo = validated_data["tipo_movimiento"]
         tauser = validated_data["tauser"]
 
         movimiento = MovimientoStock.objects.create(**validated_data)
@@ -148,6 +132,18 @@ class MovimientoStockSerializer(serializers.ModelSerializer):
 
         return movimiento
     
+    def get_tipo_movimiento_detalle(self, obj):
+        return {
+            "value": obj.tipo_movimiento,
+            "label": obj.get_tipo_movimiento_display(),
+        }
+
+    def get_estado_detalle(self, obj):
+        return {
+            "value": obj.estado,
+            "label": obj.get_estado_display(),
+        }
+
     def _get_regla_stock(self, codigo_tipo, tauser):
         """Define las reglas de incremento y decremento de stock."""
         reglas = {
@@ -216,11 +212,12 @@ class MovimientoStockSerializer(serializers.ModelSerializer):
                 )
                 if updated == 0:
                     # Re-consultar para obtener el stock actual
-                    stock_origen.refresh_from_db()
                     raise serializers.ValidationError(
                         f"No hay suficiente stock para la denominación {denominacion}. "
                         f"Stock disponible: {stock_origen.stock}, requerido: {cantidad}"
                     )
+                
+                stock_origen.refresh_from_db()
 
             # Sumar al destino usando actualización atómica
             if regla["incrementa"]:
@@ -249,6 +246,10 @@ class MovimientoStockSerializer(serializers.ModelSerializer):
 
         for stock_item in denominaciones:
             valor = stock_item.denominacion.denominacion
+
+            if stock_item.denominacion.divisa.pk != movimiento.divisa.pk:
+                continue
+
             if monto_restante <= 0:
                 break
 
@@ -265,7 +266,7 @@ class MovimientoStockSerializer(serializers.ModelSerializer):
                 # Actualización atómica del stock
                 updated = (
                     StockDivisaTauser.objects
-                    .filter(id=stock_item.id, stock__gte=cantidad_a_usar)
+                    .filter(id=stock_item.pk, stock__gte=cantidad_a_usar)
                     .update(stock=F('stock') - cantidad_a_usar)
                 )
                 if updated == 0:
@@ -273,6 +274,7 @@ class MovimientoStockSerializer(serializers.ModelSerializer):
                         f"No hay suficiente stock para la denominación {stock_item.denominacion.denominacion}"
                     )
                 
+                stock_item.refresh_from_db()
                 monto_restante -= Decimal(cantidad_a_usar) * valor
 
         if monto_restante > 0:

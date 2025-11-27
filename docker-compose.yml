@@ -7,11 +7,12 @@ services:
       bash -c "python manage.py migrate --noinput && 
                python -m seeds.load_all_seeds && 
                stripe listen --api-key ${STRIPE_KEY} --forward-to http://backend:8000/api/operaciones/stripe_webhook/ & 
-               python manage.py runserver 0.0.0.0:8000"
+               python -m debugpy --listen 0.0.0.0:5678 manage.py runserver 0.0.0.0:8000"
     volumes:
       - ./backend:/app:delegated
     ports:
       - "8000:8000"
+      - "5678:5678"
     env_file:
       - .env
     depends_on:

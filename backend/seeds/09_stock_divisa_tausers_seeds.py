@@ -19,7 +19,7 @@ def _calculate_stock(position: int, total: int) -> int:
         return base_stock * 5  
     
     if position == 1 or position == total - 2:
-        return base_stock * 3.
+        return base_stock * 3
 
     return base_stock * 2
 

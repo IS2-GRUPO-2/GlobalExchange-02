@@ -8,6 +8,7 @@ financieros (`MetodoFinanciero`) y sus implementaciones específicas
 """
 # imports (arriba, junto a los demás)
 # NUEVO: simulador de pagos
+from apps.stock.enums import TipoMovimiento, EstadoMovimiento
 from .pyments import APROBADO, componenteSimuladorPagosCobros, completar_pago_stripe, guardar_tarjeta_stripe
 from decimal import Decimal, ROUND_HALF_UP, InvalidOperation
 from django.db import transaction as db_transaction
@@ -21,7 +22,7 @@ from rest_framework.response import Response
 from apps.cotizaciones.service import TasaService
 from apps.metodos_financieros.models import MetodoFinanciero, TipoMetodoFinanciero
 from apps.pagos.models import Pagos
-from apps.stock.models import TipoMovimiento, MovimientoStock, EstadoMovimiento
+from apps.stock.models import MovimientoStock
 from apps.stock.serializers import MovimientoStockSerializer
 from apps.tauser.models import Tauser
 from globalexchange.configuration import config
@@ -104,7 +105,7 @@ def operacion_publica(request):
 
 @api_view(["GET"])
 @permission_classes([permissions.AllowAny])
-def get_op_perspectiva_casa(request) -> str:
+def get_op_perspectiva_casa(request):
     """
     Determina el tipo de operación desde la perspectiva del cliente y la casa.
     """
@@ -256,9 +257,7 @@ class TransaccionViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_400_BAD_REQUEST
             )
 
-        estado_finalizado = (
-            EstadoMovimiento.objects.filter(codigo="FINALIZADO").first()
-        )
+        estado_finalizado = EstadoMovimiento.FINALIZADO
 
         with db_transaction.atomic():
             transaccion.estado = 'completada'
@@ -365,12 +364,6 @@ class TransaccionViewSet(viewsets.ModelViewSet):
         except Tauser.DoesNotExist:
             raise ValidationError('El tauser indicado no existe.')
 
-    def _get_tipo_movimiento(self, codigo: str) -> TipoMovimiento:
-        try:
-            return TipoMovimiento.objects.get(codigo=codigo)
-        except TipoMovimiento.DoesNotExist:
-            raise ValidationError(f"El tipo de movimiento '{codigo}' no estA� configurado.")
-
     def _get_metodo_financiero(self, nombre: str) -> MetodoFinanciero:
         try:
             return MetodoFinanciero.objects.get(nombre=nombre)
@@ -383,9 +376,9 @@ class TransaccionViewSet(viewsets.ModelViewSet):
         return transaccion.divisa_destino_id
 
     def _registrar_movimiento_entclt(self, transaccion: Transaccion, tauser: Tauser, detalles):
-        tipo_mov = self._get_tipo_movimiento('ENTCLT')
+        tipo_mov = TipoMovimiento.ENTCLT
         data = {
-            'tipo_movimiento': tipo_mov.pk,
+            'tipo_movimiento': tipo_mov,
             'tauser': str(tauser.id),
             'transaccion': transaccion.id,
             'divisa': self._get_divisa_extranjera_id(transaccion),
@@ -410,18 +403,6 @@ class TransaccionViewSet(viewsets.ModelViewSet):
                 f"Las denominaciones suman {total} pero se esperaba {esperado}."
             )
 
-        serializer.save()
-
-    def _registrar_movimiento_salclt(self, transaccion: Transaccion, tauser: Tauser):
-        tipo_mov = self._get_tipo_movimiento('SALCLT')
-        data = {
-            'tipo_movimiento': tipo_mov.pk,
-            'tauser': str(tauser.id),
-            'transaccion': transaccion.id,
-            'divisa': self._get_divisa_extranjera_id(transaccion),
-        }
-        serializer = MovimientoStockSerializer(data=data)
-        serializer.is_valid(raise_exception=True)
         serializer.save()
 
     def _registrar_pagos_compra(self, transaccion: Transaccion):
@@ -839,12 +820,6 @@ class TransaccionViewSet(viewsets.ModelViewSet):
         if transaccion.tauser_id != tauser.id:
             transaccion.tauser = tauser
             fields_to_update.append('tauser')
-
-        with db_transaction.atomic():
-            self._registrar_movimiento_salclt(transaccion, tauser)
-            if fields_to_update:
-                fields_to_update.append('updated_at')
-                transaccion.save(update_fields=fields_to_update)
 
         serializer = self.get_serializer(transaccion)
         return Response(serializer.data, status=status.HTTP_200_OK)
