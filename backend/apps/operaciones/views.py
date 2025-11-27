@@ -8,6 +8,7 @@ financieros (`MetodoFinanciero`) y sus implementaciones específicas
 """
 # imports (arriba, junto a los demás)
 # NUEVO: simulador de pagos
+from apps.stock.enums import TipoMovimiento, EstadoMovimiento
 from .pyments import APROBADO, componenteSimuladorPagosCobros, completar_pago_stripe, guardar_tarjeta_stripe
 from decimal import Decimal, ROUND_HALF_UP, InvalidOperation
 from django.db import transaction as db_transaction
@@ -21,7 +22,7 @@ from rest_framework.response import Response
 from apps.cotizaciones.service import TasaService
 from apps.metodos_financieros.models import MetodoFinanciero, TipoMetodoFinanciero
 from apps.pagos.models import Pagos
-from apps.stock.models import TipoMovimiento, MovimientoStock, EstadoMovimiento
+from apps.stock.models import MovimientoStock
 from apps.stock.serializers import MovimientoStockSerializer
 from apps.tauser.models import Tauser
 from globalexchange.configuration import config
@@ -146,7 +147,7 @@ def operacion_publica(request):
 
 @api_view(["GET"])
 @permission_classes([permissions.AllowAny])
-def get_op_perspectiva_casa(request) -> str:
+def get_op_perspectiva_casa(request):
     """
     Determina el tipo de operación desde la perspectiva del cliente y la casa.
     """
@@ -199,7 +200,7 @@ def stripe_webhook(request):
         completar_pago_stripe(event['data']['object']['id'])
 
     # TODO: Manejar de manera correcta el almacenamiento de tarjetas con Stripe
-    #if event['type'] == 'payment_method.attached':
+    # if event['type'] == 'payment_method.attached':
     #    guardar_tarjeta_stripe(event['data']['object']['id'])
 
     return Response(data=None, status=status.HTTP_200_OK)
@@ -298,19 +299,29 @@ class TransaccionViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_400_BAD_REQUEST
             )
 
-        estado_finalizado = (
-            EstadoMovimiento.objects.filter(codigo="FINALIZADO").first()
-        )
+        estado_finalizado = EstadoMovimiento.FINALIZADO
 
         with db_transaction.atomic():
             transaccion.estado = 'completada'
             transaccion.fecha_fin = timezone.now()
-            transaccion.save(update_fields=['estado', 'fecha_fin', 'updated_at'])
+            transaccion.save(
+                update_fields=['estado', 'fecha_fin', 'updated_at'])
 
             if estado_finalizado:
                 MovimientoStock.objects.filter(transaccion=transaccion).update(
                     estado=estado_finalizado
                 )
+
+            # Registrar ganancia automáticamente al completar transacción
+            from apps.ganancias.service import GananciaService
+            try:
+                GananciaService.registrar_ganancia(transaccion)
+            except Exception as e:
+                # Log error pero no fallar la transacción
+                import logging
+                logger = logging.getLogger(__name__)
+                logger.error(
+                    f"Error al registrar ganancia para transacción {transaccion.id}: {str(e)}")
 
         serializer = self.get_serializer(transaccion)
         return Response(serializer.data)
@@ -401,6 +412,7 @@ class TransaccionViewSet(viewsets.ModelViewSet):
                 'canceladas': queryset.filter(estado='cancelada').count(),
                 'fallidas': queryset.filter(estado='fallida').count(),
             })
+
     def _get_tauser(self, tauser_id):
         try:
             return Tauser.objects.get(pk=tauser_id)
@@ -425,9 +437,9 @@ class TransaccionViewSet(viewsets.ModelViewSet):
         return transaccion.divisa_destino_id
 
     def _registrar_movimiento_entclt(self, transaccion: Transaccion, tauser: Tauser, detalles):
-        tipo_mov = self._get_tipo_movimiento('ENTCLT')
+        tipo_mov = TipoMovimiento.ENTCLT
         data = {
-            'tipo_movimiento': tipo_mov.pk,
+            'tipo_movimiento': tipo_mov,
             'tauser': str(tauser.id),
             'transaccion': transaccion.id,
             'divisa': self._get_divisa_extranjera_id(transaccion),
@@ -437,7 +449,8 @@ class TransaccionViewSet(viewsets.ModelViewSet):
         serializer.is_valid(raise_exception=True)
         detalles_validados = serializer.validated_data.get('detalles', [])
         if not detalles_validados:
-            raise ValidationError('Debe proporcionar al menos una denominación válida.')
+            raise ValidationError(
+                'Debe proporcionar al menos una denominación válida.')
 
         total = Decimal('0')
         for item in detalles_validados:
@@ -446,24 +459,13 @@ class TransaccionViewSet(viewsets.ModelViewSet):
             total += denominacion * cantidad
 
         total = total.quantize(Decimal('0.01'))
-        esperado = Decimal(str(transaccion.monto_origen)).quantize(Decimal('0.01'))
+        esperado = Decimal(str(transaccion.monto_origen)
+                           ).quantize(Decimal('0.01'))
         if total != esperado:
             raise ValidationError(
                 f"Las denominaciones suman {total} pero se esperaba {esperado}."
             )
 
-        serializer.save()
-
-    def _registrar_movimiento_salclt(self, transaccion: Transaccion, tauser: Tauser):
-        tipo_mov = self._get_tipo_movimiento('SALCLT')
-        data = {
-            'tipo_movimiento': tipo_mov.pk,
-            'tauser': str(tauser.id),
-            'transaccion': transaccion.id,
-            'divisa': self._get_divisa_extranjera_id(transaccion),
-        }
-        serializer = MovimientoStockSerializer(data=data)
-        serializer.is_valid(raise_exception=True)
         serializer.save()
 
     def _registrar_pagos_compra(self, transaccion: Transaccion):
@@ -480,7 +482,8 @@ class TransaccionViewSet(viewsets.ModelViewSet):
         if not mensaje:
             return
 
-        detalle_alias = getattr(getattr(transaccion, "metodo_financiero_detalle", None), "alias", None)
+        detalle_alias = getattr(
+            getattr(transaccion, "metodo_financiero_detalle", None), "alias", None)
         if detalle_alias:
             mensaje = f"{mensaje} - {detalle_alias}"
 
@@ -537,11 +540,12 @@ class TransaccionViewSet(viewsets.ModelViewSet):
 
         tc_final = resultado['tc_final']
         monto_destino = resultado['monto_destino']
+        precio_base = resultado['precio_base']
 
-        return tc_final, monto_destino
+        return tc_final, monto_destino, precio_base
 
     def _build_reconfirm_payload(self, transaccion: Transaccion):
-        tc_actual, monto_destino_actual = self._recalcular_tc_y_monto(
+        tc_actual, monto_destino_actual, precio_base = self._recalcular_tc_y_monto(
             transaccion)
 
         delta_tc = (tc_actual - Decimal(transaccion.tasa_aplicada))
@@ -552,6 +556,7 @@ class TransaccionViewSet(viewsets.ModelViewSet):
             'cambio': bool(delta_tc != 0),
             'tasa_anterior': str(transaccion.tasa_aplicada),
             'tasa_actual': str(tc_actual),
+            'precio_base': str(precio_base),
             'delta_tc': str(delta_tc),
             'delta_pct': str(delta_pct),
             'monto_destino_anterior': str(transaccion.monto_destino),
@@ -644,7 +649,7 @@ class TransaccionViewSet(viewsets.ModelViewSet):
 
         acepta_cambio = bool(request.data.get('acepta_cambio', False))
 
-        tc_actual, monto_destino_actual = self._recalcular_tc_y_monto(
+        tc_actual, monto_destino_actual, precio_base = self._recalcular_tc_y_monto(
             transaccion)
         cambio = (tc_actual != Decimal(transaccion.tasa_aplicada))
 
@@ -662,6 +667,7 @@ class TransaccionViewSet(viewsets.ModelViewSet):
         if cambio and acepta_cambio:
             transaccion.tasa_aplicada = tc_actual
             transaccion.monto_destino = monto_destino_actual
+            transaccion.precio_base = precio_base
 
         # 2) Simular pago/cobro en el procesador (dummy)
         pago = componenteSimuladorPagosCobros(transaccion)
@@ -714,7 +720,7 @@ class TransaccionViewSet(viewsets.ModelViewSet):
 
         acepta_cambio = bool(request.data.get('acepta_cambio', False))
 
-        tc_actual, monto_destino_actual = self._recalcular_tc_y_monto(
+        tc_actual, monto_destino_actual, precio_base = self._recalcular_tc_y_monto(
             transaccion)
         cambio = (tc_actual != Decimal(transaccion.tasa_aplicada))
 
@@ -732,6 +738,7 @@ class TransaccionViewSet(viewsets.ModelViewSet):
         if cambio and acepta_cambio:
             transaccion.tasa_aplicada = tc_actual
             transaccion.monto_destino = monto_destino_actual
+            transaccion.precio_base = precio_base
 
         transaccion.save()
         DOMAIN = config.DEV_URL if config.DJANGO_DEBUG else config.PROD_URL
@@ -795,7 +802,6 @@ class TransaccionViewSet(viewsets.ModelViewSet):
         pago.response = "STRIPE_CHECKOUT_SESSION_CREATED"
         pago.save()
         return Response({"url": checkout_session.url}, status=status.HTTP_200_OK)
-        
 
     @action(detail=True, methods=['post'], url_path='recibir-efectivo')
     def recibir_efectivo(self, request, pk=None):
@@ -822,7 +828,8 @@ class TransaccionViewSet(viewsets.ModelViewSet):
             raise ValidationError('Debe indicar el tauser asignado.')
 
         if not isinstance(detalles, list) or not detalles:
-            raise ValidationError('Debe proporcionar las denominaciones recibidas.')
+            raise ValidationError(
+                'Debe proporcionar las denominaciones recibidas.')
 
         tauser = self._get_tauser(tauser_id)
         fields_to_update = []
@@ -837,8 +844,11 @@ class TransaccionViewSet(viewsets.ModelViewSet):
                 if not acepta_cambio:
                     return Response(payload, status=status.HTTP_409_CONFLICT)
                 transaccion.tasa_aplicada = Decimal(payload['tasa_actual'])
-                transaccion.monto_destino = Decimal(payload['monto_destino_actual'])
-                fields_to_update.extend(['tasa_aplicada', 'monto_destino'])
+                transaccion.monto_destino = Decimal(
+                    payload['monto_destino_actual'])
+                transaccion.precio_base = Decimal(payload['precio_base'])
+                fields_to_update.extend(
+                    ['tasa_aplicada', 'monto_destino', 'precio_base'])
 
         with db_transaction.atomic():
             self._registrar_movimiento_entclt(transaccion, tauser, detalles)
@@ -882,12 +892,5 @@ class TransaccionViewSet(viewsets.ModelViewSet):
             transaccion.tauser = tauser
             fields_to_update.append('tauser')
 
-        with db_transaction.atomic():
-            self._registrar_movimiento_salclt(transaccion, tauser)
-            if fields_to_update:
-                fields_to_update.append('updated_at')
-                transaccion.save(update_fields=fields_to_update)
-
         serializer = self.get_serializer(transaccion)
         return Response(serializer.data, status=status.HTTP_200_OK)
-
