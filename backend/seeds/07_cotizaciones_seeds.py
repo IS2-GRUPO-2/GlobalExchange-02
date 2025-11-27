@@ -1,4 +1,6 @@
 from decimal import Decimal
+from datetime import datetime, timedelta
+from django.utils import timezone
 from apps.cotizaciones.models import Tasa, HistorialTasa
 from apps.divisas.models import Divisa
 
@@ -67,18 +69,58 @@ def run():
                     'activo': tasa_data['activo']
                 }
             )
+            
             if created:
                 print(f"  → Tasa creada: {divisa.codigo} - {tasa.precioBase} PYG")
-                
-                # Crear entrada en historial de tasa
-                HistorialTasa.objects.create(
-                    tasa=tasa,
-                    tasaCompra=tasa_data['precio_base'] + tasa_data['comision_base_compra'],
-                    tasaVenta=tasa_data['precio_base'] - tasa_data['comision_base_venta']
-                )
-                print(f"    → Historial inicial creado para {divisa.codigo}")
             else:
                 print(f"  → Tasa ya existe: {divisa.codigo}")
+            
+            # Eliminar historial existente para esta tasa (para regenerarlo)
+            historial_existente = HistorialTasa.objects.filter(tasa=tasa).count()
+            if historial_existente > 0:
+                HistorialTasa.objects.filter(tasa=tasa).delete()
+                print(f"    → Eliminados {historial_existente} registros de historial previos")
+            
+            # Crear historial desde el 1 de enero de 2025 hasta hoy
+            # Simulando fluctuaciones realistas del tipo de cambio
+            fecha_actual = timezone.now()
+            fecha_inicio = timezone.make_aware(datetime(2025, 1, 1, 0, 0, 0))
+            
+            # Calcular días desde inicio del año
+            dias_totales = (fecha_actual - fecha_inicio).days + 1
+            
+            # Crear registros en lote para mejorar el rendimiento
+            registros_historial = []
+            for dia_index in range(dias_totales):
+                fecha = fecha_inicio + timedelta(days=dia_index)
+                
+                # Generar variación del precio base (±3% pseudo-aleatoria)
+                # Usamos un patrón basado en días para reproducibilidad
+                variacion = Decimal(str((dia_index % 7 - 3) / 100.0))  # -3% a +3%
+                precio_con_variacion = tasa_data['precio_base'] * (Decimal('1.0') + variacion)
+                
+                registro = HistorialTasa(
+                    tasa=tasa,
+                    tasaCompra=precio_con_variacion + tasa_data['comision_base_compra'],
+                    tasaVenta=precio_con_variacion - tasa_data['comision_base_venta']
+                )
+                registros_historial.append((registro, fecha))
+            
+            # Crear todos los registros en bulk
+            objetos_creados = [reg for reg, _ in registros_historial]
+            HistorialTasa.objects.bulk_create(objetos_creados)
+            
+            # Actualizar las fechas después de la creación (necesario porque auto_now_add=True)
+            # Obtener los IDs de los registros recién creados
+            ids_creados = list(HistorialTasa.objects.filter(tasa=tasa).order_by('-id')[:dias_totales].values_list('id', flat=True))
+            ids_creados.reverse()  # Ordenar del más antiguo al más reciente
+            
+            # Actualizar cada registro con su fecha correspondiente
+            for i, registro_id in enumerate(ids_creados):
+                _, fecha = registros_historial[i]
+                HistorialTasa.objects.filter(id=registro_id).update(fechaCreacion=fecha)
+            
+            print(f"    → Historial de {dias_totales} días creado para {divisa.codigo} (desde 01/01/2025)")
                 
         except Divisa.DoesNotExist:
             print(f"  ⚠️  Divisa no encontrada: {tasa_data['codigo_divisa']}")

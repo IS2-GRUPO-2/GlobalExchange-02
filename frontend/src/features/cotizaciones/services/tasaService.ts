@@ -82,3 +82,31 @@ export const getPublicTasas = async (): Promise<any[]> => {
     throw err;
   }
 };
+
+export type PublicHistoryPoint = {
+  fecha: string;
+  tasaCompra: string;
+  tasaVenta: string;
+};
+
+export type PublicHistoryResponse = {
+  divisa: { codigo: string; nombre: string };
+  base?: { codigo: string; nombre: string; simbolo: string } | null;
+  points: PublicHistoryPoint[];
+};
+
+export const getPublicHistory = async (params: {
+  divisa: string;
+  start?: string;
+  end?: string;
+}): Promise<PublicHistoryResponse> => {
+  try {
+    const res = await axios.get<PublicHistoryResponse>(`${API_URL}public/history/`, {
+      params,
+    });
+    return res.data;
+  } catch (err: any) {
+    console.error("Error fetching public history: ", err?.response?.data || err.message);
+    throw err;
+  }
+};
