@@ -14,7 +14,6 @@ export interface TransaccionRequest {
   operacion: "compra" | "venta";
   tasa_aplicada: number;
   tasa_inicial: number;
-  precio_base: number;
   divisa_origen: number;
   divisa_destino: number;
   monto_origen: number;

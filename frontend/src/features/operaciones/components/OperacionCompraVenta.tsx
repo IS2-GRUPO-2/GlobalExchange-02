@@ -322,7 +322,6 @@ export default function OperacionCompraVenta() {
         operacion: opPerspectivaCasa!,
         tasa_aplicada: resultado.tc_final,
         tasa_inicial: resultado.tc_final,
-        precio_base: resultado.precio_base,
         divisa_origen: Number(divisaOrigen),
         divisa_destino: Number(divisaDestino),
         monto_origen: resultado.monto_origen,

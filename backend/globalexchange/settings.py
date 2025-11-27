@@ -40,7 +40,6 @@ CORS_ALLOW_CREDENTIALS = True
 INSTALLED_APPS = [
     'corsheaders',
     'rest_framework',
-    'django_filters',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -62,7 +61,6 @@ INSTALLED_APPS = [
     'apps.stock',
     'apps.pagos',
     'apps.facturacion',
-    'apps.ganancias',
     'drf_yasg',
     'django_otp',
     'django_otp.plugins.otp_static',
@@ -123,7 +121,6 @@ REST_FRAMEWORK = {
         'rest_framework_simplejwt.authentication.JWTAuthentication',
     ),
     "DEFAULT_FILTER_BACKENDS": [
-        "django_filters.rest_framework.DjangoFilterBackend",
         "rest_framework.filters.SearchFilter",
     ],
     "DEFAULT_RENDERER_CLASSES": (
@@ -134,8 +131,9 @@ REST_FRAMEWORK = {
 }
 
 
+
 SIMPLE_JWT = {
-    "TOKEN_OBTAINER_SERIALIZER": "globalexchange.serializers.CustomTokenObtainPairSerializer",
+    "TOKEN_OBTAINER_SERIALIZER" : "globalexchange.serializers.CustomTokenObtainPairSerializer",
     "ACCESS_TOKEN_LIFETIME": timedelta(hours=1),
     "REFRESH_TOKEN_LIFETIME": timedelta(days=7),
 }

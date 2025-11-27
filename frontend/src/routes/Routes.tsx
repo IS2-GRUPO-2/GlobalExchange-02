@@ -23,7 +23,6 @@ import {
   METODOS_FINANCIEROS_DETALLE,
   TAUSER,
   OPERACION,
-  GANANCIAS,
 } from "../types/perms";
 import CotizacionesPage from "../features/cotizaciones/pages/CotizacionesPage";
 import RequireAuth from "./RequiereAuth";
@@ -35,7 +34,6 @@ import NotificacionesPage from "../features/notificaciones/pages/NotificacionesP
 import { NOTIFICACIONES } from "../types/perms"; 
 import SimuladorTransaccionBancariaPage from "../features/operaciones/pages/SimuladorTransaccionBancariaPage";
 import ComprobantePage from "../features/operaciones/pages/ComprobantePage";
-import { GananciasPage } from "../features/ganancias";
 
 export const router = createBrowserRouter([
  
@@ -184,14 +182,6 @@ export const router = createBrowserRouter([
         element: (
           <RequireAuth anyOf={[NOTIFICACIONES.VIEW, NOTIFICACIONES.VIEW_CLIENTE]}>
             <NotificacionesPage />
-          </RequireAuth>
-        ),
-      },
-      {
-        path: "ganancias",
-        element: (
-          <RequireAuth anyOf={[GANANCIAS.VIEW]}>
-            <GananciasPage />
           </RequireAuth>
         ),
       },
