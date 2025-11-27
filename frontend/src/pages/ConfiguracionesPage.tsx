@@ -12,9 +12,10 @@ import {
   User,
   Monitor,
   Bell,
-  Shield
+  Shield,
+  TrendingUp,
 } from "lucide-react";
-import { CATEGORIAS_CLIENTE, CLIENTES, DIVISAS, METODOS_FINANCIEROS, ROLES, TASAS, USUARIOS, TAUSER , METODOS_FINANCIEROS_DETALLE, NOTIFICACIONES} from "../types/perms";
+import { CATEGORIAS_CLIENTE, CLIENTES, DIVISAS, METODOS_FINANCIEROS, ROLES, TASAS, USUARIOS, TAUSER , METODOS_FINANCIEROS_DETALLE, NOTIFICACIONES, GANANCIAS} from "../types/perms";
 import Can from "../components/Can";
 
 type ConfigItem = {
@@ -120,6 +121,15 @@ const ConfiguracionesPage = () => {
       path: "/configuraciones-notificaciones",
       habilitado: true,
       permisos: [NOTIFICACIONES.VIEW, NOTIFICACIONES.VIEW_CLIENTE],
+    },
+    {
+      id: "ganancias",
+      nombre: "Reportes de Ganancias",
+      descripcion: "Análisis y estadísticas de ganancias generadas",
+      icon: <TrendingUp className="w-6 h-6 text-emerald-600" />,
+      path: "/ganancias",
+      habilitado: true,
+      permisos: [GANANCIAS.VIEW],
     },
     {
       id: "mfa",
