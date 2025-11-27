@@ -92,3 +92,52 @@ class GananciaService:
             'monto_divisa': monto_divisa,
             'divisa_extranjera': divisa_extranjera,
         }
+
+    @staticmethod
+    @transaction.atomic
+    def registrar_ganancia(transaccion: Transaccion) -> Ganancia:
+        """
+        Registra la ganancia de una transacción completada en la base de datos.
+
+        Args:
+            transaccion: Instancia de Transaccion completada
+
+        Returns:
+            Ganancia: Instancia del modelo Ganancia creada
+
+        Raises:
+            ValueError: Si la transacción no está completada o ya tiene ganancia registrada
+        """
+        # Validaciones
+        if transaccion.estado != 'completada':
+            raise ValueError(
+                f"La transacción {transaccion.id} no está completada")
+
+        # Verificar si ya existe una ganancia para esta transacción
+        if Ganancia.objects.filter(transaccion=transaccion).exists():
+            raise ValueError(
+                f"Ya existe una ganancia registrada para la transacción {transaccion.id}")
+
+        # Calcular ganancia
+        datos = GananciaService.calcular_ganancia_transaccion(transaccion)
+
+        # Obtener fecha de la transacción
+        fecha = transaccion.fecha_fin.date(
+        ) if transaccion.fecha_fin else transaccion.fecha_inicio.date()
+
+        # Crear registro de ganancia
+        ganancia = Ganancia.objects.create(
+            transaccion=transaccion,
+            ganancia_neta=datos['ganancia_neta'],
+            divisa_extranjera=datos['divisa_extranjera'],
+            fecha=fecha,
+            anio=fecha.year,
+            mes=fecha.month,
+            operacion=transaccion.operacion,
+            metodo_financiero=transaccion.metodo_financiero,
+            tasa_mercado=datos['tasa_mercado'],
+            tasa_aplicada=datos['tasa_aplicada'],
+            monto_divisa=datos['monto_divisa'],
+        )
+
+        return ganancia
