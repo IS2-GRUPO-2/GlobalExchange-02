@@ -12,10 +12,15 @@ interface EtapaSeleccionMetodoProps {
   onDetalleMetodoInfoChange: (instancia: any | null) => void;
   onMetodoGenericoChange: (metodoId: number | null) => void;
   onMetodoSeleccionadoChange: (metodo: MetodoFinanciero | null) => void;
-  onRetroceder: () => void;
-  onContinuar: () => void;
-  onCancelar: () => void;
+  onRetroceder?: () => void;
+  onContinuar?: () => void;
+  onCancelar?: () => void;
+  variant?: "wizard" | "inline";
+  disabled?: boolean;
+  onReadyChange?: (ready: boolean) => void;
 }
+
+const METODOS_GENERICOS = ["EFECTIVO", "CHEQUE", "STRIPE"];
 
 export default function EtapaSeleccionMetodo({
   opPerspectivaCasa,
@@ -29,8 +34,24 @@ export default function EtapaSeleccionMetodo({
   onRetroceder,
   onContinuar,
   onCancelar,
+  variant = "wizard",
+  disabled = false,
+  onReadyChange,
 }: EtapaSeleccionMetodoProps) {
   const [mostrandoInstancias, setMostrandoInstancias] = useState(false);
+  const isInline = variant === "inline";
+
+  const handleRetroceder = () => {
+    onRetroceder?.();
+  };
+
+  const handleContinuar = () => {
+    onContinuar?.();
+  };
+
+  const handleCancelar = () => {
+    onCancelar?.();
+  };
 
   const handleMetodoChange = (metodo: MetodoFinanciero | null) => {
     onMetodoSeleccionadoChange(metodo);
@@ -43,11 +64,7 @@ export default function EtapaSeleccionMetodo({
       return;
     }
 
-    if (
-      metodo.nombre === "EFECTIVO" ||
-      metodo.nombre === "CHEQUE" ||
-      metodo.nombre === "STRIPE"
-    ) {
+    if (METODOS_GENERICOS.includes(metodo.nombre)) {
       onMetodoGenericoChange(metodo.id ?? null);
       onDetalleMetodoChange(null);
       onDetalleMetodoInfoChange(null);
@@ -65,10 +82,9 @@ export default function EtapaSeleccionMetodo({
       setMostrandoInstancias(false);
       return;
     }
-    const requiereInstancias =
-      ["EFECTIVO", "CHEQUE", "STRIPE"].includes(
-        metodoSeleccionadoInfo.nombre
-      ) === false;
+    const requiereInstancias = !METODOS_GENERICOS.includes(
+      metodoSeleccionadoInfo.nombre
+    );
     setMostrandoInstancias(requiereInstancias);
   }, [metodoSeleccionadoInfo]);
 
@@ -115,31 +131,44 @@ export default function EtapaSeleccionMetodo({
     );
   };
 
-  if (mostrandoInstancias && metodoSeleccionadoInfo) {
-    return (
-      <div className="space-y-6 select-none">
-        <div className="text-center">
-          <h3 className="text-lg font-semibold text-gray-800 mb-2">
-            {getTituloMetodo()}
-          </h3>
-          <p className="text-sm text-gray-600 mb-4">{getDescripcionMetodo()}</p>
-        </div>
+  useEffect(() => {
+    onReadyChange?.(puedeAvanzar());
+  }, [detalleMetodoSeleccionado, metodoGenericoSeleccionado, onReadyChange]);
 
-        <SeleccionInstanciaMetodo
-          metodoFinanciero={metodoSeleccionadoInfo}
-          instanciaSeleccionada={detalleMetodoSeleccionado}
-          onInstanciaChange={handleInstanciaChange}
-          onVolver={volverASeleccionMetodos}
-          onCancelar={onCancelar}
-          onContinuar={onContinuar}
-          puedeAvanzar={puedeAvanzar()}
-        />
+  const renderInstancias = () => (
+    <div
+      className={`space-y-6 select-none ${
+        disabled ? "opacity-50 pointer-events-none" : ""
+      }`}
+      aria-disabled={disabled}
+    >
+      <div className="text-center">
+        <h3 className="text-lg font-semibold text-gray-800 mb-2">
+          {getTituloMetodo()}
+        </h3>
+        <p className="text-sm text-gray-600 mb-4">{getDescripcionMetodo()}</p>
       </div>
-    );
-  }
 
-  return (
-    <div className="space-y-6 select-none">
+      <SeleccionInstanciaMetodo
+        metodoFinanciero={metodoSeleccionadoInfo!}
+        instanciaSeleccionada={detalleMetodoSeleccionado}
+        onInstanciaChange={handleInstanciaChange}
+        onVolver={volverASeleccionMetodos}
+        onCancelar={handleCancelar}
+        onContinuar={handleContinuar}
+        puedeAvanzar={puedeAvanzar()}
+        mostrarAcciones={!isInline}
+      />
+    </div>
+  );
+
+  const renderSeleccionMetodo = () => (
+    <div
+      className={`space-y-6 select-none ${
+        disabled ? "opacity-50 pointer-events-none" : ""
+      }`}
+      aria-disabled={disabled}
+    >
       <div className="text-center">
         <h3 className="text-lg font-semibold text-gray-800 mb-2">
           {getTituloMetodo()}
@@ -154,34 +183,42 @@ export default function EtapaSeleccionMetodo({
       />
 
       {/* Botones de navegaciA3n */}
-      <div className="flex justify-between items-center gap-3 pt-4">
-        <button
-          onClick={onRetroceder}
-          className="px-6 py-2 border border-gray-300 text-gray-700 rounded-lg font-medium hover:bg-gray-50 transition-colors"
-        >
-          Atrás
-        </button>
-
-        <div className="flex gap-3">
+      {!isInline && (
+        <div className="flex justify-between items-center gap-3 pt-4">
           <button
-            onClick={onCancelar}
+            onClick={handleRetroceder}
             className="px-6 py-2 border border-gray-300 text-gray-700 rounded-lg font-medium hover:bg-gray-50 transition-colors"
           >
-            Cancelar
+            AtrA�s
           </button>
-          <button
-            onClick={onContinuar}
-            disabled={!puedeAvanzar()}
-            className={`px-6 py-2 rounded-lg font-medium transition-colors ${
-              puedeAvanzar()
-                ? "bg-zinc-900 text-white hover:bg-zinc-700"
-                : "bg-gray-300 text-gray-500 cursor-not-allowed"
-            }`}
-          >
-            Continuar
-          </button>
+
+          <div className="flex gap-3">
+            <button
+              onClick={handleCancelar}
+              className="px-6 py-2 border border-gray-300 text-gray-700 rounded-lg font-medium hover:bg-gray-50 transition-colors"
+            >
+              Cancelar
+            </button>
+            <button
+              onClick={handleContinuar}
+              disabled={!puedeAvanzar()}
+              className={`px-6 py-2 rounded-lg font-medium transition-colors ${
+                puedeAvanzar()
+                  ? "bg-zinc-900 text-white hover:bg-zinc-700"
+                  : "bg-gray-300 text-gray-500 cursor-not-allowed"
+              }`}
+            >
+              Continuar
+            </button>
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
+
+  if (mostrandoInstancias && metodoSeleccionadoInfo) {
+    return renderInstancias();
+  }
+
+  return renderSeleccionMetodo();
 }

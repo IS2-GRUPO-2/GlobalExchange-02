@@ -20,7 +20,9 @@ interface Props {
   clienteActual: Cliente | null;
   opPerspectivaCasa: "compra" | "venta" | null;
   setOpPerspectivaCasa: (perspectiva: "compra" | "venta" | null) => void;
-  onContinuar: () => void;
+  onContinuar?: () => void;
+  variant?: "wizard" | "inline";
+  onReadyChange?: (ready: boolean) => void;
 }
 
 type LimiteCfg = {
@@ -40,6 +42,8 @@ export default function EtapaSeleccionDivisas({
   opPerspectivaCasa,
   setOpPerspectivaCasa,
   onContinuar,
+  variant = "wizard",
+  onReadyChange,
 }: Props) {
   const [divisas, setDivisas] = useState<Divisa[]>([]);
   const [divisaBase, setDivisaBase] = useState<Divisa | null>(null);
@@ -246,6 +250,12 @@ export default function EtapaSeleccionDivisas({
     !loadingLimites &&
     !denominacionesMsg &&
     !validandoDenominaciones;
+
+  useEffect(() => {
+    onReadyChange?.(!!puedeAvanzar);
+  }, [puedeAvanzar, onReadyChange]);
+
+  const isInline = variant === "inline";
 
   
 
@@ -499,19 +509,21 @@ export default function EtapaSeleccionDivisas({
       )}
 
       {/* Botones de navegación */}
-      <div className="flex justify-end gap-3">
-        <button
-          onClick={onContinuar}
-          disabled={!puedeAvanzar}
-          className={`px-6 py-2 rounded-lg font-medium transition-colors ${
-            puedeAvanzar
-              ? "bg-zinc-900 text-white hover:bg-zinc-700"
-              : "bg-gray-300 text-gray-500 cursor-not-allowed"
-          }`}
-        >
-          {loadingLimites ? "Cargando..." : "Continuar"}
-        </button>
-      </div>
+      {!isInline && (
+        <div className="flex justify-end gap-3">
+          <button
+            onClick={onContinuar}
+            disabled={!puedeAvanzar || !onContinuar}
+            className={`px-6 py-2 rounded-lg font-medium transition-colors ${
+              puedeAvanzar && onContinuar
+                ? "bg-zinc-900 text-white hover:bg-zinc-700"
+                : "bg-gray-300 text-gray-500 cursor-not-allowed"
+            }`}
+          >
+            {loadingLimites ? "Cargando..." : "Continuar"}
+          </button>
+        </div>
+      )}
     </div>
   );
 }
