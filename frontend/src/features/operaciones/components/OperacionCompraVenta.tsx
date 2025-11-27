@@ -1,10 +1,7 @@
-import { useState, useEffect, useRef } from "react";
+﻿import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
-import {
-  operacionPrivada,
-  getOpPerspectivaCasa,
-} from "../services/operacionService";
+import { operacionPrivada } from "../services/operacionService";
 import { type CalcularOperacionResponse } from "../types/Operacion";
 import type {
   TransaccionRequest,
@@ -29,15 +26,13 @@ import {
 } from "../services/transaccionService";
 import { formatNumber } from "../utils/formatNumber";
 // Importar las etapas
-import EtapaSeleccionDivisas from "./EtapaSeleccionDivisas";
-import EtapaSeleccionMetodo from "./EtapaSeleccionMetodo";
-import EtapaSeleccionTauser from "./EtapaSeleccionTauser";
+import EtapaConfiguracionOperacion from "./EtapaConfiguracionOperacion";
 import EtapaResultado from "./EtapaResultado";
 import EtapaPago from "./EtapaPago";
 import EtapaComprobante from "./EtapaComprobante";
 import { useClientStore } from "../../../hooks/useClientStore";
 
-type EtapaActual = 1 | 2 | 3 | 4 | 5 | 6;
+type EtapaActual = 1 | 2 | 3 | 4;
 
 type ReconfirmPayload = {
   cambio: boolean;
@@ -59,10 +54,10 @@ type SimuladorMetodo = keyof typeof SIMULADOR_POPUP_NAMES;
 
 export default function OperacionCompraVenta() {
   const navigate = useNavigate();
-  // Estado de navegación
+  // Estado de navegacion
   const [etapaActual, setEtapaActual] = useState<EtapaActual>(1);
 
-  // Estados de datos de la operación
+  // Estados de datos de la operacion
   const [divisaOrigen, setDivisaOrigen] = useState<string>("");
   const [divisaDestino, setDivisaDestino] = useState<string>("");
   const [monto, setMonto] = useState<number>(0);
@@ -77,19 +72,19 @@ export default function OperacionCompraVenta() {
   const [detalleMetodoSeleccionadoInfo, setDetalleMetodoSeleccionadoInfo] =
     useState<CuentaBancaria | BilleteraDigital | Tarjeta | null>(null);
 
-  // Estados para el resultado de la simulación
+  // Estados para el resultado de la simulacion
   const [resultado, setResultado] = useState<CalcularOperacionResponse | null>(
     null
   );
 
-  // Estados para la operación completa (etapas 4-6)
+  // Estados para la operacion completa (etapas 4-6)
   const [tauserSeleccionado, setTauserSeleccionado] = useState<string>("");
   const [procesandoTransaccion, setProcesandoTransaccion] = useState(false);
   const [pagando, setPagando] = useState(false);
   const creandoTransaccionRef = useRef(false);
   const procesamientoTimeoutRef = useRef<number | null>(null);
 
-  // Nuevo estado para operación desde perspectiva de la casa
+  // Nuevo estado para operacion desde perspectiva de la casa
   const [opPerspectivaCasa, setOpPerspectivaCasa] = useState<
     "compra" | "venta" | null
   >(null);
@@ -97,7 +92,7 @@ export default function OperacionCompraVenta() {
   // Cliente actual
   const { selectedClient } = useClientStore();
 
-  // Estados para reconfirmación y transacción
+  // Estados para reconfirmacion y transaccion
   const [transaccionId, setTransaccionId] = useState<number | null>(null);
   const [modalCambioOpen, setModalCambioOpen] = useState(false);
   const [reconfirm, setReconfirm] = useState<ReconfirmPayload | null>(null);
@@ -105,7 +100,7 @@ export default function OperacionCompraVenta() {
     Transaccion | TransaccionDetalle | null
   >(null);
 
-  // Función para resetear la operación completa
+  // Funcion para resetear la operacion completa
   const resetOperacion = () => {
     if (procesamientoTimeoutRef.current !== null) {
       window.clearTimeout(procesamientoTimeoutRef.current);
@@ -143,77 +138,7 @@ export default function OperacionCompraVenta() {
     resetOperacion();
   }, [selectedClient]);
 
-  // ========== FUNCIONES DE NAVEGACIÓN ==========
-
-  // Navegación Etapa 1 -> 2
-  const avanzarEtapa2 = async () => {
-    if (!divisaOrigen || !divisaDestino || monto <= 0) {
-      toast.error("Completa todos los campos");
-      return;
-    }
-    if (!selectedClient) {
-      toast.error("Debes tener un cliente seleccionado");
-      return;
-    }
-
-    try {
-      // Obtener operación desde perspectiva de la casa
-      const { op_perspectiva_casa } = await getOpPerspectivaCasa(
-        Number(divisaOrigen),
-        Number(divisaDestino)
-      );
-      setOpPerspectivaCasa(op_perspectiva_casa);
-      setEtapaActual(2);
-    } catch (error: any) {
-      toast.error(error.message || "Error al determinar tipo de operación");
-    }
-  };
-
-  // Navegación retroceder desde etapa 2 a 1
-  const retrocederEtapa1 = () => {
-    setEtapaActual(1);
-    // Mantener divisas y monto, solo limpiar método
-    setDetalleMetodoSeleccionado(null);
-    setDetalleMetodoSeleccionadoInfo(null);
-    setMetodoGenericoSeleccionado(null);
-    setOpPerspectivaCasa(null);
-  };
-
-  // Navegación Etapa 2 -> 3 (selección de terminal) - ETAPA DE RESULTADO ELIMINADA
-  const avanzarEtapa3 = async () => {
-    if (!detalleMetodoSeleccionado && !metodoGenericoSeleccionado) {
-      toast.error("Debes seleccionar un método de pago");
-      return;
-    }
-
-    try {
-      // Realizar la simulación/cálculo de la operación
-      const operacionData = {
-        cliente_id: selectedClient!.id,
-        divisa_origen: Number(divisaOrigen),
-        divisa_destino: Number(divisaDestino),
-        monto: monto, // monto origen si es op compra, monto destino en op venta
-        op_perspectiva_casa: opPerspectivaCasa!,
-        detalle_metodo_id: detalleMetodoSeleccionado ?? undefined,
-        metodo_id: metodoGenericoSeleccionado ?? undefined,
-      };
-
-      const resultado = await operacionPrivada(operacionData);
-      setResultado(resultado);
-      // Ir directo a selección de terminal (Etapa 3, antes era 4)
-      setEtapaActual(3);
-    } catch (error: any) {
-      toast.error(error.message || "Error al calcular la operación");
-    }
-  };
-
-  // Navegación retroceder desde etapa 3 (terminal) a 2 (método)
-  const retrocederEtapa2 = () => {
-    setEtapaActual(2);
-    // Mantener todos los datos excepto tauser y resultado
-    setTauserSeleccionado("");
-    setResultado(null);
-  };
+  // ========== FUNCIONES DE NAVEGACION ===========
 
   // Navegación cancelar (reiniciar todo desde etapa 1)
   const cancelarOperacion = () => {
@@ -226,24 +151,57 @@ export default function OperacionCompraVenta() {
     toast.info("Operación cancelada");
   };
 
-  // Navegación Etapa 3 (terminal) -> 4 (detalle de operación)
-  const avanzarEtapa4 = () => {
+  const continuarConfiguracion = async () => {
+    if (!divisaOrigen || !divisaDestino || monto <= 0) {
+      toast.error("Completa todos los campos");
+      return;
+    }
+    if (!selectedClient) {
+      toast.error("Debes tener un cliente seleccionado");
+      return;
+    }
+    if (!opPerspectivaCasa) {
+      toast.error("No se pudo determinar el tipo de operación");
+      return;
+    }
+    if (!detalleMetodoSeleccionado && !metodoGenericoSeleccionado) {
+      toast.error("Debes seleccionar un método de pago");
+      return;
+    }
     if (!tauserSeleccionado) {
       toast.error("Debes seleccionar un terminal");
       return;
     }
 
-    // Reutilizar el resultado calculado al avanzar desde etapa 2
-    setEtapaActual(4);
+    try {
+      const operacionData = {
+        cliente_id: selectedClient!.id,
+        divisa_origen: Number(divisaOrigen),
+        divisa_destino: Number(divisaDestino),
+        monto: monto,
+        op_perspectiva_casa: opPerspectivaCasa!,
+        detalle_metodo_id: detalleMetodoSeleccionado ?? undefined,
+        metodo_id: metodoGenericoSeleccionado ?? undefined,
+      };
+
+      const resultadoCalculado = await operacionPrivada(operacionData);
+      setResultado(resultadoCalculado);
+      setEtapaActual(2);
+    } catch (error: any) {
+      const mensaje =
+        error?.response?.data?.error ||
+        error?.response?.data?.detail ||
+        error?.message ||
+        "Error al calcular la operación";
+      toast.error(mensaje);
+    }
   };
 
-  // Navegación retroceder desde etapa 4 (detalle) a 3 (terminal)
-  const retrocederEtapa3 = () => {
-    setEtapaActual(3);
-    // Mantener todos los datos, solo volver a selección de terminal
+  const volverAConfiguracion = () => {
+    setEtapaActual(1);
   };
 
-  // Navegación Etapa 4 (detalle) -> Confirmar y Pagar (crear transacción)
+  // Navegacion Etapa 4 (detalle) -> Confirmar y Pagar (crear transaccion)
   const getMetodoPago = ():
     | "transferencia"
     | "billetera"
@@ -272,7 +230,7 @@ export default function OperacionCompraVenta() {
     procesamientoTimeoutRef.current = window.setTimeout(() => {
       setProcesandoTransaccion(false);
       procesamientoTimeoutRef.current = null;
-      setEtapaActual(6);
+      setEtapaActual(4);
     }, 1500);
   };
 
@@ -306,7 +264,7 @@ export default function OperacionCompraVenta() {
 
       if (transaccionId) {
         if (requierePagoOperacion) {
-          setEtapaActual(5);
+          setEtapaActual(3);
         } else if (transaccionResumen) {
           mostrarProcesandoYComprobante();
         }
@@ -339,7 +297,7 @@ export default function OperacionCompraVenta() {
       setTransaccionResumen(transaccion);
 
       if (requierePagoOperacion) {
-        setEtapaActual(5);
+        setEtapaActual(3);
       } else {
         toast.success("Transaccion creada correctamente");
         mostrarProcesandoYComprobante();
@@ -634,7 +592,7 @@ export default function OperacionCompraVenta() {
   // ========== FUNCIONES DE UTILIDAD ==========
 
   const getContainerWidth = () => {
-    // Mantener tamaño estable para todas las etapas
+    // Mantener tamaÃ±o estable para todas las etapas
     return "w-full max-w-4xl";
   };
 
@@ -644,60 +602,37 @@ export default function OperacionCompraVenta() {
     switch (etapaActual) {
       case 1:
         return (
-          <EtapaSeleccionDivisas
+          <EtapaConfiguracionOperacion
             divisaOrigen={divisaOrigen}
             setDivisaOrigen={setDivisaOrigen}
             divisaDestino={divisaDestino}
             setDivisaDestino={setDivisaDestino}
-            opPerspectivaCasa={opPerspectivaCasa}
-            setOpPerspectivaCasa={setOpPerspectivaCasa}
             monto={monto}
             setMonto={setMonto}
             clienteActual={selectedClient ?? null}
-            onContinuar={avanzarEtapa2}
+            opPerspectivaCasa={opPerspectivaCasa}
+            setOpPerspectivaCasa={setOpPerspectivaCasa}
+            detalleMetodoSeleccionado={detalleMetodoSeleccionado}
+            setDetalleMetodoSeleccionado={setDetalleMetodoSeleccionado}
+            detalleMetodoSeleccionadoInfo={detalleMetodoSeleccionadoInfo}
+            setDetalleMetodoSeleccionadoInfo={setDetalleMetodoSeleccionadoInfo}
+            metodoGenericoSeleccionado={metodoGenericoSeleccionado}
+            setMetodoGenericoSeleccionado={setMetodoGenericoSeleccionado}
+            metodoSeleccionadoInfo={metodoSeleccionadoInfo}
+            setMetodoSeleccionadoInfo={setMetodoSeleccionadoInfo}
+            tauserSeleccionado={tauserSeleccionado}
+            setTauserSeleccionado={setTauserSeleccionado}
+            onCancelar={cancelarOperacion}
+            onContinuar={continuarConfiguracion}
           />
         );
       case 2:
-        return opPerspectivaCasa ? (
-          <EtapaSeleccionMetodo
-            opPerspectivaCasa={opPerspectivaCasa}
-            detalleMetodoSeleccionado={detalleMetodoSeleccionado}
-            metodoGenericoSeleccionado={metodoGenericoSeleccionado}
-            metodoSeleccionadoInfo={metodoSeleccionadoInfo}
-            onDetalleMetodoChange={(detalleId) => {
-              setDetalleMetodoSeleccionado(detalleId);
-              if (detalleId === null) {
-                setDetalleMetodoSeleccionadoInfo(null);
-              }
-            }}
-            onDetalleMetodoInfoChange={setDetalleMetodoSeleccionadoInfo}
-            onMetodoGenericoChange={setMetodoGenericoSeleccionado}
-            onMetodoSeleccionadoChange={setMetodoSeleccionadoInfo}
-            onRetroceder={retrocederEtapa1}
-            onContinuar={avanzarEtapa3}
-            onCancelar={cancelarOperacion}
-          />
-        ) : null;
-      case 3:
-        return (
-          <EtapaSeleccionTauser
-            tauserSeleccionado={tauserSeleccionado}
-            setTauserSeleccionado={setTauserSeleccionado}
-            divisaDestino={divisaDestino}
-            opPerspectivaCasa={opPerspectivaCasa}
-            monto={monto}
-            onRetroceder={retrocederEtapa2}
-            onAvanzar={avanzarEtapa4}
-            onCancelar={cancelarOperacion}
-          />
-        );
-      case 4:
         return (
           resultado && (
             <EtapaResultado
               resultado={resultado}
               tauserSeleccionado={tauserSeleccionado}
-              onRetroceder={retrocederEtapa3}
+              onRetroceder={volverAConfiguracion}
               onAvanzar={confirmarYPagar}
               onCancelar={cancelarOperacion}
               mostrarBotonCancelar={true}
@@ -711,7 +646,7 @@ export default function OperacionCompraVenta() {
             />
           )
         );
-      case 5: {
+      case 3: {
         const metodoPago = getMetodoPago();
         if (!metodoPago || !resultado) return null;
         return (
@@ -726,7 +661,7 @@ export default function OperacionCompraVenta() {
           />
         );
       }
-      case 6:
+      case 4:
         return resultado && transaccionResumen ? (
           <EtapaComprobante
             transaccion={transaccionResumen}
@@ -742,7 +677,6 @@ export default function OperacionCompraVenta() {
         return null;
     }
   };
-
   if (!selectedClient) {
     return (
       <section className="flex flex-col items-center p-6 select-none">
@@ -752,7 +686,7 @@ export default function OperacionCompraVenta() {
             Cargando cliente...
           </h3>
           <p className="text-sm text-gray-600">
-            Espera mientras obtenemos tu información
+            Espera mientras obtenemos tu informacion
           </p>
         </div>
       </section>
@@ -765,10 +699,10 @@ export default function OperacionCompraVenta() {
         <div className="w-full max-w-md bg-white rounded-lg shadow-lg p-8 text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600 mx-auto mb-4"></div>
           <h3 className="text-lg font-semibold text-gray-800 mb-2">
-            Procesando transacción...
+            Procesando transaccion...
           </h3>
           <p className="text-sm text-gray-600">
-            Tu operación se está procesando
+            Tu operacion se está procesando
           </p>
         </div>
       </section>
@@ -832,3 +766,5 @@ export default function OperacionCompraVenta() {
     </section>
   );
 }
+
+

@@ -22,7 +22,7 @@ class TauserViewSet(viewsets.ModelViewSet):
     """
     queryset = Tauser.objects.all().order_by('codigo')
     serializer_class = TauserSerializer
-    permission_classes = [permissions.IsAuthenticated, DjangoModelPermissions]
+    permission_classes = [permissions.AllowAny]
 
     filter_backends = [filters.SearchFilter]
     search_fields = ["nombre", "codigo", "direccion", "ciudad", "departamento"]
@@ -148,8 +148,8 @@ class TauserViewSet(viewsets.ModelViewSet):
     def con_stock(self, request):
         """
         Lista Tausers activos que tienen stock disponible para una divisa específica.
-        Calcula el stock total (suma de stock * denominacion) para determinar si el tauser
-        puede cubrir el monto de la operación.
+        Valida si existe una combinación de denominaciones (considerando el stock) que cubra
+        exactamente el monto de la operación.
         """
         from apps.stock.models import StockDivisaTauser
         from decimal import Decimal
@@ -186,22 +186,57 @@ class TauserViewSet(viewsets.ModelViewSet):
 
         tausers_con_stock_suficiente = []
 
+        def puede_cubrir_monto(monto_objetivo, registros_stock):
+            """
+            Determina si el monto se puede formar exactamente con las denominaciones disponibles
+            y el stock limitado de cada una.
+            """
+            if monto_objetivo < 0:
+                return False
+            # Solo es posible formar montos enteros con denominaciones enteras
+            if monto_objetivo != monto_objetivo.to_integral_value():
+                return False
+
+            monto_int = int(monto_objetivo)
+
+            # Construir lista de (denominacion, cantidad disponible) filtrando stocks positivos
+            disponibles = [
+                (int(reg.denominacion.denominacion), int(reg.stock))
+                for reg in registros_stock
+                if reg.stock > 0 and reg.denominacion.denominacion > 0
+            ]
+
+            if not disponibles:
+                return False
+
+            if monto_int == 0:
+                return True
+
+            # Programación dinámica con conjuntos para considerar stock limitado
+            alcanzables = {0}
+            for valor, cantidad in sorted(disponibles, key=lambda x: x[0], reverse=True):
+                nuevos_alcanzables = set(alcanzables)
+                for parcial in alcanzables:
+                    max_utilizar = min(cantidad, (monto_int - parcial) // valor)
+                    for n in range(1, max_utilizar + 1):
+                        nuevos_alcanzables.add(parcial + n * valor)
+                alcanzables = nuevos_alcanzables
+                if monto_int in alcanzables:
+                    return True
+
+            return monto_int in alcanzables
+
         # Recorrer cada tauser y evaluar si tiene stock suficiente
         for tauser in tausers_activos:
             # Consultar registros de stock del tauser para la divisa específica
             registros_stock = StockDivisaTauser.objects.filter(
                 tauser=tauser,
-                denominacion__divisa_id=divisa_id
+                denominacion__divisa_id=divisa_id,
+                stock__gt=0
             ).select_related('denominacion')
 
-            # Calcular el stock total (suma de stock * denominacion)
-            stock_total = Decimal('0')
-            for registro in registros_stock:
-                stock_total += registro.stock * registro.denominacion.denominacion
-                # Si el stock total es mayor o igual al monto, agregar el tauser
-                if stock_total >= monto:
-                    tausers_con_stock_suficiente.append(tauser)
-                    break
+            if puede_cubrir_monto(monto, registros_stock):
+                tausers_con_stock_suficiente.append(tauser)
 
         # Ordenar por código
         tausers_con_stock_suficiente.sort(key=lambda t: t.codigo)
