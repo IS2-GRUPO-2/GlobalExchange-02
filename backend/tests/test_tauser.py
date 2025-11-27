@@ -618,17 +618,15 @@ class TestTauserConStockEndpoint:
         assert 'numéricos válidos' in response.data['detail']
 
     def test_con_stock_monto_bajo(self, authenticated_client, divisa, tausers_con_stock):
-        """Test: Todos los tausers con stock aparecen para montos bajos"""
+        """Test: Solo aparecen tausers que pueden formar el monto con sus denominaciones"""
         url = reverse('tauser-con-stock')
         response = authenticated_client.get(
             url, {'divisa_id': divisa.id, 'monto': 10})
 
         assert response.status_code == status.HTTP_200_OK
-        # Deberían aparecer TAU-001 (1000), TAU-002 (250), TAU-003 (50), TAU-004 (165)
-        assert len(response.data) == 4
+        # Solo pueden entregar 10 exacto TAU-003 (10x5) y TAU-004 (tiene una de 10)
+        assert len(response.data) == 2
         codigos = [t['codigo'] for t in response.data]
-        assert 'TAU-001' in codigos
-        assert 'TAU-002' in codigos
         assert 'TAU-003' in codigos
         assert 'TAU-004' in codigos
         assert 'TAU-005' not in codigos  # Sin stock
@@ -662,16 +660,15 @@ class TestTauserConStockEndpoint:
         assert response.data[0]['codigo'] == 'TAU-001'
 
     def test_con_stock_monto_exacto(self, authenticated_client, divisa, tausers_con_stock):
-        """Test: Tauser con stock exactamente igual al monto aparece"""
+        """Test: Solo aparecen tausers con combinación exacta para el monto"""
         url = reverse('tauser-con-stock')
         response = authenticated_client.get(
             url, {'divisa_id': divisa.id, 'monto': 250})
 
         assert response.status_code == status.HTTP_200_OK
-        # Deberían aparecer TAU-001 (1000) y TAU-002 (250)
-        assert len(response.data) == 2
+        # TAU-002 puede formar 250 con 5 billetes de 50; TAU-001 no puede formar 250 exacto
+        assert len(response.data) == 1
         codigos = [t['codigo'] for t in response.data]
-        assert 'TAU-001' in codigos
         assert 'TAU-002' in codigos
 
     def test_con_stock_monto_imposible(self, authenticated_client, divisa, tausers_con_stock):
@@ -703,14 +700,14 @@ class TestTauserConStockEndpoint:
         assert len(response.data) == 4
 
     def test_con_stock_monto_decimal(self, authenticated_client, divisa, tausers_con_stock):
-        """Test: Funciona correctamente con montos decimales"""
+        """Test: Montos no enteros no se pueden formar con denominaciones enteras"""
         url = reverse('tauser-con-stock')
         response = authenticated_client.get(
             url, {'divisa_id': divisa.id, 'monto': 49.99})
 
         assert response.status_code == status.HTTP_200_OK
-        # Deberían aparecer TAU-001, TAU-002, TAU-003, TAU-004
-        assert len(response.data) == 4
+        # Ningún tauser puede cubrir un monto con decimales usando denominaciones enteras
+        assert len(response.data) == 0
 
     def test_con_stock_ordenado_por_codigo(self, authenticated_client, divisa, tausers_con_stock):
         """Test: Los resultados están ordenados por código"""
@@ -738,8 +735,7 @@ class TestTauserConStockEndpoint:
 
         assert response.status_code == status.HTTP_200_OK
         codigos = [t['codigo'] for t in response.data]
-        assert 'TAU-004' in codigos  # Debe aparecer con monto exacto
-        assert 'TAU-001' in codigos  # También tiene suficiente
+        assert codigos == ['TAU-004']  # Solo TAU-004 puede formar 165 exacto
 
     def test_con_stock_solo_tausers_activos(self, authenticated_client, divisa, tausers_con_stock):
         """Test: Solo tausers activos aparecen en los resultados"""
