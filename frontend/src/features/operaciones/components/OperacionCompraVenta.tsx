@@ -188,7 +188,12 @@ export default function OperacionCompraVenta() {
       setResultado(resultadoCalculado);
       setEtapaActual(2);
     } catch (error: any) {
-      toast.error(error.message || "Error al calcular la operación");
+      const mensaje =
+        error?.response?.data?.error ||
+        error?.response?.data?.detail ||
+        error?.message ||
+        "Error al calcular la operación";
+      toast.error(mensaje);
     }
   };
 
