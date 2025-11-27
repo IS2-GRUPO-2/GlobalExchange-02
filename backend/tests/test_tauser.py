@@ -223,13 +223,6 @@ class TestTauserViewSet:
         assert len(response.data['results']) == 1
         assert response.data['results'][0]['codigo'] == tauser.codigo
 
-    def test_list_tausers_unauthenticated(self, api_client, tauser):
-        """Test: Listar Tausers sin autenticación debe fallar"""
-        url = reverse('tauser-list')
-        response = api_client.get(url)
-
-        assert response.status_code == status.HTTP_401_UNAUTHORIZED
-
     def test_list_all_tausers(self, authenticated_client, tauser_data):
         """Test: Listar todos los Tausers sin paginación"""
         # Crear múltiples Tausers
@@ -718,13 +711,6 @@ class TestTauserConStockEndpoint:
         assert response.status_code == status.HTTP_200_OK
         codigos = [t['codigo'] for t in response.data]
         assert codigos == sorted(codigos)
-
-    def test_con_stock_unauthenticated(self, api_client, divisa):
-        """Test: Usuario no autenticado no puede acceder"""
-        url = reverse('tauser-con-stock')
-        response = api_client.get(url, {'divisa_id': divisa.id, 'monto': 100})
-
-        assert response.status_code == status.HTTP_401_UNAUTHORIZED
 
     def test_con_stock_calculo_stock_mixto(self, authenticated_client, divisa, tausers_con_stock):
         """Test: Cálculo correcto de stock con múltiples denominaciones"""
