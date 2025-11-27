@@ -1,9 +1,13 @@
-from decimal import Decimal
+from decimal import Decimal, ROUND_HALF_UP
 from apps.clientes.models import Cliente
 from apps.divisas.models import Divisa
 from apps.cotizaciones.models import Tasa
 from apps.metodos_financieros.models import MetodoFinanciero, MetodoFinancieroDetalle
 from apps.cotizaciones.service import TasaService
+
+
+def _round_decimal(valor: Decimal) -> Decimal:
+    return valor.to_integral_value(rounding=ROUND_HALF_UP)
 
 
 def _get_divisa(id_divisa: int) -> Divisa:
@@ -91,6 +95,18 @@ def calcular_operacion(divisa_origen_id, divisa_destino_id, monto: Decimal, op_p
     if op_perspectiva_casa == "compra":
         com_metodo = _get_comision_compra(
             detalle) if detalle else metodo.comision_pago_porcentaje
+        com_metodo_pct = Decimal(str(com_metodo or 0))
+        # Tasa original: precio base - comisión base (sin descuento ni método)
+        tasa_original = _round_decimal(
+            tasa.precioBase - tasa.comisionBaseCompra
+        )
+        # Tasa sin descuento de categoría: aplicar solo comisión del método
+        tasa_sin_desc = tasa_original
+        if com_metodo_pct:
+            tasa_sin_desc = _round_decimal(
+                tasa_sin_desc - tasa_sin_desc * (com_metodo_pct / Decimal("100"))
+            )
+
         tc = TasaService.calcular_tasa_compra(tasa, com_metodo, cliente)
         # El monto ingresado en el input representa el monto que el cliente entrega
         monto_origen = monto
@@ -100,10 +116,27 @@ def calcular_operacion(divisa_origen_id, divisa_destino_id, monto: Decimal, op_p
 
         com_metodo = _get_comision_venta(
             detalle) if detalle else metodo.comision_cobro_porcentaje
+        com_metodo_pct = Decimal(str(com_metodo or 0))
+        # Tasa original: precio base + comisión base (sin descuento ni método)
+        tasa_original = _round_decimal(
+            tasa.precioBase + tasa.comisionBaseVenta
+        )
+        # Tasa sin descuento de categoría: aplicar solo comisión del método
+        tasa_sin_desc = tasa_original
+        if com_metodo_pct:
+            tasa_sin_desc = _round_decimal(
+                tasa_sin_desc + tasa_sin_desc * (com_metodo_pct / Decimal("100"))
+            )
+
         tc = TasaService.calcular_tasa_venta(tasa, com_metodo, cliente)
         # El monto ingresado en el imput representa el monto que el cliente quiere
         monto_destino = monto
         monto_origen = monto_destino * tc
+
+    descuento_categoria = (
+        cliente.id_categoria.descuento if cliente else Decimal("0")
+    )
+    com_metodo_val = Decimal(str(com_metodo or 0))
 
     return {
         "op_perspectiva_casa": op_perspectiva_casa,
@@ -113,10 +146,17 @@ def calcular_operacion(divisa_origen_id, divisa_destino_id, monto: Decimal, op_p
             "nombre_categoria": cliente.id_categoria.nombre if cliente_id else None,
             "descuento_categoria": float(cliente.id_categoria.descuento) if cliente_id else None,
             "nombre_metodo": metodo_nombre,
-            "comision_metodo": float(com_metodo),
+            "comision_metodo": float(com_metodo_val),
         },
         "tc_final": tc,
         "precio_base": tasa.precioBase,
         "monto_origen": monto_origen,
-        "monto_destino": monto_destino
+        "monto_destino": monto_destino,
+        "tasas": {
+            "tasa_original": float(tasa_original),
+            "tasa_sin_descuento_categoria": float(tasa_sin_desc),
+            "tasa_aplicada": float(tc),
+            "descuento_categoria": float(descuento_categoria),
+            "comision_metodo": float(com_metodo_val),
+        },
     }

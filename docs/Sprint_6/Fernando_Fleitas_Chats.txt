@@ -1,0 +1,2 @@
+feature/IS2-50 Generación de reportes en PDF o EXCEL
+https://chatgpt.com/share/6928dd59-8fc8-800b-98c1-52c3ff831f6d

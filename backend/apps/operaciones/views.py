@@ -26,6 +26,8 @@ from apps.stock.models import MovimientoStock
 from apps.stock.serializers import MovimientoStockSerializer
 from apps.tauser.models import Tauser
 from globalexchange.configuration import config
+from apps.clientes.models import Cliente
+from apps.divisas.models import LimiteConfig
 
 from .models import Transaccion
 from .serializers import (
@@ -61,6 +63,16 @@ def operacion_privada(request):
     if serializer.is_valid():
         try:
             data = serializer.validated_data
+
+            cliente_id = data.get("cliente_id")
+            if not cliente_id:
+                return Response(
+                    {"error": "Debe indicar el cliente para validar los límites de operación."},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+
+            cliente = Cliente.objects.get(id=cliente_id)
+
             resultado = calcular_operacion(
                 cliente_id=data.get("cliente_id", None),
                 divisa_origen_id=data.get("divisa_origen"),
@@ -70,6 +82,36 @@ def operacion_privada(request):
                 metodo_id=data.get("metodo_id", None),
                 detalle_metodo_id=data.get("detalle_metodo_id", None)
             )
+
+            # Validar limites diarios/mensuales en divisa base
+            limite_cfg = LimiteConfig.get_solo()
+            limite_mensual = limite_cfg.limite_mensual
+            limite_diario = limite_cfg.limite_diario
+
+            # Determinar el monto en divisa base segun la perspectiva
+            if data.get("op_perspectiva_casa") == "compra":
+                monto_base = Decimal(str(resultado["monto_destino"]))
+            else:
+                monto_base = Decimal(str(resultado["monto_origen"]))
+
+            # Validar limite mensual primero
+            if limite_mensual is not None:
+                total_mensual = (cliente.gasto_mensual or Decimal("0")) + monto_base
+                if total_mensual > limite_mensual:
+                    return Response(
+                        {"error": "Límite mensual alcanzado para este cliente."},
+                        status=status.HTTP_400_BAD_REQUEST,
+                    )
+
+            # Luego validar limite diario
+            if limite_diario is not None:
+                total_diario = (cliente.gasto_diario or Decimal("0")) + monto_base
+                if total_diario > limite_diario:
+                    return Response(
+                        {"error": "Límite diario alcanzado para este cliente."},
+                        status=status.HTTP_400_BAD_REQUEST,
+                    )
+
             return Response(resultado, status=status.HTTP_200_OK)
         except Exception as e:
             return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
@@ -381,15 +423,13 @@ class TransaccionViewSet(viewsets.ModelViewSet):
         try:
             return TipoMovimiento.objects.get(codigo=codigo)
         except TipoMovimiento.DoesNotExist:
-            raise ValidationError(
-                f"El tipo de movimiento '{codigo}' no estA� configurado.")
+            raise ValidationError(f"El tipo de movimiento '{codigo}' no está configurado.")
 
     def _get_metodo_financiero(self, nombre: str) -> MetodoFinanciero:
         try:
             return MetodoFinanciero.objects.get(nombre=nombre)
         except MetodoFinanciero.DoesNotExist:
-            raise ValidationError(
-                f"El mActodo financiero '{nombre}' no estA� disponible.")
+            raise ValidationError(f"El método financiero '{nombre}' no está disponible.")
 
     def _get_divisa_extranjera_id(self, transaccion: Transaccion) -> int:
         if not transaccion.divisa_origen.es_base:
