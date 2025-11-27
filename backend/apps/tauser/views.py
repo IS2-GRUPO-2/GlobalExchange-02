@@ -22,7 +22,7 @@ class TauserViewSet(viewsets.ModelViewSet):
     """
     queryset = Tauser.objects.all().order_by('codigo')
     serializer_class = TauserSerializer
-    permission_classes = [permissions.IsAuthenticated, DjangoModelPermissions]
+    permission_classes = [permissions.AllowAny]
 
     filter_backends = [filters.SearchFilter]
     search_fields = ["nombre", "codigo", "direccion", "ciudad", "departamento"]
