@@ -189,7 +189,7 @@ export default function EtapaSeleccionMetodo({
             onClick={handleRetroceder}
             className="px-6 py-2 border border-gray-300 text-gray-700 rounded-lg font-medium hover:bg-gray-50 transition-colors"
           >
-            AtrA�s
+            Atrás
           </button>
 
           <div className="flex gap-3">

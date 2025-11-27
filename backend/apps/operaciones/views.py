@@ -411,13 +411,13 @@ class TransaccionViewSet(viewsets.ModelViewSet):
         try:
             return TipoMovimiento.objects.get(codigo=codigo)
         except TipoMovimiento.DoesNotExist:
-            raise ValidationError(f"El tipo de movimiento '{codigo}' no estA� configurado.")
+            raise ValidationError(f"El tipo de movimiento '{codigo}' no está configurado.")
 
     def _get_metodo_financiero(self, nombre: str) -> MetodoFinanciero:
         try:
             return MetodoFinanciero.objects.get(nombre=nombre)
         except MetodoFinanciero.DoesNotExist:
-            raise ValidationError(f"El mActodo financiero '{nombre}' no estA� disponible.")
+            raise ValidationError(f"El método financiero '{nombre}' no está disponible.")
 
     def _get_divisa_extranjera_id(self, transaccion: Transaccion) -> int:
         if not transaccion.divisa_origen.es_base:
