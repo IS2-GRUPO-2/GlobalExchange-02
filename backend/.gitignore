@@ -1,3 +1,6 @@
 .env
 __pycache__/
 .venv/
+celerybeat-schedule
+celerybeat-schedule-shm
+celerybeat-schedule-wal
