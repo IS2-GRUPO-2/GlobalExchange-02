@@ -32,7 +32,7 @@ jobs:
           
       - name: Ejecutar pruebas con Docker Compose
         run: |
-          docker compose up backend db \
+          docker compose up backend db rabbitmq celery_worker \
             --build \
             --exit-code-from backend \
             --abort-on-container-exit

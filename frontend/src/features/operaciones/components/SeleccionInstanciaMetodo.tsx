@@ -12,6 +12,7 @@ interface SeleccionInstanciaMetodoProps {
   onCancelar: () => void;
   onContinuar: () => void;
   puedeAvanzar: boolean;
+  mostrarAcciones?: boolean;
 }
 
 export default function SeleccionInstanciaMetodo({
@@ -21,7 +22,8 @@ export default function SeleccionInstanciaMetodo({
   onVolver,
   onCancelar,
   onContinuar,
-  puedeAvanzar
+  puedeAvanzar,
+  mostrarAcciones = true,
 }: SeleccionInstanciaMetodoProps) {
   const [cuentasBancarias, setCuentasBancarias] = useState<CuentaBancaria[]>([]);
   const [billeterasDigitales, setBilleterasDigitales] = useState<BilleteraDigital[]>([]);
@@ -236,25 +238,27 @@ export default function SeleccionInstanciaMetodo({
           Atrás
         </button>
         
-        <div className="flex gap-3">
-          <button
-            onClick={onCancelar}
-            className="px-6 py-2 border border-gray-300 text-gray-700 rounded-lg font-medium hover:bg-gray-50 transition-colors"
-          >
-            Cancelar
-          </button>
-          <button
-            onClick={onContinuar}
-            disabled={!puedeAvanzar}
-            className={`px-6 py-2 rounded-lg font-medium transition-colors ${
-              puedeAvanzar
-                ? "bg-zinc-900 text-white hover:bg-zinc-700"
-                : "bg-gray-300 text-gray-500 cursor-not-allowed"
-            }`}
-          >
-            Continuar
-          </button>
-        </div>
+        {mostrarAcciones && (
+          <div className="flex gap-3">
+            <button
+              onClick={onCancelar}
+              className="px-6 py-2 border border-gray-300 text-gray-700 rounded-lg font-medium hover:bg-gray-50 transition-colors"
+            >
+              Cancelar
+            </button>
+            <button
+              onClick={onContinuar}
+              disabled={!puedeAvanzar}
+              className={`px-6 py-2 rounded-lg font-medium transition-colors ${
+                puedeAvanzar
+                  ? "bg-zinc-900 text-white hover:bg-zinc-700"
+                  : "bg-gray-300 text-gray-500 cursor-not-allowed"
+              }`}
+            >
+              Continuar
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );

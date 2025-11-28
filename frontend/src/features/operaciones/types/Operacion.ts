@@ -28,8 +28,16 @@ export type CalcularOperacionResponse = {
     comision_metodo?: number;
   };
   tc_final: number;
+  precio_base: number;
   monto_origen: number;
   monto_destino: number;
+  tasas?: {
+    tasa_original: number;
+    tasa_sin_descuento_categoria: number;
+    tasa_aplicada: number;
+    descuento_categoria: number;
+    comision_metodo: number;
+  };
 };
 
 

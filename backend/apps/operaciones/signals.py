@@ -1,16 +1,42 @@
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 from django.core.exceptions import ValidationError
+from rest_framework.exceptions import ValidationError as DRFValidationError
 from apps.facturacion.factura_service import cargar_datos_factura, calcular_factura, generar_factura
 from .models import Transaccion
 from apps.facturacion.models import Factura, FacturaSettings
 import json
 import logging
+from apps.stock.serializers import MovimientoStockSerializer
+from apps.stock.models import MovimientoStock
+from apps.stock.enums import TipoMovimiento, EstadoMovimiento
 
 logger = logging.getLogger(__name__)
 
 @receiver(post_save, sender=Transaccion)
-def generar_factura_al_pagar(sender, instance: Transaccion, **kwargs):
+def manejar_transaccion_post_save(sender, instance, created, **kwargs):
+    procesar_cambios_transaccion(instance, created)
+
+def procesar_cambios_transaccion(transaccion: Transaccion, created):
+    if created:
+        from .tasks import expire_transaction_task
+        TTL = 86400 # 24hs
+
+        expire_transaction_task.apply_async(args=[transaccion.pk], countdown=TTL)
+    
+    if transaccion.estado in ["en_proceso", "completada"]:
+        generar_factura_al_pagar(transaccion)
+
+    if created and transaccion.operacion == "venta":
+        reservar_stock_divisa(instance=transaccion, created=created)
+
+    if transaccion.operacion == "venta" and transaccion.estado == "completada":
+        finalizar_movimiento_stock(transaccion)
+
+    if not created and transaccion.estado in ["cancelada", "fallida"]:
+        cancelar_reserva_stock(transaccion)  
+
+def generar_factura_al_pagar(instance: Transaccion):
     """
         Genera y envía una factura cuando una transacción es pagada
     """
@@ -53,3 +79,56 @@ def generar_factura_al_pagar(sender, instance: Transaccion, **kwargs):
         logger.error(f"Error validando datos de factura: {e}")
     except Exception as e:
         logger.error(f"Error inesperado generando factura: {e}")
+
+def reservar_stock_divisa(instance, created):
+    if instance.estado not in ["en_proceso", "pendiente"] or instance.operacion == "compra":
+        logger.warning("No se puede reservar stock para la transaccion con id " + str(instance.pk))
+        return
+
+    logger.info(f"Reservando stock para la transaccion con id {instance.pk}")
+
+    tipo_movimiento = TipoMovimiento.SALCLT
+    monto = instance.monto_destino
+    divisa = instance.divisa_destino
+    
+    data = {
+        "tipo_movimiento": tipo_movimiento,
+        "tauser": instance.tauser.pk,
+        "transaccion": instance.pk,
+        "monto": monto,
+        "divisa": divisa.pk
+    }
+
+    serializer = MovimientoStockSerializer(data=data)
+    try:
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+    except (ValidationError, DRFValidationError) as exc:
+        logger.error(
+            f"No se puede reservar stock para transacción {instance.pk}, datos inválidos: {data}. Error: {exc}"
+        )
+        return
+
+def cancelar_reserva_stock(transaccion: Transaccion):
+    try:
+        movimiento = MovimientoStock.objects.get(transaccion=transaccion)
+    except MovimientoStock.DoesNotExist:
+        logger.warning("No se puede cancelar reserva de stock para la transaccion con id" + str(transaccion.pk))
+        return
+
+    logger.info(f"Cancelando movimiento de stock debido a transacción {transaccion.pk} cancelada")
+    movimiento.estado = EstadoMovimiento.CANCELADO
+
+    movimiento.save()
+
+def finalizar_movimiento_stock(transaccion: Transaccion):
+    try:
+        movimiento = MovimientoStock.objects.get(transaccion=transaccion)
+    except MovimientoStock.DoesNotExist:
+        logger.warning("No se puede finalizar reserva de stock para la transaccion con id" + str(transaccion.pk))
+        return
+
+    logger.info(f"Cancelando movimiento de stock debido a transacción {transaccion.pk} cancelada")
+    movimiento.estado = EstadoMovimiento.FINALIZADO
+
+    movimiento.save()

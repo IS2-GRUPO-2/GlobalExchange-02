@@ -13,7 +13,8 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 from pathlib import Path
 from .configuration import config
 from datetime import timedelta
-
+import os
+from celery.schedules import crontab
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -39,6 +40,7 @@ CORS_ALLOW_CREDENTIALS = True
 INSTALLED_APPS = [
     'corsheaders',
     'rest_framework',
+    'django_filters',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -60,6 +62,7 @@ INSTALLED_APPS = [
     'apps.stock',
     'apps.pagos',
     'apps.facturacion',
+    'apps.ganancias',
     'drf_yasg',
     'django_otp',
     'django_otp.plugins.otp_static',
@@ -120,6 +123,7 @@ REST_FRAMEWORK = {
         'rest_framework_simplejwt.authentication.JWTAuthentication',
     ),
     "DEFAULT_FILTER_BACKENDS": [
+        "django_filters.rest_framework.DjangoFilterBackend",
         "rest_framework.filters.SearchFilter",
     ],
     "DEFAULT_RENDERER_CLASSES": (
@@ -130,9 +134,8 @@ REST_FRAMEWORK = {
 }
 
 
-
 SIMPLE_JWT = {
-    "TOKEN_OBTAINER_SERIALIZER" : "globalexchange.serializers.CustomTokenObtainPairSerializer",
+    "TOKEN_OBTAINER_SERIALIZER": "globalexchange.serializers.CustomTokenObtainPairSerializer",
     "ACCESS_TOKEN_LIFETIME": timedelta(hours=1),
     "REFRESH_TOKEN_LIFETIME": timedelta(days=7),
 }
@@ -162,7 +165,7 @@ AUTH_PASSWORD_VALIDATORS = [
 
 LANGUAGE_CODE = 'en-us'
 
-TIME_ZONE = 'UTC'
+TIME_ZONE = 'America/Asuncion'
 
 USE_I18N = True
 
@@ -198,3 +201,21 @@ EMAIL_HOST_PASSWORD = config.EMAIL_HOST_PASSWORD
 
 # OTP Configuration for MFA
 OTP_TOTP_ISSUER = 'GlobalExchange-PY'
+
+CELERY_BROKER_URL = os.environ.get('CELERY_BROKER_URL', 'amqp://guest:guest@rabbitmq:5672//')
+CELERY_RESULT_BACKEND = 'rpc://' 
+CELERY_TIMEZONE = TIME_ZONE  # Asume que tienes TIME_ZONE definido arriba (ej: 'America/Asuncion')
+CELERY_ENABLE_UTC = True
+CELERY_ACCEPT_CONTENT = ['json']
+CELERY_TASK_SERIALIZER = 'json'
+
+CELERY_BEAT_SCHEDULE = {
+    'reiniciar-limites-diarios': {
+        'task': 'apps.clientes.tasks.resetear_limite_diario',
+        'schedule': crontab(hour=6, minute=6)
+    },
+    'reiniciar-limites-mensuales': {
+        'task': 'apps.clientes.tasks.resetear_limite_mensual',
+        'schedule': crontab(hour=6, minute=0, day_of_month=1)
+    }
+}

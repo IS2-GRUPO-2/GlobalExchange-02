@@ -150,3 +150,7 @@ export const NOTIFICACIONES = {
   VIEW_CLIENTE: "notificaciones.view_notificaciontasacliente",
   CHANGE_CLIENTE: "notificaciones.change_notificaciontasacliente",
 } as const;
+
+export const GANANCIAS = {
+  VIEW: "ganancias.can_view_ganancias",
+} as const;

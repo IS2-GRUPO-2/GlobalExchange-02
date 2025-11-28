@@ -8,7 +8,7 @@ import uuid
 from apps.operaciones.models import Transaccion, PermisosOperacion
 from apps.usuarios.models import User
 from apps.clientes.models import Cliente, CategoriaCliente
-from apps.divisas.models import Divisa
+from apps.divisas.models import Divisa, LimiteConfig
 from apps.tauser.models import Tauser
 from apps.metodos_financieros.models import MetodoFinanciero, MetodoFinancieroDetalle
 from apps.cotizaciones.models import Tasa
@@ -505,6 +505,18 @@ class TestTransaccionViewSet:
 class TestOperacionPrivada:
     """Pruebas para el endpoint de operación privada"""
 
+    @pytest.fixture(autouse=True)
+    def reset_limites(self):
+        limite_cfg = LimiteConfig.get_solo()
+        limite_cfg.limite_diario = None
+        limite_cfg.limite_mensual = None
+        limite_cfg.save()
+        yield
+        limite_cfg.refresh_from_db()
+        limite_cfg.limite_diario = None
+        limite_cfg.limite_mensual = None
+        limite_cfg.save()
+
     def test_operacion_privada_authenticated(self, authenticated_client, cliente_test, divisa_usd, divisa_pyg, metodo_efectivo, tasa_usd):
         """Prueba operación privada con usuario autenticado"""
         client, user = authenticated_client
@@ -549,6 +561,54 @@ class TestOperacionPrivada:
         response = client.post(url, data, format='json')
 
         assert response.status_code == status.HTTP_400_BAD_REQUEST
+
+    def test_operacion_privada_supera_limite_mensual(self, authenticated_client, cliente_test, divisa_usd, divisa_pyg, metodo_efectivo, tasa_usd):
+        """Prueba que se bloquee si supera el límite mensual"""
+        client, user = authenticated_client
+        url = reverse('operacion-privada')
+
+        limite_cfg = LimiteConfig.get_solo()
+        limite_cfg.limite_mensual = Decimal('1')
+        limite_cfg.limite_diario = None
+        limite_cfg.save()
+
+        data = {
+            'cliente_id': str(cliente_test.id),
+            'divisa_origen': divisa_pyg.id,
+            'divisa_destino': divisa_usd.id,
+            'monto': Decimal('100.00'),
+            'op_perspectiva_casa': 'compra',
+            'metodo_id': metodo_efectivo.id
+        }
+
+        response = client.post(url, data, format='json')
+
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        assert 'mensual' in response.data.get('error', '').lower()
+
+    def test_operacion_privada_supera_limite_diario(self, authenticated_client, cliente_test, divisa_usd, divisa_pyg, metodo_efectivo, tasa_usd):
+        """Prueba que se bloquee si supera el límite diario usando monto en divisa base"""
+        client, user = authenticated_client
+        url = reverse('operacion-privada')
+
+        limite_cfg = LimiteConfig.get_solo()
+        limite_cfg.limite_mensual = Decimal('1000000')
+        limite_cfg.limite_diario = Decimal('1')
+        limite_cfg.save()
+
+        data = {
+            'cliente_id': str(cliente_test.id),
+            'divisa_origen': divisa_pyg.id,  # Base
+            'divisa_destino': divisa_usd.id,  # Extranjera
+            'monto': Decimal('100.00'),
+            'op_perspectiva_casa': 'venta',
+            'metodo_id': metodo_efectivo.id
+        }
+
+        response = client.post(url, data, format='json')
+
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        assert 'diario' in response.data.get('error', '').lower()
 
 
 class TestOperacionPublica:

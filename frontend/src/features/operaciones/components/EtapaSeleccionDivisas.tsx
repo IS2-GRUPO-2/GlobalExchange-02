@@ -1,12 +1,7 @@
 import { useState, useEffect } from "react";
 import type { Divisa } from "../../divisas/types/Divisa";
-import {
-  getDivisasConTasa,
-  getLimiteConfig,
-  validarDenominaciones,
-} from "../../divisas/services/divisaService";
+import { getDivisasConTasa, validarDenominaciones } from "../../divisas/services/divisaService";
 import { formatInputNumber, unformatInputNumber } from "../utils/formatNumber";
-import { getTasas } from "../../cotizaciones/services/tasaService";
 import type { Cliente } from "../../clientes/types/Cliente";
 import { getOpPerspectivaCasa } from "../services/operacionService";
 
@@ -20,14 +15,10 @@ interface Props {
   clienteActual: Cliente | null;
   opPerspectivaCasa: "compra" | "venta" | null;
   setOpPerspectivaCasa: (perspectiva: "compra" | "venta" | null) => void;
-  onContinuar: () => void;
+  onContinuar?: () => void;
+  variant?: "wizard" | "inline";
+  onReadyChange?: (ready: boolean) => void;
 }
-
-type LimiteCfg = {
-  id: number;
-  limite_diario: number | null;
-  limite_mensual: number | null;
-};
 
 export default function EtapaSeleccionDivisas({
   divisaOrigen,
@@ -40,18 +31,14 @@ export default function EtapaSeleccionDivisas({
   opPerspectivaCasa,
   setOpPerspectivaCasa,
   onContinuar,
+  variant = "wizard",
+  onReadyChange,
 }: Props) {
   const [divisas, setDivisas] = useState<Divisa[]>([]);
   const [divisaBase, setDivisaBase] = useState<Divisa | null>(null);
 
   // Estado para el input formateado
   const [montoDisplay, setMontoDisplay] = useState<string>("");
-
-  // --- límites (simple) ---
-  const [limites, setLimites] = useState<LimiteCfg | null>(null);
-  const [loadingLimites, setLoadingLimites] = useState(true);
-  const [limiteMsg, setLimiteMsg] = useState<string>("");
-  const [tasaBase, setTasaBase] = useState<string>("");
 
   // --- validación de denominaciones ---
   const [denominacionesMsg, setDenominacionesMsg] = useState<string>("");
@@ -81,90 +68,6 @@ export default function EtapaSeleccionDivisas({
     };
     fetchDivisas();
   }, []);
-
-  // Cargar límites una vez
-  useEffect(() => {
-    const fetchLimites = async () => {
-      try {
-        const res = await getLimiteConfig();
-        // Normalizo a number|null por si viene string
-        setLimites({
-          id: res.id! as any,
-          limite_diario:
-            res.limite_diario !== null ? Number(res.limite_diario) : null,
-          limite_mensual:
-            res.limite_mensual !== null ? Number(res.limite_mensual) : null,
-        });
-      } catch (e) {
-        console.error("Error obteniendo limite-config", e);
-        setLimites(null); // sin límites ante error
-      } finally {
-        setLoadingLimites(false);
-      }
-    };
-    fetchLimites();
-  }, []);
-
-  // Cargar tasas en cada que se cambia la divisa origen
-  useEffect(() => {
-    if (!divisaOrigen) return;
-
-    const setTasaActual = async () => {
-      if (divisaBase?.id == Number(divisaOrigen)) {
-        setTasaBase("1");
-        return;
-      }
-
-      const tasas = await getTasas({ search: "" });
-      console.log(tasas);
-
-      const tasa = tasas.find((t) => t.divisa == Number(divisaOrigen));
-
-      console.log("Tasa encontrada: " + tasa);
-
-      setTasaBase(tasa ? String(tasa.precioBase) : "1");
-    };
-    
-
-    setTasaActual();
-  }, [divisaOrigen]);
-
-  // Validación simple: monto < límites (con prioridad mensual > diario)
-  useEffect(() => {
-    if (
-      !clienteActual ||
-      !monto ||
-      monto <= 0 ||
-      loadingLimites ||
-      tasaBase == ""
-    ) {
-      setLimiteMsg("");
-      return;
-    }
-    if (!limites) {
-      // sin configuración => sin límites
-      setLimiteMsg("");
-      return;
-    }
-    const { limite_mensual, limite_diario } = limites;
-    console.log("Tasa base utilizada para revisar limites: " + tasaBase);
-    // Prioridad mensual primero
-    const nuevoGastoDiario =
-      Number(clienteActual.gasto_diario) + monto * Number(tasaBase);
-    console.log("Nuevo gasto diario: " + nuevoGastoDiario);
-
-    const nuevoGastoMensual =
-      Number(clienteActual.gasto_mensual) + monto * Number(tasaBase);
-    console.log("Nuevo gasto mensual: " + nuevoGastoMensual);
-
-    if (limite_mensual !== null && nuevoGastoMensual >= limite_mensual) {
-      setLimiteMsg("Límite mensual alcanzado");
-    } else if (limite_diario !== null && nuevoGastoDiario >= limite_diario) {
-      setLimiteMsg("Límite diario alcanzado");
-    } else {
-      setLimiteMsg("");
-    }
-  }, [monto, clienteActual, limites, loadingLimites, divisaOrigen, tasaBase]);
 
   // Validar disponibilidad de denominaciones
   useEffect(() => {
@@ -242,10 +145,14 @@ export default function EtapaSeleccionDivisas({
     divisaOrigen !== divisaDestino &&
     monto > 0 &&
     clienteActual &&
-    !limiteMsg &&
-    !loadingLimites &&
     !denominacionesMsg &&
     !validandoDenominaciones;
+
+  useEffect(() => {
+    onReadyChange?.(!!puedeAvanzar);
+  }, [puedeAvanzar, onReadyChange]);
+
+  const isInline = variant === "inline";
 
   
 
@@ -294,7 +201,6 @@ export default function EtapaSeleccionDivisas({
             <select
               value={divisaOrigen}
               onChange={(e) => {
-                setLimiteMsg(""); // limpiar feedback viejo
                 setDenominacionesMsg(""); // limpiar validación de denominaciones
                 setDivisaOrigen(e.target.value);
                 const origen = divisas.find(
@@ -342,7 +248,6 @@ export default function EtapaSeleccionDivisas({
           <button
             type="button"
             onClick={() => {
-              setLimiteMsg(""); // limpiar feedback viejo
               setDenominacionesMsg(""); // limpiar validación de denominaciones
               const temp = divisaOrigen;
               setDivisaOrigen(divisaDestino);
@@ -362,7 +267,6 @@ export default function EtapaSeleccionDivisas({
             <select
               value={divisaDestino}
               onChange={(e) => {
-                setLimiteMsg(""); // limpiar feedback viejo
                 setDenominacionesMsg(""); // limpiar validación de denominaciones
                 setDivisaDestino(e.target.value);
               }}
@@ -413,7 +317,6 @@ export default function EtapaSeleccionDivisas({
 
                 // Validar que sea un número válido
                 if (unformatted === "" || /^\d+$/.test(unformatted)) {
-                  setLimiteMsg(""); // limpiar mensaje de límite
                   setDenominacionesMsg(""); // limpiar validación de denominaciones
                   setMontoDisplay(formatInputNumber(unformatted));
                   setMonto(unformatted === "" ? 0 : Number(unformatted));
@@ -444,16 +347,6 @@ export default function EtapaSeleccionDivisas({
           </div>
         </div>
       </div>
-
-      {/* Mensaje de límite (simple) */}
-      {!!limiteMsg && (
-        <div
-          className="bg-red-50 border border-red-200 rounded-lg p-3 text-sm text-red-700"
-          aria-live="polite"
-        >
-          {limiteMsg}
-        </div>
-      )}
 
       {/* Mensaje de validación de denominaciones */}
       {!!denominacionesMsg && (
@@ -499,19 +392,21 @@ export default function EtapaSeleccionDivisas({
       )}
 
       {/* Botones de navegación */}
-      <div className="flex justify-end gap-3">
-        <button
-          onClick={onContinuar}
-          disabled={!puedeAvanzar}
+      {!isInline && (
+        <div className="flex justify-end gap-3">
+          <button
+            onClick={onContinuar}
+            disabled={!puedeAvanzar || !onContinuar}
           className={`px-6 py-2 rounded-lg font-medium transition-colors ${
-            puedeAvanzar
+            puedeAvanzar && onContinuar
               ? "bg-zinc-900 text-white hover:bg-zinc-700"
               : "bg-gray-300 text-gray-500 cursor-not-allowed"
           }`}
         >
-          {loadingLimites ? "Cargando..." : "Continuar"}
-        </button>
-      </div>
+            Continuar
+          </button>
+        </div>
+      )}
     </div>
   );
 }

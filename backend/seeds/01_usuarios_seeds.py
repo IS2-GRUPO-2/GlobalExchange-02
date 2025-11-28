@@ -77,7 +77,7 @@ def run():
         }
     )
     if created:
-        print(f"  �+' Usuario creado: {gerente.email}")
+        print(f"  Usuario creado: {gerente.email}")
     
     # Usuarios adicionales para pruebas
     usuarios_prueba = [

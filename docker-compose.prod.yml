@@ -6,7 +6,7 @@ services:
     command: >
       bash -c "python manage.py migrate --noinput &&
                python -m seeds.load_all_seeds &&
-               gunicorn globalexchange.wsgi:application --bind 0.0.0.0:8000
+               gunicorn globalexchange. wsgi:application --bind 0.0.0.0:8000
                --workers 3
                --worker-class gevent
                --worker-connections 1000
@@ -17,11 +17,46 @@ services:
     volumes:
       - static_volume:/app/static
       - media_volume:/app/media
+    environment:
+      - CELERY_BROKER_URL=amqp://${RABBITMQ_USER:-admin}:${RABBITMQ_PASS:-secure_password}@rabbitmq:5672//
     env_file:
-      - .env #En el vps .env, pero si vas a ejecutarlo local, .env.prod
+      - .env
     depends_on:
       db:
         condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    restart: unless-stopped
+
+  celery_worker:
+    image: ghcr.io/is2-grupo-2/globalexchange-02/backend:latest
+    container_name: celery_worker_prod
+    hostname: celery_worker
+    command: celery -A globalexchange worker -l info --concurrency=2
+    environment:
+      - CELERY_BROKER_URL=amqp://${RABBITMQ_USER:-admin}:${RABBITMQ_PASS:-secure_password}@rabbitmq:5672//
+    env_file:
+      - .env
+    depends_on:
+      db:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    restart: unless-stopped
+
+  celery_beat:
+    image: ghcr.io/is2-grupo-2/globalexchange-02/backend:latest
+    container_name: celery_beat_prod
+    hostname: celery_beat
+    command: celery -A globalexchange beat -l info
+    environment:
+      - CELERY_BROKER_URL=amqp://${RABBITMQ_USER:-admin}:${RABBITMQ_PASS:-secure_password}@rabbitmq:5672//
+    env_file:
+      - .env
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+    restart: unless-stopped
 
   simulador_pagos:
     image: ghcr.io/is2-grupo-2/globalexchange-02/simulador:latest
@@ -29,6 +64,7 @@ services:
     hostname: simulador_pagos
     depends_on:
       - backend
+    restart: unless-stopped
 
   nginx_prod:
     image: ghcr.io/is2-grupo-2/globalexchange-02/frontend:latest
@@ -43,13 +79,13 @@ services:
       - "443:443"
     depends_on:
       - backend
-
+    restart: unless-stopped
 
   db:
     image: postgres:17-alpine
     container_name: db_postgres_prod
     env_file:
-      - .env
+      - . env
     volumes:
       - pg_data_prod:/var/lib/postgresql/data
     restart: unless-stopped
@@ -59,7 +95,27 @@ services:
       timeout: 5s
       retries: 10
 
+  rabbitmq:
+    image: rabbitmq:3. 13-management-alpine
+    container_name: rabbitmq_prod
+    hostname: rabbitmq
+    environment:
+      - RABBITMQ_DEFAULT_USER=${RABBITMQ_USER:-admin}
+      - RABBITMQ_DEFAULT_PASS=${RABBITMQ_PASS:-secure_password}
+      - RABBITMQ_NODENAME=rabbit@rabbitmq
+    volumes:
+      - rabbitmq_data_prod:/var/lib/rabbitmq
+    ports:
+      - "15672:15672"  # Solo para monitoreo, considera bloquearlo con firewall
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
 volumes:
   pg_data_prod:
   static_volume:
   media_volume:
+  rabbitmq_data_prod:

@@ -3,15 +3,18 @@ services:
     build: ./backend
     container_name: backend_desrr
     hostname: backend
+    environment:
+      - CELERY_BROKER_URL=amqp://guest:guest@rabbitmq:5672//
     command: >
       bash -c "python manage.py migrate --noinput && 
                python -m seeds.load_all_seeds && 
                stripe listen --api-key ${STRIPE_KEY} --forward-to http://backend:8000/api/operaciones/stripe_webhook/ & 
-               python manage.py runserver 0.0.0.0:8000"
+               python -m debugpy --listen 0.0.0.0:5678 manage.py runserver 0.0.0.0:8000"
     volumes:
       - ./backend:/app:delegated
     ports:
       - "8000:8000"
+      - "5678:5678"
     env_file:
       - .env
     depends_on:
@@ -31,6 +34,40 @@ services:
     environment:
       - CHOKIDAR_USEPOLLING=true
     depends_on:
+      - backend
+
+  celery_worker:
+    build: ./backend
+    container_name: celery_worker_desrr
+    hostname: celery_worker
+    # El comando para iniciar el worker
+    command: celery -A globalexchange worker -l info
+    volumes:
+      - ./backend:/app:delegated
+    env_file:
+      - .env
+    environment:
+      # URL de conexión a RabbitMQ: amqp://user:password@host:port/vhost
+      - CELERY_BROKER_URL=amqp://guest:guest@rabbitmq:5672//
+    depends_on:
+      - backend # Esperamos a que el backend inicie (aunque lo critico es rabbit y db)
+      - rabbitmq
+      - db
+
+  celery_beat:
+    build: ./backend
+    container_name: celery_beat_desrr
+    hostname: celery_beat
+    # El comando es 'beat' en lugar de 'worker'
+    command: celery -A globalexchange beat -l info
+    volumes:
+      - ./backend:/app:delegated
+    env_file:
+      - .env
+    environment:
+      - CELERY_BROKER_URL=amqp://guest:guest@rabbitmq:5672//
+    depends_on:
+      - rabbitmq
       - backend
 
   simulador_pagos:
@@ -54,6 +91,17 @@ services:
       interval: 5s
       timeout: 5s
       retries: 10
+
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: rabbitmq_desrr
+    hostname: rabbitmq
+    ports:
+      - "5672:5672"   # Puerto para comunicación de Celery
+      - "15672:15672" # Puerto para la UI de administración (usuario/pass: guest/guest)
+    environment:
+      - RABBITMQ_DEFAULT_USER=guest
+      - RABBITMQ_DEFAULT_PASS=guest
 
 volumes:
   pg_data:
