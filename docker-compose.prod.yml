@@ -71,6 +71,7 @@ services:
     container_name: nginx_prod
     volumes:
       - /etc/letsencrypt:/etc/letsencrypt:ro
+      - /var/www/certbot:/var/www/certbot
       - static_volume:/app/static
       - media_volume:/app/media
     ports:
