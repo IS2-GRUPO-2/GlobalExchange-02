@@ -6,7 +6,7 @@ services:
     command: >
       bash -c "python manage.py migrate --noinput &&
                python -m seeds.load_all_seeds &&
-               gunicorn globalexchange. wsgi:application --bind 0.0.0.0:8000
+               gunicorn globalexchange.wsgi:application --bind 0.0.0.0:8000
                --workers 3
                --worker-class gevent
                --worker-connections 1000
@@ -85,7 +85,7 @@ services:
     image: postgres:17-alpine
     container_name: db_postgres_prod
     env_file:
-      - . env
+      - .env
     volumes:
       - pg_data_prod:/var/lib/postgresql/data
     restart: unless-stopped
